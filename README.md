@@ -11,7 +11,7 @@ To 1.:
 Checkpointing shall be done without interferring the execution of the component
 It shall be done fast: Incremental checkpointing: Only the changes are stored
 * Need to know which data is modified
-* Need to partition the data into page-sized segments
+* Need to partition the data into page-sized segments (Granularity of incremental ckpt)
 * MMU provides a dirty-bit per physical page; does Genode provide an API for this low-level mechanism?
 * MMU resides on the CPU
 * MMU translates virtual memory addresses to physical addresses
