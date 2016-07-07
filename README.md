@@ -1,0 +1,1 @@
+# genode-CheckpointRestore-SharedMemory
