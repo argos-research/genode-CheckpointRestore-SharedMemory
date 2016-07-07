@@ -19,8 +19,9 @@ int main()
     
     Genode::printf("Avail = %d\n", Genode::env()->ram_session()->avail());
     
-    Genode::env()->rm_session()->attach(rds);
-    Genode::printf("Attached ram dataspace to rm session\n");
+    void* addr = Genode::env()->rm_session()->attach(rds);
+    Genode::printf("Attached ram dataspace to rm session at the location %p\n",
+                   addr);
     
     Genode::printf("RM session state = %d\n", Genode::env()->rm_session()->state());
     
