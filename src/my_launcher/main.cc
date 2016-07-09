@@ -66,6 +66,12 @@ public:
         return !Genode::strcmp(service_name, "LOG") ? &_log_service
              : !Genode::strcmp(service_name, "RM") ? &_rm_service
              : 0;
+          
+        /* Usage with Service_registry */     
+        //static Genode::Service_registry parent_services;
+        //parent_services.insert(new (env()->heap()) Genode::Parent_service("RAM"));
+        //parent_services.insert(new (env()->heap()) Genode::Parent_service("ROM"));
+        //return _parent_services->find(service_name);
     }
     
     void filter_session_args(const char *service, char *args, Genode::size_t args_len)
