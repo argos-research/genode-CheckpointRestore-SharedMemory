@@ -2,20 +2,41 @@
 
 Workflow
 1. Checkpoint a component A
+
 2. Serialize data
+
 3. Transfer to new node
+
 4. Deserialize data
+
 5. Restore state of the component A and restart it
 
-To 1.:
-Checkpointing shall be done without interferring the execution of the component
-It shall be done fast: Incremental checkpointing: Only the changes are stored
-* Need to know which data is modified
-* Need to partition the data into page-sized segments (Granularity of incremental ckpt)
-* MMU provides a dirty-bit per physical page; does Genode provide an API for this low-level mechanism?
-* MMU resides on the CPU
-* MMU translates virtual memory addresses to physical addresses
-* MMU uses a page table to map virtual to physical pages
-* A page table consists of page table entries (PTEs)
-* A PTE MAY include information about (1) whether the page was written to (dirty bit) and (2) when it was last used (accessed bit)
-* Need to find out, if Genode provides MMU information
+
+Approach
+* Checkpoint in core. Checkpointing as a core service, or as a script which can be triggered by the scheduler.
+ * Checkpoint the PD session
+  * Capability space
+  * Metadata of the capabilities
+ * Managed dataspaces in the incremental checkpointer (see next step)
+
+
+* Incremental Checkpointing needs: 
+ * Service which provides a RAM service for distributing managed dataspaces instead of "normal" dataspaces
+ * A client's (= component which shall be checkpointed) RAM access is rerouted to the custom RAM service
+ * By requesting a dataspace from the RAM service, a managed dataspace with several small dataspaces (optimal: 1 PAGESIZE) is returned.
+ * First they are not backed with real memory (detached)
+ * After the client tries to use them, the CPU causes a page fault
+  * The page fault is caught by the foc kernel, which forwards it to Genode
+  * Genode tries to find a suitable dataspace in its core and fails
+  * Upon failure it sends a Signal to its other components which can catch it through a Rm\_client::fault_handler
+  * A thread catches this signal and attaches a dataspace at the requested location
+  * It also marks the location for the next checkpoint
+ * Now the client resumes its execution until a checkpoint is performed
+ * After the checkpoint the marks are unset from all dataspaces and all dataspaces are detached again
+
+
+* Restore
+ * Object identities (through PD session's metadata)
+ * Capability space for the component
+ * Managed dataspaces in the incremental checkpointer
+  * Inclusive Registers, e.g. instruction pointer
