@@ -16,7 +16,7 @@
 namespace Genode { struct Cr_session_client; }
 
 
-struct Genode::Cr_session_client : Rpc_client<Genode::Cr_session>
+struct Genode::Cr_session_client : Rpc_client<Cr_session>
 {
     explicit Cr_session_client(Cr_session_capability session_cap)
     : Rpc_client<Cr_session>(session_cap) { }
@@ -25,9 +25,9 @@ struct Genode::Cr_session_client : Rpc_client<Genode::Cr_session>
     
     void say_hello()
     {
-        Genode::log("issue RPC for saying hello.");
+        log("issue RPC for saying hello.");
         call<Rpc_say_hello>();
-        Genode::log("returned from 'say_hallo' RPC call.");
+        log("returned from 'say_hallo' RPC call.");
     }
     
     int add(int a, int b)

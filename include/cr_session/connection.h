@@ -12,7 +12,7 @@
 
 namespace Genode { struct Cr_connection; }
 
-struct Genode::Cr_connection : Connection<Genode::Cr_session>, Genode::Cr_session_client
+struct Genode::Cr_connection : Connection<Cr_session>, Cr_session_client
 {
     enum { RAM_QUOTA = 16*4*1024 };
     
