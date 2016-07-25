@@ -1,6 +1,7 @@
 # Genode real-time capable checkpoint/restore mechanism
 
 Workflow
+
 1. Checkpoint a component A
 
 2. Serialize data
