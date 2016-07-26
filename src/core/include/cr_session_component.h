@@ -17,10 +17,27 @@ namespace Genode { class Cr_session_component; }
 class Genode::Cr_session_component : public Rpc_object<Cr_session>
 {
 private:
+    /**
+    * Read and store the PD label
+    */
+    struct Label {
+
+        enum { MAX_LEN = 64 };
+        char string[MAX_LEN];
+
+        Label(char const *args)
+        {
+            Arg_string::find_arg(args, "label").string(string,
+                                                sizeof(string), "");
+        }
+    } const _label;
+    Allocator *_alloced_pds;
 
 public:
-    Cr_session_component(char const *args) { }
-    virtual ~Cr_session_component() { }
+    Cr_session_component(Allocator *alloced_pds, char const *args)
+    : _label(args),
+      _alloced_pds(alloced_pds)
+    { }
 
     /*************************
     ** CR session interface **

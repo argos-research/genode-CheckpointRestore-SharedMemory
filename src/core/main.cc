@@ -248,6 +248,7 @@ int main()
 	 * destruction (to enable quota trading) of session component objects.
 	 */
 	static Sliced_heap sliced_heap(env()->ram_session(), env()->rm_session());
+    static Sliced_heap pd_sliced_heap(env()->ram_session(), env()->rm_session());
 
 	/*
 	 * Factory for creating RPC capabilities within core
@@ -261,14 +262,14 @@ int main()
 	static Rm_root      rm_root      (e, &sliced_heap, pager_ep);
 	static Cpu_root     cpu_root     (e, e, &pager_ep, &sliced_heap,
 	                                  Trace::sources());
-	static Pd_root      pd_root      (e, e, pager_ep, &sliced_heap);
+	static Pd_root      pd_root      (e, e, pager_ep, &pd_sliced_heap);
 	static Log_root     log_root     (e, &sliced_heap);
 	static Io_mem_root  io_mem_root  (e, e, platform()->io_mem_alloc(),
 	                                  platform()->ram_alloc(), &sliced_heap);
 	static Irq_root     irq_root     (core_env()->pd_session(),
 	                                  platform()->irq_alloc(), &sliced_heap);
 	static Trace::Root  trace_root   (e, &sliced_heap, Trace::sources(), trace_policies);
-    static Cr_root      cr_root      (e, &sliced_heap);
+    static Cr_root      cr_root      (e, &sliced_heap, &pd_sliced_heap);
 
 	/*
 	 * Play our role as parent of init and declare our services.
