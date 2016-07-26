@@ -2,6 +2,8 @@
  * \brief  Core main program
  * \author Norman Feske
  * \date   2006-07-12
+ * \note   Modified by Denis Huber on 2016-07-26
+ *         Modifications are marked with "Denis Huber"
  */
 
 /*
@@ -262,6 +264,9 @@ int main()
 	static Rm_root      rm_root      (e, &sliced_heap, pager_ep);
 	static Cpu_root     cpu_root     (e, e, &pager_ep, &sliced_heap,
 	                                  Trace::sources());
+	// Changed by Denis Huber
+	// pd_root shall use the distinct pd_sliced_heap for storing 
+	// Pd_session_component objects
 	static Pd_root      pd_root      (e, e, pager_ep, &pd_sliced_heap);
 	static Log_root     log_root     (e, &sliced_heap);
 	static Io_mem_root  io_mem_root  (e, e, platform()->io_mem_alloc(),
@@ -269,6 +274,9 @@ int main()
 	static Irq_root     irq_root     (core_env()->pd_session(),
 	                                  platform()->irq_alloc(), &sliced_heap);
 	static Trace::Root  trace_root   (e, &sliced_heap, Trace::sources(), trace_policies);
+	// Added by Denis Huber
+	// cr_root creates Cr_session_component objects which implement a
+	// Checkpoint/Restore mechanism in core
     static Cr_root      cr_root      (e, &sliced_heap, &pd_sliced_heap);
 
 	/*
@@ -285,6 +293,8 @@ int main()
 		Local_service(Io_mem_session::service_name(),  &io_mem_root),
 		Local_service(Irq_session::service_name(),     &irq_root),
 		Local_service(Trace::Session::service_name(),  &trace_root),
+		// Added by Denis Huber
+		// Including cr_root into the Local_service registry
         Local_service(Cr_session::service_name(),      &cr_root)
 	};
 

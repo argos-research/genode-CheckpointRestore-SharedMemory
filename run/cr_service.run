@@ -1,0 +1,36 @@
+build { core init drivers/timer test/cr_service }
+
+create_boot_directory
+
+install_config {
+<config>
+  <parent-provides>
+    <service name="LOG"/>
+    <service name="SIGNAL"/>
+    <service name="CR"/>
+    <service name="RM"/>
+    <service name="ROM"/>
+    <service name="IO_MEM"/>
+    <service name="IO_PORT"/>
+    <service name="IRQ"/>
+  </parent-provides>
+  <default-route>
+    <any-service> <parent/> <any-child/> </any-service>
+  </default-route>
+  <start name="cr_driver">
+    <resource name="RAM" quantum="1M"/>
+  </start>
+  <start name="timer">
+    <resource name="RAM" quantum="1M"/>
+    <provides><service name="Timer"/></provides>
+  </start>
+  <start name="sheep_counter">
+    <resource name="RAM" quantum="1M"/>
+  </start>
+</config>}
+
+build_boot_image { core init timer cr_driver sheep_counter }
+
+append qemu_args " -nographic "
+
+run_genode_until "5 sheeps.*\n" 15

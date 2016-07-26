@@ -3,6 +3,7 @@
  * \author Norman Feske
  * \date   2006-05-15
  * \note   Modified by Denis Huber on 2016-07-26
+ *         Modifications are marked with "Denis Huber"
  */
 
 /*
@@ -170,10 +171,10 @@ class Genode::Sliced_heap : public Allocator
 		size_t          _consumed;     /* number of allocated bytes       */
 		List<Block>     _blocks;       /* list of allocated blocks        */
 		Lock            _lock;         /* serialize allocations           */
-        
-		/**
-		 * cr_session_component needs access to stored objects from core-main
-		 */
+
+		// Added by Denis Huber
+		// Cr_session_component needs access to a Sliced_heap used by core
+		// for storing Pd_session_component objects
 		friend class Cr_session_component;
 
 	public:

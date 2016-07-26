@@ -1,5 +1,5 @@
 /*
- * \brief  Test program for hello core client
+ * \brief  Test program for CR session
  * \author Denis Huber
  * \date   2016-07-25
  *
@@ -12,7 +12,7 @@
 #include <base/log.h>
 #include <cr_session/connection.h>
 
-Genode::size_t Component::stack_size() { return 16*4*1024; }
+Genode::size_t Component::stack_size() { return 32*4*1024; }
 
 void Component::construct(Genode::Env &env)
 {
