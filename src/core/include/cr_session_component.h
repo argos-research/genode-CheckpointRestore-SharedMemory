@@ -32,10 +32,12 @@ private:
                                                 sizeof(string), "");
         }
     } const _label;
-    Allocator *_alloced_pds;
+    
+    
+    Sliced_heap *_alloced_pds;
 
 public:
-    Cr_session_component(Allocator *alloced_pds, char const *args)
+    Cr_session_component(Sliced_heap *alloced_pds, char const *args)
     : _label(args),
       _alloced_pds(alloced_pds)
     { }
@@ -48,7 +50,25 @@ public:
     bool checkpoint(String<64> label) 
     {
         log("Here arises a powerful checkpoint mechanism. Please wait.");
-        return false; 
+        for(Sliced_heap::Block *b = _alloced_pds->_blocks.first(); 
+            b != 0; b = b->Element::next())
+        {
+            log("Block ", (void *) b);
+            Pd_session_component *pd =
+                reinterpret_cast<Pd_session_component*>(b + 1);
+            log("Pd label ", pd->_label.string);
+        }
+        
+        log("Read through all pds");
+        
+        /*
+        Sliced_heap::Block *b = _alloced_pds->_blocks.first();
+        log("Block ", (void *) b);
+        b = b->Element::next();
+        log("Block ", (void *) b);
+        */
+        
+        return false;
     }
     
     bool restore(String<64> label) 

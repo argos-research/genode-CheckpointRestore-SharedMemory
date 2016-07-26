@@ -18,7 +18,7 @@ namespace Genode { class Cr_root; }
 class Genode::Cr_root : public Root_component<Cr_session_component>
 {
 private:
-    Allocator *_alloced_pds;
+    Sliced_heap *_alloced_pds;
 
 protected:
     Cr_session_component *_create_session(const char *args)
@@ -34,7 +34,7 @@ public:
      * \param session_ep entrypoint for managing CR session objects
      * \param md_alloc   meta-data allocator to be used by root component
      */ 
-    Cr_root(Rpc_entrypoint *session_ep, Allocator *md_alloc, Allocator *alloced_pds)
+    Cr_root(Rpc_entrypoint *session_ep, Allocator *md_alloc, Sliced_heap *alloced_pds)
     : Root_component<Cr_session_component>(session_ep, md_alloc), 
       _alloced_pds(alloced_pds) 
     { }

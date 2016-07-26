@@ -17,8 +17,6 @@ struct Genode::Cr_session : Session
 {
     static const char *service_name() { return "CR"; }
 
-    //virtual ~Cr_session() { }
-
     virtual bool checkpoint(String<64> label) = 0;
     virtual bool restore(String<64> label) = 0;
 
