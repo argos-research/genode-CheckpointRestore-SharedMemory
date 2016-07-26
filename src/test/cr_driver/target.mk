@@ -1,3 +1,3 @@
-TARGET = hello_core_client
+TARGET = test-cr_driver
 SRC_CC = main.cc
 LIBS   = base

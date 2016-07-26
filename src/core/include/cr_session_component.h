@@ -8,6 +8,7 @@
 #define _CORE__INCLUDE__CR_SESSION_COMPONENT_H_
 
 /* Genode includes */
+#include <util/string.h>
 #include <base/log.h>
 #include <base/rpc_server.h>
 #include <cr_session/cr_session.h>
@@ -38,15 +39,23 @@ public:
     : _label(args),
       _alloced_pds(alloced_pds)
     { }
+    
 
     /*************************
     ** CR session interface **
     *************************/
 
-    void say_hello() {
-        log("I am here... Hello."); }
-    int add(int a, int b) {
-        return a+b; }
+    bool checkpoint(String<64> label) 
+    {
+        log("Here arises a powerful checkpoint mechanism. Please wait.");
+        return false; 
+    }
+    
+    bool restore(String<64> label) 
+    {
+        log("Here arises a magnificent restore mechanism. Please be patient."); 
+        return false;
+    }
 };
 
 #endif /* _CORE__INCLUDE__CR_SESSION_COMPONENT_H_ */

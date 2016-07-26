@@ -12,6 +12,7 @@
 #include <cr_session/capability.h>
 #include <base/rpc_client.h>
 #include <base/log.h>
+#include <util/string.h>
 
 namespace Genode { struct Cr_session_client; }
 
@@ -23,16 +24,22 @@ struct Genode::Cr_session_client : Rpc_client<Cr_session>
     
     virtual ~Cr_session_client() { }
     
-    void say_hello()
+    bool checkpoint(String<64> label)
     {
-        log("issue RPC for saying hello.");
-        call<Rpc_say_hello>();
-        log("returned from 'say_hallo' RPC call.");
+        bool result;
+        log("issue RPC for checkpoint(", label.string(), ").");
+        result = call<Rpc_checkpoint>(label);
+        log("returned from 'checkpoint' RPC call.");
+        return result;
     }
     
-    int add(int a, int b)
+    bool restore(String<64> label)
     {
-        return call<Rpc_add>(a, b);
+        bool result;
+        log("issue RPC for restore(", label.string(), ").");
+        result = call<Rpc_restore>(label);
+        log("returned from 'restore' RPC call.");
+        return result;
     }
 };
 

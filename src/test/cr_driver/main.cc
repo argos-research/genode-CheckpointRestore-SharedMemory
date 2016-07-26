@@ -16,11 +16,10 @@ Genode::size_t Component::stack_size() { return 16*4*1024; }
 
 void Component::construct(Genode::Env &env)
 {
-    Genode::Cr_connection cr_con(env);
+    Genode::Cr_connection cr(env);
     
-    cr_con.say_hello();
-    int const sum = cr_con.add(42, 7);
-    Genode::log("added 42 and 7 = ", sum);
+    cr.checkpoint("Hello");
+    cr.restore("Hello");
     
     Genode::log("hello core test completed");
 }

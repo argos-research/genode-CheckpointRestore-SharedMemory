@@ -1,4 +1,4 @@
-build { core init test/core_service }
+build { core init test/cr_driver }
 
 create_boot_directory
 
@@ -11,12 +11,12 @@ install_config {
   <default-route>
     <any-service> <parent/> <any-child/> </any-service>
   </default-route>
-  <start name="hello_core_client">
+  <start name="test-cr_driver">
     <resource name="RAM" quantum="1M"/>
   </start>
 </config>}
 
-build_boot_image { core init hello_core_client }
+build_boot_image { core init test-cr_driver }
 
 append qemu_args " -nographic "
 
