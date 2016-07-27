@@ -12,6 +12,7 @@
 #include <base/log.h>
 #include <base/rpc_server.h>
 #include <cr_session/cr_session.h>
+#include <dataspace/client.h>
 
 namespace Genode { class Cr_session_component; }
 
@@ -47,19 +48,26 @@ public:
     ** CR session interface **
     *************************/
 
-    bool checkpoint(String<64> label) 
+    bool checkpoint(String<64> label)
     {
         log("Here arises a powerful checkpoint mechanism. Please wait.");
-        for(Sliced_heap::Block *b = _alloced_pds->_blocks.first(); 
-            b != 0; b = b->Element::next())
+        Pd_session_component *pd = nullptr;
+        bool found = false;
+        Sliced_heap::Block *b = _alloced_pds->_blocks.first();
+        for(; (b != 0) && !found; b = b->next())
         {
-            log("Block ", (void *) b);
-            Pd_session_component *pd =
-                reinterpret_cast<Pd_session_component*>(b + 1);
-            log("Pd label ", pd->_label.string);
+            //log("Block ", (void *) b, " B-size=", b->size);
+            pd = reinterpret_cast<Pd_session_component*>(b + 1);
+            //log("Pd label ", pd->_label.string);
+            //strcmp(pd->_label.string, label.string());
+            if(label == pd->_label.string)
+            {
+                found = true;
+            }
         }
         
-        log("Read through all pds");
+        log("Found=", found ? "true" : "false");
+        if(found) log("Label=", pd->_label.string);
         
         /*
         Sliced_heap::Block *b = _alloced_pds->_blocks.first();

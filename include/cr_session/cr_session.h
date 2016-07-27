@@ -9,6 +9,9 @@
 #ifndef _INCLUDE__CR_SESSION__CR_SESSION_H_
 #define _INCLUDE__CR_SESSION__CR_SESSION_H_
 
+#include <session/session.h>
+#include <util/string.h>
+
 namespace Genode {
     struct Cr_session;
 }

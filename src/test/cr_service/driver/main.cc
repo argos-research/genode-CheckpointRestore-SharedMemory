@@ -18,8 +18,8 @@ void Component::construct(Genode::Env &env)
 {
     Genode::Cr_connection cr(env);
     
-    cr.checkpoint("Hello");
-    cr.restore("Hello");
+    cr.checkpoint("init -> sheep_counter");
+    cr.restore("init -> shepp_counter");
     
     Genode::log("hello core test completed");
 }

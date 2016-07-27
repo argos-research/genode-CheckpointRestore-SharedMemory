@@ -9,7 +9,6 @@
 
 /* Genode */
 #include <root/component.h>
-
 /* Core */
 #include <cr_session_component.h>
 
