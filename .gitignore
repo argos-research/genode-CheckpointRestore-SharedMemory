@@ -1,1 +1,6 @@
+# shell scripts
 *.sh
+
+# eclipse project files
+.project
+.cproject
