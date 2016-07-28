@@ -12,7 +12,7 @@
 #include <base/log.h>
 #include <base/rpc_server.h>
 #include <cr_session/cr_session.h>
-#include <dataspace/client.h>
+#include <base/env.h>
 
 namespace Genode { class Cr_session_component; }
 
@@ -59,7 +59,6 @@ public:
             //log("Block ", (void *) b, " B-size=", b->size);
             pd = reinterpret_cast<Pd_session_component*>(b + 1);
             //log("Pd label ", pd->_label.string);
-            //strcmp(pd->_label.string, label.string());
             if(label == pd->_label.string)
             {
                 found = true;
@@ -69,14 +68,15 @@ public:
         log("Found=", found ? "true" : "false");
         if(found) log("Label=", pd->_label.string);
         
-        /*
-        Sliced_heap::Block *b = _alloced_pds->_blocks.first();
-        log("Block ", (void *) b);
-        b = b->Element::next();
-        log("Block ", (void *) b);
-        */
+        Region_map_component rm_comp = pd->_address_space;
+        /*Dataspace_client ds_client(rm_comp.);
+        char* addr = core_env()->rm_session()->attach(rm_client.dataspace());
         
-        return false;
+        log("Dataspace from PD");
+        log("phys_addr=", ds_client.phys_addr(), " size=", ds_client.size(), " writable= ", ds_client.writable() ? "true" : "false");
+*/
+
+        return true;
     }
     
     bool restore(String<64> label) 
