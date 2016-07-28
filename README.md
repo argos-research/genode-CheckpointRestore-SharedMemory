@@ -14,36 +14,33 @@ Workflow
 
 
 Approach
-* Checkpoint in core. Checkpointing as a core service, or as a script which can be triggered by the scheduler.
- * Checkpoint the PD session
- * Capability space
- * Metadata of the capabilities
- * Managed dataspaces in the incremental checkpointer (see next step)
+* Checkpoint in core
+ * Checkpoint as a core service
+ * Search PD session for target component (via label string or use PD session capability)
+ * What to checkpoint: Dataspaces, thread's metadata, thread's registers, capabilities used
+ * Store data on RAM or a filesystem (needs driver)
+* Restore in core
+ * Restore as a core service
+ * Identify data of the target component (through label string)
+ * Recreate missing capabilities
+ * Load data to RAM to continue using it for periodic checkpoints
+* Optimization via incremental checkpointing
+ * Realization through "custom RAM service, managed dataspaces, detach -> page fault -> mark & attach"
+ * Custom RAM service in core (with own service name: MRAM)
+ * Managed dataspaces: 
 
+1. MRAM service creates dataspaces from RAM and creates a RM session
 
-* Incremental Checkpointing needs: 
- * Service which provides a RAM service for distributing managed dataspaces instead of "normal" dataspaces
- * A client's (= component which shall be checkpointed) RAM access is rerouted to the custom RAM service
- * By requesting a dataspace from the RAM service, a managed dataspace with several small dataspaces (optimal: 1 PAGESIZE) is returned.
- * First they are not backed with real memory (detached)
- * After the client tries to use them, the CPU causes a page fault
- * The page fault is caught by the foc kernel, which forwards it to Genode
- * Genode tries to find a suitable dataspace in its core and fails
- * Upon failure it sends a Signal to its other components which can catch it through a Rm\_client::fault_handler
- * A thread catches this signal and attaches a dataspace at the requested location
- * It also marks the location for the next checkpoint
- * Now the client resumes its execution until a checkpoint is performed
- * After the checkpoint the marks are unset from all dataspaces and all dataspaces are detached again
+2. It does not attach the dataspace to the RM session, but it creates a dataspace from the RM session
 
+3. The created dataspace is a managed dataspace which is returned to the MRAM client for requesting a dataspace
 
-* Restore
- * Object identities (through PD session's metadata)
- * Capability space for the component
- * Managed dataspaces in the incremental checkpointer
- * Inclusive Registers, e.g. instruction pointer
+ * detach -> page fault -> mark & attach mechanism:
 
-#TODO
+1. On the first usage of the dataspace a page fault is triggered, because no dataspace is attached
 
-Approach is deprecated.
+2. The MRAM service catches the page fault and marks the dataspace as "used" and attaches a dataspace for the usage
 
-Change *Approach* from hybrid (core and genode api) to core-only approach!
+3. After a checkpoint is performed the dataspaces are unmarked (set to "not used") and detached from the RM session, thus a new page fault can be caught
+
+ * The managed dataspace size shall be a multiple of 1 PAGESIZE; a benchmark can be made to find out the optimal dataspace size for a given component
