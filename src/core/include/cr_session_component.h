@@ -12,6 +12,8 @@
 #include <base/log.h>
 #include <base/rpc_server.h>
 #include <cr_session/cr_session.h>
+#include <region_map/client.h>
+#include <dataspace/client.h>
 #include <base/env.h>
 
 namespace Genode { class Cr_session_component; }
@@ -68,14 +70,23 @@ public:
         log("Found=", found ? "true" : "false");
         if(found) log("Label=", pd->_label.string);
         
-        Region_map_component rm_comp = pd->_address_space;
-        /*Dataspace_client ds_client(rm_comp.);
+        // Capabilities
+/*
+        Capability<Region_map> rm_cap = pd->address_space();
+        Region_map_client rm_client(rm_cap);
         char* addr = core_env()->rm_session()->attach(rm_client.dataspace());
-        
-        log("Dataspace from PD");
-        log("phys_addr=", ds_client.phys_addr(), " size=", ds_client.size(), " writable= ", ds_client.writable() ? "true" : "false");
 */
 
+        // Rpc_object directly
+/*
+        Dataspace_capability ds_cap = pd->address_space_region_map().dataspace();
+        char* addr = core_env()->rm_session()->attach(ds_cap);
+        log("Attaching dataspace: Returned pointer: ", addr);
+
+        Dataspace_component *ds_comp = pd->address_space_region_map().dataspace_component();
+        log("Reading dataspace component");
+        log("phys_addr = ", ds_comp->phys_addr(), " size = ", ds_comp->size(), " writable = ", ds_comp->writable() ? "true" : "false");
+*/
         return true;
     }
     
