@@ -14,26 +14,32 @@ Workflow
 
 
 Approach
-* Checkpoint in core
- * Checkpoint as a core service
- * Search PD session for target component (via label string or use PD session capability)
- * What to checkpoint: Dataspaces, thread's metadata, thread's registers, capabilities used
- * Store data on RAM or a filesystem (needs driver)
-* Restore in core
- * Restore as a core service
- * Identify data of the target component (through label string)
- * Recreate missing capabilities
- * Load data to RAM to continue using it for periodic checkpoints
-* Optimization via incremental checkpointing
- * Realization through "custom RAM service, managed dataspaces, detach -> page fault -> mark & attach"
- * Custom RAM service in core (with own service name: MRAM)
+* Checkpoint in userland
+ * Checkpoint as a service
+ * Parent is checkpointer
+ * Child is the target
+ * Intercept PD session for Region_map
+ * Intercept CPU sessoin for thread information
+ * Intercept PD session for created capabilities
+ * Intercept session requests for obtained capabilities
+ * Store data in RAM of checkpointer by using own RAM quota or in a filesystem (needs driver)
+* Restore in userland
+ * Restore as a service
+ * Recreate the child using stored data from checkpoint
+ * Recreate PD, CPU, RAM, ROM session
+ * Recreate created/obtained capabilities
+ * Load data of the target component into checkpointer to allow incremental checkpoints
+* Incremental checkpointing as optimization
+ * At checkpoint time store only the changes to the last checkpoint
+ * Marking of "dirty pages" through the use of a custom RAM service with managed dataspaces
+ * Intercept RAM session to create managed dataspaces instead of normal dataspaces
  * Managed dataspaces: 
 
-1. MRAM service creates dataspaces from RAM and creates a RM session
+1. Custom RAM service creates dataspaces from RAM and creates a RM session
 
 2. It does not attach the dataspace to the RM session, but it creates a dataspace from the RM session
 
-3. The created dataspace is a managed dataspace which is returned to the MRAM client for requesting a dataspace
+3. The created dataspace is a managed dataspace which is returned to the RAM client for requesting a dataspace
 
  * detach -> page fault -> mark & attach mechanism:
 
