@@ -23,6 +23,7 @@ private:
 
 	Genode::Env &_env;
 	Genode::Allocator &_md_alloc;
+	const char *_unique_name;
 
 	struct Resources
 	{
@@ -46,9 +47,6 @@ private:
 	 * Entrypoint for serving the root interfaces of the services provided
 	 * by the child and announced towards the parent of GDB monitor
 	 */
-
-	const char *_unique_name;
-
 	Genode::Entrypoint        &_root_ep;
 	Genode::Service_registry  &_parent_services;
 	Genode::Service_registry   _child_services;
@@ -73,9 +71,9 @@ public:
 		_resources(_env, unique_name),
 		_initial_thread(_resources.cpu, _resources.pd, unique_name),
 		_root_ep(root_ep),
-		_parent_services(),
-		_local_services(),
+		_parent_services(), // TODO: Needs reference
 		_child_services(),
+		_local_services(),
 		_elf(unique_name),
 		_child(_elf.dataspace(), Genode::Dataspace_capability(),
 		       _resources.pd,  _resources.pd,
