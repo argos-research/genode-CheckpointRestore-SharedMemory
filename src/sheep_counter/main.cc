@@ -1,9 +1,9 @@
 /*
  * \brief  Test program which just counts sheeps
  * \author Denis Huber
- * \date   2016-07-26
+ * \date   2016-08-04
  *
- * This program is a target for the CR service. It counts a sheep, 
+ * This program is a target for the rtcr service. It counts a sheep,
  * prints the number of the sheep and goes to sleep between each 
  * iteration. This component will be checkpointed serialized, 
  * (transfered), deserialized, and restored. It does not know that it is
