@@ -4,3 +4,4 @@
 # eclipse project files
 .project
 .cproject
+.settings
