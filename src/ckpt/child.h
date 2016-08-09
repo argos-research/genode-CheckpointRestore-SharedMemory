@@ -21,9 +21,9 @@ class Rtcr::Target_child : public Genode::Child_policy
 {
 private:
 
-	Genode::Env &_env;
+	Genode::Env       &_env;
 	Genode::Allocator &_md_alloc;
-	const char *_unique_name;
+	const char        *_unique_name;
 
 	struct Resources
 	{
