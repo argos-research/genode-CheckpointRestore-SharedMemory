@@ -61,6 +61,18 @@ private:
 	Genode::Region_map_client  _address_space { _resources.pd.address_space() };
 	Genode::Child              _child;
 
+	// TODO: create a session capabilities need a root component
+	// Pd session needs a root component too and session creation too?
+	// TODO: activate entrypoint??
+/*
+	Cpu_session_capability _get_cpu_session_cap()
+	{
+		_entrypoint.manage(&_cpu_root);
+		char args[64];
+		Genode::snprintf(args, sizeof(args), "ram_quota=64K, label=\"%s\"", _unique_name);
+		return static_cap_cast<Cpu_session>(_cpu_root.session(args, Affinity()));
+	}
+*/
 public:
 
 	/**
