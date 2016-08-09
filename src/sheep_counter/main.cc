@@ -18,16 +18,22 @@ Genode::size_t Component::stack_size() { return 32*4*1024; }
 
 void Component::construct(Genode::Env &env)
 {
+	using namespace Genode;
     unsigned int n = 1;
     Timer::Connection timer(env);
     
     while(1)
     {
         if(n == 1)
-            Genode::log("1 sheep. zzZ");
+            log("1 sheep. zzZ");
         else
-            Genode::log(n, " sheeps. zzZ");
+            log(n, " sheeps. zzZ");
         n++;
         timer.msleep(2000);
+        break;
     }
+    Ram_dataspace_capability ram_ds = env.ram().alloc(4096);
+    char *local_addr = env.rm().attach(ram_ds);
+    *local_addr = 'c';
+    log("3 sheeps. zzZ");
 }

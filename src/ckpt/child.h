@@ -32,7 +32,6 @@ private:
 	{
 		Genode::Ram_connection ram;
 		Rtcr::Pd_session_component pd;
-		//Genode::Pd_connection pd;
 		Genode::Cpu_connection cpu;
 
 		Resources(Genode::Env &env, Genode::Allocator &md_alloc,
@@ -40,7 +39,6 @@ private:
 		:
 			ram(),
 			pd(env, md_alloc, ep, label),
-			//pd(_unique_name),
 			cpu()
 		{
 			enum { CHILD_QUOTA = 1*1024*1024 };

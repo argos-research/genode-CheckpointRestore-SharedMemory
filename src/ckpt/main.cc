@@ -12,6 +12,7 @@
 
 /* Rtcr includes */
 #include "child.h"
+#include "pd_session_component.h"
 
 namespace Rtcr {
 	struct Main;
@@ -27,7 +28,7 @@ struct Rtcr::Main
 */
 	enum { STACK_SIZE = 8*1024 };
 	Genode::Entrypoint ep { env, STACK_SIZE, "child_stack" };
-	Genode::Heap heap { env.ram(), env.rm() };
+	Genode::Heap md_heap { env.ram(), env.rm() };
 	/**
 	 * Signal_handler is a Signal_context_capability (can be targeted by
 	 * Signal_transmitter) and a Signal_dispatcher_base (executes a function
@@ -39,7 +40,7 @@ struct Rtcr::Main
 	{
 		//env.parent().announce(env.ep().manage(pd_root));
 
-		Target_child child { env, heap, ep, ep, "sheep_counter" };
+		Target_child child { env, md_heap, ep, ep, "sheep_counter" };
 
 		Genode::sleep_forever();
 	}
