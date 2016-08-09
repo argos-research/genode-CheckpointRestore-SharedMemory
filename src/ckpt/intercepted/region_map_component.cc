@@ -4,7 +4,8 @@
  * \date 2016-08-09
  */
 
-#include "intercepted/region_map_component.h"
+/* local includes */
+#include "region_map_component.h"
 
 /**************************
  ** Region map component **
@@ -26,7 +27,7 @@ Rtcr::Region_map_component::attach(Dataspace_capability ds_cap,
 	void *end_addr = (void*)((addr_t)start_addr + size - 1);
 	Lock::Guard lock_guard(_region_map_lock);
 	_regions.insert(new (_md_alloc)
-			Region(start_addr, end_addr, ds_cap, offset));
+			Region(start_addr, end_addr, offset, ds_cap));
 
 	if(verbose)
 		log("Region: ", start_addr, " - ", end_addr);

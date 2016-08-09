@@ -7,11 +7,13 @@
 /* Genode includes */
 #include <base/child.h>
 #include <base/env.h>
-#include <pd_session/connection.h>
 #include <rom_session/connection.h>
 #include <ram_session/connection.h>
 #include <cpu_session/connection.h>
 #include <region_map/client.h>
+
+/* Rtcr includes */
+//#include "intercepted/pd_session_component.h"
 
 namespace Rtcr {
 	class Target_child;
@@ -21,23 +23,28 @@ class Rtcr::Target_child : public Genode::Child_policy
 {
 private:
 
-	Genode::Env       &_env;
-	Genode::Allocator &_md_alloc;
-	const char        *_unique_name;
+	Genode::Env        &_env;
+	Genode::Allocator  &_md_alloc;
+	Genode::Entrypoint &_ep;
+	const char         *_unique_name;
 
 	struct Resources
 	{
 		Genode::Ram_connection ram;
-		Genode::Pd_connection  pd;
+		//Rtcr::Pd_session_component pd;
+		Genode::Pd_connection pd;
 		Genode::Cpu_connection cpu;
 
-		Resources(Genode::Env &env, char const *label)
+		Resources()
 		:
-			pd(label)
+			ram(),
+			//pd(_env, _md_alloc, _ep, _unique_name),
+			pd(_unique_name),
+			cpu()
 		{
 			enum { CHILD_QUOTA = 1*1024*1024 };
-			ram.ref_account(env.ram_session_cap());
-			env.ram().transfer_quota(ram.cap(), CHILD_QUOTA);
+			ram.ref_account(_env.ram_session_cap());
+			_env.ram().transfer_quota(ram.cap(), CHILD_QUOTA);
 		}
 	} _resources;
 
@@ -59,6 +66,9 @@ public:
 
 	/**
 	 * Constructor
+	 *
+	 * \param ep Entrypoint for child's resources
+	 * \param root_ep Entrypoint for child's root interfaces (i.e. services)
 	 */
 	Target_child(const char *unique_name,
 	             Genode::Entrypoint &ep,
@@ -66,9 +76,9 @@ public:
 				 Genode::Env &env,
 	             Genode::Allocator &md_alloc)
 	:
-		_env(env), _md_alloc(md_alloc),
+		_env(env), _md_alloc(md_alloc), _ep(ep),
 		_unique_name(unique_name),
-		_resources(_env, unique_name),
+		_resources(unique_name),
 		_initial_thread(_resources.cpu, _resources.pd, unique_name),
 		_root_ep(root_ep),
 		_parent_services(), // TODO: Needs reference

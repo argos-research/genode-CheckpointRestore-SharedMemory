@@ -13,7 +13,7 @@
 #include <pd_session/connection.h>
 
 /* RTCR includes */
-#include "intercepted/region_map_component.h"
+#include "region_map_component.h"
 
 namespace Rtcr {
 	class Pd_session_component;
@@ -38,10 +38,10 @@ public:
 	/**
 	 * Constructor
 	 */
-	Pd_session_component(Env &env, Allocator &md_alloc, Entrypoint &ep)
+	Pd_session_component(Env &env, Allocator &md_alloc, Entrypoint &ep, const char *label)
 	:
 		_env(env),  _md_alloc(md_alloc), _ep(ep),
-		_pd(env, "rtcr pd session component"),
+		_pd(env, label),
 		_address_space(_env, _md_alloc, _ep, _pd.address_space()),
 		_stack_area   (_env, _md_alloc, _ep, _pd.stack_area()),
 		_linker_area  (_env, _md_alloc, _ep, _pd.linker_area())

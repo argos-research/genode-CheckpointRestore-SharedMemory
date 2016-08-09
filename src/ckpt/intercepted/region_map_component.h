@@ -10,6 +10,7 @@
 #include <base/log.h>
 #include <base/entrypoint.h>
 #include <base/rpc_server.h>
+#include <base/allocator.h>
 #include <region_map/client.h>
 #include <region_map/region_map.h>
 
@@ -35,7 +36,7 @@ public:
 	/**
 	 * Record of an attached dataspace
 	 */
-	class Region : List<Region>::Element
+	class Region : public List<Region>::Element
 	{
 	private:
 		void                *_start;
@@ -52,7 +53,7 @@ public:
 		/**
 		 * Find Region which contains the addr
 		 */
-		Region find_by_addr(void *addr)
+		Region *find_by_addr(void *addr)
 		{
 			if((addr >= _start) && (addr <= _end))
 				return this;
