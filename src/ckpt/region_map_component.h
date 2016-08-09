@@ -99,12 +99,71 @@ public:
 	 ** Region map Rpc interface **
 	 ******************************/
 
-	Local_addr           attach        (Dataspace_capability, size_t,
-	                                    off_t, bool, Local_addr, bool) override;
-	void                 detach        (Local_addr) override;
-	void                 fault_handler (Signal_context_capability) override;
-	State                state         () override;
-	Dataspace_capability dataspace     () override;
+	Local_addr attach(Dataspace_capability ds_cap, size_t size, off_t offset,
+			bool use_local_addr, Region_map::Local_addr local_addr, bool executable)
+	{
+		if (verbose)
+			log("size = ", size, ", offset = ", offset);
+
+		// Attach dataspace to real region map
+		void *start_addr = _parent_region_map.attach(ds_cap, size, offset,
+				use_local_addr, local_addr,executable);
+
+		// Store data about the dataspace in form of a Region
+		void *end_addr = (void*)((addr_t)start_addr + size - 1);
+		Lock::Guard lock_guard(_region_map_lock);
+		_regions.insert(new (_md_alloc)
+				Region(start_addr, end_addr, offset, ds_cap));
+
+		if(verbose)
+			log("Region: ", start_addr, " - ", end_addr);
+
+		return start_addr;
+	}
+
+	void detach(Region_map::Local_addr local_addr)
+	{
+		if(verbose)
+			log("local_addr = ", (void*)local_addr);
+
+		// Detach from real region map
+		_parent_region_map.detach(local_addr);
+
+		// Remove and delete region from region mapping
+		Lock::Guard lock_guard(_region_map_lock);
+		Region *region = _regions.first()->find_by_addr(local_addr);
+		if(!region)
+		{
+			error("address not in region map");
+			return;
+		}
+		_regions.remove(region);
+		destroy(_md_alloc, region);
+	}
+
+	void fault_handler(Signal_context_capability handler)
+	{
+		if(verbose)
+			log(__PRETTY_FUNCTION__);
+
+		_parent_region_map.fault_handler(handler);
+	}
+
+	State state()
+	{
+		if(verbose)
+			log(__PRETTY_FUNCTION__);
+
+		return _parent_region_map.state();
+	}
+
+	Dataspace_capability dataspace()
+	{
+		if(verbose)
+			log(__PRETTY_FUNCTION__);
+
+		return _parent_region_map.dataspace();
+	}
 };
 
 #endif /* _RTCR_REGION_MAP_COMPONENT_H_ */

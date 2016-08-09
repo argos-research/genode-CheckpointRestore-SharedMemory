@@ -13,7 +13,7 @@
 #include <region_map/client.h>
 
 /* Rtcr includes */
-//#include "intercepted/pd_session_component.h"
+#include "pd_session_component.h"
 
 namespace Rtcr {
 	class Target_child;
@@ -31,20 +31,21 @@ private:
 	struct Resources
 	{
 		Genode::Ram_connection ram;
-		//Rtcr::Pd_session_component pd;
-		Genode::Pd_connection pd;
+		Rtcr::Pd_session_component pd;
+		//Genode::Pd_connection pd;
 		Genode::Cpu_connection cpu;
 
-		Resources()
+		Resources(Genode::Env &env, Genode::Allocator &md_alloc,
+				Genode::Entrypoint &ep, const char *label)
 		:
 			ram(),
-			//pd(_env, _md_alloc, _ep, _unique_name),
-			pd(_unique_name),
+			pd(env, md_alloc, ep, label),
+			//pd(_unique_name),
 			cpu()
 		{
 			enum { CHILD_QUOTA = 1*1024*1024 };
-			ram.ref_account(_env.ram_session_cap());
-			_env.ram().transfer_quota(ram.cap(), CHILD_QUOTA);
+			ram.ref_account(env.ram_session_cap());
+			env.ram().transfer_quota(ram.cap(), CHILD_QUOTA);
 		}
 	} _resources;
 
@@ -55,7 +56,7 @@ private:
 	 * by the child and announced towards the parent of GDB monitor
 	 */
 	Genode::Entrypoint        &_root_ep;
-	Genode::Service_registry  &_parent_services;
+	Genode::Service_registry   _parent_services;
 	Genode::Service_registry   _child_services;
 	Genode::Service_registry   _local_services;
 	Genode::Rom_connection     _elf;
@@ -70,26 +71,26 @@ public:
 	 * \param ep Entrypoint for child's resources
 	 * \param root_ep Entrypoint for child's root interfaces (i.e. services)
 	 */
-	Target_child(const char *unique_name,
-	             Genode::Entrypoint &ep,
-	             Genode::Entrypoint &root_ep,
-				 Genode::Env &env,
-	             Genode::Allocator &md_alloc)
+	Target_child(Genode::Env &env,
+			Genode::Allocator &md_alloc,
+			Genode::Entrypoint &ep,
+			Genode::Entrypoint &root_ep,
+			const char *unique_name)
 	:
 		_env(env), _md_alloc(md_alloc), _ep(ep),
 		_unique_name(unique_name),
-		_resources(unique_name),
-		_initial_thread(_resources.cpu, _resources.pd, unique_name),
+		_resources(_env, _md_alloc, _ep, _unique_name),
+		_initial_thread(_resources.cpu, _resources.pd.cap(), _unique_name),
 		_root_ep(root_ep),
 		_parent_services(), // TODO: Needs reference
 		_child_services(),
 		_local_services(),
 		_elf(unique_name),
 		_child(_elf.dataspace(), Genode::Dataspace_capability(),
-		       _resources.pd,  _resources.pd,
+		       _resources.pd.cap(),  _resources.pd,
 		       _resources.ram, _resources.ram,
 		       _resources.cpu, _initial_thread,
-		       _env.rm(), _address_space, ep.rpc_ep(), *this)
+		       _env.rm(), _address_space, _ep.rpc_ep(), *this)
 	{ }
 
 	const char *name() const { return _unique_name; }
