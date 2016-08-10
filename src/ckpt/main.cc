@@ -11,8 +11,7 @@
 #include <base/log.h>
 
 /* Rtcr includes */
-#include "child.h"
-#include "pd_session_component.h"
+#include "target_child.h"
 
 namespace Rtcr {
 	struct Main;
@@ -40,7 +39,7 @@ struct Rtcr::Main
 	{
 		//env.parent().announce(env.ep().manage(pd_root));
 
-		Target_child child { env, md_heap, ep, ep, "sheep_counter" };
+		Target_child child { env, md_heap, ep, "sheep_counter" };
 
 		Genode::sleep_forever();
 	}
