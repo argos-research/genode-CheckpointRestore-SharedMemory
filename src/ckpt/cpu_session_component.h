@@ -10,6 +10,7 @@
 /* Genode includes */
 #include <base/log.h>
 #include <base/rpc_server.h>
+#include <cpu_session/connection.h>
 
 namespace Rtcr {
 	class Cpu_session_component;
@@ -21,24 +22,40 @@ class Rtcr::Cpu_session_component : public Rpc_object<Cpu_session>
 private:
 	static constexpr bool verbose = true;
 
-	Entrypoint &_ep;
+	Env       &_env;
 	Allocator &_md_alloc;
+	/**
+	 * Parent pd session, usually from core
+	 */
 	Pd_session_capability _parent_pd_cap;
 	/**
-	 * Parent cpu connection, usually from core
+	 * Connection to parent's cpu session, usually from core
 	 */
-	Cpu_connection _cpu;
+	Cpu_connection _parent_cpu;
 
 public:
 
-	Cpu_session_component(char const *label, Entrypoint &ep, Allocator &md_alloc,
-			Pd_session_capability parent_pd_cap)
+	Cpu_session_component(Env &env, Allocator &md_alloc, Pd_session_capability parent_pd_cap)
 	:
-		_ep(ep), _md_alloc(md_alloc), _parent_pd_cap(parent_pd_cap), _cpu()
-	{ }
+		_env(env), _md_alloc(md_alloc),
+		_parent_pd_cap(parent_pd_cap),
+		_parent_cpu()
+	{
+		_env.ep().manage(*this);
+		if(verbose)
+		{
+			log("Cpu_session_component created");
+			log("Arguments: env=", &env, ", md_alloc=", &md_alloc, ", parent_pd_cap=", parent_pd_cap.local_name());
+			log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_pd_cap=", _parent_pd_cap.local_name(),
+					", _parent_cpu=", _parent_cpu.local_name());
+		}
+	}
 
 	~Cpu_session_component()
-	{ }
+	{
+		_env.ep().dissolve(*this);
+		if(verbose) log("Cpu_session_component destroyed");
+	}
 
 	/***************************
 	 ** Cpu_session interface **
@@ -52,55 +69,55 @@ public:
 		/**
 		 * Note: Use physical core PD instead of virtualized Pd session
 		 */
-		return _cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
+		return _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
 	}
 
 	void kill_thread(Thread_capability thread) override
 	{
 		if(verbose) log("kill_thread()");
-		_cpu.kill_thread(thread);
+		_parent_cpu.kill_thread(thread);
 	}
 
 	void exception_sigh(Signal_context_capability handler) override
 	{
 		if(verbose) log("exception_sigh()");
-		_cpu.exception_sigh(handler);
+		_parent_cpu.exception_sigh(handler);
 	}
 
 	Affinity::Space affinity_space() const override
 	{
 		if(verbose) log("affinity_space()");
-		return _cpu.affinity_space();
+		return _parent_cpu.affinity_space();
 	}
 
 	Dataspace_capability trace_control() override
 	{
 		if(verbose) log("trace_control()");
-		return _cpu.trace_control();
+		return _parent_cpu.trace_control();
 	}
 
 	Quota quota() override
 	{
 		if(verbose) log("quota()");
-		return _cpu.quota();
+		return _parent_cpu.quota();
 	}
 
 	int ref_account(Cpu_session_capability c) override
 	{
 		if(verbose) log("ref_accout()");
-		return _cpu.ref_account(c);
+		return _parent_cpu.ref_account(c);
 	}
 
 	int transfer_quota(Cpu_session_capability c, size_t q) override
 	{
 		if(verbose) log("transfer_quota()");
-		return _cpu.transfer_quota(c, q);
+		return _parent_cpu.transfer_quota(c, q);
 	}
 
 	Capability<Native_cpu> native_cpu() override
 	{
 		if(verbose) log("native_cpu()");
-		return _cpu.native_cpu();
+		return _parent_cpu.native_cpu();
 	}
 };
 
