@@ -5,55 +5,21 @@
  */
 
 #include <base/log.h>
-#include <base/component.h>
 #include <base/rpc_server.h>
-#include <base/rpc_client.h>
+#include <base/component.h>
 #include <ram_session/connection.h>
 
 namespace Random {
 	class My_ram_session_component;
-	class My_ram_session;
-	class My_ram_session_client;
 }
 
-class Random::My_ram_session //: public Genode::Session
-{
-public:
-	//static const char *service_name() { return "MYRAM"; }
-	virtual ~My_ram_session() { }
-	virtual int alloc() = 0;
-	virtual void free(int) = 0;
-
-	GENODE_RPC(Rpc_alloc, int, alloc);
-	GENODE_RPC(Rpc_free, void, free, int);
-	GENODE_RPC_INTERFACE(Rpc_alloc, Rpc_free);
-};
-
-class Random::My_ram_session_client : Genode::Rpc_client<My_ram_session>
-{
-public:
-	explicit My_ram_session_client(Genode::Capability<My_ram_session> session)
-	: Rpc_client<My_ram_session>(session) { Genode::log("My_ram_session_client created"); }
-
-	int alloc() override
-	{
-		Genode::log("calling alloc()");
-		return call<Rpc_alloc>();
-	}
-
-	void free(int i) override
-	{
-		Genode::log("calling free(", i, ")");
-		call<Rpc_free>(i);
-	}
-};
-
-
-class Random::My_ram_session_component : public  Genode::Rpc_object<My_ram_session>
+class Random::My_ram_session_component : public  Genode::Rpc_object<Genode::Ram_session>
 {
 public:
 
-	My_ram_session_component()
+	Genode::Ram_connection _parent_ram;
+
+	My_ram_session_component() : _parent_ram()
 	{
 		Genode::log("My_ram_session_component created");
 	}
@@ -63,15 +29,34 @@ public:
 		Genode::log("My_ram_session_component destroyed");
 	}
 
-	int alloc() override
+	Genode::Ram_dataspace_capability alloc(Genode::size_t size, Genode::Cache_attribute cached) override
 	{
-		Genode::log("executing alloc()");
-		return 42;
+		return _parent_ram.alloc(size, cached);
 	}
 
-	void free(int i) override
+	void free(Genode::Ram_dataspace_capability ds) override
 	{
-		Genode::log("executing free(", i,")");
+		_parent_ram.free(ds);
+	}
+
+	int ref_account(Genode::Ram_session_capability ram_session) override
+	{
+		return _parent_ram.ref_account(ram_session);
+	}
+
+	int transfer_quota(Genode::Ram_session_capability ram_session, Genode::size_t amount) override
+	{
+		return _parent_ram.transfer_quota(ram_session, amount);
+	}
+
+	Genode::size_t quota() override
+	{
+		return _parent_ram.quota();
+	}
+
+	Genode::size_t used() override
+	{
+		return _parent_ram.used();
 	}
 
 };
@@ -82,22 +67,14 @@ void Component::construct(Genode::Env &env)
 {
 	using namespace Genode;
 
-	Ram_connection ram_standard;
-	log("Standard ram");
-	log("q:   ", ram_standard.quota());
-	log("ref: ", ram_standard.ref_account(env.ram_session_cap()));
-	log("q:   ", ram_standard.quota());
-	log("tq:  ", env.ram().transfer_quota(ram_standard, 4*1024));
-	log("q:   ", ram_standard.quota());
-
-	Entrypoint new_ep(env, 16*1024, "new ep");
+	Entrypoint ep(env, 16*1024, "ram ep");
 	Random::My_ram_session_component ram_impl;
-	Random::My_ram_session_client ram_special { new_ep.manage(ram_impl) };
-	//char buf[] = "ram_quota=16384";
-	//Ram_session_client ram_special { env.parent().session<Ram_session>(buf) };
-	log("Special ram");
-	log("a: ", ram_special.alloc());
-	ram_special.free(42);
+	Ram_session_client ram_special { ep.manage(ram_impl) };
+
+	log("r: ", ram_special.ref_account(env.ram_session_cap()));
+	log("q: ", ram_special.quota());
+	log("t: ", env.ram().transfer_quota(ram_special, 4096));
+	log("q: ", ram_special.quota());
 
 	log("Random ended");
 }
