@@ -24,7 +24,6 @@ struct Rtcr::Main
 	Env &env;
 
 	enum { STACK_SIZE = 16*1024 };
-	Entrypoint ep { env, STACK_SIZE, "child_stack" };
 	Heap md_heap { env.ram(), env.rm() };
 	/**
 	 * Signal_handler is a Signal_context_capability (can be targeted by
@@ -35,12 +34,12 @@ struct Rtcr::Main
 
 	Main(Env &env_) : env(env_)
 	{
-		//env.parent().announce(env.ep().manage(pd_root));
+		log("Main env: ", &env);
 
 		log("before creating child");
 		const char *label = "sheep_counter";
 
-		Target_child child { env, md_heap, ep, label };
+		Target_child child { env, md_heap, label };
 
 		sleep_forever();
 	}
