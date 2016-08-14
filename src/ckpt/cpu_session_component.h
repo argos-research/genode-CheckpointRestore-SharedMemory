@@ -22,8 +22,8 @@ class Rtcr::Cpu_session_component : public Rpc_object<Cpu_session>
 private:
 	static constexpr bool verbose = true;
 
-	Env       &_env;
-	Allocator &_md_alloc;
+	Entrypoint &_ep;
+	Allocator  &_md_alloc;
 	/**
 	 * Parent pd session, usually from core
 	 */
@@ -35,25 +35,25 @@ private:
 
 public:
 
-	Cpu_session_component(Env &env, Allocator &md_alloc, Pd_session_capability parent_pd_cap)
+	Cpu_session_component(Entrypoint &ep, Allocator &md_alloc, Pd_session_capability parent_pd_cap)
 	:
-		_env(env), _md_alloc(md_alloc),
+		_ep(ep), _md_alloc(md_alloc),
 		_parent_pd_cap(parent_pd_cap),
 		_parent_cpu()
 	{
-		_env.ep().manage(*this);
+		_ep.manage(*this);
 		if(verbose)
 		{
 			log("Cpu_session_component created");
-			log("Arguments: env=", &env, ", md_alloc=", &md_alloc, ", parent_pd_cap=", parent_pd_cap.local_name());
-			log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_pd_cap=", _parent_pd_cap.local_name(),
-					", _parent_cpu=", _parent_cpu.local_name());
+			//log("Arguments: env=", &ep, ", md_alloc=", &md_alloc, ", parent_pd_cap=", parent_pd_cap.local_name());
+			//log("State: _ep=", &_ep, ", _md_alloc=", &_md_alloc, ", _parent_pd_cap=", _parent_pd_cap.local_name(),
+			//		", _parent_cpu=", _parent_cpu.local_name());
 		}
 	}
 
 	~Cpu_session_component()
 	{
-		_env.ep().dissolve(*this);
+		_ep.dissolve(*this);
 		if(verbose) log("Cpu_session_component destroyed");
 	}
 

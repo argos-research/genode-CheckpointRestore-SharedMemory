@@ -22,8 +22,9 @@ class Rtcr::Pd_session_component : public Rpc_object<Pd_session>
 private:
 	static constexpr bool verbose = true;
 
-	Env       &_env;
-	Allocator &_md_alloc;
+	Env        &_env;
+	Entrypoint &_ep;
+	Allocator  &_md_alloc;
 	/**
 	 * Connection to parent's pd connection, usually from core
 	 */
@@ -33,24 +34,25 @@ public:
 	/**
 	 * Constructor
 	 */
-	Pd_session_component(Env &env, Allocator &md_alloc, const char *label)
+	Pd_session_component(Env &env, Entrypoint &ep, Allocator &md_alloc, const char *label)
 	:
 		_env(env),
+		_ep(ep),
 		_md_alloc(md_alloc),
 		_parent_pd(env, label)
 	{
-		_env.ep().manage(*this);
+		_ep.manage(*this);
 		if(verbose)
 		{
 			log("Pd_session_component created");
-			log("Arguments: env=", &env, ", md_alloc=", &md_alloc, ", label=", label);
-			log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_pd=", _parent_pd.local_name());
+			//log("Arguments: env=", &env, ", md_alloc=", &md_alloc, ", label=", label);
+			//log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_pd=", _parent_pd.local_name());
 		}
 	}
 
 	~Pd_session_component()
 	{
-		_env.ep().dissolve(*this);
+		_ep.dissolve(*this);
 		if(verbose) log("Pd_session_component destroyed");
 	}
 

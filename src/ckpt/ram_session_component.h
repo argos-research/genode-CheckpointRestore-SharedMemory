@@ -22,8 +22,8 @@ class Rtcr::Ram_session_component : public Rpc_object<Ram_session>
 private:
 	static constexpr bool verbose = true;
 
-	Env &_env;
-	Allocator &_md_alloc;
+	Entrypoint &_ep;
+	Allocator  &_md_alloc;
 
 	/**
 	 * Connection to the parent Ram session (usually core's Ram session)
@@ -32,24 +32,24 @@ private:
 
 public:
 
-	Ram_session_component(Env &env, Allocator &md_alloc)
+	Ram_session_component(Entrypoint &ep, Allocator &md_alloc)
 	:
-		_env(env), _md_alloc(md_alloc), _parent_ram()
+		_ep(ep), _md_alloc(md_alloc), _parent_ram()
 	{
-		_env.ep().manage(*this);
+		_ep.manage(*this);
 		if(verbose)
 		{
 			log("Ram_session_component created");
-			log("Arguments: env=", &env, ", md_alloc=", &md_alloc);
-			log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_ram=", _parent_ram.local_name());
-			log("n=", _parent_ram.service_name(), " ln=", _parent_ram.local_name(), " v=", _parent_ram.valid()?"true":"false");
-			log("q=", _parent_ram.quota(), " u=", _parent_ram.used(), " a=", _parent_ram.avail());
+			//log("Arguments: env=", &env, ", md_alloc=", &md_alloc);
+			//log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_ram=", _parent_ram.local_name());
+			//log("n=", _parent_ram.service_name(), " ln=", _parent_ram.local_name(), " v=", _parent_ram.valid()?"true":"false");
+			//log("q=", _parent_ram.quota(), " u=", _parent_ram.used(), " a=", _parent_ram.avail());
 		}
 	}
 
 	~Ram_session_component()
 	{
-		_env.ep().dissolve(*this);
+		_ep.dissolve(*this);
 		if(verbose) log("Ram_session_component destroyed");
 	}
 
@@ -62,7 +62,7 @@ public:
 	void free(Ram_dataspace_capability ds) override
 	{
 		if(verbose) log("free()");
-		return _parent_ram.free(ds);
+		_parent_ram.free(ds);
 	}
 
 	int ref_account(Ram_session_capability ram_session) override

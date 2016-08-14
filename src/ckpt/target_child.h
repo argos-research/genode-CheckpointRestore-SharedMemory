@@ -34,6 +34,7 @@ private:
 	 * Checkpointer's environment
 	 */
 	Env        &_env;
+	Entrypoint &_ep;
 	Allocator  &_md_alloc;
 	/**
 	 * Child's Entrypoint
@@ -42,13 +43,11 @@ private:
 
 	struct Pd_manager
 	{
-		const char *label;
 		Rtcr::Pd_session_component pd;
 
-		Pd_manager(Env &env, Allocator &md_alloc, const char *unique_name)
+		Pd_manager(Env &env, Entrypoint &ep, Allocator &md_alloc, const char *unique_name)
 		:
-			label(unique_name),
-			pd(env, md_alloc, label)
+			pd(env, ep, md_alloc, unique_name)
 		{
 			log("Pd session managed");
 		}
@@ -58,9 +57,9 @@ private:
 	{
 		Rtcr::Cpu_session_component cpu;
 
-		Cpu_manager(Env &env, Allocator &md_alloc, Pd_session_capability parent_pd_cap)
+		Cpu_manager(Entrypoint &ep, Allocator &md_alloc, Pd_session_capability parent_pd_cap)
 		:
-			cpu(env, md_alloc, parent_pd_cap)
+			cpu(ep, md_alloc, parent_pd_cap)
 		{
 			log("Cpu session managed");
 		}
@@ -71,9 +70,9 @@ private:
 		const size_t donate_quota = 1*1024*1024;
 		Rtcr::Ram_session_component ram;
 
-		Ram_manager(Env &env, Allocator &md_alloc)
+		Ram_manager(Env &env, Entrypoint &ep, Allocator &md_alloc)
 		:
-			ram(env, md_alloc)
+			ram(ep, md_alloc)
 		{
 			log("ref_account: ", ram.ref_account(env.ram_session_cap()));
 			log("transfer result: ", env.ram().transfer_quota(ram.cap(), donate_quota));
@@ -87,13 +86,13 @@ public:
 	/**
 	 * Constructor
 	 */
-	Target_child(Env &env, Allocator &md_alloc, const char *unique_name)
+	Target_child(Env &env, Entrypoint &ep, Allocator &md_alloc, const char *unique_name)
 	:
-		_env(env), _md_alloc(md_alloc),
+		_env(env), _ep(ep), _md_alloc(md_alloc),
 		_unique_name(unique_name),
-		_pd_manager(_env, _md_alloc, _unique_name),
-		_cpu_manager(_env, _md_alloc, _pd_manager.pd.parent_pd_cap()),
-		_ram_manager(_env, _md_alloc)
+		_pd_manager(_env, _ep, _md_alloc, _unique_name),
+		_cpu_manager(_ep, _md_alloc, _pd_manager.pd.parent_pd_cap()),
+		_ram_manager(_env, _ep, _md_alloc)
 	{
 		if(verbose) log("Target_child created");
 	}
