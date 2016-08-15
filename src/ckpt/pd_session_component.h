@@ -46,15 +46,12 @@ public:
 		_ep(ep),
 		_md_alloc(md_alloc),
 		_parent_pd(env, label),
-		_address_space(),
-		_stack_area(),
-		_linker_area()
+		_address_space(_ep, _md_alloc, _parent_pd.address_space()),
+		_stack_area(_ep, _md_alloc, _parent_pd.stack_area()),
+		_linker_area(_ep, _md_alloc, _parent_pd.linker_area())
 	{
 		_ep.manage(*this);
-		if(verbose)
-		{
-			Genode::log("Pd_session_component created");
-		}
+		if(verbose) Genode::log("Pd_session_component created");
 	}
 
 	~Pd_session_component()
@@ -130,19 +127,19 @@ public:
 	Genode::Capability<Genode::Region_map> address_space() override
 	{
 		if(verbose) Genode::log("Pd::address_space()");
-		return _parent_pd.address_space();
+		return _address_space.Rpc_object<Genode::Region_map>::cap();
 	}
 
 	Genode::Capability<Genode::Region_map> stack_area() override
 	{
 		if(verbose) Genode::log("Pd::stack_area()");
-		return _parent_pd.stack_area();
+		return _stack_area.Rpc_object<Genode::Region_map>::cap();
 	}
 
 	Genode::Capability<Genode::Region_map> linker_area() override
 	{
 		if(verbose) Genode::log("Pd::linker_area()");
-		return _parent_pd.linker_area();
+		return _linker_area.Rpc_object<Genode::Region_map>::cap();
 	}
 
 	Genode::Capability<Native_pd> native_pd() override
