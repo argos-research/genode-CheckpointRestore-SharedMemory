@@ -15,17 +15,21 @@
 
 namespace Rtcr {
 	struct Main;
-	using namespace Genode;
 }
 
 struct Rtcr::Main
 {
 
-	Env &env;
+	Genode::Env &env;
 
 	enum { STACK_SIZE = 16*1024 };
-	Entrypoint child_ep { env, STACK_SIZE, "childs ep" };
-	Heap md_heap { env.ram(), env.rm() };
+	/**
+	 * Entrypoint used to virtualize child's resources like RAM, CPU
+	 */
+	Genode::Entrypoint resource_ep { env, STACK_SIZE, "childs ep" };
+	Genode::Heap md_heap { env.ram(), env.rm() };
+	Genode::Service_registry parent_services;
+	const char *label = "sheep_counter";
 	/**
 	 * Signal_handler is a Signal_context_capability (can be targeted by
 	 * Signal_transmitter) and a Signal_dispatcher_base (executes a function
@@ -33,20 +37,18 @@ struct Rtcr::Main
 	 */
 	//Signal_handler<Main> sig_handler { ep, *this, &Main::handle_signal };
 
-	Main(Env &env_) : env(env_)
+	Main(Genode::Env &env_) : env(env_)
 	{
-		log("Main env: ", &env);
+		Genode::log("Main env: ", &env);
+		Genode::log("before creating child");
 
-		log("before creating child");
-		const char *label = "sheep_counter";
+		Target_child child { env, resource_ep, md_heap, parent_services, label };
 
-		Target_child child { env, child_ep, md_heap, label };
-
-		sleep_forever();
+		Genode::sleep_forever();
 	}
 
 	void handle_signal() {
-		log(__PRETTY_FUNCTION__); }
+		Genode::log(__PRETTY_FUNCTION__); }
 };
 
 Genode::size_t Component::stack_size() { return 64*1024; }

@@ -29,6 +29,11 @@ public:
 		Genode::log("My_ram_session_component destroyed");
 	}
 
+	Genode::Ram_session_capability parent_ram_cap()
+	{
+		return _parent_ram;
+	}
+
 	Genode::Ram_dataspace_capability alloc(Genode::size_t size, Genode::Cache_attribute cached) override
 	{
 		return _parent_ram.alloc(size, cached);
@@ -67,13 +72,13 @@ void Component::construct(Genode::Env &env)
 {
 	using namespace Genode;
 
-	Entrypoint ep(env, 16*1024, "ram ep");
+	Entrypoint resource_ep(env, 16*1024, "ram ep");
 	Random::My_ram_session_component ram_impl;
-	Ram_session_client ram_special { ep.manage(ram_impl) };
+	Ram_session_client ram_special { resource_ep.manage(ram_impl) };
 
 	log("r: ", ram_special.ref_account(env.ram_session_cap()));
 	log("q: ", ram_special.quota());
-	log("t: ", env.ram().transfer_quota(ram_special, 4096));
+	log("t: ", env.ram().transfer_quota(ram_impl.parent_ram_cap(), 4096));
 	log("q: ", ram_special.quota());
 
 	log("Random ended");

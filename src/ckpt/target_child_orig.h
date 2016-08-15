@@ -38,7 +38,7 @@ private:
 	/**
 	 * Child's Entrypoint
 	 */
-	Entrypoint &_ep;
+	Entrypoint &_resource_ep;
 	const char *_unique_name;
 
 	struct Pd_manager
@@ -97,7 +97,7 @@ public:
 	Target_child(Env &env, Allocator &md_alloc, Entrypoint &ep,
 			const char *unique_name)
 	:
-		_env(env), _md_alloc(md_alloc), _ep(ep),
+		_env(env), _md_alloc(md_alloc), _resource_ep(ep),
 		_unique_name(unique_name),
 		_pd_manager(_env, _md_alloc, _unique_name),
 		_cpu_manager(_env, _md_alloc, _pd_manager.pd.parent_pd_cap()),
