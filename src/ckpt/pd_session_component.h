@@ -12,6 +12,9 @@
 #include <base/rpc_server.h>
 #include <pd_session/connection.h>
 
+/* Rtcr includes */
+#include "region_map_component.h"
+
 namespace Rtcr {
 	class Pd_session_component;
 }
@@ -29,6 +32,10 @@ private:
 	 */
 	Genode::Pd_connection _parent_pd;
 
+	Region_map_component _address_space;
+	Region_map_component _stack_area;
+	Region_map_component _linker_area;
+
 public:
 	/**
 	 * Constructor
@@ -38,14 +45,15 @@ public:
 		_env(env),
 		_ep(ep),
 		_md_alloc(md_alloc),
-		_parent_pd(env, label)
+		_parent_pd(env, label),
+		_address_space(),
+		_stack_area(),
+		_linker_area()
 	{
 		_ep.manage(*this);
 		if(verbose)
 		{
 			Genode::log("Pd_session_component created");
-			//log("Arguments: env=", &env, ", md_alloc=", &md_alloc, ", label=", label);
-			//log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_pd=", _parent_pd.local_name());
 		}
 	}
 
@@ -53,19 +61,6 @@ public:
 	{
 		_ep.dissolve(*this);
 		if(verbose) Genode::log("Pd_session_component destroyed");
-	}
-
-	void print_cap()
-	{
-		//log("__Cap__");
-		Genode::log("local_name: ", this->cap().local_name());
-		/*log("cap_index id: ", (unsigned int)this->cap().idx()->id());
-		log("valid: ", this->cap().valid() ? "true" : "false");
-
-		log("__Rpc__");
-		log("local_name: ", this->Rpc_object<Pd_session>::cap().local_name());
-		log("cap_index id: ", (unsigned int)this->Rpc_object<Pd_session>::cap().idx()->id());
-		log("valid: ", this->Rpc_object<Pd_session>::cap().valid() ? "true" : "false");*/
 	}
 
 	Genode::Pd_session_capability parent_pd_cap()
