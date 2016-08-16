@@ -21,7 +21,7 @@ void Component::construct(Genode::Env &env)
 	using namespace Genode;
     unsigned int n = 1;
     Timer::Connection timer(env);
-    
+    /*
     while(1)
     {
         if(n == 1)
@@ -32,8 +32,11 @@ void Component::construct(Genode::Env &env)
         timer.msleep(2000);
         break;
     }
+    */
+
     Ram_dataspace_capability ram_ds = env.ram().alloc(4096);
     char *local_addr = env.rm().attach(ram_ds);
     *local_addr = 'c';
+    env.rm().detach(local_addr);
     log("3 sheeps. zzZ");
 }
