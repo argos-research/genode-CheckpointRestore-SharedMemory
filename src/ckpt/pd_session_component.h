@@ -22,7 +22,7 @@ namespace Rtcr {
 class Rtcr::Pd_session_component : public Genode::Rpc_object<Genode::Pd_session>
 {
 private:
-	static constexpr bool verbose = true;
+	static constexpr bool verbose = false;
 
 	Genode::Env        &_env;
 	Genode::Entrypoint &_ep;

@@ -39,9 +39,6 @@ struct Rtcr::Main
 
 	Main(Genode::Env &env_) : env(env_)
 	{
-		Genode::log("Main env: ", &env);
-		Genode::log("before creating child");
-
 		Target_child child { env, resource_ep, md_heap, parent_services, label };
 
 		Genode::sleep_forever();
