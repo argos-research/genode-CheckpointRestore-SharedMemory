@@ -11,6 +11,7 @@
 #include <base/log.h>
 #include <base/rpc_server.h>
 #include <cpu_session/connection.h>
+#include <cpu_thread/client.h>
 
 namespace Rtcr {
 	class Cpu_session_component;
@@ -19,7 +20,7 @@ namespace Rtcr {
 class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>
 {
 private:
-	static constexpr bool verbose = false;
+	static constexpr bool verbose = true;
 
 	Genode::Entrypoint &_ep;
 	Genode::Allocator  &_md_alloc;
@@ -83,7 +84,8 @@ public:
 			Name const &name, Genode::Affinity::Location affinity, Weight weight,
 			Genode::addr_t utcb) override
 	{
-		if(verbose) Genode::log("Cpu::create_thread()");
+		if(verbose) Genode::log("Cpu::create_thread()\n  Name: ", name.string());
+
 		/**
 		 * Note: Use physical core PD instead of virtualized Pd session
 		 */
@@ -92,7 +94,23 @@ public:
 		// Store the thread
 		Genode::Lock::Guard _lock_guard(_threads_lock);
 		_threads.insert(new (_md_alloc) Thread_info(thread_cap));
-
+/*
+		if(!Genode::strcmp(name.string(), "Worker3"))
+		{
+			Genode::Thread_state state = Genode::Cpu_thread_client(_threads.first()->thread_cap).state();
+			Genode::log("Worker1: ip ", state.ip, ", sp ", state.sp);
+		}
+*/
+/*
+		Genode::size_t i = 0;
+		Thread_info *curr = _threads.first();
+		while(curr)
+		{
+			i++;
+			curr = curr->next();
+		}
+		Genode::log("There are ", i, " threads stored");
+*/
 		return thread_cap;
 	}
 
