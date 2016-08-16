@@ -32,6 +32,26 @@ private:
 	 */
 	Genode::Cpu_connection _parent_cpu;
 
+	struct Thread_info : Genode::List<Thread_info>::Element
+	{
+		Genode::Thread_capability thread_cap;
+
+		Thread_info(Genode::Thread_capability thread_cap)
+		: thread_cap(thread_cap) { }
+
+		Thread_info *find_by_cap(Genode::Thread_capability cap)
+		{
+			if(thread_cap.local_name() == cap.local_name())
+				return this;
+			Thread_info *thread_info = next();
+			return thread_info ? thread_info->find_by_cap(cap) : 0;
+		}
+
+	};
+
+	Genode::Lock _threads_lock;
+	Genode::List<Thread_info> _threads;
+
 public:
 
 	Cpu_session_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc, Genode::Pd_session_capability parent_pd_cap)
@@ -41,13 +61,7 @@ public:
 		_parent_cpu()
 	{
 		_ep.manage(*this);
-		if(verbose)
-		{
-			Genode::log("Cpu_session_component created");
-			//log("Arguments: env=", &ep, ", md_alloc=", &md_alloc, ", parent_pd_cap=", parent_pd_cap.local_name());
-			//log("State: _ep=", &_ep, ", _md_alloc=", &_md_alloc, ", _parent_pd_cap=", _parent_pd_cap.local_name(),
-			//		", _parent_cpu=", _parent_cpu.local_name());
-		}
+		if(verbose) Genode::log("Cpu_session_component created");
 	}
 
 	~Cpu_session_component()
@@ -65,7 +79,7 @@ public:
 	 ** Cpu_session interface **
 	 ***************************/
 
-	Genode::Thread_capability create_thread(Genode::Capability<Genode::Pd_session> /* pd_cap */,
+	Genode::Thread_capability create_thread(Genode::Pd_session_capability /* pd_cap */,
 			Name const &name, Genode::Affinity::Location affinity, Weight weight,
 			Genode::addr_t utcb) override
 	{
@@ -73,12 +87,32 @@ public:
 		/**
 		 * Note: Use physical core PD instead of virtualized Pd session
 		 */
-		return _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
+		Genode::Thread_capability thread_cap = _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
+
+		// Store the thread
+		Genode::Lock::Guard _lock_guard(_threads_lock);
+		_threads.insert(new (_md_alloc) Thread_info(thread_cap));
+
+		return thread_cap;
 	}
 
 	void kill_thread(Genode::Thread_capability thread) override
 	{
 		if(verbose) Genode::log("Cpu::kill_thread()");
+
+		// Find thread
+		Genode::Lock::Guard lock_guard(_threads_lock);
+		Thread_info *thread_info = _threads.first()->find_by_cap(thread);
+		if(!thread_info)
+		{
+			Genode::error("Thread with capability ", thread.local_name(), " (local) not found!");
+			return;
+		}
+
+		// Remove and destroy thread from list and allocator
+		_threads.remove(thread_info);
+		destroy(_md_alloc, thread_info);
+
 		_parent_cpu.kill_thread(thread);
 	}
 
@@ -97,9 +131,7 @@ public:
 	Genode::Dataspace_capability trace_control() override
 	{
 		if(verbose) Genode::log("Cpu::trace_control()");
-		Genode::Dataspace_capability ds_cap = _parent_cpu.trace_control();
-		//Genode::log("  ds_cap: ", ds_cap.local_name(), ", valid: ", ds_cap.valid()?"true":"false");
-		return ds_cap;
+		return _parent_cpu.trace_control();;
 	}
 
 	Quota quota() override

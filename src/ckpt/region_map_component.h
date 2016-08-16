@@ -19,14 +19,14 @@ namespace Rtcr {
 class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>
 {
 private:
-	static constexpr bool verbose = true;
+	static constexpr bool verbose = false;
 
 	Genode::Entrypoint        &_ep;
 	Genode::Allocator         &_md_alloc;
 	/**
 	 * Wrapped region map from parent, usually core
 	 */
-	Genode::Region_map_client _wrapped_rm;
+	Genode::Region_map_client _parent_rm;
 
 	/**
 	 * Record of an attached dataspace
@@ -70,7 +70,7 @@ public:
 	Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc, Genode::Capability<Region_map> rm_cap)
 	:
 		_ep(ep), _md_alloc(md_alloc),
-		_wrapped_rm(rm_cap),
+		_parent_rm(rm_cap),
 		_regions()
 	{
 		_ep.manage(*this);
@@ -98,7 +98,7 @@ public:
 		if (verbose) Genode::log("Rm::attach()");
 
 		// Attach dataspace to real region map
-		Region_map::Local_addr addr = _wrapped_rm.attach(
+		Region_map::Local_addr addr = _parent_rm.attach(
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
 
 		// Store information about the attachment in a Region
@@ -142,7 +142,7 @@ public:
 		destroy(_md_alloc, region);
 
 		// Detach from real region map
-		_wrapped_rm.detach(local_addr);
+		_parent_rm.detach(local_addr);
 
 		if(verbose) Genode::log("  Detached dataspace for the local address ", (void*)local_addr);
 	}
@@ -152,7 +152,7 @@ public:
 		if(verbose)
 			Genode::log("Rm::fault_handler()");
 
-		_wrapped_rm.fault_handler(handler);
+		_parent_rm.fault_handler(handler);
 	}
 
 	State state()
@@ -160,7 +160,7 @@ public:
 		if(verbose)
 			Genode::log("Rm::state()");
 
-		return _wrapped_rm.state();
+		return _parent_rm.state();
 	}
 
 	Genode::Dataspace_capability dataspace()
@@ -168,7 +168,7 @@ public:
 		if(verbose)
 			Genode::log("Rm::dataspace()");
 
-		return _wrapped_rm.dataspace();
+		return _parent_rm.dataspace();
 	}
 };
 
