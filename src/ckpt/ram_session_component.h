@@ -36,14 +36,7 @@ public:
 		_ep(ep), _md_alloc(md_alloc), _parent_ram()
 	{
 		_ep.manage(*this);
-		if(verbose)
-		{
-			Genode::log("Ram_session_component created");
-			//log("Arguments: env=", &env, ", md_alloc=", &md_alloc);
-			//log("State: _env=", &_env, ", _md_alloc=", &_md_alloc, ", _parent_ram=", _parent_ram.local_name());
-			//log("n=", _parent_ram.service_name(), " ln=", _parent_ram.local_name(), " v=", _parent_ram.valid()?"true":"false");
-			//log("q=", _parent_ram.quota(), " u=", _parent_ram.used(), " a=", _parent_ram.avail());
-		}
+		if(verbose) Genode::log("Ram_session_component created");
 	}
 
 	~Ram_session_component()

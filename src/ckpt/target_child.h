@@ -21,7 +21,7 @@ namespace Rtcr {
 	class Target_child;
 }
 
-class Rtcr::Target_child : Genode::Child_policy
+class Rtcr::Target_child : public Genode::Child_policy
 {
 private:
 	static constexpr bool verbose = true;
@@ -150,7 +150,7 @@ public:
 			if(verbose) Genode::log("Inserted service \"", service_name, "\" into parent_services");
 		}
 
-return service;
+		return service;
 	}
 
 	void filter_session_args(const char *service, char *args,

@@ -2,7 +2,7 @@
 # Build
 #
 
-build { core init random }
+build { core init random drivers/timer sheep_counter }
 
 create_boot_directory
 
@@ -25,6 +25,10 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
 	<start name="random">
 		<resource name="RAM" quantum="10M"/>
 	</start>
@@ -34,7 +38,7 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init random }
+build_boot_image { core init random timer sheep_counter }
 
 append qemu_args " -nographic "
 
