@@ -20,7 +20,7 @@ namespace Rtcr {
 class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>
 {
 private:
-	static constexpr bool verbose_debug = true;
+	static constexpr bool verbose_debug = false;
 
 	Genode::Env       &_env;
 	Genode::Allocator &_md_alloc;

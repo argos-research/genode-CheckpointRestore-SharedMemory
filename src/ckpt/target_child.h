@@ -24,7 +24,7 @@ namespace Rtcr {
 class Rtcr::Target_child : public Genode::Child_policy
 {
 private:
-	static constexpr bool verbose = true;
+	static constexpr bool verbose_debug = true;
 	Genode::String<32>  _name;
 	Genode::Env        &_env;
 	Genode::Allocator  &_md_alloc;
@@ -94,7 +94,7 @@ public:
 				_resources.cpu.cap(), _initial_thread,
 				_env.rm(), _address_space, _child_ep.rpc_ep(), *this)
 	{
-		if(verbose) Genode::log("Target_child created");
+		if(verbose_debug) Genode::log("Target_child \"", _name.string(), "\" created.");
 	}
 
 	/****************************
@@ -105,7 +105,7 @@ public:
 
 	Genode::Service *resolve_session_request(const char *service_name, const char *args)
 	{
-		//Genode::log(service, " ", args);
+		if(verbose_debug) Genode::log("Session request: ", service_name, " ", args);
 
 		Genode::Service *service = 0;
 
@@ -129,14 +129,13 @@ public:
 		{
 			service = new (_md_alloc) Genode::Parent_service(service_name);
 			_parent_services.insert(service);
-			if(verbose) Genode::log("Inserted service \"", service_name, "\" into parent_services");
+			if(verbose_debug) Genode::log("  Inserted service into parent_services");
 		}
 
 		return service;
 	}
 
-	void filter_session_args(const char *service, char *args,
-	                         Genode::size_t args_len)
+	void filter_session_args(const char *service, char *args, Genode::size_t args_len)
 	{
 		Genode::Arg_string::set_arg_string(args, args_len, "label", _name.string());
 	}

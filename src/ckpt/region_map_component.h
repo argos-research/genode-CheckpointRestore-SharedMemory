@@ -19,7 +19,7 @@ namespace Rtcr {
 class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>
 {
 private:
-	static constexpr bool verbose = false;
+	static constexpr bool verbose = true;
 
 	Genode::Entrypoint        &_ep;
 	Genode::Allocator         &_md_alloc;
@@ -107,13 +107,12 @@ public:
 		if(verbose)
 		{
 			Genode::size_t ds_size = Genode::Dataspace_client(ds_cap).size();
-			Genode::size_t size_in_pages = (Genode::size_t)(ds_size/4096);
+			Genode::size_t num_pages = (Genode::size_t)(ds_size/4096);
 
 			Genode::log("  Attached dataspace ", ds_cap.local_name(),
-			" (local) to local address ", (void*)addr,
-			" with size = ", ds_size,
-			" (", size_in_pages,
-			size_in_pages==1?" page)":" pages)");
+			" (local) into [", Genode::Hex((Genode::size_t)addr),
+			", ", Genode::Hex((Genode::size_t)addr+ds_size), ") ",
+			num_pages, num_pages==1?" page":" pages");
 		}
 
 		// Store Region in a list
