@@ -20,26 +20,19 @@ namespace Rtcr {
 struct Rtcr::Main
 {
 
-	Genode::Env &env;
-
-	enum { STACK_SIZE = 16*1024 };
-	/**
-	 * Entrypoint used to virtualize child's resources like RAM, CPU
-	 */
-	Genode::Entrypoint resource_ep { env, STACK_SIZE, "childs ep" };
-	Genode::Heap md_heap { env.ram(), env.rm() };
-	Genode::Service_registry parent_services;
-	const char *label = "sheep_counter";
+	Genode::Env              &env;
+	Genode::Heap              md_heap { env.ram(), env.rm() };
+	Genode::Service_registry  parent_services;
 	/**
 	 * Signal_handler is a Signal_context_capability (can be targeted by
 	 * Signal_transmitter) and a Signal_dispatcher_base (executes a function
 	 * in the Entrypoint when a signal arrives)
 	 */
-	//Signal_handler<Main> sig_handler { ep, *this, &Main::handle_signal };
+	//Signal_handler<Main> sig_handler { env.ep(), *this, &Main::handle_signal };
 
 	Main(Genode::Env &env_) : env(env_)
 	{
-		Target_child child { env, resource_ep, md_heap, parent_services, label };
+		Target_child child { env, md_heap, parent_services, "sheep_counter" };
 
 		Genode::sleep_forever();
 	}

@@ -20,10 +20,10 @@ namespace Rtcr {
 class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>
 {
 private:
-	static constexpr bool verbose = true;
+	static constexpr bool verbose_debug = true;
 
-	Genode::Entrypoint &_ep;
-	Genode::Allocator  &_md_alloc;
+	Genode::Env       &_env;
+	Genode::Allocator &_md_alloc;
 	/**
 	 * Parent pd session, usually from core
 	 */
@@ -55,23 +55,22 @@ private:
 
 public:
 
-	Cpu_session_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc, Genode::Pd_session_capability parent_pd_cap)
+	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Pd_session_capability parent_pd_cap, const char *name)
 	:
-		_ep(ep), _md_alloc(md_alloc),
+		_env          (env),
+		_md_alloc     (md_alloc),
 		_parent_pd_cap(parent_pd_cap),
-		_parent_cpu()
+		_parent_cpu   (env, name)
 	{
-		_ep.manage(*this);
-		if(verbose) Genode::log("Cpu_session_component created");
+		if(verbose_debug) Genode::log("Cpu_session_component created");
 	}
 
 	~Cpu_session_component()
 	{
-		_ep.dissolve(*this);
-		if(verbose) Genode::log("Cpu_session_component destroyed");
+		if(verbose_debug) Genode::log("Cpu_session_component destroyed");
 	}
 
-	Genode::Cpu_session_capability parent_cpu_cap()
+	Genode::Cpu_session_capability parent_cap()
 	{
 		return _parent_cpu.cap();
 	}
@@ -84,7 +83,7 @@ public:
 			Name const &name, Genode::Affinity::Location affinity, Weight weight,
 			Genode::addr_t utcb) override
 	{
-		if(verbose) Genode::log("Cpu::create_thread()\n  Name: ", name.string());
+		if(verbose_debug) Genode::log("Cpu::create_thread()\n  Name: ", name.string());
 
 		/**
 		 * Note: Use physical core PD instead of virtualized Pd session
@@ -116,7 +115,7 @@ public:
 
 	void kill_thread(Genode::Thread_capability thread) override
 	{
-		if(verbose) Genode::log("Cpu::kill_thread()");
+		if(verbose_debug) Genode::log("Cpu::kill_thread()");
 
 		// Find thread
 		Genode::Lock::Guard lock_guard(_threads_lock);
@@ -136,43 +135,43 @@ public:
 
 	void exception_sigh(Genode::Signal_context_capability handler) override
 	{
-		if(verbose) Genode::log("Cpu::exception_sigh()");
+		if(verbose_debug) Genode::log("Cpu::exception_sigh()");
 		_parent_cpu.exception_sigh(handler);
 	}
 
 	Genode::Affinity::Space affinity_space() const override
 	{
-		if(verbose) Genode::log("Cpu::affinity_space()");
+		if(verbose_debug) Genode::log("Cpu::affinity_space()");
 		return _parent_cpu.affinity_space();
 	}
 
 	Genode::Dataspace_capability trace_control() override
 	{
-		if(verbose) Genode::log("Cpu::trace_control()");
+		if(verbose_debug) Genode::log("Cpu::trace_control()");
 		return _parent_cpu.trace_control();;
 	}
 
 	Quota quota() override
 	{
-		if(verbose) Genode::log("Cpu::quota()");
+		if(verbose_debug) Genode::log("Cpu::quota()");
 		return _parent_cpu.quota();
 	}
 
 	int ref_account(Genode::Cpu_session_capability c) override
 	{
-		if(verbose) Genode::log("Cpu::ref_accout()");
+		if(verbose_debug) Genode::log("Cpu::ref_accout()");
 		return _parent_cpu.ref_account(c);
 	}
 
 	int transfer_quota(Genode::Cpu_session_capability c, Genode::size_t q) override
 	{
-		if(verbose) Genode::log("Cpu::transfer_quota()");
+		if(verbose_debug) Genode::log("Cpu::transfer_quota()");
 		return _parent_cpu.transfer_quota(c, q);
 	}
 
 	Genode::Capability<Native_cpu> native_cpu() override
 	{
-		if(verbose) Genode::log("Cpu::native_cpu()");
+		if(verbose_debug) Genode::log("Cpu::native_cpu()");
 		return _parent_cpu.native_cpu();
 	}
 };

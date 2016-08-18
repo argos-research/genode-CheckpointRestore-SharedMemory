@@ -19,9 +19,9 @@ namespace Rtcr {
 class Rtcr::Ram_session_component : public Genode::Rpc_object<Genode::Ram_session>
 {
 private:
-	static constexpr bool verbose = false;
+	static constexpr bool verbose_debug = true;
 
-	Genode::Entrypoint &_ep;
+	Genode::Env        &_env;
 	Genode::Allocator  &_md_alloc;
 
 	/**
@@ -31,21 +31,21 @@ private:
 
 public:
 
-	Ram_session_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc)
+	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, const char *name)
 	:
-		_ep(ep), _md_alloc(md_alloc), _parent_ram()
+		_env       (env),
+		_md_alloc  (md_alloc),
+		_parent_ram(env, name)
 	{
-		_ep.manage(*this);
-		if(verbose) Genode::log("Ram_session_component created");
+		if(verbose_debug) Genode::log("Ram_session_component created");
 	}
 
 	~Ram_session_component()
 	{
-		_ep.dissolve(*this);
-		if(verbose) Genode::log("Ram_session_component destroyed");
+		if(verbose_debug) Genode::log("Ram_session_component destroyed");
 	}
 
-	Genode::Ram_session_capability parent_ram_cap()
+	Genode::Ram_session_capability parent_cap()
 	{
 		return _parent_ram.cap();
 	}
@@ -56,37 +56,37 @@ public:
 
 	Genode::Ram_dataspace_capability alloc(Genode::size_t size, Genode::Cache_attribute cached) override
 	{
-		if(verbose) Genode::log("Ram::alloc()");
+		if(verbose_debug) Genode::log("Ram::alloc()");
 		return _parent_ram.alloc(size, cached);
 	}
 
 	void free(Genode::Ram_dataspace_capability ds) override
 	{
-		if(verbose) Genode::log("Ram::free()");
+		if(verbose_debug) Genode::log("Ram::free()");
 		_parent_ram.free(ds);
 	}
 
 	int ref_account(Genode::Ram_session_capability ram_session) override
 	{
-		if(verbose) Genode::log("Ram::ref_account()");
+		if(verbose_debug) Genode::log("Ram::ref_account()");
 		return _parent_ram.ref_account(ram_session);
 	}
 
 	int transfer_quota(Genode::Ram_session_capability ram_session, Genode::size_t amount) override
 	{
-		if(verbose) Genode::log("Ram::transfer_quota()");
+		if(verbose_debug) Genode::log("Ram::transfer_quota()");
 		return _parent_ram.transfer_quota(ram_session, amount);
 	}
 
 	Genode::size_t quota() override
 	{
-		if(verbose) Genode::log("Ram::quota()");
+		if(verbose_debug) Genode::log("Ram::quota()");
 		return _parent_ram.quota();
 	}
 
 	Genode::size_t used() override
 	{
-		if(verbose) Genode::log("Ram::used()");
+		if(verbose_debug) Genode::log("Ram::used()");
 		return _parent_ram.used();
 	}
 
