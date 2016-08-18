@@ -42,4 +42,4 @@ build_boot_image { core init random timer sheep_counter }
 
 append qemu_args " -nographic "
 
-run_genode_until "Random ended.*\n" 15
+run_genode_until "10 sheeps.*\n" 15
