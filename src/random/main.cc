@@ -66,11 +66,10 @@ public:
 class My_child : public Child_policy
 {
 private:
-	struct Debug_me {Debug_me() { log("All is fine until now!");}
-	};
 	String<32>  _name;
 	Env        &_env;
 	Entrypoint  _child_ep;
+	Entrypoint  _extra_ep;
 	struct Resources
 	{
 		Pd_connection            pd;
@@ -90,7 +89,6 @@ private:
 	Region_map_client     _address_space;
 	Parent_service        _log_service;
 	Parent_service        _timer_service;
-	Debug_me              _debug_here;
 	Child                 _child;
 public:
 	My_child(Env &env, const char *name)
@@ -98,17 +96,17 @@ public:
 		_name           (name),
 		_env            (env),
 		_child_ep       (env, 64*1024, "child_ep"),
+		_extra_ep       (env, 64*1024, "extra_ep"),
 		_resources      (env, _child_ep, _name.string()),
 		_initial_thread (_resources.cpu, _resources.pd.cap(), _name.string()),
 		_address_space  (_resources.pd.address_space()),
 		_log_service    ("LOG"),
 		_timer_service  ("Timer"),
-		_debug_here     (),
 		_child(_resources.rom.dataspace(), Dataspace_capability(),
 				_resources.pd,        _resources.pd,
 				_resources.ram.cap(), _resources.ram,
 				_resources.cpu,       _initial_thread,
-				env.rm(), _address_space, _child_ep.rpc_ep(), *this)
+				env.rm(), _address_space, _extra_ep.rpc_ep(), *this)
 	{ }
 
 	const char *name() const { return _name.string(); }
