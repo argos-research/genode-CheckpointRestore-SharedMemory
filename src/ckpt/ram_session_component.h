@@ -11,6 +11,9 @@
 #include <base/log.h>
 #include <base/rpc_server.h>
 #include <ram_session/connection.h>
+#include <rm_session/connection.h>
+#include <dataspace/client.h>
+
 
 namespace Rtcr {
 	class Ram_session_component;
@@ -28,6 +31,12 @@ private:
 	 * Connection to the parent Ram session (usually core's Ram session)
 	 */
 	Genode::Ram_connection _parent_ram;
+	Genode::Rm_connection _parent_rm;
+
+	struct Dataspace_info : Genode::List<Dataspace_info>::Element
+	{
+		Dataspace_info() { }
+	};
 
 public:
 
@@ -35,7 +44,8 @@ public:
 	:
 		_env       (env),
 		_md_alloc  (md_alloc),
-		_parent_ram(env, name)
+		_parent_ram(env, name),
+		_parent_rm(env)
 	{
 		if(verbose_debug) Genode::log("Ram_session_component created");
 	}
@@ -57,7 +67,31 @@ public:
 	Genode::Ram_dataspace_capability alloc(Genode::size_t size, Genode::Cache_attribute cached) override
 	{
 		if(verbose_debug) Genode::log("Ram::alloc()");
-		return _parent_ram.alloc(size, cached);
+		enum { GRANULARITY = 4096 };
+
+		Genode::size_t rest_page = size % GRANULARITY;
+		Genode::size_t num_pages = (size / GRANULARITY) + (rest_page == 0 ? 0 : 1);
+		Genode::log("r: ", rest_page, " n: ", num_pages);
+
+		Genode::Region_map_client rm_out { _parent_rm.create(num_pages*GRANULARITY) };
+		Genode::log("Region_map created.");
+
+		for(Genode::size_t i = 0; i < num_pages; i++)
+		{
+			try
+			{
+				rm_out.attach(_parent_ram.alloc(GRANULARITY, cached));
+			}
+			catch(Genode::Allocator::Out_of_memory)
+			{
+				Genode::error("_parent_ram has no memory!");
+				return Genode::Capability<Genode::Ram_dataspace>();
+			}
+		}
+
+		Genode::log("Region_map filled");
+
+		return Genode::static_cap_cast<Genode::Ram_dataspace>(rm_out.dataspace());
 	}
 
 	void free(Genode::Ram_dataspace_capability ds) override

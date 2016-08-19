@@ -49,7 +49,7 @@ private:
 			this->ep.manage(cpu);
 			this->ep.manage(ram);
 
-			Genode::size_t donate_quota = 1024*1024;
+			Genode::size_t donate_quota = 100*1024*1024;
 			ram.ref_account(env.ram_session_cap());
 			env.ram().transfer_quota(ram.parent_cap(), donate_quota);
 		}
