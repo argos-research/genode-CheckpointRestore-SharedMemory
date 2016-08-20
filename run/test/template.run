@@ -2,7 +2,7 @@
 # Build
 #
 
-build { core init random drivers/timer }
+build { core init test/test_template }
 
 create_boot_directory
 
@@ -17,6 +17,7 @@ install_config {
 		<service name="CPU"/>
 		<service name="ROM"/>
 		<service name="RAM"/>
+		<service name="RM"/>
 		<service name="LOG"/>
 		<service name="IO_MEM"/>
 		<service name="IO_PORT"/>
@@ -25,7 +26,7 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
-	<start name="random">
+	<start name="template">
 		<resource name="RAM" quantum="10M"/>
 	</start>
 </config>}
@@ -34,8 +35,8 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init random timer }
+build_boot_image { core init template }
 
 append qemu_args " -nographic "
 
-run_genode_until "Random ended.*\n" 15
+run_genode_until "Hello world!*\n" 15
