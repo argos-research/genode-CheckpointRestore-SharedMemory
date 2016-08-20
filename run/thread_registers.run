@@ -1,0 +1,34 @@
+#
+# Build
+#
+
+build { core init test/thread_registers }
+
+create_boot_directory
+
+#
+# Generate config
+#
+
+install_config {
+<config>
+	<parent-provides>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<start name="thread_registers">
+		<resource name="RAM" quantum="1M"/>
+	</start>
+</config>}
+
+#
+# Boot image
+#
+
+build_boot_image { core init thread_registers }
+
+append qemu_args " -nographic "
+
+run_genode_until "thread_registers ended.*\n" 15
