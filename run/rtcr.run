@@ -43,4 +43,4 @@ build_boot_image { core init timer ckpt sheep_counter }
 
 append qemu_args " -nographic "
 
-run_genode_until "3 sheeps.*\n" 15
+run_genode_until "3 sheeps.*\n" 10
