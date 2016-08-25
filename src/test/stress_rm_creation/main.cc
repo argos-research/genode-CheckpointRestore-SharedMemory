@@ -13,6 +13,7 @@
 
 using namespace Genode;
 
+
 size_t Component::stack_size() { return 64*1024; }
 
 void Component::construct(Genode::Env &env)
@@ -27,13 +28,15 @@ void Component::construct(Genode::Env &env)
 		{
 			rm.create(4096);
 		}
-		catch(Allocator::Out_of_memory)
+		catch(Region_map::Out_of_metadata)
 		{
-			log("Exception caught!"); // It never gets caught
+			log("Exception caught!");
 			char buf[Parent::Session_args::MAX_SIZE];
 			snprintf(buf, sizeof(buf), "ram_quota=%u", 64*1024);
 
 			env.parent().upgrade(rm, buf);
+
+			rm.create(4096);
 		}
 	}
 
