@@ -48,10 +48,11 @@ Approach
 
  * detach -> page fault -> mark & attach mechanism:
 
+
 1. On the first access on a managed dataspace a page fault is triggered, because no RAM dataspace is attached in the corresponding Region map
 
 2. A fault handler catches the page fault and marks the dataspace as "used" and attaches a RAM dataspace (supposed for this location) to this location
 
 3. After a checkpoint is performed the RAM dataspaces are unmarked (set to "not used") and detached from the Region map, thus a new page fault can be caught
 
- * The managed dataspace size shall be a multiple of 1 PAGESIZE; a benchmark can be made to find out the optimal dataspace size for a given component
+ * The RAM dataspace size shall be a multiple of 1 PAGESIZE; a benchmark can be made to find out the optimal dataspace size for a given component
