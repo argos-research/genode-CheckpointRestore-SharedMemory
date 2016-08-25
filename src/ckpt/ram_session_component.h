@@ -31,7 +31,7 @@ private:
 	 * Connection to the parent Ram session (usually core's Ram session)
 	 */
 	Genode::Ram_connection _parent_ram;
-	Genode::Rm_connection _parent_rm;
+	Genode::Rm_connection  _parent_rm;
 
 	struct Dataspace_info : Genode::List<Dataspace_info>::Element
 	{
@@ -45,7 +45,7 @@ public:
 		_env       (env),
 		_md_alloc  (md_alloc),
 		_parent_ram(env, name),
-		_parent_rm(env)
+		_parent_rm (env)
 	{
 		if(verbose_debug) Genode::log("Ram_session_component created");
 	}
@@ -73,7 +73,24 @@ public:
 		Genode::size_t num_pages = (size / GRANULARITY) + (rest_page == 0 ? 0 : 1);
 		Genode::log("r: ", rest_page, " n: ", num_pages);
 
-		Genode::Region_map_client rm_out { _parent_rm.create(num_pages*GRANULARITY) };
+		Genode::Capability<Genode::Region_map> new_region_map;
+
+		// try to create a Region map
+		try
+		{
+			new_region_map = _parent_rm.create(num_pages*GRANULARITY);
+		}
+		// Out of metadata => upgrade and create Region map
+		catch(Genode::Region_map::Out_of_metadata)
+		{
+			char args[Genode::Parent::Session_args::MAX_SIZE];
+			Genode::snprintf(args, sizeof(args), "ram_quota=%u", 64*1024);
+			_env.parent().upgrade(_parent_rm, args);
+
+			new_region_map = _parent_rm.create(num_pages*GRANULARITY);
+		}
+
+		Genode::Region_map_client rm_out { new_region_map };
 		Genode::log("Region_map created.");
 
 		for(Genode::size_t i = 0; i < num_pages; i++)
@@ -89,7 +106,7 @@ public:
 			}
 		}
 
-		Genode::log("Region_map filled");
+		Genode::log("Region_map filled.");
 
 		return Genode::static_cap_cast<Genode::Ram_dataspace>(rm_out.dataspace());
 	}
