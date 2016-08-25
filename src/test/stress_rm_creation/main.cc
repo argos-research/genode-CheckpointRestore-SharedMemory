@@ -9,6 +9,7 @@
 #include <base/log.h>
 #include <base/component.h>
 #include <rm_session/connection.h>
+#include <base/snprintf.h>
 
 using namespace Genode;
 
@@ -29,6 +30,10 @@ void Component::construct(Genode::Env &env)
 		catch(Allocator::Out_of_memory)
 		{
 			log("Exception caught!"); // It never gets caught
+			char buf[Parent::Session_args::MAX_SIZE];
+			snprintf(buf, sizeof(buf), "ram_quota=%u", 64*1024);
+
+			env.parent().upgrade(rm, buf);
 		}
 	}
 
