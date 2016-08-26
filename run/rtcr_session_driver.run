@@ -2,7 +2,7 @@
 # Build
 #
 
-build { core init rtcr }
+build { core init rtcr test/rtcr_session_driver }
 
 create_boot_directory
 
@@ -26,8 +26,12 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
-	<start name="template">
+	<start name="rtcr">
 		<resource name="RAM" quantum="10M"/>
+		<provides><service name="Rtcr"/></provides>
+	</start>
+	<start name="rtcr_driver">
+		<resource name="RAM" quantum="1M"/>
 	</start>
 </config>}
 
@@ -35,8 +39,8 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init rtcr }
+build_boot_image { core init rtcr rtcr_driver }
 
 append qemu_args " -nographic "
 
-run_genode_until "Hello world!*\n" 15
+run_genode_until "Rtcr-driver ended.*\n" 15
