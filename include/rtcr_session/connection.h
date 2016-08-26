@@ -18,9 +18,9 @@ struct Rtcr::Connection : Genode::Connection<Rtcr::Session>, Rtcr::Session_clien
 	/**
 	 * Constructor
 	 */
-	Connection(Genode::Env &env, Genode::size_t ram_quota)
+	Connection(Genode::Env &env)
 	:
-		Genode::Connection<Rtcr::Session>(env, session(env.parent(), "ram_quota=%zd", ram_quota)),
+		Genode::Connection<Rtcr::Session>(env, session(env.parent(), "ram_quota=4K")),
 		Session_client(cap())
 	{ }
 };
