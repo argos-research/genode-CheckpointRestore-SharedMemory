@@ -1,5 +1,5 @@
 /*
- * \brief  Ckpt session client
+ * \brief  Rtcr session client
  * \author Denis Huber
  * \date   2016-08-26
  */
@@ -9,8 +9,6 @@
 
 /* Genode includes */
 #include <base/rpc_client.h>
-
-/* Rtcr includes */
 #include <rtcr_session/capability.h>
 #include <rtcr_session/rtcr_session.h>
 

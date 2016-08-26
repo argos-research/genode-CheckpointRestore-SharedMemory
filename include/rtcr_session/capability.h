@@ -10,6 +10,6 @@
 #include <base/capability.h>
 #include <rtcr_session/rtcr_session.h>
 
-namespace Rtcr { typedef Genode::Capability<Session> Session_capability; }
+namespace Rtcr { typedef Genode::Capability<Rtcr::Session> Session_capability; }
 
 #endif /* _INCLUDE__RTCR_SESSION__CAPABILITY_H_ */

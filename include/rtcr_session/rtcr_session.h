@@ -1,5 +1,5 @@
 /*
- * \brief  Ckpt session
+ * \brief  Rtcr session
  * \author Denis Huber
  * \date   2016-08-05
  */
