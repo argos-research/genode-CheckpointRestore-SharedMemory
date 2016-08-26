@@ -13,8 +13,8 @@
 #include <rom_session/connection.h>
 
 /* Rtcr includes */
-#include "pd_session_component.h"
 #include "cpu_session_component.h"
+#include "pd_session_component.h"
 #include "ram_session_component.h"
 
 namespace Rtcr {
