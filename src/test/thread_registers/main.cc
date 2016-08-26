@@ -1,5 +1,5 @@
 /*
- * \brief  Random program for testing Genode's functionalities
+ * \brief  Reading the state of a thread to two specific times
  * \author Denis Huber
  * \date   2016-08-13
  */
@@ -38,7 +38,7 @@ namespace Random
 			while(phase != 2) ;
 			log("test_thread: Phase 2 (phase=", phase, ")");
 			// Here the second sample is taken
-			// increase stack pointer
+			// increase stack pointer (?)
 			do_phase2();
 
 			while(phase != 4) ;

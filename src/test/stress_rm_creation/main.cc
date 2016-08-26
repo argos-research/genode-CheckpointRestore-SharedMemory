@@ -1,5 +1,5 @@
 /*
- * \brief  Creates managed dataspaces with ram dataspaces
+ * \brief  Creates region maps from a rm session until quota exceedes and needs to be upgraded
  * \author Denis Huber
  * \date   2016-08-20
  */
