@@ -71,7 +71,8 @@ private:
 		/**
 		 * Find Region which contains the addr
 		 *
-		 * \param addr Local address in parent's region map
+		 * \param  addr Local address in parent's region map
+		 * \return Region_info which contains the local address
 		 */
 		Region_info *find_by_addr(Genode::addr_t addr)
 		{
