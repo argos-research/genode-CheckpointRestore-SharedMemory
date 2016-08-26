@@ -19,16 +19,16 @@ Genode::size_t Component::stack_size() { return 16*1024; }
 void Component::construct(Genode::Env &env)
 {
 	using namespace Genode;
-    unsigned int n = 1;
-    Timer::Connection timer(env);
+	unsigned int n = 1;
+	Timer::Connection timer(env);
 
-    while(1)
-    {
-        if(n == 1)
-            log("1 sheep. zzZ");
-        else
-            log(n, " sheeps. zzZ");
-        n++;
-        timer.msleep(1000);
-    }
+	while(1)
+	{
+		if(n == 1)
+			log("1 sheep. zzZ");
+		else
+			log(n, " sheeps. zzZ");
+		n++;
+		timer.msleep(1000);
+	}
 }
