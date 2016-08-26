@@ -23,7 +23,7 @@ struct Rtcr::Session : Genode::Session
 
 	typedef Genode::Rpc_in_buffer<64> Name;
 
-	static const char *service_name() { return "Ckpt"; }
+	static const char *service_name() { return "Rtcr"; }
 
 	virtual ~Session() { }
 
