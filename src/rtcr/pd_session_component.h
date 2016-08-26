@@ -1,7 +1,7 @@
 /*
- * \brief Intercepting Pd session
+ * \brief  Intercepting Pd session
  * \author Denis Huber
- * \date 2016-08-03
+ * \date   2016-08-03
  */
 
 #ifndef _RTCR_PD_SESSION_COMPONENT_H_
@@ -19,26 +19,55 @@ namespace Rtcr {
 	class Pd_session_component;
 }
 
+/**
+ * This custom Pd session provides custom Region maps
+ */
 class Rtcr::Pd_session_component : public Genode::Rpc_object<Genode::Pd_session>
 {
 private:
+	/**
+	 * Enable log output for debugging
+	 */
 	static constexpr bool verbose_debug = false;
 
+	/**
+	 * TODO Needed?
+	 */
 	Genode::Env        &_env;
+	/**
+	 * TODO Needed?
+	 */
 	Genode::Allocator  &_md_alloc;
+	/**
+	 * TODO Needed?
+	 */
 	Genode::Entrypoint &_ep;
 	/**
-	 * Connection to parent's pd connection, usually from core
+	 * Connection to parent's pd session, usually from core
 	 */
 	Genode::Pd_connection _parent_pd;
 
-	Region_map_component _address_space;
-	Region_map_component _stack_area;
-	Region_map_component _linker_area;
+	/**
+	 * Custom address space for monitoring the attachments of the Region map
+	 */
+	Rtcr::Region_map_component _address_space;
+	/**
+	 * Custom stack area for monitoring the attachments of the Region map
+	 */
+	Rtcr::Region_map_component _stack_area;
+	/**
+	 * custom linker area for monitoring the attachments of the Region map
+	 */
+	Rtcr::Region_map_component _linker_area;
 
 public:
 	/**
 	 * Constructor
+	 *
+	 * \param env      Environment to create a session to parent's PD service
+	 * \param md_alloc Allocator for the custom Region maps
+	 * \param ep       Entrypoint for managing the custom Region maps
+	 * \param label    Label for parent's PD session
 	 */
 	Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *label)
 	:
@@ -53,11 +82,17 @@ public:
 		if(verbose_debug) Genode::log("Pd_session_component created");
 	}
 
+	/**
+	 * Destructor
+	 */
 	~Pd_session_component()
 	{
 		if(verbose_debug) Genode::log("Pd_session_component destroyed");
 	}
 
+	/**
+	 * Return the capability to parent's PD session
+	 */
 	Genode::Pd_session_capability parent_cap()
 	{
 		return _parent_pd.cap();
@@ -122,18 +157,27 @@ public:
 		_parent_pd.free_rpc_cap(cap);
 	}
 
+	/**
+	 * Return custom address space
+	 */
 	Genode::Capability<Genode::Region_map> address_space() override
 	{
 		if(verbose_debug) Genode::log("Pd::address_space()");
 		return _address_space.Rpc_object<Genode::Region_map>::cap();
 	}
 
+	/**
+	 * Return custom stack area
+	 */
 	Genode::Capability<Genode::Region_map> stack_area() override
 	{
 		if(verbose_debug) Genode::log("Pd::stack_area()");
 		return _stack_area.Rpc_object<Genode::Region_map>::cap();
 	}
 
+	/**
+	 * Return custom linker area
+	 */
 	Genode::Capability<Genode::Region_map> linker_area() override
 	{
 		if(verbose_debug) Genode::log("Pd::linker_area()");

@@ -27,7 +27,10 @@ namespace Rtcr {
 class Rtcr::Target_child : public Genode::Child_policy
 {
 private:
-	static constexpr bool verbose_debug = true;
+	/**
+	 * Enable log output for debugging
+	 */
+	static constexpr bool verbose_debug = false;
 
 	/**
 	 * Child's unique name and filename of child's rom module

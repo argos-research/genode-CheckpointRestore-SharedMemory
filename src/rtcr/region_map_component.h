@@ -1,7 +1,7 @@
 /*
- * \brief Intercepting Region map
+ * \brief  Intercepting Region map
  * \author Denis Huber
- * \date 2016-08-09
+ * \date   2016-08-09
  */
 
 #ifndef _RTCR_REGION_MAP_COMPONENT_H_
@@ -16,12 +16,24 @@ namespace Rtcr {
 	class Region_map_component;
 }
 
+/**
+ * This custom Region map intercepts the attach and detach methods to monitor and provide the content of this Region map
+ */
 class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>
 {
 private:
+	/**
+	 * Enable log output for debugging
+	 */
 	static constexpr bool verbose_debug = false;
 
+	/**
+	 * Entrypoint which manages this Region map
+	 */
 	Genode::Entrypoint        &_ep;
+	/**
+	 * Allocator for Region map's attachments
+	 */
 	Genode::Allocator         &_md_alloc;
 	/**
 	 * Wrapped region map from parent, usually core
@@ -39,6 +51,17 @@ private:
 		Genode::addr_t               local_addr;
 		bool                         executable;
 
+		/**
+		 * Constructor
+		 *
+		 * Store necessary information of an attachment to this Region map to be able to recreate the Region map
+		 *
+		 * \param ds_cap     Capability to the attached dataspace
+		 * \param size       Size of the dataspace
+		 * \param offset     Offset in the dataspace
+		 * \param local_addr Address of the dataspace in parent's region map
+		 * \param executable Indicates whether the dataspace is executable
+		 */
 		Region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
 				Genode::off_t offset, Genode::addr_t local_addr, bool executable)
 		:
@@ -47,6 +70,8 @@ private:
 
 		/**
 		 * Find Region which contains the addr
+		 *
+		 * \param addr Local address in parent's region map
 		 */
 		Region_info *find_by_addr(Genode::addr_t addr)
 		{
@@ -61,11 +86,18 @@ private:
 	 * List of target's local addresses and their corresponding dataspaces
 	 */
 	Genode::List<Region_info> _regions;
+	/**
+	 * Lock to make _regions thread-safe
+	 */
 	Genode::Lock              _regions_lock;
 
 public:
 	/**
 	 * Constructor
+	 *
+	 * \param ep       Entrypoint for managing the custom Region map
+	 * \param md_alloc Allocator for attachments
+	 * \param rm_cap   Capability to parent's Region map
 	 */
 	Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc, Genode::Capability<Region_map> rm_cap)
 	:
@@ -77,6 +109,9 @@ public:
 		if(verbose_debug) Genode::log("Region_map_component created");
 	}
 
+	/**
+	 * Destrcutor
+	 */
 	~Region_map_component()
 	{
 		_ep.dissolve(*this);
@@ -92,16 +127,19 @@ public:
 	 ** Region map Rpc interface **
 	 ******************************/
 
+	/**
+	 * Attaches a dataspace to parent's Region map and stores information about the attachment
+	 */
 	Local_addr attach(Genode::Dataspace_capability ds_cap, Genode::size_t size, Genode::off_t offset,
 			bool use_local_addr, Region_map::Local_addr local_addr, bool executable)
 	{
 		if(verbose_debug) Genode::log("Rm::attach()");
 
-		// Attach dataspace to real region map
+		// Attach dataspace to real Region map
 		Region_map::Local_addr addr = _parent_rm.attach(
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
 
-		// Store information about the attachment in a Region
+		// Store information about the attachment
 		Region_info *region = new (_md_alloc) Region_info(ds_cap, size, offset, addr, executable);
 
 		if(verbose_debug)
@@ -115,13 +153,16 @@ public:
 			num_pages, num_pages==1?" page":" pages");
 		}
 
-		// Store Region in a list
+		// Store Region_info in a list
 		Genode::Lock::Guard lock_guard(_regions_lock);
 		_regions.insert(region);
 
 		return addr;
 	}
 
+	/**
+	 * Detaches the dataspace from parent's region map and destroys the information about the attachment
+	 */
 	void detach(Region_map::Local_addr local_addr)
 	{
 		if(verbose_debug) Genode::log("Rm::detach()");
