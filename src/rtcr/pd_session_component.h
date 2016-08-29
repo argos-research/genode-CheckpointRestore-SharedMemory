@@ -59,6 +59,12 @@ private:
 	 * custom linker area for monitoring the attachments of the Region map
 	 */
 	Rtcr::Region_map_component _linker_area;
+	Genode::Entrypoint _pager_ep;
+
+	void _handle()
+	{
+		Genode::log("handling!");
+	}
 
 public:
 	/**
@@ -75,10 +81,13 @@ public:
 		_md_alloc     (md_alloc),
 		_ep           (ep),
 		_parent_pd    (env, label),
-		_address_space(_ep, _md_alloc, _parent_pd.address_space()),
-		_stack_area   (_ep, _md_alloc, _parent_pd.stack_area()),
-		_linker_area  (_ep, _md_alloc, _parent_pd.linker_area())
+		_address_space(_ep, _md_alloc, _parent_pd.address_space(), "address_space"),
+		_stack_area   (_ep, _md_alloc, _parent_pd.stack_area(),    "stack_area"),
+		_linker_area  (_ep, _md_alloc, _parent_pd.linker_area(),   "linker_area"),
+		_pager_ep(env, 16*1024, "region_map pager_ep")
 	{
+		Genode::Signal_handler<Rtcr::Pd_session_component> sigh{_pager_ep, *this, &Rtcr::Pd_session_component::_handle};
+		_address_space.fault_handler(sigh);
 		if(verbose_debug) Genode::log("Pd_session_component created");
 	}
 
@@ -96,6 +105,16 @@ public:
 	Genode::Pd_session_capability parent_cap()
 	{
 		return _parent_pd.cap();
+	}
+
+	/**
+	 * Callback to signal that the child was created and that it attaches user-specific dataspaces
+	 */
+	void child_created()
+	{
+		_address_space.child_created();
+		_stack_area.child_created();
+		_linker_area.child_created();
 	}
 
 	/**************************
