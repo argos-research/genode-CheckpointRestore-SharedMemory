@@ -71,7 +71,7 @@ public:
 
 		Genode::size_t rest_page = size % GRANULARITY;
 		Genode::size_t num_pages = (size / GRANULARITY) + (rest_page == 0 ? 0 : 1);
-		Genode::log("r: ", rest_page, " n: ", num_pages);
+		//Genode::log("r: ", rest_page, " n: ", num_pages);
 
 		Genode::Capability<Genode::Region_map> new_region_map;
 
@@ -91,7 +91,7 @@ public:
 		}
 
 		Genode::Region_map_client rm_out { new_region_map };
-		Genode::log("Region_map created.");
+		//Genode::log("Region_map created.");
 
 		for(Genode::size_t i = 0; i < num_pages; i++)
 		{
@@ -106,7 +106,7 @@ public:
 			}
 		}
 
-		Genode::log("Region_map filled.");
+		//Genode::log("Region_map filled.");
 
 		return Genode::static_cap_cast<Genode::Ram_dataspace>(rm_out.dataspace());
 	}
