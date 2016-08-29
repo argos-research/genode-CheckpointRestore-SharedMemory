@@ -183,11 +183,11 @@ public:
 	/**
 	 * Return the custom Pd session
 	 */
-	Rtcr::Ram_session_component &pd()  { return _resources.pd;  }
+	Rtcr::Pd_session_component  &pd()  { return _resources.pd;  }
 	/**
 	 * Return the custom Cpu session
 	 */
-	Rtcr::Ram_session_component &cpu() { return _resources.cpu; }
+	Rtcr::Cpu_session_component &cpu() { return _resources.cpu; }
 	/**
 	 * Return the custom Ram session
 	 */
