@@ -13,14 +13,18 @@
 #include <base/log.h>
 #include <base/component.h>
 #include <timer_session/connection.h>
+#include <util/general.h>
 
 Genode::size_t Component::stack_size() { return 16*1024; }
 
 void Component::construct(Genode::Env &env)
 {
 	using namespace Genode;
-	unsigned int n = 1;
 	Timer::Connection timer(env);
+
+	unsigned int *addr = env.rm().attach(env.ram().alloc(4096));
+	addr[0] = 1;
+	unsigned int &n = *addr;
 
 	while(1)
 	{
@@ -31,4 +35,5 @@ void Component::construct(Genode::Env &env)
 		n++;
 		timer.msleep(1000);
 	}
+
 }
