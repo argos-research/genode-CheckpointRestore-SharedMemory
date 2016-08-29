@@ -4,6 +4,9 @@
  * \date   2016-08-17
  */
 
+#ifndef _INCLUDE__RTCR_UTIL__GENERAL_H_
+#define _INCLUDE__RTCR_UTIL__GENERAL_H_
+
 namespace Rtcr
 {
 	void dump_mem(const void *mem, unsigned int size)
@@ -71,3 +74,5 @@ namespace Rtcr
 		}
 	}
 }
+
+#endif /* _INCLUDE__RTCR_UTIL__GENERAL_H_ */
