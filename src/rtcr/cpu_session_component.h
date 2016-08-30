@@ -14,8 +14,26 @@
 #include <cpu_thread/client.h>
 
 namespace Rtcr {
+	struct Thread_info;
 	class Cpu_session_component;
 }
+
+struct Rtcr::Thread_info : Genode::List<Rtcr::Thread_info>::Element
+{
+	Genode::Thread_capability thread_cap;
+
+	Thread_info(Genode::Thread_capability thread_cap)
+	: thread_cap(thread_cap) { }
+
+	Thread_info *find_by_cap(Genode::Thread_capability cap)
+	{
+		if(thread_cap.local_name() == cap.local_name())
+			return this;
+		Thread_info *thread_info = next();
+		return thread_info ? thread_info->find_by_cap(cap) : 0;
+	}
+
+};
 
 class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>
 {
@@ -33,22 +51,7 @@ private:
 	 */
 	Genode::Cpu_connection _parent_cpu;
 
-	struct Thread_info : Genode::List<Thread_info>::Element
-	{
-		Genode::Thread_capability thread_cap;
 
-		Thread_info(Genode::Thread_capability thread_cap)
-		: thread_cap(thread_cap) { }
-
-		Thread_info *find_by_cap(Genode::Thread_capability cap)
-		{
-			if(thread_cap.local_name() == cap.local_name())
-				return this;
-			Thread_info *thread_info = next();
-			return thread_info ? thread_info->find_by_cap(cap) : 0;
-		}
-
-	};
 
 	Genode::Lock _threads_lock;
 	Genode::List<Thread_info> _threads;
@@ -93,23 +96,7 @@ public:
 		// Store the thread
 		Genode::Lock::Guard _lock_guard(_threads_lock);
 		_threads.insert(new (_md_alloc) Thread_info(thread_cap));
-/*
-		if(!Genode::strcmp(name.string(), "Worker3"))
-		{
-			Genode::Thread_state state = Genode::Cpu_thread_client(_threads.first()->thread_cap).state();
-			Genode::log("Worker1: ip ", state.ip, ", sp ", state.sp);
-		}
-*/
-/*
-		Genode::size_t i = 0;
-		Thread_info *curr = _threads.first();
-		while(curr)
-		{
-			i++;
-			curr = curr->next();
-		}
-		Genode::log("There are ", i, " threads stored");
-*/
+
 		return thread_cap;
 	}
 
