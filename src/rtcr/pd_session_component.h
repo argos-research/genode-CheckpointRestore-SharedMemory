@@ -28,7 +28,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = true;
 
 	/**
 	 * TODO Needed?
@@ -166,13 +166,28 @@ public:
 
 	Genode::Native_capability alloc_rpc_cap(Genode::Native_capability ep) override
 	{
-		if(verbose_debug) Genode::log("Pd::alloc_rpc_cap()");
-		return _parent_pd.alloc_rpc_cap(ep);
+		if(verbose_debug)
+		{
+			Genode::log("Pd::alloc_rpc_cap()");
+			Genode::log("  ep_cap:     ", ep.local_name());
+		}
+
+		Genode::Native_capability result {_parent_pd.alloc_rpc_cap(ep)};
+
+		if(verbose_debug)
+		{
+			Genode::log("  result_cap: ", result.local_name());
+		}
+		return result;
 	}
 
 	void free_rpc_cap(Genode::Native_capability cap) override
 	{
-		if(verbose_debug) Genode::log("Pd::free_rpc_cap()");
+		if(verbose_debug)
+		{
+			Genode::log("Pd::free_rpc_cap()");
+			Genode::log("  cap:        ", cap.local_name());
+		}
 		_parent_pd.free_rpc_cap(cap);
 	}
 
