@@ -72,7 +72,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = true;
+	static constexpr bool verbose_debug = false;
 
 	/**
 	 * Entrypoint which manages this Region map
@@ -196,7 +196,7 @@ public:
 		Region_map::Local_addr addr = _parent_rm.attach(
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
 
-		Genode::log("  poke: ", (void*)addr," = ", (*(unsigned int*)addr));
+		//Genode::log("  poke: ", (void*)addr," = ", (*(unsigned int*)addr));
 
 		// Store information about the attachment
 		Region_info *region = new (_md_alloc) Region_info(ds_cap, size, offset, addr, executable, _child_created);
