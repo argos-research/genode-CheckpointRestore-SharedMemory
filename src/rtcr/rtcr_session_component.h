@@ -4,12 +4,12 @@
  * \date   2016-08-26
  */
 
+#ifndef _RTCR__RTCR_SESSION_COMPONENT_H_
+#define _RTCR__RTCR_SESSION_COMPONENT_H_
+
 #include <base/allocator_guard.h>
 #include <base/rpc_server.h>
 #include <rtcr_session/rtcr_session.h>
-
-#ifndef _RTCR__RTCR_SESSION_COMPONENT_H_
-#define _RTCR__RTCR_SESSION_COMPONENT_H_
 
 namespace Rtcr {
 	class Session_component;
