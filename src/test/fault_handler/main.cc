@@ -8,6 +8,7 @@
 #include <base/env.h>
 #include <base/log.h>
 #include <base/component.h>
+#include <base/heap.h>
 
 using namespace Genode;
 
@@ -15,6 +16,7 @@ class Main
 {
 private:
 	Env &_env;
+	Signal_handler<Main> _sigh {_env.ep(), *this, &Main::_handle_fault};
 
 	void _handle_fault()
 	{
@@ -44,8 +46,7 @@ public:
 		log("--- pf-signal_handler started ---");
 
 		// Assigning pagefault handler to address space
-		Signal_handler<Main> sigh = {env.ep(), *this, &Main::_handle_fault};
-		_env.rm().fault_handler(sigh);
+		_env.rm().fault_handler(_sigh);
 
 		// Causing page fault
 		*((unsigned int*)0x1000) = 1;
