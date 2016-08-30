@@ -8,6 +8,7 @@
 #include <base/env.h>
 #include <base/log.h>
 #include <base/component.h>
+#include <base/sleep.h>
 
 using namespace Genode;
 
@@ -66,7 +67,6 @@ public:
 		// Starting thread which causes the page fault
 		Faulting_thread thread0 {env};
 		thread0.start();
-		thread0.join();
 
 		log("--- pf-signal_handler ended ---");
 	}
