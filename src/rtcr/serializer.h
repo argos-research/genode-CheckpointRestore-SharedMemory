@@ -28,8 +28,6 @@ private:
 
 	Genode::size_t _calculate_buffer_size()
 	{
-		enum {THREAD_SIZE = 17*sizeof(Genode::addr_t), REGION_HEADER_SIZE = 0x10};
-
 		Genode::size_t result = 0;
 
 		Rtcr::Thread_info *curr_thread = _threads.first();
@@ -53,20 +51,26 @@ private:
 		return result;
 	}
 
-	void _serialize(Rtcr::Thread_info &thread)
+	/**
+	 * Serialize a thread to the dataspace
+	 *
+	 * \param thread Thread to serialize
+	 *
+	 * \return Bytes consumed in the dataspace
+	 */
+	Genode::size_t _serialize(Rtcr::Thread_info &thread)
 	{
-		using namespace Genode;
 		Genode::Cpu_thread_client client {thread.thread_cap};
 		Genode::Thread_state ts {client.state()};
 
 		if(!ts.paused)
 		{
 			Genode::warning(" Thread ", thread.thread_cap.local_name(), " not paused.");
-			return;
+			return 0;
 		}
 
 		// Store registers and adjust pointer
-		addr_t* addr_ptr = _buf_ptr;
+		Genode::addr_t* addr_ptr = static_cast<Genode::addr_t*>(_buf_ptr);
 
 		// Using post-increment:
 		// Store register value to pointer, then increment pointer
@@ -89,10 +93,37 @@ private:
 		*(addr_ptr++) = ts.cpsr;
 		*(addr_ptr++) = ts.lr;
 
+		Genode::size_t diff = addr_ptr - static_cast<Genode::addr_t*>(_buf_ptr);
+
 		_buf_ptr = addr_ptr;
+
+		return diff;
+	}
+
+	/**
+	 * Serialize all threads in the list to the dataspace
+	 *
+	 * \param  threads List of threads
+	 *
+	 * \return Bytes consumed in the dataspace
+	 */
+	Genode::size_t _serialize(Genode::List<Rtcr::Thread_info> &threads)
+	{
+		Genode::size_t diff = 0;
+
+		Rtcr::Thread_info *curr_thread = _threads.first();
+		for( ; curr_thread; curr_thread = curr_thread->next())
+		{
+			diff += _serialize(*curr_thread);
+		}
+
+		return diff;
 	}
 
 public:
+	enum {THREAD_SIZE = 18*sizeof(Genode::addr_t), REGION_HEADER_SIZE = 0x10};
+
+
 	Serializer(Genode::List<Rtcr::Thread_info> &threads, Genode::List<Rtcr::Region_info> &regions, Genode::Env &env)
 	:
 		_threads(threads),
