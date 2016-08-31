@@ -23,7 +23,8 @@ struct Faulting_thread : Thread
 	{
 		*((unsigned int*)0x1000) = 1;
 
-		log("Page fault handled.");
+		log("  Page fault handled.");
+		log("--- pf-signal_handler ended ---");
 	}
 };
 
@@ -31,8 +32,9 @@ class Main
 {
 private:
 	Env                  &_env;
-	Entrypoint            _page_fault_ep {_env, 16*1024, "page_fault entrypoint"};
-	Signal_handler<Main>  _sigh          {_page_fault_ep, *this, &Main::_handle_fault};
+	Signal_handler<Main>  _sigh          {_env.ep(), *this, &Main::_handle_fault};
+	Faulting_thread       _fault_thread  {_env};
+
 
 	void _handle_fault()
 	{
@@ -65,10 +67,8 @@ public:
 		_env.rm().fault_handler(_sigh);
 
 		// Starting thread which causes the page fault
-		Faulting_thread thread0 {env};
-		thread0.start();
+		_fault_thread.start();
 
-		log("--- pf-signal_handler ended ---");
 	}
 };
 
