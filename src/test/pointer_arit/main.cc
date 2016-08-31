@@ -44,11 +44,15 @@ void Component::construct(Genode::Env &env)
 	*(spec_ptr++) = data0;
 	*(spec_ptr++) = data1;
 
+	// Compute difference between both pointers in bytes
+	size_t diff = spec_ptr - static_cast<addr_t*>(ptr);
+
 	ptr = spec_ptr;
 
 	Rtcr::dump_mem(print_ptr, 0x10);
 
 	log("End: ptr = ", ptr);
+	log("Stored bytes: ", diff);
 
 	log("--- pointer-test ended ---");
 }
