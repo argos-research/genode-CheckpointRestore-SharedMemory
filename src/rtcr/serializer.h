@@ -55,6 +55,7 @@ private:
 
 	void _serialize(Rtcr::Thread_info &thread)
 	{
+		using namespace Genode;
 		Genode::Cpu_thread_client client {thread.thread_cap};
 		Genode::Thread_state ts {client.state()};
 
@@ -64,26 +65,31 @@ private:
 			return;
 		}
 
-		// TODO change type of _buf_ptr in order to do pointer arithmetic
 		// Store registers and adjust pointer
-		*_buf_ptr = ts.r0;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r1;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r2;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r3;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r4;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r5;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r6;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r7;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r8;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r9;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r10;  _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r11;  _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.r12;  _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.sp;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.lr;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.ip;   _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.cpsr; _buf_ptr += sizeof(Genode::addr_t);
-		*_buf_ptr = ts.lr;   _buf_ptr += sizeof(Genode::addr_t);
+		addr_t* addr_ptr = _buf_ptr;
+
+		// Using post-increment:
+		// Store register value to pointer, then increment pointer
+		*(addr_ptr++) = ts.r0;
+		*(addr_ptr++) = ts.r1;
+		*(addr_ptr++) = ts.r2;
+		*(addr_ptr++) = ts.r3;
+		*(addr_ptr++) = ts.r4;
+		*(addr_ptr++) = ts.r5;
+		*(addr_ptr++) = ts.r6;
+		*(addr_ptr++) = ts.r7;
+		*(addr_ptr++) = ts.r8;
+		*(addr_ptr++) = ts.r9;
+		*(addr_ptr++) = ts.r10;
+		*(addr_ptr++) = ts.r11;
+		*(addr_ptr++) = ts.r12;
+		*(addr_ptr++) = ts.sp;
+		*(addr_ptr++) = ts.lr;
+		*(addr_ptr++) = ts.ip;
+		*(addr_ptr++) = ts.cpsr;
+		*(addr_ptr++) = ts.lr;
+
+		_buf_ptr = addr_ptr;
 	}
 
 public:
