@@ -43,9 +43,8 @@ private:
 		}
 
 		// Round up to full pages
-		Genode::size_t num_pages = result / 4096;
 		Genode::size_t rest_page = result % 4096;
-		num_pages = num_pages + (rest_page != 0 ? 1 : 0);
+		Genode::size_t num_pages = (result / 4096) + (rest_page == 0 ? 0 : 1);
 		result = 4096 * num_pages;
 
 		return result;
