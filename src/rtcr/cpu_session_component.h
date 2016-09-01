@@ -1,7 +1,7 @@
 /*
- * \brief Intercepting Pd session
+ * \brief  Intercepting Cpu session
  * \author Denis Huber
- * \date 2016-08-10
+ * \date   2016-08-10
  */
 
 #ifndef _RTCR_CPU_SESSION_COMPONENT_H_
