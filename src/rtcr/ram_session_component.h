@@ -129,6 +129,8 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	 */
 	void attach()
 	{
+		Genode::log("  Attaching dataspace ", dataspace.local_name(), " to Region_map ", ref_region_map_info.ref_region_map.local_name());
+		Genode::log("    attached? ", attached?"yes":"no");
 		if(!attached)
 		{
 			Genode::addr_t addr =
@@ -166,14 +168,21 @@ private:
 
 	void _handle_fault()
 	{
+		Genode::log("handling fault!");
 		Genode::Region_map::State state;
 
 		// Current managed_dataspace
 		Rtcr::Region_map_info *curr_md = _managed_dataspaces.first();
+		Genode::log("curr_md.first() = ", _managed_dataspaces.first());
 
 		for( ; curr_md; curr_md = curr_md->next())
 		{
 			Genode::Region_map_client rm_client {curr_md->ref_region_map};
+			Genode::log("    region_map ", curr_md->ref_region_map.local_name(), " state is ",
+				rm_client.state().type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
+				rm_client.state().type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
+				rm_client.state().type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
+				" pf_addr=", Genode::Hex(rm_client.state().addr));
 			// found!
 			if(rm_client.state().type != Genode::Region_map::State::READY)
 			{
@@ -185,6 +194,8 @@ private:
 		// Find dataspace which includes the faulting address
 		Rtcr::Attachable_dataspace_info *dataspace_info =
 				curr_md->attachable_dataspaces.first()->find_by_addr(state.addr);
+
+		Genode::log("  dataspace_info = ", dataspace_info);
 
 		// Check if a dataspace was found
 		if(!dataspace_info)
@@ -278,7 +289,7 @@ public:
 		if(verbose_debug)
 		{
 			Genode::log("Ram::alloc()");
-			Genode::log("  size=", size);
+			Genode::log("  size=", Genode::Hex(size));
 		}
 
 		enum { GRANULARITY = 4096 };
@@ -304,6 +315,9 @@ public:
 		// Create Region_map_info which contains a list of corresponding dataspaces
 		Rtcr::Region_map_info *rm_info = new (_md_alloc)
 				Rtcr::Region_map_info(new_region_map, new_rm_client.dataspace());
+
+		// Insert into _managed_dataspaces list
+		_managed_dataspaces.insert(rm_info);
 
 		// Set our pagefault handler for the Region_map with its own context
 		new_rm_client.fault_handler(_receiver.manage(&(rm_info->context)));
