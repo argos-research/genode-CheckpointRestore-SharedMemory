@@ -23,7 +23,7 @@ class Local_fault_handler : public Thread
 public:
 	Local_fault_handler(Env &env, Region_map &region_map0, Region_map &region_map1, Signal_receiver &receiver)
 	:
-		Thread(env, "fault_handler", 0x1000),
+		Thread(env, "fault_handler", 16*1024),
 		_env(env), _region_map0(region_map0), _region_map1(region_map1), _receiver(receiver)
 	{ }
 
@@ -31,6 +31,7 @@ public:
 	{
 		Region_map::State state0 = _region_map0.state();
 		Region_map::State state1 = _region_map1.state();
+
 		log("    region_map0 state is ",
 			state0.type == Region_map::State::READ_FAULT  ? "READ_FAULT"  :
 			state0.type == Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
@@ -112,31 +113,38 @@ void Component::construct(Genode::Env &env)
 	Capability<Region_map> rm_cap0 = rm_service.create(2*4096);
 	Capability<Region_map> rm_cap1 = rm_service.create(2*4096);
 
-	log("Created 2 Region_maps: ", rm_cap0.local_name(), " and ", rm_cap1.local_name());
+	//log("Created 2 Region_maps: ", rm_cap0.local_name(), " and ", rm_cap1.local_name());
 
 	Region_map_client rm_client0 {rm_cap0};
 	Region_map_client rm_client1 {rm_cap1};
+
+	//log("Created 2 Region_map_clients: ", &rm_client0, " and ", &rm_client1);
 
 	Signal_receiver  receiver;
 	Signal_context   signal_context0;
 	Signal_context   signal_context1;
 
-	// Assigning receiver as receiver of page faults
-	rm_client0.fault_handler(receiver.manage(&signal_context0));
-	rm_client1.fault_handler(receiver.manage(&signal_context1));
-
 	// Start fault handler thread
 	Local_fault_handler fault_handler(env, rm_client0, rm_client1, receiver);
 	fault_handler.start();
 
-	unsigned int* addr0 = address_space.attach_at(rm_client0.dataspace(), 0x8000);
-	unsigned int* addr1 = address_space.attach_at(rm_client0.dataspace(), 0x8000*2);
+	// Assigning receiver as receiver of page faults
+	rm_client0.fault_handler(receiver.manage(&signal_context0));
+	rm_client1.fault_handler(receiver.manage(&signal_context1));
 
-	log("Attached dataspaces to ", addr0, " and ", addr1);
+
+	unsigned int* addr0 = address_space.attach_at(rm_client0.dataspace(), 0x8000);
+	unsigned int* addr1 = address_space.attach_at(rm_client1.dataspace(), 0x8000*2);
+
+	//log("Attached dataspaces to ", addr0, " and ", addr1);
 
 	// Create page fault (WRITE)
-	//*addr0 = 42;
-	*(addr1+1) = 42;
+	*addr0 = 42;
+	*addr1 = 42;
+
+	signal_context0.submit(1);
+
+	*(addr0+4096/4) = 42;
 
 	log("--- pf-receiver ended ---");
 
