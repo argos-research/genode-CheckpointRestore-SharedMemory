@@ -93,7 +93,7 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = true;
+	static constexpr bool verbose_debug = false;
 
 	/**
 	 * Reference Region_map_info to which this dataspace belongs
@@ -209,13 +209,33 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	}
 };
 
+/**
+ * \brief Page fault handler designated to handle the page faults caused for the
+ * incremental checkpoint mechanism of the custom Ram_session_component
+ *
+ * Page fault handler which has a list of region maps and their associated dataspaces.
+ * Each page fault signal is handled by finding the faulting region map and attaching
+ * the designated dataspace to the faulting address.
+ */
 class Rtcr::Fault_handler : public Genode::Thread
 {
 private:
+	/**
+	 * Enable log output for debugging
+	 */
 	static constexpr bool verbose_debug = false;
+	/**
+	 * Signal_receiver on which the page fault handler waits
+	 */
 	Genode::Signal_receiver             &_receiver;
+	/**
+	 * List of region maps and their associated dataspaces
+	 */
 	Genode::List<Rtcr::Region_map_info> &_managed_dataspaces;
 
+	/**
+	 * Handle page fault signal by finding the faulting region map and attaching the designated dataspace on the faulting address
+	 */
 	void _handle_fault()
 	{
 		Genode::Region_map::State state;
@@ -225,14 +245,15 @@ private:
 		for( ; curr_md; curr_md = curr_md->next())
 		{
 			Genode::Region_map_client rm_client {curr_md->ref_region_map};
-			// found!
+
+			// If the region map is found, cancel the search and do not override the pointer to the corresponding Region_map_info
 			if(rm_client.state().type != Genode::Region_map::State::READY)
 			{
 				state = rm_client.state();
 
 				if(verbose_debug)
 				{
-				Genode::log("  region_map ", curr_md->ref_region_map.local_name(), " state is ",
+				Genode::log("Handle fault: Managed dataspace ", curr_md->ref_managed_dataspace.local_name(), " state is ",
 					state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
 					state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
 					state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
@@ -243,11 +264,9 @@ private:
 			}
 		}
 
-		// Find dataspace which includes the faulting address
+		// Find dataspace which contains the faulting address
 		Rtcr::Attachable_dataspace_info *dataspace_info =
 				curr_md->attachable_dataspaces.first()->find_by_addr(state.addr);
-
-		//Genode::log("  dataspace_info = ", dataspace_info);
 
 		// Check if a dataspace was found
 		if(!dataspace_info)
@@ -257,11 +276,18 @@ private:
 			return;
 		}
 
-		// Attach found dataspace on its designated address
+		// Attach found dataspace to its designated address
 		dataspace_info->attach();
 	}
 
 public:
+	/**
+	 * Constructor
+	 *
+	 * \param env                Environment of creator component (usually rtcr)
+	 * \param receiver           Signal_receiver which receives the page fault signals
+	 * \param managed_dataspaces Reference to the list of managed dataspaces
+	 */
 	Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
 			Genode::List<Rtcr::Region_map_info> &managed_dataspaces)
 	:
@@ -269,6 +295,10 @@ public:
 		_receiver(receiver), _managed_dataspaces(managed_dataspaces)
 	{ }
 
+	/**
+	 * Entrypoint of the thread
+	 * The thread waits for a signal and calls the handler function if it receives any signal
+	 */
 	void entry()
 	{
 		while(true)
@@ -299,37 +329,37 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = true;
+	static constexpr bool verbose_debug = false;
 
 	/**
-	 * Environment of creator
+	 * Environment of creator component (usually rtcr)
 	 */
-	Genode::Env        &_env;
+	Genode::Env                   &_env;
 	/**
 	 * Allocator for objects belonging to the monitoring of the managed dataspaces (e.g. Region_map_info and Attachable_dataspace_info)
 	 */
-	Genode::Allocator  &_md_alloc;
+	Genode::Allocator             &_md_alloc;
 
 	/**
 	 * Connection to the parent Ram session (usually core's Ram session)
 	 */
-	Genode::Ram_connection _parent_ram;
+	Genode::Ram_connection         _parent_ram;
 	/**
 	 * Connection to the parent Rm session for creating new Region_maps (usually core's Rm session)
 	 */
-	Genode::Rm_connection  _parent_rm;
+	Genode::Rm_connection          _parent_rm;
 	/**
 	 * List of managed dataspaces (= Region maps) given to the client
 	 */
-	Genode::List<Region_map_info> _managed_dataspaces;
+	Genode::List<Region_map_info>  _managed_dataspaces;
 	/**
 	 * Receiver of page faults
 	 */
-	Genode::Signal_receiver       _receiver;
+	Genode::Signal_receiver        _receiver;
 	/**
 	 * Fault handler which marks and attaches dataspaces associated with the faulting address
 	 */
-	Rtcr::Fault_handler           _page_fault_handler;
+	Rtcr::Fault_handler            _page_fault_handler;
 	// TODO create one fault handler for all three Region maps (address space, stack area, linker area)
 
 
@@ -342,7 +372,7 @@ private:
 	 */
 	void _delete_rm_info(Region_map_info *rm_info)
 	{
-		// TODO Do this removing in the destructor of Region_map_info
+		// TODO Do the removing/deleting in the destructor of Region_map_info
 
 		Attachable_dataspace_info *curr_ds = nullptr;
 
