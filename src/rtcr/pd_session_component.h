@@ -59,12 +59,7 @@ private:
 	 * custom linker area for monitoring the attachments of the Region map
 	 */
 	Rtcr::Region_map_component _linker_area;
-	Genode::Entrypoint _pager_ep;
 
-	void _handle()
-	{
-		Genode::log("handling!");
-	}
 
 public:
 	/**
@@ -83,11 +78,8 @@ public:
 		_parent_pd    (env, label),
 		_address_space(_ep, _md_alloc, _parent_pd.address_space(), "address_space"),
 		_stack_area   (_ep, _md_alloc, _parent_pd.stack_area(),    "stack_area"),
-		_linker_area  (_ep, _md_alloc, _parent_pd.linker_area(),   "linker_area"),
-		_pager_ep(env, 16*1024, "region_map pager_ep")
+		_linker_area  (_ep, _md_alloc, _parent_pd.linker_area(),   "linker_area")
 	{
-		Genode::Signal_handler<Rtcr::Pd_session_component> sigh{_pager_ep, *this, &Rtcr::Pd_session_component::_handle};
-		_address_space.fault_handler(sigh);
 		if(verbose_debug) Genode::log("Pd_session_component created");
 	}
 
