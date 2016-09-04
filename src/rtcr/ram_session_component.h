@@ -23,7 +23,14 @@ namespace Rtcr {
 	class Ram_session_component;
 }
 
-
+/**
+ * Struct which holds information about a Region_map:
+ *
+ * - Capability of the Region_map to monitor
+ * - Capability of the Region_map's dataspace
+ * - List of Dataspaces which shall be attached to the Region_map
+ * - Signal_context for handling page faults
+ */
 struct Rtcr::Region_map_info : public Genode::List<Region_map_info>::Element
 {
 	/**
@@ -56,10 +63,25 @@ struct Rtcr::Region_map_info : public Genode::List<Region_map_info>::Element
 	:
 		ref_region_map(region_map), ref_managed_dataspace(md_cap), attachable_dataspaces(), context()
 	{ }
+
+	/**
+	 * Find Region_map_info by using a specific Dataspace_capability
+	 *
+	 * \param cap Dataspace_capability of the corresponding managed dataspace
+	 *
+	 * \return Region_map_info with the corresponding Capability
+	 */
+	Region_map_info *find_by_cap(Genode::Dataspace_capability cap)
+	{
+		if(cap == ref_region_map)
+			return this;
+		Region_map_info *region_map_info = next();
+		return region_map_info ? region_map_info->find_by_cap(cap) : 0;
+	}
 };
 
 /**
- * Struct which holds information about a dataspace:
+ * Struct which holds information about a Dataspace:
  *
  * - Which Region_map does it belong to
  * - where shall it be attached,
@@ -68,6 +90,11 @@ struct Rtcr::Region_map_info : public Genode::List<Region_map_info>::Element
  */
 struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspace_info>::Element
 {
+	/**
+	 * Enable log output for debugging
+	 */
+	static constexpr bool verbose_debug = true;
+
 	/**
 	 * Reference Region_map_info to which this dataspace belongs
 	 */
@@ -102,12 +129,10 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	 * \param attached        Indicates whether the dataspace is attached in the Region_map
 	 */
 	Attachable_dataspace_info(Rtcr::Region_map_info &region_map_info, Genode::Dataspace_capability ds_cap,
-			Genode::addr_t local_addr, Genode::size_t size, bool attached = false)
+			Genode::addr_t local_addr, Genode::size_t size)
 	:
-		ref_region_map_info(region_map_info), dataspace(ds_cap), local_addr(local_addr), size(size), attached(attached)
-	{
-		if(attached) attach();
-	}
+		ref_region_map_info(region_map_info), dataspace(ds_cap), local_addr(local_addr), size(size), attached(false)
+	{ }
 
 	/**
 	 * Find Attachable_dataspace_info which contains the address addr
@@ -129,20 +154,35 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	 */
 	void attach()
 	{
-		Genode::log("  Attaching dataspace ", dataspace.local_name(), " to Region_map ", ref_region_map_info.ref_region_map.local_name());
-		Genode::log("    attached? ", attached?"yes":"no");
 		if(!attached)
 		{
+			if(verbose_debug)
+			{
+				Genode::log("Attaching dataspace ", dataspace.local_name(),
+						" to managed dataspace ", ref_region_map_info.ref_managed_dataspace.local_name(),
+						" on location ", Genode::Hex(local_addr), " (local to Region_map)");
+			}
+
+			// Attaching Dataspace to designated location
 			Genode::addr_t addr =
 					Genode::Region_map_client{ref_region_map_info.ref_region_map}.attach_at(dataspace, local_addr);
 
+			// Dataspace was not attached on the right location
 			if(addr != local_addr)
 			{
-				Genode::warning("Attachable_dataspace_info::attach Returned address is unequal to local_addr");
-				Genode::warning("  ", Genode::Hex(addr), " != ", Genode::Hex(local_addr));
+				Genode::warning("Attachable_dataspace_info::attach Dataspace was not attached on its designated location!");
+				Genode::warning("  designated", Genode::Hex(local_addr), " != attached=", Genode::Hex(addr));
 			}
 
+			// Mark as attached
 			attached = true;
+		}
+		else
+		{
+			Genode::warning("Trying to attach an already attached Dataspace:",
+					" DS ", dataspace.local_name(),
+					" MD ", ref_region_map_info.ref_managed_dataspace.local_name(),
+					" Loc ", Genode::Hex(local_addr));
 		}
 	}
 
@@ -153,9 +193,18 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	{
 		if(attached)
 		{
+			// Detaching Dataspace
 			Genode::Region_map_client{ref_region_map_info.ref_region_map}.detach(local_addr);
 
+			// Mark as detached
 			attached = false;
+		}
+		else
+		{
+			Genode::warning("Trying to detach an already detached Dataspace:",
+					" DS ", dataspace.local_name(),
+					" RM ", ref_region_map_info.ref_region_map.local_name(),
+					" Loc ", Genode::Hex(local_addr));
 		}
 	}
 };
@@ -163,30 +212,33 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 class Rtcr::Fault_handler : public Genode::Thread
 {
 private:
+	static constexpr bool verbose_debug = false;
 	Genode::Signal_receiver             &_receiver;
 	Genode::List<Rtcr::Region_map_info> &_managed_dataspaces;
 
 	void _handle_fault()
 	{
-		Genode::log("handling fault!");
 		Genode::Region_map::State state;
 
-		// Current managed_dataspace
+		// Find first faulting Region map in the list of managed dataspaces
 		Rtcr::Region_map_info *curr_md = _managed_dataspaces.first();
-		Genode::log("curr_md.first() = ", _managed_dataspaces.first());
-
 		for( ; curr_md; curr_md = curr_md->next())
 		{
 			Genode::Region_map_client rm_client {curr_md->ref_region_map};
-			Genode::log("    region_map ", curr_md->ref_region_map.local_name(), " state is ",
-				rm_client.state().type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
-				rm_client.state().type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
-				rm_client.state().type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
-				" pf_addr=", Genode::Hex(rm_client.state().addr));
 			// found!
 			if(rm_client.state().type != Genode::Region_map::State::READY)
 			{
 				state = rm_client.state();
+
+				if(verbose_debug)
+				{
+				Genode::log("  region_map ", curr_md->ref_region_map.local_name(), " state is ",
+					state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
+					state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
+					state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
+					" pf_addr=", Genode::Hex(state.addr));
+				}
+
 				break;
 			}
 		}
@@ -195,7 +247,7 @@ private:
 		Rtcr::Attachable_dataspace_info *dataspace_info =
 				curr_md->attachable_dataspaces.first()->find_by_addr(state.addr);
 
-		Genode::log("  dataspace_info = ", dataspace_info);
+		//Genode::log("  dataspace_info = ", dataspace_info);
 
 		// Check if a dataspace was found
 		if(!dataspace_info)
@@ -228,33 +280,101 @@ public:
 	}
 };
 
+/**
+ * \brief This custom Ram session intercepts the alloc and free methods to provide an incremental checkpoint mechanism.
+ *
+ * This custom Ram session intercepts the alloc method to provide the client (e.g. child of rtcr) with managed dataspaces
+ * instead of physical dataspaces. Each managed dataspace is a Region map. Each Region map has a number of dataspaces of
+ * the same size. Each dataspace has its own location in the Region map. And finally, each managed dataspace has the same
+ * page fault handler.
+ * After the creation of a managed dataspace all internal dataspaces are detached. When the client accesses a region of the
+ * managed dataspace a page fault is caused and caught by the page fault handler. This handler attaches the corresponding
+ * dataspace and marks it as attached.
+ * Now, rtcr knows which regions were accessed by the child and can copy the accessed dataspaces.
+ *
+ */
 class Rtcr::Ram_session_component : public Genode::Rpc_object<Genode::Ram_session>
 {
 private:
+	/**
+	 * Enable log output for debugging
+	 */
 	static constexpr bool verbose_debug = true;
 
+	/**
+	 * Environment of creator
+	 */
 	Genode::Env        &_env;
+	/**
+	 * Allocator for objects belonging to the monitoring of the managed dataspaces (e.g. Region_map_info and Attachable_dataspace_info)
+	 */
 	Genode::Allocator  &_md_alloc;
 
 	/**
 	 * Connection to the parent Ram session (usually core's Ram session)
 	 */
 	Genode::Ram_connection _parent_ram;
-	Genode::Rm_connection  _parent_rm;
-
 	/**
-	 * List of managed dataspaces (=Region maps) given to the client
+	 * Connection to the parent Rm session for creating new Region_maps (usually core's Rm session)
+	 */
+	Genode::Rm_connection  _parent_rm;
+	/**
+	 * List of managed dataspaces (= Region maps) given to the client
 	 */
 	Genode::List<Region_map_info> _managed_dataspaces;
 	/**
-	 * Fault handler which marks and attaches dataspaces associated with the faulting address
+	 * Receiver of page faults
 	 */
 	Genode::Signal_receiver       _receiver;
+	/**
+	 * Fault handler which marks and attaches dataspaces associated with the faulting address
+	 */
 	Rtcr::Fault_handler           _page_fault_handler;
+	// TODO create one fault handler for all three Region maps (address space, stack area, linker area)
 
+
+	/**
+	 * Removes page fault handler from Region_map,
+	 * deletes the Region_map_info and its Attachable_dataspace_infos, and
+	 * removes the Region_map_info from managed_dataspaces
+	 *
+	 * \param rm_info Pointer to the Region_map_info to delete
+	 */
+	void _delete_rm_info(Region_map_info *rm_info)
+	{
+		// TODO Do this removing in the destructor of Region_map_info
+
+		Attachable_dataspace_info *curr_ds = nullptr;
+
+		// Remove page fault handler from Region_map
+		_receiver.dissolve(&rm_info->context);
+
+		// Delete Attachable_dataspace_infos from current Region_map_info
+		while((curr_ds = rm_info->attachable_dataspaces.first()))
+		{
+			// Remove current Attachable_dataspace_info from the list
+			rm_info->attachable_dataspaces.remove(curr_ds);
+
+			// Delete current Attachable_dataspace_info from the allocator
+			Genode::destroy(_md_alloc, curr_ds);
+		}
+
+		// Remove current Region_map_info from the list
+		_managed_dataspaces.remove(rm_info);
+
+		// Delete current Region_map_info from the allocator
+		Genode::destroy(_md_alloc, rm_info);
+	}
 
 public:
 
+	/**
+	 * Constructor
+	 *
+	 * \param env      Environment for creating a session to parent's RAM service
+	 * \param md_alloc Allocator for Region_map_info and Attachable_dataspace_info
+	 * \param name     Label for parent's Ram session
+	 */
 	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, const char *name)
 	:
 		_env       (env),
@@ -269,12 +389,27 @@ public:
 		if(verbose_debug) Genode::log("Ram_session_component created");
 	}
 
+	/**
+	 * Destructor
+	 */
 	~Ram_session_component()
 	{
-		// TODO do for each Region_map _receiver.dissolve(&_context);
+		Region_map_info *curr_md = nullptr;
+
+		// Remove page fault handler from all Region_maps,
+		// delete all Region_map_infos with their Attachable_dataspaces_infos
+		while((curr_md = _managed_dataspaces.first()))
+		{
+			// Implicitly removes the first Region_map_info from the managed dataspaces list
+			_delete_rm_info(curr_md);
+		}
+
 		if(verbose_debug) Genode::log("Ram_session_component destroyed");
 	}
 
+	/**
+	 * Return the capability to parent's Ram session
+	 */
 	Genode::Ram_session_capability parent_cap()
 	{
 		return _parent_ram.cap();
@@ -284,17 +419,26 @@ public:
 	 ** Ram_session interface **
 	 ***************************/
 
+	/**
+	 * Allocate a managed dataspace with corresponding dataspaces which are associated with this managed dataspace
+	 *
+	 * \param size   Size of the managed dataspace
+	 * \param cached Not used here; only forwarded
+	 *
+	 * \return Ram_dataspace_capability of the managed dataspace
+	 */
 	Genode::Ram_dataspace_capability alloc(Genode::size_t size, Genode::Cache_attribute cached) override
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::alloc()");
-			Genode::log("  size=", Genode::Hex(size));
+			Genode::log("Ram::alloc(size=", Genode::Hex(size),")");
 		}
 
 		enum { GRANULARITY = 4096 };
+		Genode::size_t ds_size = static_cast<Genode::size_t>(GRANULARITY);
 
 		// TODO change from pages to allow arbitrary dataspace size (but they must be multiple of a pagesize)
+		// Compute the number of dataspaces which the managed dataspace shall contain
 		Genode::size_t rest_page = size % GRANULARITY;
 		Genode::size_t num_pages = (size / GRANULARITY) + (rest_page == 0 ? 0 : 1);
 
@@ -316,7 +460,7 @@ public:
 		Rtcr::Region_map_info *rm_info = new (_md_alloc)
 				Rtcr::Region_map_info(new_region_map, new_rm_client.dataspace());
 
-		// Insert into _managed_dataspaces list
+		// Insert into _managed_dataspaces
 		_managed_dataspaces.insert(rm_info);
 
 		// Set our pagefault handler for the Region_map with its own context
@@ -340,26 +484,51 @@ public:
 				return Genode::Capability<Genode::Ram_dataspace>();
 			}
 			// Prepare arguments for creating a Attachable_dataspace_info
-			Genode::addr_t local_addr = static_cast<Genode::addr_t>(GRANULARITY) * i;
-			Genode::size_t size       = static_cast<Genode::size_t>(GRANULARITY);
+			Genode::addr_t local_addr = ds_size * i;
 
-			// Create an attachable dataspace info
-			// which implicitly attaches the dataspace into the corresponding Region_map on the corresponding address
+			// Create an Attachable_dataspace_info
 			Rtcr::Attachable_dataspace_info *att_ds_info =
-					new (_md_alloc) Rtcr::Attachable_dataspace_info(*rm_info, ds_cap, local_addr, size, true);
+					new (_md_alloc) Rtcr::Attachable_dataspace_info(*rm_info, ds_cap, local_addr, ds_size);
+			// Attach the dataspace into the corresponding Region_map on the corresponding address
+			//att_ds_info->attach();
 
-			// Insert into the dataspace list of the corresponding Region_map
+			// Insert into Region_map_infos list of dataspaces
 			rm_info->attachable_dataspaces.insert(att_ds_info);
+		}
+
+		if(verbose_debug)
+		{
+			Genode::log("  Created a managed dataspace (", rm_info->ref_managed_dataspace.local_name(), ")",
+					" containing ", num_pages, " Dataspaces with the size of ", ds_size);
 		}
 
 		// Return the stored managed dataspace capability of the Region_map as a Ram_dataspace_capability
 		return Genode::static_cap_cast<Genode::Ram_dataspace>(rm_info->ref_managed_dataspace);
 	}
 
+	/**
+	 * Frees the managed dataspace and deletes it from _managed_dataspaces
+	 *
+	 * \param ds Capability of the managed dataspace
+	 */
 	void free(Genode::Ram_dataspace_capability ds) override
 	{
 		if(verbose_debug) Genode::log("Ram::free()");
-		// TODO delete/destroy the Region_map corresponding to the capability
+
+		// Find the Region_map_info which represents the Region_map with the passed Dataspace_capability
+		Region_map_info *region_map_info = _managed_dataspaces.first()->find_by_cap(ds);
+
+		// Check whether a corresponding Region_map_info exists
+		if(!region_map_info)
+		{
+			Genode::warning("Region_map not found in Ram::free(). Capability: ", ds.local_name(),
+					" not in managed dataspace list.");
+			return;
+		}
+
+		// Delete the found Region_map_info and remove it from managed_dataspaces
+		_delete_rm_info(region_map_info);
+
 		_parent_ram.free(ds);
 	}
 
@@ -367,8 +536,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::ref_account()");
-			Genode::log("  ref: ", ram_session.local_name());
+			Genode::log("Ram::ref_account(ref=", ram_session.local_name(), ")");
 		}
 
 		return _parent_ram.ref_account(ram_session);
@@ -378,8 +546,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::transfer_quota()");
-			Genode::log("  to: ", ram_session.local_name());
+			Genode::log("Ram::transfer_quota(to=", ram_session.local_name(), ")");
 		}
 		return _parent_ram.transfer_quota(ram_session, amount);
 	}
