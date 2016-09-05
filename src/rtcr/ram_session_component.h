@@ -235,13 +235,14 @@ private:
 	Genode::List<Rtcr::Region_map_info> &_managed_dataspaces;
 
 	/**
-	 * Handle page fault signal by finding the faulting region map and attaching the designated dataspace on the faulting address
+	 * Find the first faulting Region_map in the list of managed dataspaces
+	 *
+	 * \return Pointer to Region_map_info which contains the faulting Region_map
 	 */
-	void _handle_fault()
+	Region_map_info *_find_faulting_rm_info()
 	{
 		Genode::Region_map::State state;
 
-		// Find first faulting Region map in the list of managed dataspaces
 		Rtcr::Region_map_info *curr_md = _managed_dataspaces.first();
 		for( ; curr_md; curr_md = curr_md->next())
 		{
@@ -250,30 +251,43 @@ private:
 			// If the region map is found, cancel the search and do not override the pointer to the corresponding Region_map_info
 			if(rm_client.state().type != Genode::Region_map::State::READY)
 			{
-				state = rm_client.state();
-
-				if(verbose_debug)
-				{
-				Genode::log("Handle fault: Managed dataspace ", curr_md->ref_managed_dataspace.local_name(), " state is ",
-					state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
-					state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
-					state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
-					" pf_addr=", Genode::Hex(state.addr));
-				}
-
-				break;
+				return curr_md;
 			}
+		}
+
+		return curr_md;
+	}
+
+	/**
+	 * Handle page fault signal by finding the faulting region map and attaching the designated dataspace on the faulting address
+	 */
+	void _handle_fault()
+	{
+		// Find faulting Region_map_info
+		Region_map_info *faulting_rm_info = _find_faulting_rm_info();
+
+		// Get state of faulting Region_map
+		Genode::Region_map::State state = Genode::Region_map_client{faulting_rm_info->ref_region_map}.state();
+
+		if(verbose_debug)
+		{
+		Genode::log("Handle fault: Managed dataspace ",
+				faulting_rm_info->ref_managed_dataspace.local_name(), " state is ",
+				state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
+				state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
+				state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
+				" pf_addr=", Genode::Hex(state.addr));
 		}
 
 		// Find dataspace which contains the faulting address
 		Rtcr::Attachable_dataspace_info *dataspace_info =
-				curr_md->attachable_dataspaces.first()->find_by_addr(state.addr);
+				faulting_rm_info->attachable_dataspaces.first()->find_by_addr(state.addr);
 
 		// Check if a dataspace was found
 		if(!dataspace_info)
 		{
 			Genode::warning("No designated dataspace for addr = ", state.addr,
-					" in Region_map ", curr_md->ref_region_map.local_name());
+					" in Region_map ", faulting_rm_info->ref_region_map.local_name());
 			return;
 		}
 
@@ -566,7 +580,7 @@ public:
 		{
 			Genode::log("  Created a managed dataspace (", rm_info->ref_managed_dataspace.local_name(), ")",
 					" containing ", num_dataspaces, "*", ds_size,
-					" + ", remaining_dataspace_size, " Dataspaces");
+					" + ", (remaining_dataspace_size == 0 ? "" : "1*"), remaining_dataspace_size, " Dataspaces");
 		}
 
 		// Return the stored managed dataspace capability of the Region_map as a Ram_dataspace_capability
