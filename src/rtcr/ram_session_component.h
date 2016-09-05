@@ -14,6 +14,7 @@
 #include <rm_session/connection.h>
 #include <dataspace/client.h>
 #include <util/retry.h>
+#include <util/misc_math.h>
 
 
 namespace Rtcr {
@@ -329,7 +330,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = true;
 
 	/**
 	 * Environment of creator component (usually rtcr)
@@ -361,6 +362,11 @@ private:
 	 */
 	Rtcr::Fault_handler            _page_fault_handler;
 	// TODO create one fault handler for all three Region maps (address space, stack area, linker area)
+	/**
+	 * Size of Dataspaces which are associated with the managed dataspace
+	 * _granularity is a multiple of a pagesize (4096 Byte)
+	 */
+	Genode::size_t                 _granularity;
 
 
 	/**
@@ -401,11 +407,12 @@ public:
 	/**
 	 * Constructor
 	 *
-	 * \param env      Environment for creating a session to parent's RAM service
-	 * \param md_alloc Allocator for Region_map_info and Attachable_dataspace_info
-	 * \param name     Label for parent's Ram session
+	 * \param env         Environment for creating a session to parent's RAM service
+	 * \param md_alloc    Allocator for Region_map_info and Attachable_dataspace_info
+	 * \param name        Label for parent's Ram session
+	 * \param granularity Size of Dataspaces designated for the managed dataspaces in multiple of a pagesize
 	 */
-	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, const char *name)
+	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, const char *name, Genode::size_t granularity)
 	:
 		_env       (env),
 		_md_alloc  (md_alloc),
@@ -413,7 +420,8 @@ public:
 		_parent_rm (env),
 		_managed_dataspaces(),
 		_receiver(),
-		_page_fault_handler(env, _receiver, _managed_dataspaces)
+		_page_fault_handler(env, _receiver, _managed_dataspaces),
+		_granularity(granularity)
 	{
 		_page_fault_handler.start();
 		if(verbose_debug) Genode::log("Ram_session_component created");
@@ -464,18 +472,22 @@ public:
 			Genode::log("Ram::alloc(size=", Genode::Hex(size),")");
 		}
 
-		enum { GRANULARITY = 4096 };
-		Genode::size_t ds_size = static_cast<Genode::size_t>(GRANULARITY);
+		// Size of a memory page
+		const Genode::size_t PAGESIZE = 4096;
 
-		// TODO change from pages to allow arbitrary dataspace size (but they must be multiple of a pagesize)
-		// Compute the number of dataspaces which the managed dataspace shall contain
-		Genode::size_t rest_page = size % GRANULARITY;
-		Genode::size_t num_pages = (size / GRANULARITY) + (rest_page == 0 ? 0 : 1);
+		// Size of a dataspace which will be associated with a managed dataspace
+		Genode::size_t ds_size = PAGESIZE * _granularity;
+
+		// Number of whole dataspace
+		Genode::size_t num_dataspaces = size / ds_size;
+
+		// Size of the remaining dataspace in a multiple of a pagesize
+		Genode::size_t remaining_dataspace_size = Genode::align_addr(size % ds_size, 12); // 12 = log2(4096)
 
 		// Create a Region map; if Rm_session is out of ram_quota, upgrade it
 		Genode::Capability<Genode::Region_map> new_region_map =
 			Genode::retry<Genode::Rm_session::Out_of_metadata>(
-				[&] () { return _parent_rm.create(num_pages*GRANULARITY); },
+				[&] () { return _parent_rm.create(num_dataspaces*ds_size + remaining_dataspace_size); },
 				[&] ()
 				{
 					char args[Genode::Parent::Session_args::MAX_SIZE];
@@ -496,8 +508,8 @@ public:
 		// Set our pagefault handler for the Region_map with its own context
 		new_rm_client.fault_handler(_receiver.manage(&(rm_info->context)));
 
-		// Allocate memory for the new Region_map and Store the information in Region_map_info
-		for(Genode::size_t i = 0; i < num_pages; i++)
+		// Allocate num_dataspaces of Dataspaces and associate them with the Region_map
+		for(Genode::size_t i = 0; i < num_dataspaces; ++i)
 		{
 			Genode::Dataspace_capability ds_cap;
 
@@ -506,7 +518,7 @@ public:
 			{
 				// eager creation of attachments
 				// XXX lazy creation could be an optimization (create dataspaces when they are used)
-				ds_cap = _parent_ram.alloc(GRANULARITY, cached);
+				ds_cap = _parent_ram.alloc(ds_size, cached);
 			}
 			catch(Genode::Ram_session::Quota_exceeded)
 			{
@@ -519,8 +531,34 @@ public:
 			// Create an Attachable_dataspace_info
 			Rtcr::Attachable_dataspace_info *att_ds_info =
 					new (_md_alloc) Rtcr::Attachable_dataspace_info(*rm_info, ds_cap, local_addr, ds_size);
-			// Attach the dataspace into the corresponding Region_map on the corresponding address
-			//att_ds_info->attach();
+
+			// Insert into Region_map_infos list of dataspaces
+			rm_info->attachable_dataspaces.insert(att_ds_info);
+		}
+
+		// Allocate remaining Dataspace and associate it with the Region_map
+		if(remaining_dataspace_size != 0)
+		{
+			Genode::Dataspace_capability ds_cap;
+
+			// Try to allocate a dataspace which will be associated with the new region_map
+			try
+			{
+				// eager creation of attachments
+				// XXX lazy creation could be an optimization (create dataspaces when they are used)
+				ds_cap = _parent_ram.alloc(remaining_dataspace_size, cached);
+			}
+			catch(Genode::Ram_session::Quota_exceeded)
+			{
+				Genode::error("_parent_ram has no memory!");
+				return Genode::Capability<Genode::Ram_dataspace>();
+			}
+			// Prepare arguments for creating a Attachable_dataspace_info
+			Genode::addr_t local_addr = ds_size * num_dataspaces;
+
+			// Create an Attachable_dataspace_info
+			Rtcr::Attachable_dataspace_info *att_ds_info =
+					new (_md_alloc) Rtcr::Attachable_dataspace_info(*rm_info, ds_cap, local_addr, remaining_dataspace_size);
 
 			// Insert into Region_map_infos list of dataspaces
 			rm_info->attachable_dataspaces.insert(att_ds_info);
@@ -529,7 +567,8 @@ public:
 		if(verbose_debug)
 		{
 			Genode::log("  Created a managed dataspace (", rm_info->ref_managed_dataspace.local_name(), ")",
-					" containing ", num_pages, " Dataspaces with the size of ", ds_size);
+					" containing ", num_dataspaces, "*", ds_size,
+					" + ", remaining_dataspace_size, " Dataspaces");
 		}
 
 		// Return the stored managed dataspace capability of the Region_map as a Ram_dataspace_capability
@@ -576,7 +615,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::transfer_quota(to=", ram_session.local_name(), ")");
+			Genode::log("Ram::transfer_quota(to=", ram_session.local_name(), ", size=", amount, ")");
 		}
 		return _parent_ram.transfer_quota(ram_session, amount);
 	}

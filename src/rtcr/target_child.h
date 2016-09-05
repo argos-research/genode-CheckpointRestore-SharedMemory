@@ -53,6 +53,10 @@ private:
 	 */
 	Genode::Entrypoint  _child_ep;
 	/**
+	 * Granularity for incremental checkpointing in a multiple of pagesize
+	 */
+	Genode::size_t      _granularity;
+	/**
 	 * Child's resources
 	 */
 	struct Resources
@@ -80,17 +84,18 @@ private:
 		/**
 		 * Constructor
 		 *
-		 * \param env      Local environment
-		 * \param ep       Entrypoint for child's resources
-		 * \param md_alloc Local allocator
-		 * \param name     Child's unique name and also name of the rom module
+		 * \param env         Local environment
+		 * \param ep          Entrypoint for child's resources
+		 * \param md_alloc    Local allocator
+		 * \param name        Child's unique name and also name of the rom module
+		 * \param granularity Granularity for incremental checkpointing in multiple of pagesize
 		 */
-		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name)
+		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name, Genode::size_t granularity)
 		:
 			ep (ep),
 			pd (env, md_alloc, this->ep, name),
 			cpu(env, md_alloc, pd.parent_cap(), name),
-			ram(env, md_alloc, name),
+			ram(env, md_alloc, name, granularity),
 			rom(env, name)
 		{
 			// Manage child's custom resources
@@ -154,18 +159,20 @@ public:
 	 * \param md_alloc        Local allocator for child's resources and for storing services
 	 * \param parent_services Registry for services provided by parent. It is shared by all children.
 	 * \param name            Child's unique name and filename of child's rom module
+	 * \param granularity     Granularity for incremental checkpointing in multiple of pagesize
 	 *
 	 * TODO Separate child's name and filename to support multiple child's with the same rom module
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-			Genode::Service_registry &parent_services, const char *name)
+			Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
 	:
 		_name           (name),
 		_env            (env),
 		_md_alloc       (md_alloc),
 		_resources_ep   (_env, 16*1024, "resources ep"),
 		_child_ep       (_env, 16*1024, "child ep"),
-		_resources      (_env, _resources_ep, _md_alloc, _name.string()),
+		_granularity    (granularity),
+		_resources      (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
 		_initial_thread (_resources.cpu, _resources.pd.cap(), _name.string()),
 		_address_space  (_resources.pd.address_space()),
 		_parent_services(parent_services),
