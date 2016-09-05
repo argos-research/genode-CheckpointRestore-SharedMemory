@@ -376,10 +376,8 @@ private:
 	 *
 	 * \param rm_info Pointer to the Region_map_info to delete
 	 */
-	void _delete_rm_info(Region_map_info *rm_info)
+	void _delete_rm_info_and_att_ds_infos(Region_map_info *rm_info)
 	{
-		// TODO Do the removing/deleting in the destructor of Region_map_info
-
 		Attachable_dataspace_info *curr_ds = nullptr;
 
 		// Remove page fault handler from Region_map
@@ -439,7 +437,7 @@ public:
 		while((curr_md = _managed_dataspaces.first()))
 		{
 			// Implicitly removes the first Region_map_info from the managed dataspaces list
-			_delete_rm_info(curr_md);
+			_delete_rm_info_and_att_ds_infos(curr_md);
 		}
 
 		if(verbose_debug) Genode::log("Ram_session_component destroyed");
@@ -554,7 +552,7 @@ public:
 				return Genode::Capability<Genode::Ram_dataspace>();
 			}
 			// Prepare arguments for creating a Attachable_dataspace_info
-			Genode::addr_t local_addr = ds_size * num_dataspaces;
+			Genode::addr_t local_addr = num_dataspaces * ds_size;
 
 			// Create an Attachable_dataspace_info
 			Rtcr::Attachable_dataspace_info *att_ds_info =
@@ -595,8 +593,9 @@ public:
 			return;
 		}
 
-		// Delete the found Region_map_info and remove it from managed_dataspaces
-		_delete_rm_info(region_map_info);
+		// Delete the found Region_map_info including its Attachable_dataspace_infos
+		// and remove it from managed_dataspaces
+		_delete_rm_info_and_att_ds_infos(region_map_info);
 
 		_parent_ram.free(ds);
 	}

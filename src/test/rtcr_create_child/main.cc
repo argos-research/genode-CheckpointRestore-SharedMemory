@@ -26,7 +26,7 @@ struct Rtcr::Main
 
 	Main(Genode::Env &env_) : env(env_)
 	{
-		Target_child child { env, md_heap, parent_services, "sheep_counter", 3 };
+		Target_child child { env, md_heap, parent_services, "sheep_counter", 1 };
 
 		Genode::sleep_forever();
 	}
