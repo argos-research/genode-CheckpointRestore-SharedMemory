@@ -9,6 +9,7 @@
 
 #include <base/attached_ram_dataspace.h>
 #include <cpu_thread/client.h>
+#include <util/misc_math.h>
 
 namespace Rtcr {
 	class Serializer;
@@ -22,20 +23,30 @@ private:
 	Genode::Env &_env;
 	Genode::Attached_ram_dataspace *_ds;
 	/**
-	 * Shows to the next free memory space
+	 * Pointer to where to store the data
+	 * Points to the next free memory space
 	 */
 	void *_buf_ptr;
 
+	/**
+	 * Calculates the size for the buffer
+	 *
+	 * \return Size in bytes
+	 */
 	Genode::size_t _calculate_buffer_size()
 	{
 		Genode::size_t result = 0;
 
+		/**
+		 * Count all threads
+		 */
 		Rtcr::Thread_info *curr_thread = _threads.first();
 		for( ; curr_thread; curr_thread = curr_thread->next())
 		{
 			result += THREAD_SIZE;
 		}
 
+		// Counts all regions
 		Rtcr::Region_info *curr_region = _regions.first();
 		for( ; curr_region; curr_region = curr_region->next())
 		{
@@ -43,9 +54,7 @@ private:
 		}
 
 		// Round up to full pages
-		Genode::size_t rest_page = result % 4096;
-		Genode::size_t num_pages = (result / 4096) + (rest_page == 0 ? 0 : 1);
-		result = 4096 * num_pages;
+		result = Genode::align_addr(result, 12);
 
 		return result;
 	}
@@ -55,7 +64,7 @@ private:
 	 *
 	 * \param thread Thread to serialize
 	 *
-	 * \return Bytes consumed in the dataspace
+	 * \return Bytes consumed
 	 */
 	Genode::size_t _serialize(Rtcr::Thread_info &thread)
 	{
@@ -104,7 +113,7 @@ private:
 	 *
 	 * \param  threads List of threads
 	 *
-	 * \return Bytes consumed in the dataspace
+	 * \return Bytes consumed
 	 */
 	Genode::size_t _serialize(Genode::List<Rtcr::Thread_info> &threads)
 	{
@@ -127,8 +136,8 @@ public:
 	:
 		_threads(threads),
 		_regions(regions),
-		_env(env),
-		_ds(_env.ram(), _env.rm(), _calculate_buffer_size()),
+		_env    (env),
+		_ds     (_env.ram(), _env.rm(), _calculate_buffer_size()),
 		_buf_ptr(_ds->local_addr<void>())
 	{ }
 };
