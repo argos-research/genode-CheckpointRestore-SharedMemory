@@ -152,21 +152,26 @@ public:
 	void child_created() { _child_created = true; }
 
 	/**
-	 * Create a copy of a list containing regions attached to this Region map
+	 * Create a copy of regions list containing regions attached to this Region map
 	 *
 	 * \param alloc Allocator where the new list shall be stored
+	 *
+	 * \return new list
 	 */
 	Genode::List<Region_info> copy_regions_list(Genode::Allocator &alloc)
 	{
 		Genode::List<Region_info> result;
 
+		// Store all Region_infos
 		Region_info *curr = _regions.first();
-
 		for(; curr; curr = curr->next())
 		{
-			Region_info *region = new (alloc) Region_info(
-					curr->ds_cap, curr->size, curr->offset, curr->local_addr,
-					curr->executable, curr->user_specific);
+			// Create a copy of Region_info
+			Region_info *region =
+					new (alloc) Region_info(curr->ds_cap, curr->size, curr->offset,
+							curr->local_addr, curr->executable, curr->user_specific);
+
+			// Attach new Region_info to the results
 			result.insert(region);
 		}
 
