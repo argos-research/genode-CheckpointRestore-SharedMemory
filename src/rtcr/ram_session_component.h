@@ -31,6 +31,10 @@ namespace Rtcr {
  * - Capability of the Region_map's dataspace
  * - List of Dataspaces which shall be attached to the Region_map
  * - Signal_context for handling page faults
+ *
+ * TODO for class:
+ * - construct/destruct Attachable_dataspace_info
+ * - create copy of itself (using a provided allocator)
  */
 struct Rtcr::Region_map_info : public Genode::List<Region_map_info>::Element
 {
@@ -375,7 +379,6 @@ private:
 	 * Fault handler which marks and attaches dataspaces associated with the faulting address
 	 */
 	Rtcr::Fault_handler            _page_fault_handler;
-	// TODO create one fault handler for all three Region maps (address space, stack area, linker area)
 	/**
 	 * Size of Dataspaces which are associated with the managed dataspace
 	 * _granularity is a multiple of a pagesize (4096 Byte)
@@ -463,6 +466,48 @@ public:
 	Genode::Ram_session_capability parent_cap()
 	{
 		return _parent_ram.cap();
+	}
+
+	/**
+	 * Create a copy of managed dataspaces list containing managed dataspaces handed over to the client
+	 *
+	 * \param alloc Allocator where the new list shall be stored
+	 *
+	 * \return new list
+	 */
+	Genode::List<Rtcr::Region_map_info> copy_managed_dataspaces_list(Genode::Allocator &alloc)
+	{
+		Genode::List<Rtcr::Region_map_info> result;
+
+		// Store all Region_map_infos
+		Rtcr::Region_map_info *curr_md = _managed_dataspaces.first();
+		for(; curr_md; curr_md = curr_md->next())
+		{
+			// Create a copy of Region_map_info
+			Rtcr::Region_map_info *new_rm_info =
+					new (alloc) Rtcr::Region_map_info(curr_md->ref_region_map, curr_md->ref_managed_dataspace);
+
+			// Store all Attachable_dataspace_infos of the Region_map_info
+			Rtcr::Attachable_dataspace_info *curr_ds = curr_md->attachable_dataspaces.first();
+			for(; curr_ds; curr_ds = curr_ds->next())
+			{
+				// Create a copy of Attachable_dataspace_info
+				Rtcr::Attachable_dataspace_info *new_att_ds_info =
+						new (alloc) Rtcr::Attachable_dataspace_info(*new_rm_info, curr_ds->dataspace,
+								curr_ds->local_addr, curr_ds->size);
+
+				// Copy missing members not included in the constructor
+				new_att_ds_info->attached = curr_ds->attached;
+
+				// Attach new Attachable_dataspace_info to the new Region_map_info
+				new_rm_info->attachable_dataspaces.insert(new_att_ds_info);
+			}
+
+			// Attach new Region_map_info to the results
+			result.insert(new_rm_info);
+		}
+
+		return result;
 	}
 
 	/***************************
