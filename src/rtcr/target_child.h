@@ -211,7 +211,7 @@ public:
 	{
 		if(verbose_debug) Genode::log("Session request: ", service_name, " ", args);
 
-		// TODO To support grandchildren, PD, CPU, and RAM session has also to be provided to them
+		// TODO Support grandchildren: PD, CPU, and RAM session has also to be provided to them
 
 		Genode::Service *service = 0;
 
@@ -230,7 +230,7 @@ public:
 		if(service)
 			return service;
 
-		// Service not known: Assume parent provides it and fill parent service registry on demand
+		// Service not known: Assume parent provides it; fill parent service registry on demand
 		if(!service)
 		{
 			service = new (_md_alloc) Genode::Parent_service(service_name);
