@@ -14,7 +14,7 @@ using namespace Genode;
 struct Main
 {
 	Env                  &env;
-	Entrypoint            pager_ep;
+	Entrypoint            fault_handle_ep;
 	Signal_handler<Main>  sigh;
 
 	void _handle_fault()
@@ -33,15 +33,15 @@ struct Main
 		log("  Allocating dataspace and attaching it to the region map");
 		// Creating dataspace
 		Dataspace_capability ds = env.ram().alloc(4096);
-		// Attaching dataspace to the pagefault address and page-aligned
+		// Attaching dataspace to the page-aligned fault address (rounding down)
 		env.rm().attach_at(ds, state.addr & ~(4096 - 1));
 	}
 
 	Main(Env &env)
 	:
 		env(env),
-		pager_ep(env, 16*1024, "pager_ep"),
-		sigh(pager_ep, *this, &Main::_handle_fault)
+		fault_handle_ep(env, 16*1024, "fault handle"),
+		sigh(fault_handle_ep, *this, &Main::_handle_fault)
 	{
 		log("--- pf-signal_handler started ---");
 
@@ -50,6 +50,8 @@ struct Main
 
 		// Causing page fault
 		*((unsigned int*)0x1000) = 1;
+
+		// Example will work, if the Entrypoint class is fixed (e.g. Signal_proxy_thread is started in its ctor)
 
 		log("--- pf-signal_handler ended ---");
 	}
