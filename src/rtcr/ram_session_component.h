@@ -368,6 +368,10 @@ private:
 	 */
 	Genode::Rm_connection          _parent_rm;
 	/**
+	 * Lock to make _managed_dataspaces thread-safe
+	 */
+	Genode::Lock                   _managed_dataspaces_lock;
+	/**
 	 * List of managed dataspaces (= Region maps) given to the client
 	 */
 	Genode::List<Region_map_info>  _managed_dataspaces;
@@ -433,6 +437,7 @@ public:
 		_md_alloc  (md_alloc),
 		_parent_ram(env, name),
 		_parent_rm (env),
+		_managed_dataspaces_lock(),
 		_managed_dataspaces(),
 		_receiver(),
 		_page_fault_handler(env, _receiver, _managed_dataspaces),
@@ -503,7 +508,7 @@ public:
 				new_rm_info->attachable_dataspaces.insert(new_att_ds_info);
 			}
 
-			// Attach new Region_map_info to the results
+			// Attach new Region_map_info to the result
 			result.insert(new_rm_info);
 		}
 
@@ -526,7 +531,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::alloc(size=", Genode::Hex(size),")");
+			Genode::log("Ram::alloc(size=", Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),")");
 		}
 
 		// Size of a memory page
@@ -558,9 +563,6 @@ public:
 		// Create Region_map_info which contains a list of corresponding dataspaces
 		Rtcr::Region_map_info *rm_info = new (_md_alloc)
 				Rtcr::Region_map_info(new_region_map, new_rm_client.dataspace());
-
-		// Insert into _managed_dataspaces
-		_managed_dataspaces.insert(rm_info);
 
 		// Set our pagefault handler for the Region_map with its own context
 		new_rm_client.fault_handler(_receiver.manage(&(rm_info->context)));
@@ -621,9 +623,13 @@ public:
 			rm_info->attachable_dataspaces.insert(att_ds_info);
 		}
 
+		// Insert new Region_map_info into _managed_dataspaces
+		Genode::Lock::Guard lock_guard(_managed_dataspaces_lock);
+		_managed_dataspaces.insert(rm_info);
+
 		if(verbose_debug)
 		{
-			Genode::log("  Created a managed dataspace (", rm_info->ref_managed_dataspace.local_name(), ")",
+			Genode::log("  Allocated managed dataspace (", rm_info->ref_managed_dataspace.local_name(), ")",
 					" containing ", num_dataspaces, "*", ds_size,
 					" + ", (remaining_dataspace_size == 0 ? "" : "1*"), remaining_dataspace_size, " Dataspaces");
 		}
@@ -654,6 +660,7 @@ public:
 
 		// Delete the found Region_map_info including its Attachable_dataspace_infos
 		// and remove it from managed_dataspaces
+		Genode::Lock::Guard lock_guard(_managed_dataspaces_lock);
 		_delete_rm_info_and_att_ds_infos(region_map_info);
 
 		_parent_ram.free(ds);
