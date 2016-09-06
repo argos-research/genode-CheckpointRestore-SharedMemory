@@ -72,7 +72,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = true;
 
 	/**
 	 * Entrypoint which manages this Region map
@@ -96,13 +96,13 @@ private:
 	 */
 	bool                      _child_created;
 	/**
-	 * List of target's local addresses and their corresponding dataspaces
-	 */
-	Genode::List<Region_info> _regions;
-	/**
 	 * Lock to make _regions thread-safe
 	 */
 	Genode::Lock              _regions_lock;
+	/**
+	 * List of client's dataspaces and their corresponding local addresses
+	 */
+	Genode::List<Region_info> _regions;
 
 public:
 	/**
@@ -119,6 +119,7 @@ public:
 		_parent_rm(rm_cap),
 		_label(label),
 		_child_created(false),
+		_regions_lock(),
 		_regions()
 	{
 		_ep.manage(*this);
@@ -160,6 +161,8 @@ public:
 	 */
 	Genode::List<Region_info> copy_regions_list(Genode::Allocator &alloc)
 	{
+		// Note: Does not need a lock to access _regions, because the child is paused!
+
 		Genode::List<Region_info> result;
 
 		// Store all Region_infos
@@ -171,7 +174,7 @@ public:
 					new (alloc) Region_info(curr->ds_cap, curr->size, curr->offset,
 							curr->local_addr, curr->executable, curr->user_specific);
 
-			// Attach new Region_info to the results
+			// Attach new Region_info to the result
 			result.insert(region);
 		}
 
@@ -190,18 +193,30 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Rm::attach() - ", _label.string(), " child_created=", _child_created?"true":"false");
-			Genode::log("  ","size=", size,
-					", offset=", offset,
-					", local_addr=", (void*)local_addr,
-					", executable=", executable?"true":"false");
+			if(use_local_addr)
+			{
+				Genode::log("Rm<", _label.string(),">::attach(",
+						"ds_cap=",       ds_cap.local_name(),
+						", size=",       Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
+						", offset=",     offset,
+						", local_addr=", Genode::Hex(local_addr, Genode::Hex::PREFIX, Genode::Hex::PAD),
+						", exe=",        executable?"1":"0",
+						")");
+			}
+			else
+			{
+				Genode::log("Rm<", _label.string(),">::attach(",
+						"ds_cap=",   ds_cap.local_name(),
+						", size=",   Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
+						", offset=", offset,
+						", exe=",    executable?"1":"0",
+						")");
+			}
 		}
 
 		// Attach dataspace to real Region map
 		Region_map::Local_addr addr = _parent_rm.attach(
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
-
-		//Genode::log("  poke: ", (void*)addr," = ", (*(unsigned int*)addr));
 
 		// Store information about the attachment
 		Region_info *region = new (_md_alloc) Region_info(ds_cap, size, offset, addr, executable, _child_created);
@@ -212,8 +227,8 @@ public:
 			Genode::size_t ds_size = Genode::Dataspace_client(ds_cap).size();
 			Genode::size_t num_pages = (Genode::size_t)(ds_size/4096);
 
-			Genode::log("  Attached dataspace ", ds_cap.local_name(),
-			" (local) into [", Genode::Hex((Genode::size_t)addr),
+			Genode::log("  Attached dataspace (", ds_cap.local_name(), ")",
+			" into [", Genode::Hex((Genode::size_t)addr),
 			", ", Genode::Hex((Genode::size_t)addr+ds_size), ") ",
 			num_pages, num_pages==1?" page":" pages");
 		}
@@ -230,7 +245,12 @@ public:
 	 */
 	void detach(Region_map::Local_addr local_addr)
 	{
-		if(verbose_debug) Genode::log("Rm::detach() - ", _label.string());
+		if(verbose_debug)
+		{
+			Genode::log("Rm<", _label.string(),">::detach(",
+					"local_addr=", Genode::Hex(local_addr, Genode::Hex::PREFIX, Genode::Hex::PAD),
+					")");
+		}
 
 		// Detach from real region map
 		_parent_rm.detach(local_addr);
@@ -240,7 +260,7 @@ public:
 		Region_info *region = _regions.first()->find_by_addr((Genode::addr_t)local_addr);
 		if(!region)
 		{
-			Genode::warning("Region not found in Rm::detach(). Local address ", (void*)local_addr,
+			Genode::warning("Region not found in Rm::detach(). Local address ", Genode::Hex(local_addr),
 					" not in regions list.");
 			return;
 		}
@@ -249,13 +269,20 @@ public:
 		_regions.remove(region);
 		destroy(_md_alloc, region);
 
-		if(verbose_debug) Genode::log("  Detached dataspace for the local address ", (void*)local_addr);
+		if(verbose_debug)
+		{
+			Genode::log("  Detached dataspace from the local address ", Genode::Hex(local_addr));
+		}
 	}
 
 	void fault_handler(Genode::Signal_context_capability handler)
 	{
 		if(verbose_debug)
-			Genode::log("Rm::fault_handler() - ", _label.string());
+		{
+			Genode::log("Rm<", _label.string(),">::fault_handler(",
+					"handler_cap=", handler.local_name(),
+					")");
+		}
 
 		_parent_rm.fault_handler(handler);
 	}
@@ -263,7 +290,9 @@ public:
 	State state()
 	{
 		if(verbose_debug)
-			Genode::log("Rm::state() - ", _label.string());
+		{
+			Genode::log("Rm<", _label.string(),">::state()");
+		}
 
 		return _parent_rm.state();
 	}
@@ -271,9 +300,19 @@ public:
 	Genode::Dataspace_capability dataspace()
 	{
 		if(verbose_debug)
-			Genode::log("Rm::dataspace() - ", _label.string());
+		{
+			Genode::log("Rm<", _label.string(),">::dataspace()");
+		}
 
-		return _parent_rm.dataspace();
+		Genode::Dataspace_capability ds_cap = _parent_rm.dataspace();
+
+		if(verbose_debug)
+		{
+			Genode::log("  Created managed dataspace (", ds_cap.local_name(), ")",
+					" from Region_map (", _parent_rm.local_name(), ")");
+		}
+
+		return ds_cap;
 	}
 };
 

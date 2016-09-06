@@ -18,13 +18,31 @@ namespace Rtcr {
 	class Cpu_session_component;
 }
 
+/**
+ * Struct which holds a thread capability which belong to the client
+ */
 struct Rtcr::Thread_info : Genode::List<Rtcr::Thread_info>::Element
 {
+	/**
+	 * Capability of the thread
+	 */
 	Genode::Thread_capability thread_cap;
 
+	/**
+	 * Constructor
+	 *
+	 * \param thread_cap Capability of the thread
+	 */
 	Thread_info(Genode::Thread_capability thread_cap)
 	: thread_cap(thread_cap) { }
 
+	/**
+	 * Find Thread_info by using a specific Thread_capability
+	 *
+	 * \param cap Thread_capability
+	 *
+	 * \return Thread_info with the corresponding Capability
+	 */
 	Thread_info *find_by_cap(Genode::Thread_capability cap)
 	{
 		if(thread_cap.local_name() == cap.local_name())
@@ -35,61 +53,125 @@ struct Rtcr::Thread_info : Genode::List<Rtcr::Thread_info>::Element
 
 };
 
+/**
+ * This custom Cpu session intercepts the creation and destruction of threads by the client
+ */
 class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>
 {
 private:
+	/**
+	 * Enable log output for debugging
+	 */
 	static constexpr bool verbose_debug = false;
 
+	/**
+	 * Environment of creator component (usually rtcr)
+	 */
 	Genode::Env       &_env;
+	/**
+	 * Allocator for objects belonging to the monitoring of threads (e.g. Thread_info)
+	 */
 	Genode::Allocator &_md_alloc;
 	/**
-	 * Parent pd session, usually from core
+	 * Parent Pd session, usually from core; used for creating a thread
 	 */
 	Genode::Pd_session_capability _parent_pd_cap;
 	/**
-	 * Connection to parent's cpu session, usually from core
+	 * Connection to parent's Cpu session, usually from core; this class wraps this session
 	 */
 	Genode::Cpu_connection _parent_cpu;
-
-
-
+	/**
+	 * Lock to make _threads thread-safe
+	 */
 	Genode::Lock _threads_lock;
-	Genode::List<Thread_info> _threads;
+	/**
+	 * List of client's thread capabilities
+	 */
+	Genode::List<Rtcr::Thread_info> _threads;
 
 public:
 
+	/**
+	 * Constructor
+	 *
+	 * \param env           Environment for creating a session to parent's Cpu service
+	 * \param md_alloc      Allocator for Thread_info
+	 * \param parent_pd_cap Capability to parent's Pd session for creating new threads
+	 * \param name          Label for parent's Cpu session
+	 */
 	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Pd_session_capability parent_pd_cap, const char *name)
 	:
 		_env          (env),
 		_md_alloc     (md_alloc),
 		_parent_pd_cap(parent_pd_cap),
-		_parent_cpu   (env, name)
+		_parent_cpu   (env, name),
+		_threads_lock (),
+		_threads      ()
 	{
 		if(verbose_debug) Genode::log("Cpu_session_component created");
 	}
 
+	/**
+	 * Destructor
+	 */
 	~Cpu_session_component()
 	{
+		//TODO free allocator from Thread_info objects
 		if(verbose_debug) Genode::log("Cpu_session_component destroyed");
 	}
 
+	/**
+	 * Return parent's Cpu session capability
+	 *
+	 * \return Parent's Cpu session capability
+	 */
 	Genode::Cpu_session_capability parent_cap()
 	{
 		return _parent_cpu.cap();
+	}
+
+	/**
+	 * Create a copy of threads list containing thread capabilities
+	 *
+	 * \param alloc Allocator where the new list shall be stored
+	 *
+	 * \return new list
+	 */
+	Genode::List<Rtcr::Thread_info> copy_threads_list(Genode::Allocator &alloc)
+	{
+		// Note: Does not need a lock to access _threads, because the child is paused!
+
+		Genode::List<Rtcr::Thread_info> result;
+
+		// Store all Thread_infos
+		Rtcr::Thread_info *curr_th = _threads.first();
+		for(; curr_th; curr_th = curr_th->next())
+		{
+			// Create a copy of Thread_info and attach it to result
+			result.insert(new (alloc) Thread_info(curr_th->thread_cap));
+		}
+
+		return result;
 	}
 
 	/***************************
 	 ** Cpu_session interface **
 	 ***************************/
 
+	/**
+	 * Create a thread and store its capability in Thread_info
+	 */
 	Genode::Thread_capability create_thread(Genode::Pd_session_capability /* pd_cap */,
 			Name const &name, Genode::Affinity::Location affinity, Weight weight,
 			Genode::addr_t utcb) override
 	{
-		if(verbose_debug) Genode::log("Cpu::create_thread()\n  Name: ", name.string());
+		if(verbose_debug)
+		{
+			Genode::log("Cpu::create_thread(name=", name.string(), ")");
+		}
 
 		/**
-		 * Note: Use physical core PD instead of virtualized Pd session
+		 * Note: Use parent's Pd session instead of virtualized Pd session
 		 */
 		Genode::Thread_capability thread_cap = _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
 
@@ -97,19 +179,28 @@ public:
 		Genode::Lock::Guard _lock_guard(_threads_lock);
 		_threads.insert(new (_md_alloc) Thread_info(thread_cap));
 
+		if(verbose_debug)
+		{
+			Genode::log("  thread_cap=", thread_cap.local_name());
+		}
+
 		return thread_cap;
 	}
 
+	/**
+	 * Destroy thread and its Thread_info
+	 */
 	void kill_thread(Genode::Thread_capability thread) override
 	{
-		if(verbose_debug) Genode::log("Cpu::kill_thread()");
+		if(verbose_debug) Genode::log("Cpu::kill_thread(cap=", thread.local_name(),")");
+
+		Genode::Lock::Guard lock_guard(_threads_lock);
 
 		// Find thread
-		Genode::Lock::Guard lock_guard(_threads_lock);
 		Thread_info *thread_info = _threads.first()->find_by_cap(thread);
 		if(!thread_info)
 		{
-			Genode::error("Thread with capability ", thread.local_name(), " (local) not found!");
+			Genode::error("Thread with capability ", thread.local_name(), " not found!");
 			return;
 		}
 
