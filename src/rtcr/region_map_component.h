@@ -13,14 +13,14 @@
 #include <dataspace/client.h>
 
 namespace Rtcr {
-	struct Region_info;
+	struct Attached_region_info;
 	class Region_map_component;
 }
 
 /**
  * Record of an attached dataspace
  */
-struct Rtcr::Region_info : public Genode::List<Region_info>::Element
+struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::Element
 {
 	Genode::Dataspace_capability ds_cap;
 	Genode::size_t               size;
@@ -42,7 +42,7 @@ struct Rtcr::Region_info : public Genode::List<Region_info>::Element
 	 * \param user_specific Indicates whether the dataspace is created by the user who has written the child
 	 *                      Dataspaces created before the user had control voer the program are not needed for checkpoint/restore
 	 */
-	Region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
+	Attached_region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
 			Genode::off_t offset, Genode::addr_t local_addr, bool executable, bool user_specific)
 	:
 		ds_cap(ds_cap), size(size), offset(offset), local_addr(local_addr), executable(executable), user_specific(user_specific)
@@ -52,13 +52,13 @@ struct Rtcr::Region_info : public Genode::List<Region_info>::Element
 	 * Find Region which contains the addr
 	 *
 	 * \param  addr Local address in parent's region map
-	 * \return Region_info which contains the local address
+	 * \return Attached_region_info which contains the local address
 	 */
-	Region_info *find_by_addr(Genode::addr_t addr)
+	Attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
 		if((addr >= local_addr) && (addr <= local_addr + size))
 			return this;
-		Region_info *region = next();
+		Attached_region_info *region = next();
 		return region ? region->find_by_addr(addr) : 0;
 	}
 };
@@ -77,32 +77,32 @@ private:
 	/**
 	 * Entrypoint which manages this Region map
 	 */
-	Genode::Entrypoint        &_ep;
+	Genode::Entrypoint                 &_ep;
 	/**
 	 * Allocator for Region map's attachments
 	 */
-	Genode::Allocator         &_md_alloc;
+	Genode::Allocator                  &_md_alloc;
 	/**
 	 * Wrapped region map from parent, usually core
 	 */
-	Genode::Region_map_client _parent_rm;
+	Genode::Region_map_client          _parent_rm;
 	/**
 	 * Name of the Region map for debugging
 	 */
-	Genode::String<32>        _label;
+	Genode::String<32>                 _label;
 	/**
 	 * Indicates whether child has been already created or not
 	 * The dataspaces from the child creation are not needed to be checkpointed/restored
 	 */
-	bool                      _child_created;
+	bool                               _child_created;
 	/**
-	 * Lock to make _regions thread-safe
+	 * Lock to make _attached_regions thread-safe
 	 */
-	Genode::Lock              _regions_lock;
+	Genode::Lock                       _attached_regions_lock;
 	/**
 	 * List of client's dataspaces and their corresponding local addresses
 	 */
-	Genode::List<Region_info> _regions;
+	Genode::List<Attached_region_info> _attached_regions;
 
 public:
 	/**
@@ -119,8 +119,8 @@ public:
 		_parent_rm(rm_cap),
 		_label(label),
 		_child_created(false),
-		_regions_lock(),
-		_regions()
+		_attached_regions_lock(),
+		_attached_regions()
 	{
 		_ep.manage(*this);
 		if(verbose_debug) Genode::log("Region_map_component created");
@@ -134,12 +134,12 @@ public:
 		_ep.dissolve(*this);
 
 		// Destroy all Regions through detach method
-		Region_info *curr;
+		Attached_region_info *curr_at_info;
 
-		Genode::Lock::Guard lock_guard(_regions_lock);
+		Genode::Lock::Guard lock_guard(_attached_regions_lock);
 
-		while((curr = _regions.first()))
-			detach(curr->local_addr);
+		while((curr_at_info = _attached_regions.first()))
+			detach(curr_at_info->local_addr);
 		if(verbose_debug) Genode::log("Region_map_component destroyed");
 	}
 
@@ -159,22 +159,22 @@ public:
 	 *
 	 * \return new list
 	 */
-	Genode::List<Region_info> copy_regions_list(Genode::Allocator &alloc)
+	Genode::List<Attached_region_info> copy_regions_list(Genode::Allocator &alloc)
 	{
-		// Note: Does not need a lock to access _regions, because the child is paused!
+		// Note: Does not need a lock to access _attached_regions, because the child is paused!
 
-		Genode::List<Region_info> result;
+		Genode::List<Attached_region_info> result;
 
-		// Store all Region_infos
-		Region_info *curr = _regions.first();
+		// Store all Attached_region_infos
+		Attached_region_info *curr = _attached_regions.first();
 		for(; curr; curr = curr->next())
 		{
-			// Create a copy of Region_info
-			Region_info *region =
-					new (alloc) Region_info(curr->ds_cap, curr->size, curr->offset,
+			// Create a copy of Attached_region_info
+			Attached_region_info *region =
+					new (alloc) Attached_region_info(curr->ds_cap, curr->size, curr->offset,
 							curr->local_addr, curr->executable, curr->user_specific);
 
-			// Attach new Region_info to the result
+			// Attach new Attached_region_info to the result
 			result.insert(region);
 		}
 
@@ -219,7 +219,7 @@ public:
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
 
 		// Store information about the attachment
-		Region_info *region = new (_md_alloc) Region_info(ds_cap, size, offset, addr, executable, _child_created);
+		Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, size, offset, addr, executable, _child_created);
 
 		if(verbose_debug)
 		{
@@ -233,9 +233,9 @@ public:
 			num_pages, num_pages==1?" page":" pages");
 		}
 
-		// Store Region_info in a list
-		Genode::Lock::Guard lock_guard(_regions_lock);
-		_regions.insert(region);
+		// Store Attached_region_info in a list
+		Genode::Lock::Guard lock_guard(_attached_regions_lock);
+		_attached_regions.insert(region);
 
 		return addr;
 	}
@@ -256,8 +256,8 @@ public:
 		_parent_rm.detach(local_addr);
 
 		// Find region
-		Genode::Lock::Guard lock_guard(_regions_lock);
-		Region_info *region = _regions.first()->find_by_addr((Genode::addr_t)local_addr);
+		Genode::Lock::Guard lock_guard(_attached_regions_lock);
+		Attached_region_info *region = _attached_regions.first()->find_by_addr((Genode::addr_t)local_addr);
 		if(!region)
 		{
 			Genode::warning("Region not found in Rm::detach(). Local address ", Genode::Hex(local_addr),
@@ -266,7 +266,7 @@ public:
 		}
 
 		// Remove and destroy region from list and allocator
-		_regions.remove(region);
+		_attached_regions.remove(region);
 		destroy(_md_alloc, region);
 
 		if(verbose_debug)

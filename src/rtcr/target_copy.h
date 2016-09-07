@@ -19,7 +19,7 @@ private:
 
 
 public:
-	Target_copy(Genode::List<Rtcr::Thread_info> &threads, Genode::List<Rtcr::Region_info> &attached_regions)
+	Target_copy(Genode::List<Rtcr::Thread_info> &threads, Genode::List<Rtcr::Attached_region_info> &attached_regions)
 	{
 
 	}
