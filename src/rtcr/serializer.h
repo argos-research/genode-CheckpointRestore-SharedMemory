@@ -19,7 +19,8 @@ class Rtcr::Serializer
 {
 private:
 	Genode::List<Rtcr::Thread_info> &_threads;
-	Genode::List<Rtcr::Region_info> &_regions;
+	Genode::List<Rtcr::Region_info> &_attached_regions;
+	Genode::List<Rtcr::Region_map_info> &_accessed_regions;
 	Genode::Env &_env;
 	Genode::Attached_ram_dataspace *_ds;
 	/**
@@ -47,7 +48,7 @@ private:
 		}
 
 		// Counts all regions
-		Rtcr::Region_info *curr_region = _regions.first();
+		Rtcr::Region_info *curr_region = _attached_regions.first();
 		for( ; curr_region; curr_region = curr_region->next())
 		{
 			result += REGION_HEADER_SIZE + curr_region->size;
@@ -134,11 +135,11 @@ public:
 
 	Serializer(Genode::List<Rtcr::Thread_info> &threads, Genode::List<Rtcr::Region_info> &regions, Genode::Env &env)
 	:
-		_threads(threads),
-		_regions(regions),
-		_env    (env),
-		_ds     (_env.ram(), _env.rm(), _calculate_buffer_size()),
-		_buf_ptr(_ds->local_addr<void>())
+		_threads         (threads),
+		_attached_regions(regions),
+		_env             (env),
+		_ds              (_env.ram(), _env.rm(), _calculate_buffer_size()),
+		_buf_ptr         (_ds->local_addr<void>())
 	{ }
 };
 
