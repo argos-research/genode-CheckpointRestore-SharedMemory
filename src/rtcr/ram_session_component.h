@@ -103,7 +103,7 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	/**
 	 * Reference Managed_region_info to which this dataspace belongs
 	 */
-	Rtcr::Managed_region_info        &ref_managed_region_info;
+	Rtcr::Managed_region_info    &ref_managed_region_info;
 	/**
 	 * Dataspace which will be attached to / detached from the reference Region_map
 	 */
@@ -137,7 +137,10 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 			Genode::addr_t local_addr, Genode::size_t size)
 	:
 		ref_managed_region_info(managed_region_info), dataspace(ds_cap), local_addr(local_addr), size(size), attached(false)
-	{ }
+	{
+		// Every new dataspace shall be attached and marked
+		attach();
+	}
 
 	/**
 	 * Find Attachable_dataspace_info which contains the address addr
