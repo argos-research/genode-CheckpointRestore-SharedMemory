@@ -27,7 +27,6 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 	Genode::off_t                offset;
 	Genode::addr_t               local_addr;
 	bool                         executable;
-	bool                         user_specific;
 
 	/**
 	 * Constructor
@@ -39,13 +38,11 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 	 * \param offset        Offset in the dataspace
 	 * \param local_addr    Address of the dataspace in parent's region map
 	 * \param executable    Indicates whether the dataspace is executable
-	 * \param user_specific Indicates whether the dataspace is created by the user who has written the child
-	 *                      Dataspaces created before the user had control voer the program are not needed for checkpoint/restore
 	 */
 	Attached_region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
-			Genode::off_t offset, Genode::addr_t local_addr, bool executable, bool user_specific)
+			Genode::off_t offset, Genode::addr_t local_addr, bool executable)
 	:
-		ds_cap(ds_cap), size(size), offset(offset), local_addr(local_addr), executable(executable), user_specific(user_specific)
+		ds_cap(ds_cap), size(size), offset(offset), local_addr(local_addr), executable(executable)
 	{  }
 
 	/**
@@ -91,11 +88,6 @@ private:
 	 */
 	Genode::String<32>                 _label;
 	/**
-	 * Indicates whether child has been already created or not
-	 * The dataspaces from the child creation are not needed to be checkpointed/restored
-	 */
-	bool                               _child_created;
-	/**
 	 * Lock to make _attached_regions thread-safe
 	 */
 	Genode::Lock                       _attached_regions_lock;
@@ -118,7 +110,6 @@ public:
 		_md_alloc(md_alloc),
 		_parent_rm(rm_cap),
 		_label(label),
-		_child_created(false),
 		_attached_regions_lock(),
 		_attached_regions()
 	{
@@ -144,24 +135,17 @@ public:
 	}
 
 	/**
-	 * Let this Region map know, that the child is created and
-	 * the dataspaces which will be attached shall be marked accordingly
-	 *
-	 * The dataspaces attached during child's creation to the address space are not subject for chcekpoint/restore
-	 * They are recreated through the child's creation process
-	 */
-	void child_created() { _child_created = true; }
-
-	/**
-	 * Create a copy of regions list containing regions attached to this Region map
+	 * Create a copy of regions list containing regions attached to this Region map.
+	 * Is needed, if the client's threads are not paused.
 	 *
 	 * \param alloc Allocator where the new list shall be stored
 	 *
 	 * \return new list
 	 */
-	Genode::List<Attached_region_info> copy_regions_list(Genode::Allocator &alloc)
+	Genode::List<Attached_region_info> copy_attached_regions(Genode::Allocator &alloc)
 	{
-		// Note: Does not need a lock to access _attached_regions, because the child is paused!
+		// Serialize access to the list
+		Genode::Lock::Guard lock(_attached_regions_lock);
 
 		Genode::List<Attached_region_info> result;
 
@@ -172,13 +156,23 @@ public:
 			// Create a copy of Attached_region_info
 			Attached_region_info *region =
 					new (alloc) Attached_region_info(curr->ds_cap, curr->size, curr->offset,
-							curr->local_addr, curr->executable, curr->user_specific);
+							curr->local_addr, curr->executable);
 
 			// Attach new Attached_region_info to the result
 			result.insert(region);
 		}
 
 		return result;
+	}
+
+	/**
+	 * Return list of attached regions
+	 *
+	 * \return Reference to the internal attached regions
+	 */
+	Genode::List<Attached_region_info> &attached_regions()
+	{
+		return _attached_regions;
 	}
 
 	/******************************
@@ -219,7 +213,7 @@ public:
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
 
 		// Store information about the attachment
-		Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, size, offset, addr, executable, _child_created);
+		Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, size, offset, addr, executable);
 
 		if(verbose_debug)
 		{

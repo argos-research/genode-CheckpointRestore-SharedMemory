@@ -131,20 +131,22 @@ public:
 	}
 
 	/**
-	 * Create a copy of threads list containing thread capabilities
+	 * Create a copy of threads list containing thread capabilities.
+	 * Is needed, if the client's threads are not paused.
 	 *
 	 * \param alloc Allocator where the new list shall be stored
 	 *
 	 * \return new list
 	 */
-	Genode::List<Rtcr::Thread_info> copy_threads_list(Genode::Allocator &alloc)
+	Genode::List<Thread_info> copy_threads_list(Genode::Allocator &alloc)
 	{
-		// Note: Does not need a lock to access _threads, because the child is paused!
+		// Serialize access to the list
+		Genode::Lock::Guard lock(_threads_lock);
 
-		Genode::List<Rtcr::Thread_info> result;
+		Genode::List<Thread_info> result;
 
 		// Store all Thread_infos
-		Rtcr::Thread_info *curr_th = _threads.first();
+		Thread_info *curr_th = _threads.first();
 		for(; curr_th; curr_th = curr_th->next())
 		{
 			// Create a copy of Thread_info and attach it to result
@@ -152,6 +154,16 @@ public:
 		}
 
 		return result;
+	}
+
+	/**
+	 * Return list of client's threads
+	 *
+	 * \return Reference to the internal threads list
+	 */
+	Genode::List<Thread_info> &threads()
+	{
+		return _threads;
 	}
 
 	/***************************

@@ -99,16 +99,6 @@ public:
 		return _parent_pd.cap();
 	}
 
-	/**
-	 * Callback to signal that the child was created and that it attaches user-specific dataspaces
-	 */
-	void child_created()
-	{
-		_address_space.child_created();
-		_stack_area.child_created();
-		_linker_area.child_created();
-	}
-
 	/**************************
 	 ** Pd_session interface **
 	 **************************/
