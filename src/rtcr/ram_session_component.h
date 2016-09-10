@@ -62,7 +62,7 @@ struct Rtcr::Managed_region_info : public Genode::List<Managed_region_info>::Ele
 	 * Constructor
 	 *
 	 * \param region_map Region_map which is monitored
-	 * \param md_cap     Dataspace_capability of region_map's corresponding managed dataspace
+	 * \param md_cap     Dataspace_capability of region_map's managed dataspace
 	 */
 	Managed_region_info(Genode::Capability<Genode::Region_map> region_map, Genode::Dataspace_capability md_cap)
 	:
@@ -474,7 +474,8 @@ public:
 	}
 
 	/**
-	 * Create a copy of managed dataspaces list containing managed dataspaces handed over to the client
+	 * Create a copy of managed dataspaces list containing managed dataspaces handed over to the client.
+	 * It is needed, if the client's threads are not paused.
 	 *
 	 * \param alloc Allocator where the new list shall be stored
 	 *
@@ -482,6 +483,9 @@ public:
 	 */
 	Genode::List<Rtcr::Managed_region_info> copy_managed_dataspaces_list(Genode::Allocator &alloc)
 	{
+		// Serialize access to the list
+		Genode::Lock::Guard lock(_managed_dataspaces_lock);
+
 		Genode::List<Rtcr::Managed_region_info> result;
 
 		// Store all Managed_region_infos
@@ -513,6 +517,16 @@ public:
 		}
 
 		return result;
+	}
+
+	/**
+	 * Return list of managed regions
+	 *
+	 * \return Reference to the internal managed regions
+	 */
+	Genode::List<Managed_region_info> &managed_regions()
+	{
+		return _managed_dataspaces;
 	}
 
 	/***************************
