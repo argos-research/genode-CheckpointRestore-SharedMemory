@@ -67,27 +67,27 @@ private:
 	/**
 	 * Environment of creator component (usually rtcr)
 	 */
-	Genode::Env       &_env;
+	Genode::Env                   &_env;
 	/**
 	 * Allocator for objects belonging to the monitoring of threads (e.g. Thread_info)
 	 */
-	Genode::Allocator &_md_alloc;
+	Genode::Allocator             &_md_alloc;
 	/**
 	 * Parent Pd session, usually from core; used for creating a thread
 	 */
-	Genode::Pd_session_capability _parent_pd_cap;
+	Genode::Pd_session_capability  _parent_pd_cap;
 	/**
 	 * Connection to parent's Cpu session, usually from core; this class wraps this session
 	 */
-	Genode::Cpu_connection _parent_cpu;
+	Genode::Cpu_connection         _parent_cpu;
 	/**
 	 * Lock to make _threads thread-safe
 	 */
-	Genode::Lock _threads_lock;
+	Genode::Lock                   _threads_lock;
 	/**
 	 * List of client's thread capabilities
 	 */
-	Genode::List<Rtcr::Thread_info> _threads;
+	Genode::List<Thread_info>      _threads;
 
 public:
 

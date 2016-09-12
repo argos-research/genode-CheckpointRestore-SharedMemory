@@ -33,7 +33,6 @@ namespace Rtcr {
  * - Signal_context for handling page faults
  *
  * TODO for class:
- * - construct/destruct Attachable_dataspace_info
  * - create copy of itself (using a provided allocator)
  */
 struct Rtcr::Managed_region_info : public Genode::List<Managed_region_info>::Element
@@ -82,6 +81,24 @@ struct Rtcr::Managed_region_info : public Genode::List<Managed_region_info>::Ele
 			return this;
 		Managed_region_info *managed_region_info = next();
 		return managed_region_info ? managed_region_info->find_by_cap(cap) : 0;
+	}
+
+	/**
+	 * Return size of Region_map
+	 *
+	 * \return size of Region_map
+	 */
+	Genode::size_t size() const
+	{
+		Genode::size_t size = 0;
+
+		Attachable_dataspace_info *curr_ad = attachable_dataspaces.first();
+		for( ; curr_ad; curr_ad = curr_ad->next())
+		{
+			size += curr_ad->size;
+		}
+
+		return size;
 	}
 };
 
@@ -235,11 +252,11 @@ private:
 	/**
 	 * Signal_receiver on which the page fault handler waits
 	 */
-	Genode::Signal_receiver             &_receiver;
+	Genode::Signal_receiver           &_receiver;
 	/**
 	 * List of region maps and their associated dataspaces
 	 */
-	Genode::List<Rtcr::Managed_region_info> &_managed_dataspaces;
+	Genode::List<Managed_region_info> &_managed_dataspaces;
 
 	/**
 	 * Find the first faulting Region_map in the list of managed dataspaces
@@ -250,7 +267,7 @@ private:
 	{
 		Genode::Region_map::State state;
 
-		Rtcr::Managed_region_info *curr_md = _managed_dataspaces.first();
+		Managed_region_info *curr_md = _managed_dataspaces.first();
 		for( ; curr_md; curr_md = curr_md->next())
 		{
 			Genode::Region_map_client rm_client {curr_md->ref_region_map};
@@ -311,7 +328,7 @@ public:
 	 * \param managed_dataspaces Reference to the list of managed dataspaces
 	 */
 	Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
-			Genode::List<Rtcr::Managed_region_info> &managed_dataspaces)
+			Genode::List<Managed_region_info> &managed_dataspaces)
 	:
 		Thread(env, "managed dataspace pager", 16*1024),
 		_receiver(receiver), _managed_dataspaces(managed_dataspaces)
@@ -385,7 +402,7 @@ private:
 	/**
 	 * Fault handler which marks and attaches dataspaces associated with the faulting address
 	 */
-	Rtcr::Fault_handler                _page_fault_handler;
+	Fault_handler                      _page_fault_handler;
 	/**
 	 * Size of Dataspaces which are associated with the managed dataspace
 	 * _granularity is a multiple of a pagesize (4096 Byte)
@@ -484,28 +501,28 @@ public:
 	 *
 	 * \return new list
 	 */
-	Genode::List<Rtcr::Managed_region_info> copy_managed_dataspaces_list(Genode::Allocator &alloc)
+	Genode::List<Managed_region_info> copy_managed_dataspaces_list(Genode::Allocator &alloc)
 	{
 		// Serialize access to the list
 		Genode::Lock::Guard lock(_managed_dataspaces_lock);
 
-		Genode::List<Rtcr::Managed_region_info> result;
+		Genode::List<Managed_region_info> result;
 
 		// Store all Managed_region_infos
-		Rtcr::Managed_region_info *curr_md = _managed_dataspaces.first();
+		Managed_region_info *curr_md = _managed_dataspaces.first();
 		for(; curr_md; curr_md = curr_md->next())
 		{
 			// Create a copy of Managed_region_info
-			Rtcr::Managed_region_info *new_rm_info =
-					new (alloc) Rtcr::Managed_region_info(curr_md->ref_region_map, curr_md->ref_managed_dataspace);
+			Managed_region_info *new_rm_info =
+					new (alloc) Managed_region_info(curr_md->ref_region_map, curr_md->ref_managed_dataspace);
 
 			// Store all Attachable_dataspace_infos of the Managed_region_info
-			Rtcr::Attachable_dataspace_info *curr_ds = curr_md->attachable_dataspaces.first();
+			Attachable_dataspace_info *curr_ds = curr_md->attachable_dataspaces.first();
 			for(; curr_ds; curr_ds = curr_ds->next())
 			{
 				// Create a copy of Attachable_dataspace_info
-				Rtcr::Attachable_dataspace_info *new_att_ds_info =
-						new (alloc) Rtcr::Attachable_dataspace_info(*new_rm_info, curr_ds->dataspace,
+				Attachable_dataspace_info *new_att_ds_info =
+						new (alloc) Attachable_dataspace_info(*new_rm_info, curr_ds->dataspace,
 								curr_ds->local_addr, curr_ds->size);
 
 				// Copy missing members not included in the constructor
@@ -605,8 +622,8 @@ public:
 			Genode::addr_t local_addr = ds_size * i;
 
 			// Create an Attachable_dataspace_info
-			Rtcr::Attachable_dataspace_info *att_ds_info =
-					new (_md_alloc) Rtcr::Attachable_dataspace_info(*mr_info, ds_cap, local_addr, ds_size);
+			Attachable_dataspace_info *att_ds_info =
+					new (_md_alloc) Attachable_dataspace_info(*mr_info, ds_cap, local_addr, ds_size);
 
 			// Insert into Managed_region_infos list of dataspaces
 			mr_info->attachable_dataspaces.insert(att_ds_info);
@@ -633,8 +650,8 @@ public:
 			Genode::addr_t local_addr = num_dataspaces * ds_size;
 
 			// Create an Attachable_dataspace_info
-			Rtcr::Attachable_dataspace_info *att_ds_info =
-					new (_md_alloc) Rtcr::Attachable_dataspace_info(*mr_info, ds_cap, local_addr, remaining_dataspace_size);
+			Attachable_dataspace_info *att_ds_info =
+					new (_md_alloc) Attachable_dataspace_info(*mr_info, ds_cap, local_addr, remaining_dataspace_size);
 
 			// Insert into Managed_region_infos list of dataspaces
 			mr_info->attachable_dataspaces.insert(att_ds_info);
