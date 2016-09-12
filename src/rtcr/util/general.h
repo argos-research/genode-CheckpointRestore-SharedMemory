@@ -7,6 +7,8 @@
 #ifndef _INCLUDE__RTCR_UTIL__GENERAL_H_
 #define _INCLUDE__RTCR_UTIL__GENERAL_H_
 
+#include "../ram_session_component.h"
+
 namespace Rtcr
 {
 	void dump_mem(const void *mem, unsigned int size)
@@ -71,6 +73,52 @@ namespace Rtcr
 			log("   r5-r9:  ", Hex(ts.r5),  "  ", Hex(ts.r6),  "  ", Hex(ts.r7),  "  ", Hex(ts.r8),  "  ", Hex(ts.r9));
 			log("  r10-r12: ", Hex(ts.r10), "  ", Hex(ts.r11), "  ", Hex(ts.r12));
 			log("  ip, sp:  ", Hex(ts.ip),  "  ", Hex(ts.sp));
+		}
+	}
+
+	void print_attached_region_info_list(Genode::List<Attached_region_info> &list)
+	{
+		using namespace Genode;
+
+		//log("Attached_region_info list");
+
+		Attached_region_info *curr_ar = list.first();
+		for( ; curr_ar; curr_ar = curr_ar->next())
+		{
+			log("  Dataspace ", curr_ar->ds_cap.local_name(),
+					" occupying [", Hex(curr_ar->local_addr),
+					", ", Hex(curr_ar->local_addr + curr_ar->size), ")",
+					curr_ar->executable ? " exec": "");
+		}
+	}
+
+	void print_managed_region_info_list(Genode::List<Managed_region_info> &list)
+	{
+		using namespace Genode;
+
+		//log("Managed_region_info list");
+
+		Managed_region_info *curr_mr = list.first();
+		for( ; curr_mr; curr_mr = curr_mr->next())
+		{
+			size_t mds_size = Dataspace_client{curr_mr->ref_managed_dataspace}.size();
+
+			log("  Managed dataspace ", curr_mr->ref_managed_dataspace.local_name(),
+					" size ", Hex(mds_size, Hex::PREFIX, Hex::PAD),
+					", Region_map ", curr_mr->ref_region_map.local_name());
+		}
+	}
+
+	void print_copied_region_info_list(Genode::List<Copied_region_info> &list)
+	{
+		using namespace Genode;
+
+		Copied_region_info *curr_cr = list.first();
+		for( ; curr_cr; curr_cr = curr_cr->next())
+		{
+			log("  Copied dataspace ", curr_cr->ds_cap.local_name(),
+					" occupying [", Hex(curr_cr->addr),
+					", ", Hex(curr_cr->addr + curr_cr->size), ")");
 		}
 	}
 }
