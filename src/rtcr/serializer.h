@@ -20,7 +20,7 @@ class Rtcr::Serializer
 private:
 	Genode::List<Rtcr::Thread_info> &_threads;
 	Genode::List<Rtcr::Attached_region_info> &_attached_regions;
-	Genode::List<Rtcr::Region_map_info> &_accessed_regions;
+	Genode::List<Rtcr::Managed_region_info> &_accessed_regions;
 	Genode::Env &_env;
 	Genode::Attached_ram_dataspace *_ds;
 	/**
