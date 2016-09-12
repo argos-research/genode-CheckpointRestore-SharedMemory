@@ -190,7 +190,7 @@ public:
 		{
 			if(use_local_addr)
 			{
-				Genode::log("Rm<", _label.string(),">::attach(",
+				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
 						"ds_cap=",       ds_cap.local_name(),
 						", size=",       Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
 						", offset=",     offset,
@@ -200,7 +200,7 @@ public:
 			}
 			else
 			{
-				Genode::log("Rm<", _label.string(),">::attach(",
+				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
 						"ds_cap=",   ds_cap.local_name(),
 						", size=",   Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
 						", offset=", offset,
@@ -213,8 +213,10 @@ public:
 		Region_map::Local_addr addr = _parent_rm.attach(
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
 
+		Genode::size_t ds_size = Genode::Dataspace_client{ds_cap}.size();
+
 		// Store information about the attachment
-		Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, size, offset, addr, executable);
+		Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, ds_size, offset, addr, executable);
 
 		if(verbose_debug)
 		{
@@ -242,7 +244,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Rm<", _label.string(),">::detach(",
+			Genode::log("Rm<", _label.string(),">::\033[33m", "detach", "\033[0m(",
 					"local_addr=", Genode::Hex(local_addr, Genode::Hex::PREFIX, Genode::Hex::PAD),
 					")");
 		}
@@ -274,7 +276,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Rm<", _label.string(),">::fault_handler(",
+			Genode::log("Rm<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(",
 					"handler_cap=", handler.local_name(),
 					")");
 		}
@@ -296,7 +298,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Rm<", _label.string(),">::dataspace()");
+			Genode::log("Rm<", _label.string(),">::\033[33m", "dataspace", "\033[0m()");
 		}
 
 		Genode::Dataspace_capability ds_cap = _parent_rm.dataspace();
