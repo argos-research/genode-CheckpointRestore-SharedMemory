@@ -58,10 +58,46 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 		Attached_region_info *region = next();
 		return region ? region->find_by_addr(addr) : 0;
 	}
+
+	/**
+	 * Compare this object to another Attached_region_info object for similarity,
+	 * which is not as strong as identity
+	 *
+	 * Note: It does not suffice to compare the capabilities of both objects,
+	 * because a capability can be freed and instantly reused
+	 *
+	 * \param other Other Attached_region_info object to compare to this object
+	 *
+	 * \return true, if the other object is similar to this object
+	 */
+	bool similar(const Attached_region_info &other) const
+	{
+		return (ds_cap == other.ds_cap) &&
+				(local_addr == other.local_addr) &&
+				(size       == other.size) &&
+				(executable == other.executable);
+	}
+
+	/**
+	 * Compare this object to a Managed_region_info object for similarity,
+	 * which is not as strong as identity
+	 *
+	 * Note: Read similar(Attach_region_info) about capabilities
+	 *
+	 * \param other Other Managed_region_info object to compare to this object
+	 *
+	 * \return true, if the other object is similar to this object
+	 */
+	bool similar(const Managed_region_info &other) const
+	{
+		return (ds_cap == other.ref_managed_dataspace) &&
+				(size == other.size());
+	}
 };
 
 /**
- * This custom Region map intercepts the attach and detach methods to monitor and provide the content of this Region map
+ * This custom Region map intercepts the attach and detach methods to monitor and
+ * provide the content of this Region map
  */
 class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>
 {
