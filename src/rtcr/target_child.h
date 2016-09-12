@@ -200,6 +200,22 @@ public:
 	 */
 	Rtcr::Ram_session_component &ram() { return _resources.ram; }
 
+	/**
+	 * Pause child
+	 */
+	void pause()
+	{
+		_resources.cpu.pause_threads();
+	}
+
+	/**
+	 * Resume child
+	 */
+	void resume()
+	{
+		_resources.cpu.resume_threads();
+	}
+
 
 	/****************************
 	 ** Child-policy interface **
