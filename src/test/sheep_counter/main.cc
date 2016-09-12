@@ -13,7 +13,6 @@
 #include <base/log.h>
 #include <base/component.h>
 #include <timer_session/connection.h>
-#include <util/general.h>
 
 Genode::size_t Component::stack_size() { return 16*1024; }
 
