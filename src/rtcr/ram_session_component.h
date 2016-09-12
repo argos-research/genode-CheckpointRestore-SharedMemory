@@ -40,22 +40,22 @@ struct Rtcr::Managed_region_info : public Genode::List<Managed_region_info>::Ele
 	/**
 	 * Region_map which is monitored
 	 */
-	Genode::Capability<Genode::Region_map>        ref_region_map;
+	Genode::Capability<Genode::Region_map>  ref_region_map;
 	/**
 	 * Dataspace capability of ref_region_map's corresponding managed dataspace
 	 *
 	 * It is needed to associate the attached dataspaces in the custom Region_map and
 	 * the created managed dataspaces in this Ram_session
 	 */
-	Genode::Dataspace_capability                  ref_managed_dataspace;
+	Genode::Dataspace_capability            ref_managed_dataspace;
 	/**
 	 * List of dataspaces which belong to the Region_map
 	 */
-	Genode::List<Rtcr::Attachable_dataspace_info> attachable_dataspaces;
+	Genode::List<Attachable_dataspace_info> attachable_dataspaces;
 	/**
 	 * Signal_context for this Region_map
 	 */
-	Genode::Signal_context                        context;
+	Genode::Signal_context                  context;
 
 	/**
 	 * Constructor
@@ -81,24 +81,6 @@ struct Rtcr::Managed_region_info : public Genode::List<Managed_region_info>::Ele
 			return this;
 		Managed_region_info *managed_region_info = next();
 		return managed_region_info ? managed_region_info->find_by_cap(cap) : 0;
-	}
-
-	/**
-	 * Return size of Region_map
-	 *
-	 * \return size of Region_map
-	 */
-	Genode::size_t size() const
-	{
-		Genode::size_t size = 0;
-
-		Attachable_dataspace_info *curr_ad = attachable_dataspaces.first();
-		for( ; curr_ad; curr_ad = curr_ad->next())
-		{
-			size += curr_ad->size;
-		}
-
-		return size;
 	}
 };
 
