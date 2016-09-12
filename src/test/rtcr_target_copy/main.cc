@@ -13,6 +13,7 @@
 
 /* Rtcr includes */
 #include "../../rtcr/target_copy.h"
+#include "../../rtcr/util/general.h"
 
 using namespace Genode;
 
@@ -32,12 +33,21 @@ struct Rtcr::Main
 		Target_child child { env, md_heap, parent_services, "sheep_counter", 1 };
 
 		Timer::Connection timer { env };
-		timer.msleep(5000);
+		timer.msleep(2000);
 
 		child.pause();
 
 		log("Creating target copy instance");
 		Target_copy copy { env, md_heap, child };
+
+		log("Address space");
+		print_attached_region_info_list(copy.address_space_regions());
+
+		log("Stack area");
+		print_attached_region_info_list(copy.stack_regions());
+
+		log("Managed dataspaces");
+		print_managed_region_info_list(child.ram().managed_regions());
 
 		log("Syncronising target copy with target child");
 		copy.sync();
