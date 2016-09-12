@@ -166,6 +166,30 @@ public:
 		return _threads;
 	}
 
+	/**
+	 * Pause all threads
+	 */
+	void pause_threads()
+	{
+		Thread_info *curr_th = _threads.first();
+		for( ; curr_th; curr_th = curr_th->next())
+		{
+			Genode::Cpu_thread_client{curr_th->thread_cap}.pause();
+		}
+	}
+
+	/**
+	 * Resume all threads
+	 */
+	void resume_threads()
+	{
+		Thread_info *curr_th = _threads.first();
+		for( ; curr_th; curr_th = curr_th->next())
+		{
+			Genode::Cpu_thread_client{curr_th->thread_cap}.resume();
+		}
+	}
+
 	/***************************
 	 ** Cpu_session interface **
 	 ***************************/
