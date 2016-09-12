@@ -547,7 +547,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::alloc(size=", Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),")");
+			Genode::log("Ram::\033[33m", "alloc", "\033[0m(size=", Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),")");
 		}
 
 		// Size of a memory page
@@ -661,7 +661,7 @@ public:
 	 */
 	void free(Genode::Ram_dataspace_capability ds) override
 	{
-		if(verbose_debug) Genode::log("Ram::free()");
+		if(verbose_debug) Genode::log("Ram::\033[33m", "free", "\033[0m()");
 
 		// Find the Managed_region_info which represents the Region_map with the passed Dataspace_capability
 		Managed_region_info *mr_info = _managed_dataspaces.first()->find_by_cap(ds);
@@ -686,7 +686,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::ref_account(ref=", ram_session.local_name(), ")");
+			Genode::log("Ram::\033[33m", "ref_account", "\033[0m(ref=", ram_session.local_name(), ")");
 		}
 
 		return _parent_ram.ref_account(ram_session);
@@ -696,20 +696,20 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::transfer_quota(to=", ram_session.local_name(), ", size=", amount, ")");
+			Genode::log("Ram::\033[33m", "transfer_quota", "\033[0m(to=", ram_session.local_name(), ", size=", amount, ")");
 		}
 		return _parent_ram.transfer_quota(ram_session, amount);
 	}
 
 	Genode::size_t quota() override
 	{
-		if(verbose_debug) Genode::log("Ram::quota()");
+		if(verbose_debug) Genode::log("Ram::\033[33m", "quota", "\033[0m()");
 		return _parent_ram.quota();
 	}
 
 	Genode::size_t used() override
 	{
-		if(verbose_debug) Genode::log("Ram::used()");
+		if(verbose_debug) Genode::log("Ram::\033[33m", "used", "\033[0m(");
 		return _parent_ram.used();
 	}
 
