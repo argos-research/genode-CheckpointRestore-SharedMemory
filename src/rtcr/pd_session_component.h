@@ -33,32 +33,31 @@ private:
 	/**
 	 * TODO Needed?
 	 */
-	Genode::Env        &_env;
+	Genode::Env                &_env;
 	/**
 	 * TODO Needed?
 	 */
-	Genode::Allocator  &_md_alloc;
+	Genode::Allocator          &_md_alloc;
 	/**
 	 * TODO Needed?
 	 */
-	Genode::Entrypoint &_ep;
+	Genode::Entrypoint         &_ep;
 	/**
 	 * Connection to parent's pd session, usually from core
 	 */
-	Genode::Pd_connection _parent_pd;
-
+	Genode::Pd_connection       _parent_pd;
 	/**
 	 * Custom address space for monitoring the attachments of the Region map
 	 */
-	Rtcr::Region_map_component _address_space;
+	Rtcr::Region_map_component  _address_space;
 	/**
 	 * Custom stack area for monitoring the attachments of the Region map
 	 */
-	Rtcr::Region_map_component _stack_area;
+	Rtcr::Region_map_component  _stack_area;
 	/**
 	 * custom linker area for monitoring the attachments of the Region map
 	 */
-	Rtcr::Region_map_component _linker_area;
+	Rtcr::Region_map_component  _linker_area;
 
 
 public:
@@ -97,6 +96,36 @@ public:
 	Genode::Pd_session_capability parent_cap()
 	{
 		return _parent_pd.cap();
+	}
+
+	/**
+	 * Return Address space component
+	 *
+	 * \return Reference to Region_map_component of the address space
+	 */
+	Rtcr::Region_map_component &address_space_component()
+	{
+		return _address_space;
+	}
+
+	/**
+	 * Return Stack area component
+	 *
+	 * \return Reference to Region_map_component of the stack area
+	 */
+	Rtcr::Region_map_component &stack_area_component()
+	{
+		return _stack_area;
+	}
+
+	/**
+	 * Return Linker area component
+	 *
+	 * \return Reference to Region_map_component of the linker area
+	 */
+	Rtcr::Region_map_component &linker_area_component()
+	{
+		return _linker_area;
 	}
 
 	/**************************
