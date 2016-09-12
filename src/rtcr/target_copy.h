@@ -8,6 +8,7 @@
 #define _RTCR_TARGET_COPY_H_
 
 #include <util/list.h>
+#include <region_map/client.h>
 #include "target_child.h"
 
 namespace Rtcr {
@@ -291,6 +292,11 @@ public:
 		}
 
 	}
+
+	Genode::List<Thread_info>          &threads()               { return _threads;               }
+	Genode::List<Attached_region_info> &address_space_regions() { return _address_space_regions; }
+	Genode::List<Attached_region_info> &stack_regions()         { return _stack_regions;         }
+	Genode::List<Attached_region_info> &linker_regions()        { return _linker_regions;        }
 
 	Genode::List<Thread_info>        &copied_threads()               { return _copied_threads;               }
 	Genode::List<Copied_region_info> &copied_address_space_regions() { return _copied_address_space_regions; }
