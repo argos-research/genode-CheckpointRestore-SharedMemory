@@ -116,8 +116,8 @@ namespace Rtcr
 		Copied_region_info *curr_cr = list.first();
 		for( ; curr_cr; curr_cr = curr_cr->next())
 		{
-			log("  Copied dataspace ", curr_cr->cloned_ds_cap.local_name(),
-					" from ", curr_cr->origin_ds_cap.local_name(),
+			log("  Copied original dataspace ", curr_cr->original_ds_cap.local_name(),
+					"",
 					" occupying [", Hex(curr_cr->addr),
 					", ", Hex(curr_cr->addr + curr_cr->size), ")");
 		}
