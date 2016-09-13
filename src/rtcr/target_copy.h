@@ -203,19 +203,20 @@ private:
 		Genode::log("copy_attachments_inc");
 		//Genode::List<Copied_dataspace_info> copied_dataspaces;
 
-		/*Genode::List
 
 		Attached_region_info *curr_ar = _stack_regions.first();
 		for( ; curr_ar; curr_ar = curr_ar->next())
 		{
 			// Was curr_ar stored in the last checkpoint (i.e. does a corresponding Copied_region_info exists)?
-			Copied_region_info *cr_info = _copied_stack_regions.first()->find_corr_region(*curr_ar);
+			Copied_region_info *cr_info = _copied_stack_regions.first();
+			if(cr_info) cr_info = cr_info->find_by_ar_info(*curr_ar);
 
 			// A corresponding Copied_region_info exists for curr_ar
 			if(cr_info)
 			{
-				// Is the dataspace of curr_ar managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
-				Managed_region_info *mr_info = managed_regions.first()->find_by_cap(curr_ar->ds_cap);
+/*				// Is the dataspace of curr_ar managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
+				Managed_region_info *mr_info = managed_regions.first();
+				if(mr_info) mr_info = mr_info->find_by_cap(curr_ar->ds_cap);
 
 				// curr_ar's dataspace is managed by Rtcr
 				if(mr_info && cr_info->type == Copied_region_info::Managed)
@@ -239,17 +240,17 @@ private:
 				{
 
 				}
-
+*/
 			}
 			// curr_ar contains a new region, which was not checkpointed last time
 			else
 			{
-
+				Genode::log("ar_info-ds ", curr_ar->ds_cap.local_name(), " not in cr_info");
 			}
 
 
 
-		}*/
+		}
 	}
 
 	/**
