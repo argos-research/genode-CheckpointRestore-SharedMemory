@@ -35,6 +35,7 @@ struct Rtcr::Main
 		Timer::Connection timer { env };
 		timer.msleep(2000);
 
+		log("#1 Pausing");
 		child.pause();
 
 		log("Creating target copy instance");
@@ -47,24 +48,34 @@ struct Rtcr::Main
 		print_attached_region_info_list(child.pd().stack_area_component().attached_regions());
 
 		log("Managed dataspaces");
-		print_managed_region_info_list(child.ram().managed_regions());
+		print_managed_region_info_list(child.ram().managed_regions(), false);
 
 		log("Synchronising target copy with target child");
 		copy.sync(&child.ram().managed_regions());
 
-		print_copied_region_info_list(copy.copied_stack_regions());
+		log("Copied stack regions");
+		print_copied_region_info_list(copy.copied_stack_regions(), true);
 
+		log("Copied linker regions");
+		print_copied_region_info_list(copy.copied_linker_regions(), true);
+
+		log("Copied address space regions");
+		print_copied_region_info_list(copy.copied_address_space_regions(), true);
+
+		//log("Managed dataspaces");
+		//print_managed_region_info_list(child.ram().managed_regions());
+
+		log("#1 Resuming");
 		child.resume();
 
-		timer.msleep(2000);
+/*		timer.msleep(2000);
 
+		log("#2 Pausing");
 		child.pause();
-
 		copy.sync(&child.ram().managed_regions());
-
+		log("#2 Resuming");
 		child.resume();
-
-
+*/
 		Genode::sleep_forever();
 	}
 };
