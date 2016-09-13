@@ -8,6 +8,7 @@
 #define _INCLUDE__RTCR_UTIL__GENERAL_H_
 
 #include "../ram_session_component.h"
+#include "../target_copy.h"
 
 namespace Rtcr
 {
@@ -92,32 +93,102 @@ namespace Rtcr
 		}
 	}
 
-	void print_managed_region_info_list(Genode::List<Managed_region_info> &list)
+	void print_managed_region_info_list(Genode::List<Managed_region_info> &list, bool brief = false)
 	{
 		using namespace Genode;
 
 		//log("Managed_region_info list");
 
-		Managed_region_info *curr_mr = list.first();
-		for( ; curr_mr; curr_mr = curr_mr->next())
+
+		for(Managed_region_info *curr_mr = list.first(); curr_mr; curr_mr = curr_mr->next())
 		{
+			unsigned int buffer_size = 100;
+			char cloned_dataspaces_string[buffer_size] = "";
+
+			if(brief)
+			{
+				unsigned int num_ds = 0;
+				for(Attachable_dataspace_info *curr_ad = curr_mr->attachable_dataspaces.first(); curr_ad; curr_ad = curr_ad->next())
+				{
+					num_ds++;
+				}
+
+				snprintf(cloned_dataspaces_string, buffer_size, "%d dataspace(s)", num_ds);
+			}
+			else
+			{
+				unsigned int used = 0;
+				for(Attachable_dataspace_info *curr_ad = curr_mr->attachable_dataspaces.first(); curr_ad; curr_ad = curr_ad->next())
+				{
+					if(used + 10 > buffer_size)
+					{
+						used = used + snprintf(cloned_dataspaces_string + used, buffer_size - used, " ...");
+						break;
+					}
+					else if(used == 0)
+					{
+						used = used + snprintf(cloned_dataspaces_string + used, buffer_size - used, "%ld%s", curr_ad->dataspace.local_name(), curr_ad->attached?"a":"d");
+					}
+					else
+					{
+						used = used + snprintf(cloned_dataspaces_string + used, buffer_size - used, " %ld%s", curr_ad->dataspace.local_name(), curr_ad->attached?"a":"d");
+					}
+				}
+			}
+
 			size_t mds_size = Dataspace_client{curr_mr->ref_managed_dataspace}.size();
 
 			log("  Managed dataspace ", curr_mr->ref_managed_dataspace.local_name(),
+					" (", const_cast<const char*>(cloned_dataspaces_string), ")",
 					" size ", Hex(mds_size, Hex::PREFIX, Hex::PAD),
 					", Region_map ", curr_mr->ref_region_map.local_name());
 		}
 	}
 
-	void print_copied_region_info_list(Genode::List<Copied_region_info> &list)
+	void print_copied_region_info_list(Genode::List<Copied_region_info> &list, bool brief = false)
 	{
 		using namespace Genode;
 
-		Copied_region_info *curr_cr = list.first();
-		for( ; curr_cr; curr_cr = curr_cr->next())
+
+
+		for(Copied_region_info *curr_cr = list.first(); curr_cr; curr_cr = curr_cr->next())
 		{
+			unsigned int buffer_size = 100;
+			char dataspaces_string[buffer_size] = "";
+
+			if(brief)
+			{
+				unsigned int num_ds = 0;
+				for(Copied_dataspace_info *cd_info = curr_cr->cloned_dataspaces.first(); cd_info; cd_info = cd_info->next())
+				{
+					num_ds++;
+				}
+
+				snprintf(dataspaces_string, buffer_size, "%d dataspace(s)", num_ds);
+			}
+			else
+			{
+				unsigned int used = 0;
+				for(Copied_dataspace_info *cd_info = curr_cr->cloned_dataspaces.first(); cd_info; cd_info = cd_info->next())
+				{
+					if(used + 9 > buffer_size)
+					{
+						used = used + snprintf(dataspaces_string + used, buffer_size - used, " ...");
+						break;
+					}
+					else if(used == 0)
+					{
+						used = used + snprintf(dataspaces_string + used, buffer_size - used, "%ld", cd_info->ds_cap.local_name());
+					}
+					else
+					{
+						used = used + snprintf(dataspaces_string + used, buffer_size - used, " %ld", cd_info->ds_cap.local_name());
+					}
+				}
+			}
+
 			log("  Copied original dataspace ", curr_cr->original_ds_cap.local_name(),
-					"",
+					" into (", const_cast<const char*>(dataspaces_string), ")",
 					" occupying [", Hex(curr_cr->addr),
 					", ", Hex(curr_cr->addr + curr_cr->size), ")");
 		}
