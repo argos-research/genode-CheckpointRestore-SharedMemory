@@ -77,7 +77,7 @@ struct Rtcr::Managed_region_info : public Genode::List<Managed_region_info>::Ele
 	 */
 	Managed_region_info *find_by_cap(Genode::Dataspace_capability cap)
 	{
-		if(cap == ref_region_map)
+		if(cap == ref_managed_dataspace)
 			return this;
 		Managed_region_info *managed_region_info = next();
 		return managed_region_info ? managed_region_info->find_by_cap(cap) : 0;
