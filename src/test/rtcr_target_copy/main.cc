@@ -49,7 +49,17 @@ struct Rtcr::Main
 		log("Managed dataspaces");
 		print_managed_region_info_list(child.ram().managed_regions());
 
-		log("Syncronising target copy with target child");
+		log("Synchronising target copy with target child");
+		copy.sync(&child.ram().managed_regions());
+
+		print_copied_region_info_list(copy.copied_stack_regions());
+
+		child.resume();
+
+		timer.msleep(2000);
+
+		child.pause();
+
 		copy.sync(&child.ram().managed_regions());
 
 		child.resume();
