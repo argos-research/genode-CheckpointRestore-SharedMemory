@@ -12,9 +12,43 @@
 #include "target_child.h"
 
 namespace Rtcr {
+	struct Copied_dataspace_info;
 	struct Copied_region_info;
 	class  Target_copy;
 }
+
+struct Rtcr::Copied_dataspace_info : public Genode::List<Copied_dataspace_info>::Element
+{
+	Genode::Dataspace_capability ds_cap;
+	/**
+	 * Relative address to the original managed dataspace
+	 */
+	Genode::addr_t rel_addr;
+	Genode::size_t size;
+
+	Copied_dataspace_info(Genode::Dataspace_capability ds_cap, Genode::addr_t addr, Genode::size_t size)
+	:
+		ds_cap(ds_cap),
+		rel_addr(addr),
+		size(size)
+	{ }
+
+	/**
+	 * Find Copied_dataspace_info which contains the address addr
+	 *
+	 * \param addr Local address of the corresponding Copied_region_info
+	 *
+	 * \return Copied_dataspace_info which contains the local address addr
+	 */
+	Copied_dataspace_info *find_by_addr(Genode::addr_t addr)
+	{
+		if((addr >= this->rel_addr) && (addr <= this->rel_addr + size))
+			return this;
+		Copied_dataspace_info *dataspace_info = next();
+		return dataspace_info ? dataspace_info->find_by_addr(addr) : 0;
+	}
+
+};
 
 /**
  * Struct to manage the copied dataspaces of an original Region_map
@@ -23,36 +57,33 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 {
 	enum Ds_type { Managed, Foreign };
 
-	Genode::Dataspace_capability origin_ds_cap;
-	Genode::Dataspace_capability cloned_ds_cap;
-	Genode::addr_t addr;
-	Genode::size_t size;
-	bool executable;
-	Ds_type type;
-	Genode::List<Attachable_dataspace_info> *managed_dataspaces;
+	Genode::Dataspace_capability        original_ds_cap;
+	Genode::List<Copied_dataspace_info> cloned_dataspaces;
+	/**
+	 * Address of original dataspace
+	 */
+	Genode::addr_t                      addr;
+	/**
+	 * Size of original dataspace
+	 */
+	Genode::size_t                      size;
+	bool                                executable;
+	Ds_type                             type;
 
 
-	Copied_region_info(Genode::Dataspace_capability origin_ds_cap,
-			Genode::Dataspace_capability cloned_ds_cap,
+	Copied_region_info(Genode::Dataspace_capability original_ds_cap,
 			Genode::addr_t addr,
 			Genode::size_t size,
 			bool executable,
-			Ds_type type = Ds_type::Foreign,
-			Genode::List<Attachable_dataspace_info> *md = nullptr)
+			Ds_type type)
 	:
-		origin_ds_cap(origin_ds_cap),
-		cloned_ds_cap(cloned_ds_cap),
+		original_ds_cap(original_ds_cap),
+		cloned_dataspaces(),
 		addr(addr),
 		size(size),
 		executable(executable),
-		type(type),
-		managed_dataspaces(md)
-	{
-		if(type == Managed && md == nullptr)
-		{
-			Genode::error("Copied region is managed but was not provided with a managed dataspaces list");
-		}
-	}
+		type(type)
+	{ }
 
 
 	/**
@@ -62,29 +93,13 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 	 *
 	 * \return Clone dataspace_capability
 	 */
-	Copied_region_info *find_by_clone_cap(Genode::Dataspace_capability original)
+	Copied_region_info *find_by_original_ds_cap(Genode::Dataspace_capability original)
 	{
-		if(original == origin_ds_cap)
+		if(original == original_ds_cap)
 			return this;
 		Copied_region_info *cr_info = next();
-		return cr_info ? cr_info->find_by_clone_cap(original) : 0;
+		return cr_info ? cr_info->find_by_original_ds_cap(original) : 0;
 	}
-
-	/**
-	 * Given the clone dataspace capability, find the corresponding original dataspace capability
-	 *
-	 * \param clone Dataspace_capability which was created through cloning
-	 *
-	 * \return Original dataspace_capability
-	 */
-	Copied_region_info *find_by_original_cap(Genode::Dataspace_capability clone)
-	{
-		if(clone == cloned_ds_cap)
-			return this;
-		Copied_region_info *cr_info = next();
-		return cr_info ? cr_info->find_by_original_cap(clone) : 0;
-	}
-
 
 	/**
 	 * Find a corresponding Copied_region_info using an Attached_region_info
@@ -111,7 +126,7 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 	 */
 	bool corresponding(const Attached_region_info &other) const
 	{
-		return (origin_ds_cap == other.ds_cap) &&
+		return (original_ds_cap == other.ds_cap) &&
 				(addr == other.local_addr) &&
 				(size == other.size) &&
 				(executable == other.executable);
@@ -148,13 +163,13 @@ private:
 	Genode::List<Copied_region_info>    _copied_linker_regions;
 
 	/**
-	 * Clone a dataspace's content
+	 * Copy dataspace's content
 	 *
 	 * \param ds_from Dataspace to clone from
 	 * \param ds_to   Dataspace to clone to
 	 * \param size    Size of cloned memory
 	 */
-	void _clone_dataspace(Genode::Dataspace_capability &ds_from, Genode::Dataspace_capability &ds_to,
+	void _copy_dataspace(Genode::Dataspace_capability &ds_from, Genode::Dataspace_capability &ds_to,
 			Genode::size_t size)
 	{
 		void *orig  = _env.rm().attach(ds_from);
@@ -164,6 +179,35 @@ private:
 
 		_env.rm().detach(clone);
 		_env.rm().detach(orig);
+	}
+
+	/**
+	 * Clone a dataspace including its content
+	 *
+	 * \param ds_from Dataspace to clone from
+	 * \param size    Size of cloned memory
+	 *
+	 * \return Cloned dataspace cap
+	 */
+	Genode::Dataspace_capability _clone_dataspace(Genode::Dataspace_capability &ds_from, Genode::size_t size)
+	{
+		Genode::Dataspace_capability ds_to = _env.ram().alloc(size);
+
+		if(!ds_to.valid())
+		{
+			Genode::error(__func__, ": Memory allocation for cloned dataspace failed");
+			return Genode::Dataspace_capability();
+		}
+
+		void *orig  = _env.rm().attach(ds_from);
+		void *clone = _env.rm().attach(ds_to);
+
+		Genode::memcpy(clone, orig, size);
+
+		_env.rm().detach(clone);
+		_env.rm().detach(orig);
+
+		return ds_to;
 	}
 
 	/**
@@ -185,7 +229,7 @@ private:
 	 */
 	void _copy_attachments_all()
 	{
-		Genode::log("copy_attachments_all");
+		Genode::log(__func__, ": Implement me");
 	}
 
 	/**
@@ -193,52 +237,121 @@ private:
 	 */
 	void _copy_attachments_inc(Genode::List<Managed_region_info> &managed_regions)
 	{
-		Genode::log("copy_attachments_inc");
-		//Genode::List<Copied_dataspace_info> copied_dataspaces;
+		Genode::log(__func__, ": Implementing...");
+		Copied_region_info *cr_info = nullptr;
+		Managed_region_info *mr_info = nullptr;
+		Attached_region_info *ar_info = nullptr;
 
+		// 1. Remove all Copied_region_infos with their dataspaces, if they are no longer attached
+		for(cr_info = _copied_stack_regions.first(); cr_info; cr_info = cr_info->next())
+		{
+			// Find Attached_region_info which corresponds to Copied_region_info
+			ar_info = _stack_regions.first();
+			if(ar_info) ar_info = ar_info->find_by_cap(cr_info->original_ds_cap);
 
-		Attached_region_info *curr_ar = _stack_regions.first();
-		for( ; curr_ar; curr_ar = curr_ar->next())
+			// No corresponding Attached_region_info was found
+			if(!ar_info)
+			{
+				// 1. Free dataspaces and their corresponding cd_info from cr_info
+				Copied_dataspace_info *cd_info = cr_info->cloned_dataspaces.first();
+				for(; cd_info; cd_info = cd_info->next())
+				{
+					_env.ram().free(Genode::static_cap_cast<Genode::Ram_dataspace>(cd_info->ds_cap));
+					cr_info->cloned_dataspaces.remove(cd_info);
+					Genode::destroy(_alloc, cd_info);
+				}
+
+				// 2. Free cr_info
+				_copied_stack_regions.remove(cr_info);
+				Genode::destroy(_alloc, cr_info);
+			}
+
+		}
+
+		// 2. Copy/Clone all Attached_region_infos which were changed/not monitored/new
+		for(ar_info = _stack_regions.first(); ar_info; ar_info = ar_info->next())
 		{
 			// Was curr_ar stored in the last checkpoint (i.e. does a corresponding Copied_region_info exists)?
-			Copied_region_info *cr_info = _copied_stack_regions.first();
-			if(cr_info) cr_info = cr_info->find_by_ar_info(*curr_ar);
+			cr_info = _copied_stack_regions.first();
+			if(cr_info) cr_info = cr_info->find_by_ar_info(*ar_info);
 
-			// A corresponding Copied_region_info exists for curr_ar
+			/*****************************************************************************
+			 ** Dataspace from current Attached_region_info was copied in the last sync **
+			 *****************************************************************************/
 			if(cr_info)
 			{
-/*				// Is the dataspace of curr_ar managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
-				Managed_region_info *mr_info = managed_regions.first();
-				if(mr_info) mr_info = mr_info->find_by_cap(curr_ar->ds_cap);
+				// Is the dataspace of curr_ar managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
+				mr_info = managed_regions.first();
+				if(mr_info) mr_info = mr_info->find_by_cap(ar_info->ds_cap);
 
-				// curr_ar's dataspace is managed by Rtcr
+				/******************************************************************************************
+				 ** Dataspace from current Attached_region_info is managed by Rtcr (= managed dataspace) **
+				 ******************************************************************************************/
 				if(mr_info && cr_info->type == Copied_region_info::Managed)
 				{
-					Attachable_dataspace_info *curr_orig_ad   = mr_info->attachable_dataspaces.first();
-					Attachable_dataspace_info *curr_copied_ad = cr_info->managed_dataspaces->first();
+					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and managed");
 
-					for(; curr_orig_ad; curr_orig_ad=curr_orig_ad->next())
-					{
-						// Dataspace is attached
-						if(curr_orig_ad->attached)
-						{
-							_clone_dataspace(curr_orig_ad->dataspace,
-									curr_copied_ad->dataspace, curr_copied_ad->size);
-						}
-					}
-
+					// 1. Copy content of n marked dataspaces
+					// 2. Unmark dataspaces
 				}
-				// The dataspace of curr_ar is not managed
+				/************************************************************************************
+				 ** Dataspace from current Attached_region_info is foreign (= not managed by Rtcr) **
+				 ************************************************************************************/
 				else
 				{
+					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and not managed");
 
+					// 1. Copy content of 1 dataspace
 				}
-*/
+
 			}
-			// curr_ar contains a new region, which was not checkpointed last time
+			/***************************************************************************************
+			 ** Dataspace from current Attached_region_info was not copied. It is a new dataspace **
+			 ***************************************************************************************/
 			else
 			{
-				Genode::log("ar_info-ds ", curr_ar->ds_cap.local_name(), " not in cr_info");
+				//Genode::log("ar_info-ds ", curr_ar->ds_cap.local_name(), " not in cr_info");
+
+				// Is the dataspace of curr_ar managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
+				mr_info = managed_regions.first();
+				if(mr_info) mr_info = mr_info->find_by_cap(ar_info->ds_cap);
+
+				/******************************************************************************************
+				 ** Dataspace from current Attached_region_info is managed by Rtcr (= managed dataspace) **
+				 ******************************************************************************************/
+				if(mr_info)
+				{
+					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and managed");
+
+					// 1. Create new Copied_region_info
+					Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
+							ar_info->ds_cap, ar_info->local_addr, ar_info->size,
+							ar_info->executable, Copied_region_info::Managed);
+
+					// 2. Clone n dataspaces, manage them with n new Copied_dataspace_infos,
+					//    and attach the new Copied_dataspace_infos to the new Copied_region_info
+					Attachable_dataspace_info *ad_info = mr_info->attachable_dataspaces.first();
+					for(; ad_info; ad_info = ad_info->next())
+					{
+						Genode::Dataspace_capability new_ds_cap = _clone_dataspace(ad_info->dataspace, ad_info->size);
+						Copied_dataspace_info *new_cd_info =
+								new (_alloc) Copied_dataspace_info(new_ds_cap, ad_info->local_addr, ad_info->size);
+						new_cr_info->cloned_dataspaces.insert(new_cd_info);
+					}
+					// 3. Attach new Copied_region_info to Copied_region_info list
+					_copied_stack_regions.insert(new_cr_info);
+				}
+				/************************************************************************************
+				 ** Dataspace from current Attached_region_info is foreign (= not managed by Rtcr) **
+				 ************************************************************************************/
+				else
+				{
+					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and not managed");
+
+					// 1. Clone 1 dataspace
+					// 2. Create Copied_region_info with 1 Copied_dataspace_info
+					// 3. Attach Copied_region_info to Copied_region_info list
+				}
 			}
 
 
@@ -251,7 +364,7 @@ private:
 	 */
 	void _copy_capabilities()
 	{
-		Genode::log("Implement me!");
+		Genode::log(__func__, ": Implement me!");
 	}
 
 
