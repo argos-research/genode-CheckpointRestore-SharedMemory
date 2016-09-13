@@ -41,16 +41,16 @@ struct Rtcr::Main
 		Target_copy copy { env, md_heap, child };
 
 		log("Address space");
-		print_attached_region_info_list(copy.address_space_regions());
+		print_attached_region_info_list(child.pd().address_space_component().attached_regions());
 
 		log("Stack area");
-		print_attached_region_info_list(copy.stack_regions());
+		print_attached_region_info_list(child.pd().stack_area_component().attached_regions());
 
 		log("Managed dataspaces");
 		print_managed_region_info_list(child.ram().managed_regions());
 
 		log("Syncronising target copy with target child");
-		copy.sync();
+		copy.sync(&child.ram().managed_regions());
 
 		child.resume();
 
