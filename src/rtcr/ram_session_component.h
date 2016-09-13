@@ -577,11 +577,11 @@ public:
 		Genode::Region_map_client new_rm_client{new_region_map};
 
 		// Create Managed_region_info which contains a list of corresponding dataspaces
-		Rtcr::Managed_region_info *mr_info = new (_md_alloc)
+		Rtcr::Managed_region_info *new_mr_info = new (_md_alloc)
 				Rtcr::Managed_region_info(new_region_map, new_rm_client.dataspace());
 
 		// Set our pagefault handler for the Region_map with its own context
-		new_rm_client.fault_handler(_receiver.manage(&(mr_info->context)));
+		new_rm_client.fault_handler(_receiver.manage(&(new_mr_info->context)));
 
 		// Allocate num_dataspaces of Dataspaces and associate them with the Region_map
 		for(Genode::size_t i = 0; i < num_dataspaces; ++i)
@@ -604,11 +604,11 @@ public:
 			Genode::addr_t local_addr = ds_size * i;
 
 			// Create an Attachable_dataspace_info
-			Attachable_dataspace_info *att_ds_info =
-					new (_md_alloc) Attachable_dataspace_info(*mr_info, ds_cap, local_addr, ds_size);
+			Attachable_dataspace_info *new_ad_info =
+					new (_md_alloc) Attachable_dataspace_info(*new_mr_info, ds_cap, local_addr, ds_size);
 
 			// Insert into Managed_region_infos list of dataspaces
-			mr_info->attachable_dataspaces.insert(att_ds_info);
+			new_mr_info->attachable_dataspaces.insert(new_ad_info);
 		}
 
 		// Allocate remaining Dataspace and associate it with the Region_map
@@ -632,26 +632,26 @@ public:
 			Genode::addr_t local_addr = num_dataspaces * ds_size;
 
 			// Create an Attachable_dataspace_info
-			Attachable_dataspace_info *att_ds_info =
-					new (_md_alloc) Attachable_dataspace_info(*mr_info, ds_cap, local_addr, remaining_dataspace_size);
+			Attachable_dataspace_info *new_ad_info =
+					new (_md_alloc) Attachable_dataspace_info(*new_mr_info, ds_cap, local_addr, remaining_dataspace_size);
 
 			// Insert into Managed_region_infos list of dataspaces
-			mr_info->attachable_dataspaces.insert(att_ds_info);
+			new_mr_info->attachable_dataspaces.insert(new_ad_info);
 		}
 
 		// Insert new Managed_region_info into _managed_dataspaces
 		Genode::Lock::Guard lock_guard(_managed_dataspaces_lock);
-		_managed_dataspaces.insert(mr_info);
+		_managed_dataspaces.insert(new_mr_info);
 
 		if(verbose_debug)
 		{
-			Genode::log("  Allocated managed dataspace (", mr_info->ref_managed_dataspace.local_name(), ")",
+			Genode::log("  Allocated managed dataspace (", new_mr_info->ref_managed_dataspace.local_name(), ")",
 					" containing ", num_dataspaces, "*", ds_size,
 					" + ", (remaining_dataspace_size == 0 ? "" : "1*"), remaining_dataspace_size, " Dataspaces");
 		}
 
 		// Return the stored managed dataspace capability of the Region_map as a Ram_dataspace_capability
-		return Genode::static_cap_cast<Genode::Ram_dataspace>(mr_info->ref_managed_dataspace);
+		return Genode::static_cap_cast<Genode::Ram_dataspace>(new_mr_info->ref_managed_dataspace);
 	}
 
 	/**
