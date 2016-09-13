@@ -350,7 +350,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = true;
+	static constexpr bool verbose_debug = false;
 
 	/**
 	 * Environment of creator component (usually rtcr)
