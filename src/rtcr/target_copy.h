@@ -12,51 +12,9 @@
 #include "target_child.h"
 
 namespace Rtcr {
-	struct Copied_dataspace_info;
 	struct Copied_region_info;
 	class  Target_copy;
 }
-
-/**
- * This list element keeps track whether a dataspace was already cloned
- *
- * Used by copying attachments
- */
-struct Rtcr::Copied_dataspace_info : public Genode::List<Copied_dataspace_info>::Element
-{
-	Genode::Dataspace_capability original;
-	Genode::Dataspace_capability clone;
-
-	/**
-	 * Given the original dataspace capability, find the corresponding clone dataspace capability
-	 *
-	 * \param original Dataspace_capability which was used for cloning
-	 *
-	 * \return Clone dataspace_capability
-	 */
-	Copied_dataspace_info *find_by_clone_cap(Genode::Dataspace_capability original)
-	{
-		if(original == this->original)
-			return this;
-		Copied_dataspace_info *cd_info = next();
-		return cd_info ? cd_info->find_by_clone_cap(original) : 0;
-	}
-
-	/**
-	 * Given the clone dataspace capability, find the corresponding original dataspace capability
-	 *
-	 * \param clone Dataspace_capability which was created through cloning
-	 *
-	 * \return Original dataspace_capability
-	 */
-	Copied_dataspace_info *find_by_original_cap(Genode::Dataspace_capability clone)
-	{
-		if(clone == this->clone)
-			return this;
-		Copied_dataspace_info *cd_info = next();
-		return cd_info ? cd_info->find_by_original_cap(clone) : 0;
-	}
-};
 
 /**
  * Struct to manage the copied dataspaces of an original Region_map
@@ -65,7 +23,8 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 {
 	enum Ds_type { Managed, Foreign };
 
-	Genode::Dataspace_capability ds_cap;
+	Genode::Dataspace_capability origin_ds_cap;
+	Genode::Dataspace_capability cloned_ds_cap;
 	Genode::addr_t addr;
 	Genode::size_t size;
 	bool executable;
@@ -73,14 +32,16 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 	Genode::List<Attachable_dataspace_info> *managed_dataspaces;
 
 
-	Copied_region_info(Genode::Dataspace_capability ds_cap,
+	Copied_region_info(Genode::Dataspace_capability origin_ds_cap,
+			Genode::Dataspace_capability cloned_ds_cap,
 			Genode::addr_t addr,
 			Genode::size_t size,
 			bool executable,
 			Ds_type type = Ds_type::Foreign,
 			Genode::List<Attachable_dataspace_info> *md = nullptr)
 	:
-		ds_cap(ds_cap),
+		origin_ds_cap(origin_ds_cap),
+		cloned_ds_cap(cloned_ds_cap),
 		addr(addr),
 		size(size),
 		executable(executable),
@@ -92,6 +53,38 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 			Genode::error("Copied region is managed but was not provided with a managed dataspaces list");
 		}
 	}
+
+
+	/**
+	 * Given the original dataspace capability, find the corresponding clone dataspace capability
+	 *
+	 * \param original Dataspace_capability which was used for cloning
+	 *
+	 * \return Clone dataspace_capability
+	 */
+	Copied_region_info *find_by_clone_cap(Genode::Dataspace_capability original)
+	{
+		if(original == origin_ds_cap)
+			return this;
+		Copied_region_info *cr_info = next();
+		return cr_info ? cr_info->find_by_clone_cap(original) : 0;
+	}
+
+	/**
+	 * Given the clone dataspace capability, find the corresponding original dataspace capability
+	 *
+	 * \param clone Dataspace_capability which was created through cloning
+	 *
+	 * \return Original dataspace_capability
+	 */
+	Copied_region_info *find_by_original_cap(Genode::Dataspace_capability clone)
+	{
+		if(clone == cloned_ds_cap)
+			return this;
+		Copied_region_info *cr_info = next();
+		return cr_info ? cr_info->find_by_original_cap(clone) : 0;
+	}
+
 
 	/**
 	 * Find a corresponding Copied_region_info using an Attached_region_info
@@ -118,7 +111,7 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 	 */
 	bool corresponding(const Attached_region_info &other) const
 	{
-		return (ds_cap == other.ds_cap) &&
+		return (origin_ds_cap == other.ds_cap) &&
 				(addr == other.local_addr) &&
 				(size == other.size) &&
 				(executable == other.executable);
