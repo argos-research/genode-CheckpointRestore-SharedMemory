@@ -53,6 +53,27 @@ void print_list(List<My_info> &list)
 	}
 }
 
+void delete_elements_alternating(List<My_info> &list, Allocator &alloc)
+{
+	bool delete_element = false;
+
+	My_info *curr = list.first();
+	while(curr)
+	{
+		My_info *next = curr->next();
+
+		if(delete_element)
+		{
+			list.remove(curr);
+			destroy(alloc, curr);
+		}
+
+		delete_element = !delete_element;
+
+		curr = next;
+	}
+}
+
 size_t Component::stack_size() { return 64*1024; }
 
 void Component::construct(Genode::Env &env)
@@ -83,6 +104,20 @@ void Component::construct(Genode::Env &env)
 	copied_list.first()->next()->valid = false;
 	copied_list.first()->next()->next()->valid = false;
 	print_list(copied_list);
+
+	log("Delete alternating elements");
+	My_info *info4 = new (heap1) My_info(ds1, 0x4000, true);
+	My_info *info5 = new (heap1) My_info(ds1, 0x5000, true);
+	My_info *info6 = new (heap1) My_info(ds1, 0x6000, true);
+	info_list.insert(info4);
+	info_list.insert(info5);
+	info_list.insert(info6);
+	log("\nBefore");
+	print_list(info_list);
+	delete_elements_alternating(info_list, heap1);
+	log("\nAfter");
+	print_list(info_list);
+
 
 
 	log("--- list-manipulation ended ---");
