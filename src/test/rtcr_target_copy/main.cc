@@ -33,49 +33,37 @@ struct Rtcr::Main
 		Target_child child { env, md_heap, parent_services, "sheep_counter", 1 };
 
 		Timer::Connection timer { env };
-		timer.msleep(2000);
+		timer.msleep(1000);
 
-		log("#1 Pausing");
-		child.pause();
 
 		log("Creating target copy instance");
 		Target_copy copy { env, md_heap, child };
 
-		log("Address space");
-		print_attached_region_info_list(child.pd().address_space_component().attached_regions());
 
-		log("Stack area");
-		print_attached_region_info_list(child.pd().stack_area_component().attached_regions());
+		for(unsigned int i = 0; i < 10; ++i)
+		{
+			timer.msleep(2000);
 
-		log("Managed dataspaces");
-		print_managed_region_info_list(child.ram().managed_regions(), false);
+			log("Pausing #", i);
 
-		log("Synchronising target copy with target child");
-		copy.sync(&child.ram().managed_regions());
+			log("Address space");
+			print_attached_region_info_list(child.pd().address_space_component().attached_regions());
 
-		log("Copied stack regions");
-		print_copied_region_info_list(copy.copied_stack_regions(), true);
+			log("Managed dataspaces");
+			print_managed_region_info_list(child.ram().managed_regions());
 
-		log("Copied linker regions");
-		print_copied_region_info_list(copy.copied_linker_regions(), true);
+			child.pause();
+			copy.sync(&child.ram().managed_regions());
 
-		log("Copied address space regions");
-		print_copied_region_info_list(copy.copied_address_space_regions(), true);
+			log("Copied address space");
+			print_copied_region_info_list(copy.copied_address_space_regions());
 
-		//log("Managed dataspaces");
-		//print_managed_region_info_list(child.ram().managed_regions());
+			child.resume();
 
-		log("#1 Resuming");
-		child.resume();
 
-/*		timer.msleep(2000);
+			log("Resumed #", i);
+		}
 
-		log("#2 Pausing");
-		child.pause();
-		copy.sync(&child.ram().managed_regions());
-		log("#2 Resuming");
-		child.resume();
-*/
 		Genode::sleep_forever();
 	}
 };
