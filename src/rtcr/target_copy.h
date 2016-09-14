@@ -253,10 +253,17 @@ private:
 	 */
 	void _copy_attachments_all()
 	{
-		Genode::log(__func__, ": Implement me");
+		_clean_all_entries_in_copied_region_list(_copied_stack_regions);
+		_copy_regions_all(_stack_regions, _copied_stack_regions);
+
+		_clean_all_entries_in_copied_region_list(_copied_linker_regions);
+		_copy_regions_all(_linker_regions, _copied_stack_regions);
+
+		_clean_all_entries_in_copied_region_list(_copied_address_space_regions);
+		_copy_regions_all(_address_space_regions, _copied_address_space_regions);
 	}
 
-	void _clean_all_entries_in_copied_region(Genode::List<Copied_region_info> &copy_list)
+	void _clean_all_entries_in_copied_region_list(Genode::List<Copied_region_info> &copy_list)
 	{
 		Copied_region_info *cr_info = copy_list.first();
 		while(cr_info)
@@ -283,7 +290,7 @@ private:
 	/**
 	 * Remove all Copied_region_infos with their dataspaces from copy_list, if they are no longer found in orig_list
 	 */
-	void _clean_old_entries_in_copied_region(Genode::List<Attached_region_info> &orig_list, Genode::List<Copied_region_info> &copy_list)
+	void _clean_old_entries_in_copied_region_list(Genode::List<Attached_region_info> &orig_list, Genode::List<Copied_region_info> &copy_list)
 	{
 		Copied_region_info *cr_info = copy_list.first();
 		while(cr_info)
@@ -317,6 +324,56 @@ private:
 	}
 
 
+	void _copy_regions_all(Genode::List<Attached_region_info> &orig_list, Genode::List<Copied_region_info> &copy_list)
+	{
+		for(Attached_region_info *ar_info = orig_list.first(); ar_info; ar_info = ar_info->next())
+		{
+			// Ignore linker and stack area which are disguised as managed dataspaces
+			// (e.g. the address space list has the stack area attached as a managed dataspace)
+			if(ar_info->ds_cap == _linker_ds_cap || ar_info->ds_cap == _stack_ds_cap)
+			{
+				continue;
+			}
+
+			Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and not managed");
+
+			// 1. Create new Copied_region_info
+			Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
+					ar_info->ds_cap, ar_info->local_addr, ar_info->size,
+					ar_info->executable, Copied_region_info::Foreign);
+
+			// 2.2.1 Clone 1 dataspace
+			Genode::Dataspace_capability new_ds_cap = _clone_dataspace(ar_info->ds_cap, ar_info->size);
+
+			// 2.2.2 Manage the cloned dataspace with a Copied_dataspace_info
+			Copied_dataspace_info *new_cd_info =
+					new (_alloc) Copied_dataspace_info(new_ds_cap, 0, ar_info->size);
+
+			// 2.2.3 Insert the new Copied_dataspace_info to the new Copied_region_info
+			new_cr_info->cloned_dataspaces.insert(new_cd_info);
+
+
+			// 3. Attach new Copied_region_info to Copied_region_info list
+			copy_list.insert(new_cr_info);
+
+		}
+	}
+
+	bool _filtered(const Attached_region_info &ar_info)
+	{
+		// TODO Replace hardcoded filter arguments
+		bool result = false;
+
+		/*
+		if(ar_info.local_addr == 0x0103e000)
+		{
+			result = true;
+		}
+		*/
+
+		return result;
+	}
+
 	/**
 	 * Copy/Clone all Attached_region_infos from orig, which were changed/are not monitored/are new, to copy
 	 */
@@ -330,7 +387,7 @@ private:
 			// (e.g. the address space list has the stack area attached as a managed dataspace)
 			if(ar_info->ds_cap == _linker_ds_cap || ar_info->ds_cap == _stack_ds_cap)
 			{
-				break;
+				continue;
 			}
 
 			Managed_region_info *mr_info = nullptr;
@@ -354,7 +411,7 @@ private:
 				 ******************************************************************************************/
 				if(mr_info && cr_info->type == Copied_region_info::Managed)
 				{
-					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and managed");
 
 					// 1. Copy content of n marked dataspaces
 					// 2. Unmark dataspaces
@@ -379,9 +436,9 @@ private:
 
 							if(do_detach)
 							{
-								Genode::log("  Detaching dataspace ", ad_info->dataspace.local_name()
+								//Genode::log("  Detaching dataspace ", ad_info->dataspace.local_name()
 										//," from ", ad_info->ref_managed_region_info.ref_managed_dataspace.local_name()
-										);
+								//		);
 
 								ad_info->detach();
 							}
@@ -393,7 +450,7 @@ private:
 				 ************************************************************************************/
 				else
 				{
-					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and not managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and not managed");
 
 					// 1. Copy content of 1 dataspace
 					_copy_dataspace(ar_info->ds_cap, cr_info->cloned_dataspaces.first()->ds_cap, ar_info->size);
@@ -414,9 +471,9 @@ private:
 				/******************************************************************************************
 				 ** Dataspace from current Attached_region_info is managed by Rtcr (= managed dataspace) **
 				 ******************************************************************************************/
-				if(mr_info)
+				if(mr_info && !_filtered(*ar_info))
 				{
-					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and managed");
 
 					// 1. Create new Copied_region_info
 					Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
@@ -453,9 +510,9 @@ private:
 
 							if(do_detach)
 							{
-								Genode::log("  Detaching dataspace ", ad_info->dataspace.local_name()
+								//Genode::log("  Detaching dataspace ", ad_info->dataspace.local_name()
 										//," from ", ad_info->ref_managed_region_info.ref_managed_dataspace.local_name()
-										);
+								//		);
 								if(ad_info->attached) ad_info->detach();
 							}
 						}
@@ -468,7 +525,7 @@ private:
 				 ************************************************************************************/
 				else
 				{
-					Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and not managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and not managed");
 
 					// 1. Create new Copied_region_info
 					Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
@@ -509,13 +566,13 @@ private:
 	 */
 	void _copy_attachments_inc(Genode::List<Managed_region_info> &managed_regions)
 	{
-		_clean_old_entries_in_copied_region(_stack_regions, _copied_stack_regions);
+		_clean_old_entries_in_copied_region_list(_stack_regions, _copied_stack_regions);
 		_copy_regions_inc(_stack_regions, _copied_stack_regions, managed_regions, false);
 
-		_clean_old_entries_in_copied_region(_linker_regions, _copied_linker_regions);
+		_clean_old_entries_in_copied_region_list(_linker_regions, _copied_linker_regions);
 		_copy_regions_inc(_linker_regions, _copied_linker_regions, managed_regions, false);
 
-		_clean_old_entries_in_copied_region(_address_space_regions, _copied_address_space_regions);
+		_clean_old_entries_in_copied_region_list(_address_space_regions, _copied_address_space_regions);
 		_copy_regions_inc(_address_space_regions, _copied_address_space_regions, managed_regions);
 	}
 
@@ -561,11 +618,6 @@ public:
 		}
 
 	}
-
-	Genode::List<Thread_info>          &threads()               { return _threads;               }
-	Genode::List<Attached_region_info> &address_space_regions() { return _address_space_regions; }
-	Genode::List<Attached_region_info> &stack_regions()         { return _stack_regions;         }
-	Genode::List<Attached_region_info> &linker_regions()        { return _linker_regions;        }
 
 	Genode::List<Thread_info>        &copied_threads()               { return _copied_threads;               }
 	Genode::List<Copied_region_info> &copied_address_space_regions() { return _copied_address_space_regions; }
