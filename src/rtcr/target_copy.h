@@ -229,13 +229,7 @@ private:
 			return Genode::Dataspace_capability();
 		}
 
-		void *orig  = _env.rm().attach(ds_from);
-		void *clone = _env.rm().attach(ds_to);
-
-		Genode::memcpy(clone, orig, size);
-
-		_env.rm().detach(clone);
-		_env.rm().detach(orig);
+		_copy_dataspace(ds_from, ds_to, size);
 
 		return ds_to;
 	}
@@ -262,23 +256,50 @@ private:
 		Genode::log(__func__, ": Implement me");
 	}
 
-	/**
-	 * Remove all Copied_region_infos with their dataspaces from copy, if they are no longer found in orig
-	 */
-	void _clean_copied_region(Genode::List<Attached_region_info> &orig, Genode::List<Copied_region_info> &copy)
+	void _clean_all_entries_in_copied_region(Genode::List<Copied_region_info> &copy_list)
 	{
-		for(Copied_region_info *cr_info = copy.first(); cr_info; cr_info = cr_info->next())
+		Copied_region_info *cr_info = copy_list.first();
+		while(cr_info)
 		{
+			// Store next pointer before it is possibly destroyed
+			Copied_region_info *next = cr_info->next();
+
+			// Delete all cloned dataspaces
+			for(Copied_dataspace_info *cd_info = cr_info->cloned_dataspaces.first(); cd_info; cd_info = cd_info->next())
+			{
+				cr_info->cloned_dataspaces.remove(cd_info);
+				Genode::destroy(_alloc, cd_info);
+			}
+
+			// Delete Copied_region_info itself
+			copy_list.remove(cr_info);
+			Genode::destroy(_alloc, cr_info);
+
+			// Assign pointer to next list element to the current pointer
+			cr_info = next;
+		}
+	}
+
+	/**
+	 * Remove all Copied_region_infos with their dataspaces from copy_list, if they are no longer found in orig_list
+	 */
+	void _clean_old_entries_in_copied_region(Genode::List<Attached_region_info> &orig_list, Genode::List<Copied_region_info> &copy_list)
+	{
+		Copied_region_info *cr_info = copy_list.first();
+		while(cr_info)
+		{
+			// Store next pointer before it is possibly destroyed
+			Copied_region_info *next = cr_info->next();
+
 			// Find Attached_region_info which corresponds to Copied_region_info
-			Attached_region_info *ar_info = orig.first();
+			Attached_region_info *ar_info = orig_list.first();
 			if(ar_info) ar_info = ar_info->find_by_cap(cr_info->original_ds_cap);
 
 			// No corresponding Attached_region_info was found
 			if(!ar_info)
 			{
 				// 1. Free dataspaces and their corresponding cd_info from cr_info
-				Copied_dataspace_info *cd_info = cr_info->cloned_dataspaces.first();
-				for(; cd_info; cd_info = cd_info->next())
+				for(Copied_dataspace_info *cd_info = cr_info->cloned_dataspaces.first(); cd_info; cd_info = cd_info->next())
 				{
 					_env.ram().free(Genode::static_cap_cast<Genode::Ram_dataspace>(cd_info->ds_cap));
 					cr_info->cloned_dataspaces.remove(cd_info);
@@ -286,9 +307,12 @@ private:
 				}
 
 				// 2. Free cr_info
-				copy.remove(cr_info);
+				copy_list.remove(cr_info);
 				Genode::destroy(_alloc, cr_info);
 			}
+
+			// Assign pointer to next list element to the current pointer
+			cr_info = next;
 		}
 	}
 
@@ -321,7 +345,7 @@ private:
 			 *****************************************************************************/
 			if(cr_info)
 			{
-				// Is the dataspace of curr_ar managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
+				// Is the dataspace of current Attached_region_info managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
 				mr_info = managed_regions.first();
 				if(mr_info) mr_info = mr_info->find_by_cap(ar_info->ds_cap);
 
@@ -485,13 +509,13 @@ private:
 	 */
 	void _copy_attachments_inc(Genode::List<Managed_region_info> &managed_regions)
 	{
-		_clean_copied_region(_stack_regions, _copied_stack_regions);
+		_clean_old_entries_in_copied_region(_stack_regions, _copied_stack_regions);
 		_copy_regions_inc(_stack_regions, _copied_stack_regions, managed_regions, false);
 
-		_clean_copied_region(_linker_regions, _copied_linker_regions);
+		_clean_old_entries_in_copied_region(_linker_regions, _copied_linker_regions);
 		_copy_regions_inc(_linker_regions, _copied_linker_regions, managed_regions, false);
 
-		_clean_copied_region(_address_space_regions, _copied_address_space_regions);
+		_clean_old_entries_in_copied_region(_address_space_regions, _copied_address_space_regions);
 		_copy_regions_inc(_address_space_regions, _copied_address_space_regions, managed_regions);
 	}
 
