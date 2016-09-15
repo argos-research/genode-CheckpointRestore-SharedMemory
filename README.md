@@ -21,7 +21,8 @@ Approach
  * Pause target during checkpoint
  * Intercept PD session for Region_map
  * Intercept CPU session for thread information
- * Implement an API to manipulate the capability space of components: Read and Write
+ * Implement an API to manipulate the capability space of components: Request and Install
+ * Intercept Core services to keep track of created Capabilities and their states
  * Store data in RAM of checkpointer by using own RAM quota or in a filesystem (needs driver)
  * Resume target after checkpoint
 * Restore in userland
