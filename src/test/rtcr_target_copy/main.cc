@@ -30,7 +30,7 @@ struct Rtcr::Main
 
 	Main(Genode::Env &env_) : env(env_)
 	{
-		Target_child child { env, md_heap, parent_services, "sheep_counter", 1 };
+		Target_child child { env, md_heap, parent_services, "sheep_counter", true };
 
 		Timer::Connection timer { env };
 		timer.msleep(1000);
@@ -40,9 +40,9 @@ struct Rtcr::Main
 		Target_copy copy { env, md_heap, child };
 
 
-		for(unsigned int i = 0; i < 10; ++i)
+		for(unsigned int i = 0; i < 100; ++i)
 		{
-			timer.msleep(2000);
+			timer.msleep(3000);
 
 			log("Pausing #", i);
 
