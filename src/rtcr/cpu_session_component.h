@@ -131,32 +131,6 @@ public:
 	}
 
 	/**
-	 * Create a copy of threads list containing thread capabilities.
-	 * Is needed, if the client's threads are not paused.
-	 *
-	 * \param alloc Allocator where the new list shall be stored
-	 *
-	 * \return new list
-	 */
-	Genode::List<Thread_info> copy_threads_list(Genode::Allocator &alloc)
-	{
-		// Serialize access to the list
-		Genode::Lock::Guard lock(_threads_lock);
-
-		Genode::List<Thread_info> result;
-
-		// Store all Thread_infos
-		Thread_info *curr_th = _threads.first();
-		for(; curr_th; curr_th = curr_th->next())
-		{
-			// Create a copy of Thread_info and attach it to result
-			result.insert(new (alloc) Thread_info(curr_th->thread_cap));
-		}
-
-		return result;
-	}
-
-	/**
 	 * Return list of client's threads
 	 *
 	 * \return Reference to the internal threads list
@@ -171,8 +145,7 @@ public:
 	 */
 	void pause_threads()
 	{
-		Thread_info *curr_th = _threads.first();
-		for( ; curr_th; curr_th = curr_th->next())
+		for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
 		{
 			Genode::Cpu_thread_client{curr_th->thread_cap}.pause();
 		}
@@ -183,8 +156,7 @@ public:
 	 */
 	void resume_threads()
 	{
-		Thread_info *curr_th = _threads.first();
-		for( ; curr_th; curr_th = curr_th->next())
+		for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
 		{
 			Genode::Cpu_thread_client{curr_th->thread_cap}.resume();
 		}

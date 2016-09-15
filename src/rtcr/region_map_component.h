@@ -151,37 +151,6 @@ public:
 	}
 
 	/**
-	 * Create a copy of regions list containing regions attached to this Region map.
-	 * Is needed, if the client's threads are not paused.
-	 *
-	 * \param alloc Allocator where the new list shall be stored
-	 *
-	 * \return new list
-	 */
-	Genode::List<Attached_region_info> copy_attached_regions(Genode::Allocator &alloc)
-	{
-		// Serialize access to the list
-		Genode::Lock::Guard lock(_attached_regions_lock);
-
-		Genode::List<Attached_region_info> result;
-
-		// Store all Attached_region_infos
-		Attached_region_info *curr = _attached_regions.first();
-		for(; curr; curr = curr->next())
-		{
-			// Create a copy of Attached_region_info
-			Attached_region_info *region =
-					new (alloc) Attached_region_info(curr->ds_cap, curr->size, curr->offset,
-							curr->addr, curr->executable);
-
-			// Attach new Attached_region_info to the result
-			result.insert(region);
-		}
-
-		return result;
-	}
-
-	/**
 	 * Return list of attached regions
 	 *
 	 * \return Reference to the internal attached regions
