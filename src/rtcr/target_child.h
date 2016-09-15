@@ -45,6 +45,10 @@ private:
 	 */
 	Genode::Allocator  &_md_alloc;
 	/**
+	 * Indicator whether to use incremental checkpointing
+	 */
+	const bool          _use_inc_ckpt;
+	/**
 	 * Entrypoint for managing child's resource-sessions (PD, CPU, RAM)
 	 */
 	Genode::Entrypoint  _resources_ep;
@@ -90,12 +94,13 @@ private:
 		 * \param name        Child's unique name and also name of the rom module
 		 * \param granularity Granularity for incremental checkpointing in multiple of pagesize
 		 */
-		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name, Genode::size_t granularity)
+		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name,
+				bool use_inc_ckpt = true, Genode::size_t granularity = 1)
 		:
 			ep (ep),
 			pd (env, md_alloc, this->ep, name),
 			cpu(env, md_alloc, pd.parent_cap(), name),
-			ram(env, md_alloc, name, granularity),
+			ram(env, md_alloc, name, use_inc_ckpt, granularity),
 			rom(env, name)
 		{
 			// Manage child's custom resources
@@ -164,15 +169,17 @@ public:
 	 * TODO Separate child's name and filename to support multiple child's with the same rom module
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-			Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
+			Genode::Service_registry &parent_services, const char *name,
+			bool use_inc_ckpt = true, Genode::size_t granularity = 1)
 	:
 		_name           (name),
 		_env            (env),
 		_md_alloc       (md_alloc),
+		_use_inc_ckpt   (use_inc_ckpt),
 		_resources_ep   (_env, 16*1024, "resources ep"),
 		_child_ep       (_env, 16*1024, "child ep"),
 		_granularity    (granularity),
-		_resources      (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
+		_resources      (_env, _resources_ep, _md_alloc, _name.string(), _use_inc_ckpt, _granularity),
 		_initial_thread (_resources.cpu, _resources.pd.cap(), _name.string()),
 		_address_space  (_resources.pd.address_space()),
 		_parent_services(parent_services),
