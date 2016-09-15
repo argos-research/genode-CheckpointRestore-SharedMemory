@@ -60,7 +60,7 @@ for(unsigned int i = 0; i < 100; ++i) {
 
 			if(mr_info)
 
-			for(Attachable_dataspace_info *ad_info = mr_info->attachable_dataspaces.first(); ad_info; ad_info = ad_info->next())
+			for(Attachable_dataspace_info *ad_info = mr_info->ad_infos.first(); ad_info; ad_info = ad_info->next())
 			{
 				if(ad_info->attached)
 				{
@@ -75,7 +75,7 @@ for(unsigned int i = 0; i < 100; ++i) {
 
 			if(mr_info)
 
-			for(Attachable_dataspace_info *ad_info = mr_info->attachable_dataspaces.first(); ad_info; ad_info = ad_info->next())
+			for(Attachable_dataspace_info *ad_info = mr_info->ad_infos.first(); ad_info; ad_info = ad_info->next())
 			{
 				if(ad_info->attached)
 				{

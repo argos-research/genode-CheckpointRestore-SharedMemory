@@ -25,7 +25,7 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 	Genode::Dataspace_capability ds_cap;
 	Genode::size_t               size;
 	Genode::off_t                offset;
-	Genode::addr_t               local_addr;
+	Genode::addr_t               addr;
 	bool                         executable;
 
 	/**
@@ -42,7 +42,7 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 	Attached_region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
 			Genode::off_t offset, Genode::addr_t local_addr, bool executable)
 	:
-		ds_cap(ds_cap), size(size), offset(offset), local_addr(local_addr), executable(executable)
+		ds_cap(ds_cap), size(size), offset(offset), addr(local_addr), executable(executable)
 	{  }
 
 	/**
@@ -53,7 +53,7 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 	 */
 	Attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
-		if((addr >= local_addr) && (addr <= local_addr + size))
+		if((addr >= this->addr) && (addr <= this->addr + size))
 			return this;
 		Attached_region_info *region = next();
 		return region ? region->find_by_addr(addr) : 0;
@@ -146,7 +146,7 @@ public:
 		Genode::Lock::Guard lock_guard(_attached_regions_lock);
 
 		while((curr_at_info = _attached_regions.first()))
-			detach(curr_at_info->local_addr);
+			detach(curr_at_info->addr);
 		if(verbose_debug) Genode::log("Region_map_component destroyed");
 	}
 
@@ -172,7 +172,7 @@ public:
 			// Create a copy of Attached_region_info
 			Attached_region_info *region =
 					new (alloc) Attached_region_info(curr->ds_cap, curr->size, curr->offset,
-							curr->local_addr, curr->executable);
+							curr->addr, curr->executable);
 
 			// Attach new Attached_region_info to the result
 			result.insert(region);

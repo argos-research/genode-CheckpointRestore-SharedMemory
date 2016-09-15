@@ -83,12 +83,12 @@ namespace Rtcr
 
 		//log("Attached_region_info list");
 
-		Attached_region_info *curr_ar = list.first();
-		for( ; curr_ar; curr_ar = curr_ar->next())
+
+		for(Attached_region_info *curr_ar = list.first(); curr_ar; curr_ar = curr_ar->next())
 		{
 			log("  Dataspace ", curr_ar->ds_cap.local_name(),
-					" occupying [", Hex(curr_ar->local_addr),
-					", ", Hex(curr_ar->local_addr + curr_ar->size), ")",
+					" occupying [", Hex(curr_ar->addr),
+					", ", Hex(curr_ar->addr + curr_ar->size), ")",
 					curr_ar->executable ? " exec": "");
 		}
 	}
@@ -108,7 +108,7 @@ namespace Rtcr
 			if(brief)
 			{
 				unsigned int num_ds = 0;
-				for(Attachable_dataspace_info *curr_ad = curr_mr->attachable_dataspaces.first(); curr_ad; curr_ad = curr_ad->next())
+				for(Attachable_dataspace_info *curr_ad = curr_mr->ad_infos.first(); curr_ad; curr_ad = curr_ad->next())
 				{
 					num_ds++;
 				}
@@ -118,7 +118,7 @@ namespace Rtcr
 			else
 			{
 				unsigned int used = 0;
-				for(Attachable_dataspace_info *curr_ad = curr_mr->attachable_dataspaces.first(); curr_ad; curr_ad = curr_ad->next())
+				for(Attachable_dataspace_info *curr_ad = curr_mr->ad_infos.first(); curr_ad; curr_ad = curr_ad->next())
 				{
 					if(used + 10 > buffer_size)
 					{
@@ -127,21 +127,21 @@ namespace Rtcr
 					}
 					else if(used == 0)
 					{
-						used = used + snprintf(cloned_dataspaces_string + used, buffer_size - used, "%ld%s", curr_ad->dataspace.local_name(), curr_ad->attached?"a":"d");
+						used = used + snprintf(cloned_dataspaces_string + used, buffer_size - used, "%ld%s", curr_ad->ds_cap.local_name(), curr_ad->attached?"a":"d");
 					}
 					else
 					{
-						used = used + snprintf(cloned_dataspaces_string + used, buffer_size - used, " %ld%s", curr_ad->dataspace.local_name(), curr_ad->attached?"a":"d");
+						used = used + snprintf(cloned_dataspaces_string + used, buffer_size - used, " %ld%s", curr_ad->ds_cap.local_name(), curr_ad->attached?"a":"d");
 					}
 				}
 			}
 
-			size_t mds_size = Dataspace_client{curr_mr->ref_managed_dataspace}.size();
+			size_t mds_size = Dataspace_client{curr_mr->mds_cap}.size();
 
-			log("  Managed dataspace ", curr_mr->ref_managed_dataspace.local_name(),
+			log("  Managed dataspace ", curr_mr->mds_cap.local_name(),
 					" (", const_cast<const char*>(cloned_dataspaces_string), ")",
 					" size ", Hex(mds_size, Hex::PREFIX, Hex::PAD),
-					", Region_map ", curr_mr->ref_region_map.local_name());
+					", Region_map ", curr_mr->rm_cap.local_name());
 		}
 	}
 

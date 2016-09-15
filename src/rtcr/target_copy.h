@@ -72,7 +72,7 @@ struct Rtcr::Copied_dataspace_info : public Genode::List<Copied_dataspace_info>:
 	 */
 	bool corresponding_ad_info(const Attachable_dataspace_info &ad_info)
 	{
-		return (rel_addr == ad_info.local_addr) && (size == ad_info.size);
+		return (rel_addr == ad_info.rel_addr) && (size == ad_info.size);
 	}
 
 };
@@ -154,7 +154,7 @@ struct Rtcr::Copied_region_info : public Genode::List<Copied_region_info>::Eleme
 	bool corresponding(const Attached_region_info &other) const
 	{
 		return (original_ds_cap == other.ds_cap) &&
-				(addr == other.local_addr) &&
+				(addr == other.addr) &&
 				(size == other.size) &&
 				(executable == other.executable);
 	}
@@ -339,7 +339,7 @@ private:
 
 			// 1. Create new Copied_region_info
 			Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
-					ar_info->ds_cap, ar_info->local_addr, ar_info->size,
+					ar_info->ds_cap, ar_info->addr, ar_info->size,
 					ar_info->executable, Copied_region_info::Foreign);
 
 			// 2.2.1 Clone 1 dataspace
@@ -415,7 +415,7 @@ private:
 
 					// 1. Copy content of n marked dataspaces
 					// 2. Unmark dataspaces
-					for(Attachable_dataspace_info *ad_info = mr_info->attachable_dataspaces.first(); ad_info; ad_info = ad_info->next())
+					for(Attachable_dataspace_info *ad_info = mr_info->ad_infos.first(); ad_info; ad_info = ad_info->next())
 					{
 						if(ad_info->attached)
 						{
@@ -423,15 +423,15 @@ private:
 
 							if(cd_info)
 							{
-								_copy_dataspace(ad_info->dataspace, cd_info->ds_cap, ad_info->size);
+								_copy_dataspace(ad_info->ds_cap, cd_info->ds_cap, ad_info->size);
 							}
 							else
 							{
 								Genode::error("No corresponding Copied_dataspace_info found: Attachable_dataspace_info",
-										" ds ", ad_info->dataspace.local_name(),
-										", addr ", ad_info->local_addr,
+										" ds ", ad_info->ds_cap.local_name(),
+										", addr ", ad_info->rel_addr,
 										", size ", ad_info->size,
-										", managing dataspace ", ad_info->ref_managed_region_info.ref_managed_dataspace.local_name());
+										", managing dataspace ", ad_info->mr_info.mds_cap.local_name());
 							}
 
 							if(do_detach)
@@ -477,7 +477,7 @@ private:
 
 					// 1. Create new Copied_region_info
 					Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
-							ar_info->ds_cap, ar_info->local_addr, ar_info->size,
+							ar_info->ds_cap, ar_info->addr, ar_info->size,
 							ar_info->executable, Copied_region_info::Managed);
 
 					// 2. Copy dataspace capabilities/clone dataspaces to cloned_dataspaces from the managed dataspace
@@ -498,13 +498,13 @@ private:
 						// 2.2.2 Manage them with n new Copied_dataspace_infos
 						// 2.2.3 Insert the new Copied_dataspace_infos to the new Copied_region_info
 						// 2.2.4 Detach n dataspaces from Attachable_dataspace_infos to unmark the dataspaces
-						Attachable_dataspace_info *ad_info = mr_info->attachable_dataspaces.first();
+						Attachable_dataspace_info *ad_info = mr_info->ad_infos.first();
 						for(; ad_info; ad_info = ad_info->next())
 						{
-							Genode::Dataspace_capability new_ds_cap = _clone_dataspace(ad_info->dataspace, ad_info->size);
+							Genode::Dataspace_capability new_ds_cap = _clone_dataspace(ad_info->ds_cap, ad_info->size);
 
 							Copied_dataspace_info *new_cd_info =
-									new (_alloc) Copied_dataspace_info(new_ds_cap, ad_info->local_addr, ad_info->size);
+									new (_alloc) Copied_dataspace_info(new_ds_cap, ad_info->rel_addr, ad_info->size);
 
 							new_cr_info->cloned_dataspaces.insert(new_cd_info);
 
@@ -529,7 +529,7 @@ private:
 
 					// 1. Create new Copied_region_info
 					Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
-							ar_info->ds_cap, ar_info->local_addr, ar_info->size,
+							ar_info->ds_cap, ar_info->addr, ar_info->size,
 							ar_info->executable, Copied_region_info::Foreign);
 
 					// 2. Copy/clone 1 dataspace
