@@ -149,8 +149,6 @@ namespace Rtcr
 	{
 		using namespace Genode;
 
-
-
 		for(Copied_region_info *curr_cr = list.first(); curr_cr; curr_cr = curr_cr->next())
 		{
 			unsigned int buffer_size = 100;

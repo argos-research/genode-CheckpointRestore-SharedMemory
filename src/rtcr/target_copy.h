@@ -364,12 +364,12 @@ private:
 		// TODO Replace hardcoded filter arguments
 		bool result = false;
 
-		/*
-		if(ar_info.local_addr == 0x0103e000)
+
+		if(ar_info.addr == 0x1000)
 		{
 			result = true;
 		}
-		*/
+
 
 		return result;
 	}
@@ -471,7 +471,7 @@ private:
 				/******************************************************************************************
 				 ** Dataspace from current Attached_region_info is managed by Rtcr (= managed dataspace) **
 				 ******************************************************************************************/
-				if(mr_info && !_filtered(*ar_info))
+				if(mr_info)
 				{
 					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and managed");
 
@@ -573,7 +573,7 @@ private:
 		_copy_regions_inc(_linker_regions, _copied_linker_regions, managed_regions, false);
 
 		_clean_old_entries_in_copied_region_list(_address_space_regions, _copied_address_space_regions);
-		_copy_regions_inc(_address_space_regions, _copied_address_space_regions, managed_regions);
+		_copy_regions_inc(_address_space_regions, _copied_address_space_regions, managed_regions, false);
 	}
 
 	/**
