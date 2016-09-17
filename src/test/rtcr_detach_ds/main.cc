@@ -39,7 +39,7 @@ struct Rtcr::Main
 		List<Attached_region_info> &ar_infos = child.pd().address_space_component().attached_regions();
 		List<Managed_region_info>  &mr_infos = child.ram().managed_regions();
 
-		Attached_region_info *ar_info = ar_infos.first();
+		/*Attached_region_info *ar_info = ar_infos.first();
 		if(ar_info) ar_info = ar_info->find_by_addr(0x1000);
 		if(ar_info)
 			log("Found attached region at address ", Hex(ar_info->addr));
@@ -57,7 +57,7 @@ struct Rtcr::Main
 		{
 			log("Did not found managed region for the attached region");
 			return;
-		}
+		}*/
 
 		for(unsigned int i = 0; i < 100; ++i)
 		{
@@ -68,16 +68,39 @@ struct Rtcr::Main
 			log("Managed regions");
 			print_managed_region_info_list(mr_infos);
 
+			Managed_region_info *my_mr_info = nullptr;
+
 			log("Detaching");
-			for(Attachable_dataspace_info *ad_info = mr_info->ad_infos.first(); ad_info; ad_info = ad_info->next())
+			for(Attached_region_info *ar_info = ar_infos.first(); ar_info; ar_info = ar_info->next())
 			{
-				ad_info->detach();
+				Managed_region_info *mr_info = mr_infos.first();
+				if(mr_info) mr_info = mr_info->find_by_cap(ar_info->ds_cap);
+
+				Attachable_dataspace_info *ad_info = nullptr;
+				if(mr_info) ad_info = mr_info->ad_infos.first();
+
+				for( ; ad_info; ad_info = ad_info->next())
+				{
+					if(ad_info->attached && ar_info->addr == 0x1000)
+					{
+						my_mr_info = mr_info;
+						//Region_map_client{ad_info->mr_info.rm_cap}.detach(ad_info->rel_addr);
+						ad_info->detach();
+					}
+				}
 			}
 
-			Attachable_dataspace_info *ad_info = mr_info->ad_infos.first();
-			unsigned int *addr = env.rm().attach(ad_info->ds_cap);
-			log("Reading ", *addr, " sheeps");
-			env.rm().detach(addr);
+			log("Managed regions");
+			print_managed_region_info_list(mr_infos);
+
+			/*
+			if(my_mr_info)
+			{
+				Attachable_dataspace_info *ad_info = my_mr_info->ad_infos.first();
+				unsigned int *addr = env.rm().attach(ad_info->ds_cap);
+				log("Reading ", *addr, " sheeps");
+				env.rm().detach(addr);
+			}*/
 
 			child.resume();
 			log("Resumed ", i);
