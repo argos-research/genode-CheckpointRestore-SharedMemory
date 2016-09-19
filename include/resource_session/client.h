@@ -22,8 +22,8 @@ struct Resource::Session_client : Genode::Rpc_client<Session>
 	void thread(Genode::Thread_capability thread_cap) override {
 		call<Rpc_thread>(thread_cap); }
 
-	Genode::Dataspace_capability dataspace(Genode::size_t size) override {
-		return call<Rpc_dataspace>(size); }
+	Genode::Dataspace_capability dataspace() override {
+		return call<Rpc_dataspace>(); }
 };
 
 #endif /* _INCLUDE__RESOURCE_REGISTRY_SESSION__CLIENT_H_ */

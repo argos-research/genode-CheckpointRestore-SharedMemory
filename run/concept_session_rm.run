@@ -32,7 +32,7 @@ install_config {
 	</start>
 	<start name="ckpt">
 		<resource name="RAM" quantum="10M"/>
-		<provides><service name="Resource_registry"/></provides>
+		<provides><service name="Resource"/></provides>
 	</start>
 	<start name="target">
 		<resource name="RAM" quantum="10M"/>
