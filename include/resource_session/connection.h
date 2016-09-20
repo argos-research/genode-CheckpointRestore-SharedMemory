@@ -20,7 +20,7 @@ struct Resource::Connection : Genode::Connection<Session>, Session_client
 	 */
 	Connection(Genode::Env &env)
 	:
-		Genode::Connection<Session>(env, session(env.parent(), "ram_quota=64K")),
+		Genode::Connection<Session>(env, session(env.parent(), "ram_quota=8K")),
 		Session_client(cap())
 	{ }
 };

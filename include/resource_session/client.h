@@ -19,11 +19,11 @@ struct Resource::Session_client : Genode::Rpc_client<Session>
 	explicit Session_client(Session_capability session)
 	: Rpc_client<Session>(session) { }
 
-	void thread(Genode::Thread_capability thread_cap) override {
-		call<Rpc_thread>(thread_cap); }
+	virtual void provide(Genode::Native_capability cap, Genode::uint32_t id = 0) override {
+		call<Rpc_provide>(cap, id); }
 
-	Genode::Dataspace_capability dataspace() override {
-		return call<Rpc_dataspace>(); }
+	virtual Genode::Native_capability request(Genode::uint32_t id = 0) override {
+		return call<Rpc_request>(id); }
 };
 
 #endif /* _INCLUDE__RESOURCE_REGISTRY_SESSION__CLIENT_H_ */
