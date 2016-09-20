@@ -104,12 +104,13 @@ struct Resource::Main
 			if(cli_res.native_pd_cap.valid())
 			{
 				log("Valid pd_cap");
-				Genode::Capability<Genode::Foc_native_pd> foc_cap =
+
+				Genode::Capability<Genode::Foc_native_pd> foc_pd_cap =
 						Genode::static_cap_cast<Genode::Foc_native_pd>(cli_res.native_pd_cap);
-				//log("foc_pd_cap is ", foc_cap.valid()?"valid":"invalid");
-				Genode::Foc_native_pd_client foc_client{foc_cap};
-				foc_client.request(1);
-				foc_client.install(foc_cap, 1);
+
+				Genode::Foc_native_pd_client foc_pd_client{foc_pd_cap};
+				foc_pd_client.request(1);
+				foc_pd_client.install(foc_pd_cap, 1);
 			}
 			else
 			{
