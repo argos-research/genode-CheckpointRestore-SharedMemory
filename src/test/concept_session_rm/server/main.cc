@@ -161,11 +161,11 @@ public:
 		_cli_res(cli_res)
 	{ }
 
-	void thread(Genode::Thread_capability thread_cap)
+	void provide(Genode::Native_capability thread_cap, Genode::uint32_t)
 	{
-		_cli_res.thread_cap = thread_cap;
+		_cli_res.thread_cap = Genode::reinterpret_cap_cast<Genode::Cpu_thread>(thread_cap);
 	}
-	Genode::Dataspace_capability dataspace()
+	Genode::Native_capability request(Genode::uint32_t)
 	{
 		return Genode::Region_map_client{_cli_res.rm_cap}.dataspace();
 	}

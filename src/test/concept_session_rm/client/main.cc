@@ -26,10 +26,10 @@ void Component::construct(Genode::Env &env)
 	Resource::Connection resource_service {env};
 
 	log("Sending main thread cap");
-	resource_service.thread(Thread::myself()->cap());
+	resource_service.provide(Thread::myself()->cap());
 
 	log("Requesting dataspace cap");
-	Dataspace_capability ds_cap = resource_service.dataspace();
+	Dataspace_capability ds_cap = reinterpret_cap_cast<Dataspace>(resource_service.request());
 
 	log("Attaching dataspace cap");
 	unsigned int *addr = env.rm().attach(ds_cap);
