@@ -175,7 +175,7 @@ public:
 			if(use_local_addr)
 			{
 				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
-						"ds_cap=",       ds_cap.local_name(),
+						"ds_cap=",       ds_cap,
 						", size=",       Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
 						", offset=",     offset,
 						", local_addr=", Genode::Hex(local_addr, Genode::Hex::PREFIX, Genode::Hex::PAD),
@@ -185,7 +185,7 @@ public:
 			else
 			{
 				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
-						"ds_cap=",   ds_cap.local_name(),
+						"ds_cap=",   ds_cap,
 						", size=",   Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
 						", offset=", offset,
 						", exe=",    executable?"1":"0",
@@ -208,7 +208,7 @@ public:
 			Genode::size_t ds_size = Genode::Dataspace_client(ds_cap).size();
 			Genode::size_t num_pages = (Genode::size_t)(ds_size/4096);
 
-			Genode::log("  Attached dataspace (", ds_cap.local_name(), ")",
+			Genode::log("  Attached dataspace (", ds_cap, ")",
 			" into [", Genode::Hex((Genode::size_t)addr),
 			", ", Genode::Hex((Genode::size_t)addr+ds_size), ") ",
 			num_pages, num_pages==1?" page":" pages");
@@ -261,7 +261,7 @@ public:
 		if(verbose_debug)
 		{
 			Genode::log("Rm<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(",
-					"handler_cap=", handler.local_name(),
+					"handler_cap=", handler,
 					")");
 		}
 
@@ -289,8 +289,8 @@ public:
 
 		if(verbose_debug)
 		{
-			Genode::log("  Created managed dataspace (", ds_cap.local_name(), ")",
-					" from Region_map (", _parent_rm.local_name(), ")");
+			Genode::log("  Created managed dataspace (", ds_cap, ")",
+					" from Region_map (", _parent_rm, ")");
 		}
 
 		return ds_cap;

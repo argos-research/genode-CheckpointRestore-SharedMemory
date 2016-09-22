@@ -162,8 +162,8 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 		{
 			if(verbose_debug)
 			{
-				Genode::log("Attaching dataspace ", ds_cap.local_name(),
-						" to managed dataspace ", mr_info.mds_cap.local_name(),
+				Genode::log("Attaching dataspace ", ds_cap,
+						" to managed dataspace ", mr_info.mds_cap,
 						" on location ", Genode::Hex(rel_addr), " (local to Region_map)");
 			}
 
@@ -184,8 +184,8 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 		else
 		{
 			Genode::warning("Trying to attach an already attached Dataspace:",
-					" DS ", ds_cap.local_name(),
-					" MD ", mr_info.mds_cap.local_name(),
+					" DS ", ds_cap,
+					" MD ", mr_info.mds_cap,
 					" Loc ", Genode::Hex(rel_addr));
 		}
 	}
@@ -197,8 +197,8 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Detaching dataspace ", ds_cap.local_name(),
-					" from managed dataspace ", mr_info.mds_cap.local_name(),
+			Genode::log("Detaching dataspace ", ds_cap,
+					" from managed dataspace ", mr_info.mds_cap,
 					" on location ", Genode::Hex(rel_addr), " (local to Region_map)");
 		}
 
@@ -213,9 +213,9 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 		else
 		{
 			Genode::warning("Trying to detach an already detached Dataspace:",
-					" RM ", mr_info.rm_cap.local_name(),
-					" MD ", mr_info.mds_cap.local_name(),
-					" DS ", ds_cap.local_name(),
+					" RM ", mr_info.rm_cap,
+					" MD ", mr_info.mds_cap,
+					" DS ", ds_cap,
 					" Loc ", Genode::Hex(rel_addr));
 		}
 	}
@@ -283,7 +283,7 @@ private:
 		if(verbose_debug)
 		{
 		Genode::log("Handle fault: Managed dataspace ",
-				faulting_rm_info->mds_cap.local_name(), " state is ",
+				faulting_rm_info->mds_cap, " state is ",
 				state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
 				state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
 				state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
@@ -298,7 +298,7 @@ private:
 		if(!ad_info)
 		{
 			Genode::warning("No designated dataspace for addr = ", state.addr,
-					" in Region_map ", faulting_rm_info->rm_cap.local_name());
+					" in Region_map ", faulting_rm_info->rm_cap);
 			return;
 		}
 
@@ -612,7 +612,7 @@ public:
 
 			if(verbose_debug)
 			{
-				Genode::log("  Allocated managed dataspace (", new_mr_info->mds_cap.local_name(), ")",
+				Genode::log("  Allocated managed dataspace (", new_mr_info->mds_cap, ")",
 						" containing ", num_dataspaces, "*", ds_size,
 						" + ", (remaining_dataspace_size == 0 ? "" : "1*"), remaining_dataspace_size, " Dataspaces");
 			}
@@ -631,19 +631,19 @@ public:
 	 *
 	 * \param ds Capability of the managed dataspace
 	 */
-	void free(Genode::Ram_dataspace_capability ds) override
+	void free(Genode::Ram_dataspace_capability ds_cap) override
 	{
 		if(verbose_debug) Genode::log("Ram::\033[33m", "free", "\033[0m()");
 
 		if(_use_inc_ckpt)
 		{
 			// Find the Managed_region_info which represents the Region_map with the passed Dataspace_capability
-			Managed_region_info *mr_info = _mr_infos.first()->find_by_cap(ds);
+			Managed_region_info *mr_info = _mr_infos.first()->find_by_cap(ds_cap);
 
 			// Check whether a corresponding Managed_region_info exists
 			if(!mr_info)
 			{
-				Genode::warning("Region_map not found in Ram::free(). Capability: ", ds.local_name(),
+				Genode::warning("Region_map not found in Ram::free(). Capability: ", ds_cap,
 						" not in managed dataspace list.");
 				return;
 			}
@@ -653,11 +653,11 @@ public:
 			Genode::Lock::Guard lock_guard(_mr_infos_lock);
 			_delete_rm_info_and_ad_infos(*mr_info);
 
-			_parent_ram.free(ds);
+			_parent_ram.free(ds_cap);
 		}
 		else
 		{
-			_parent_ram.free(ds);
+			_parent_ram.free(ds_cap);
 		}
 	}
 
@@ -665,7 +665,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::\033[33m", "ref_account", "\033[0m(ref=", ram_session.local_name(), ")");
+			Genode::log("Ram::\033[33m", "ref_account", "\033[0m(ref=", ram_session, ")");
 		}
 
 		return _parent_ram.ref_account(ram_session);
@@ -675,7 +675,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Ram::\033[33m", "transfer_quota", "\033[0m(to=", ram_session.local_name(), ", size=", amount, ")");
+			Genode::log("Ram::\033[33m", "transfer_quota", "\033[0m(to=", ram_session, ", size=", amount, ")");
 		}
 		return _parent_ram.transfer_quota(ram_session, amount);
 	}

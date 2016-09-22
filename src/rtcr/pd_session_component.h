@@ -179,15 +179,14 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Pd::alloc_rpc_cap()");
-			Genode::log("  ep_cap:     ", ep.local_name());
+			Genode::log("Pd::alloc_rpc_cap(", ep, ")");
 		}
 
 		Genode::Native_capability result {_parent_pd.alloc_rpc_cap(ep)};
 
 		if(verbose_debug)
 		{
-			Genode::log("  result_cap: ", result.local_name());
+			Genode::log("  result_cap: ", result);
 		}
 		return result;
 	}
@@ -196,8 +195,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Pd::free_rpc_cap()");
-			Genode::log("  cap:        ", cap.local_name());
+			Genode::log("Pd::free_rpc_cap(", cap,")");
 		}
 		_parent_pd.free_rpc_cap(cap);
 	}

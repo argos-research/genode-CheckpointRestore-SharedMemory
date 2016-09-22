@@ -335,7 +335,7 @@ private:
 				continue;
 			}
 
-			Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and not managed");
+			//Genode::log("Dataspace to copy ", ar_info->ds_cap, " not copied and not managed");
 
 			// 1. Create new Copied_region_info
 			Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
@@ -411,7 +411,7 @@ private:
 				 ******************************************************************************************/
 				if(mr_info && cr_info->type == Copied_region_info::Managed)
 				{
-					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap, " copied and managed");
 
 					// 1. Copy content of n marked dataspaces
 					// 2. Unmark dataspaces
@@ -428,16 +428,16 @@ private:
 							else
 							{
 								Genode::error("No corresponding Copied_dataspace_info found: Attachable_dataspace_info",
-										" ds ", ad_info->ds_cap.local_name(),
+										" ds ", ad_info->ds_cap,
 										", addr ", ad_info->rel_addr,
 										", size ", ad_info->size,
-										", managing dataspace ", ad_info->mr_info.mds_cap.local_name());
+										", managing dataspace ", ad_info->mr_info.mds_cap);
 							}
 
 							if(do_detach)
 							{
-								//Genode::log("  Detaching dataspace ", ad_info->dataspace.local_name()
-										//," from ", ad_info->ref_managed_region_info.ref_managed_dataspace.local_name()
+								//Genode::log("  Detaching dataspace ", ad_info->ds_cap
+										//," from ", ad_info->ref_managed_region_info.ref_managed_dataspace
 								//		);
 
 								ad_info->detach();
@@ -450,7 +450,7 @@ private:
 				 ************************************************************************************/
 				else
 				{
-					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " copied and not managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap, " copied and not managed");
 
 					// 1. Copy content of 1 dataspace
 					_copy_dataspace(ar_info->ds_cap, cr_info->cloned_dataspaces.first()->ds_cap, ar_info->size);
@@ -462,7 +462,7 @@ private:
 			 ***************************************************************************************/
 			else
 			{
-				//Genode::log("ar_info-ds ", curr_ar->ds_cap.local_name(), " not in cr_info");
+				//Genode::log("ar_info-ds ", curr_ar->ds_cap, " not in cr_info");
 
 				// Is the dataspace of curr_ar managed by Rtcr (i.e. created by Rtcr's custom Ram session)?
 				mr_info = managed_regions.first();
@@ -473,7 +473,7 @@ private:
 				 ******************************************************************************************/
 				if(mr_info)
 				{
-					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap, " not copied and managed");
 
 					// 1. Create new Copied_region_info
 					Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(
@@ -510,8 +510,8 @@ private:
 
 							if(do_detach)
 							{
-								//Genode::log("  Detaching dataspace ", ad_info->dataspace.local_name()
-										//," from ", ad_info->ref_managed_region_info.ref_managed_dataspace.local_name()
+								//Genode::log("  Detaching dataspace ", ad_info->ds_cap
+										//," from ", ad_info->ref_managed_region_info.ref_managed_dataspace
 								//		);
 								if(ad_info->attached) ad_info->detach();
 							}
@@ -525,7 +525,7 @@ private:
 				 ************************************************************************************/
 				else
 				{
-					//Genode::log("Dataspace to copy ", ar_info->ds_cap.local_name(), " not copied and not managed");
+					//Genode::log("Dataspace to copy ", ar_info->ds_cap, " not copied and not managed");
 
 					// 1. Create new Copied_region_info
 					Copied_region_info *new_cr_info = new (_alloc) Copied_region_info(

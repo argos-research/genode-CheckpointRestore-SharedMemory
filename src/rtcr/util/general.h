@@ -86,7 +86,7 @@ namespace Rtcr
 
 		for(Attached_region_info *curr_ar = list.first(); curr_ar; curr_ar = curr_ar->next())
 		{
-			log("  Dataspace ", curr_ar->ds_cap.local_name(),
+			log("  Dataspace ", curr_ar->ds_cap,
 					" occupying [", Hex(curr_ar->addr),
 					", ", Hex(curr_ar->addr + curr_ar->size), ")",
 					curr_ar->executable ? " exec": "");
@@ -138,10 +138,10 @@ namespace Rtcr
 
 			size_t mds_size = Dataspace_client{curr_mr->mds_cap}.size();
 
-			log("  Managed dataspace ", curr_mr->mds_cap.local_name(),
+			log("  Managed dataspace ", curr_mr->mds_cap,
 					" (", const_cast<const char*>(cloned_dataspaces_string), ")",
 					" size ", Hex(mds_size, Hex::PREFIX, Hex::PAD),
-					", Region_map ", curr_mr->rm_cap.local_name());
+					", Region_map ", curr_mr->rm_cap);
 		}
 	}
 
@@ -185,7 +185,7 @@ namespace Rtcr
 				}
 			}
 
-			log("  Copied original dataspace ", curr_cr->original_ds_cap.local_name(),
+			log("  Copied original dataspace ", curr_cr->original_ds_cap,
 					" into (", const_cast<const char*>(dataspaces_string), ")",
 					" occupying [", Hex(curr_cr->addr),
 					", ", Hex(curr_cr->addr + curr_cr->size), ")");

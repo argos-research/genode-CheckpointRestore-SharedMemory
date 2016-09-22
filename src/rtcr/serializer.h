@@ -74,7 +74,7 @@ private:
 
 		if(!ts.paused)
 		{
-			Genode::warning(" Thread ", thread.thread_cap.local_name(), " not paused.");
+			Genode::warning(" Thread ", thread.thread_cap, " not paused.");
 			return 0;
 		}
 

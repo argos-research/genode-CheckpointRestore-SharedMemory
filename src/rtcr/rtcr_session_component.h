@@ -31,14 +31,12 @@ public:
 
 	void checkpoint(Name const &component) override
 	{
-		if(verbose) Genode::log("checkpoint()");
-		Genode::log("  arg: ", component.string());
+		if(verbose) Genode::log("checkpoint(component=", component.string(),")");
 	}
 
 	void restore(Name const &component) override
 	{
-		if(verbose) Genode::log("restore()");
-		Genode::log("  arg: ", component.string());
+		if(verbose) Genode::log("restore(component=", component.string(),")");
 	}
 };
 

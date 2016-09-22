@@ -45,7 +45,7 @@ struct Rtcr::Thread_info : Genode::List<Rtcr::Thread_info>::Element
 	 */
 	Thread_info *find_by_cap(Genode::Thread_capability cap)
 	{
-		if(thread_cap.local_name() == cap.local_name())
+		if(thread_cap == cap)
 			return this;
 		Thread_info *thread_info = next();
 		return thread_info ? thread_info->find_by_cap(cap) : 0;
@@ -116,7 +116,14 @@ public:
 	 */
 	~Cpu_session_component()
 	{
-		//TODO free allocator from Thread_info objects
+		while(Thread_info *thread_info = _threads.first())
+		{
+			// Remove thread from list
+			_threads.remove(thread_info);
+			// Free memory space from allocator
+			destroy(_md_alloc, thread_info);
+		}
+
 		if(verbose_debug) Genode::log("Cpu_session_component destroyed");
 	}
 
@@ -189,7 +196,7 @@ public:
 
 		if(verbose_debug)
 		{
-			Genode::log("  thread_cap=", thread_cap.local_name());
+			Genode::log("  thread_cap: ", thread_cap);
 		}
 
 		return thread_cap;
@@ -200,7 +207,7 @@ public:
 	 */
 	void kill_thread(Genode::Thread_capability thread) override
 	{
-		if(verbose_debug) Genode::log("Cpu::kill_thread(cap=", thread.local_name(),")");
+		if(verbose_debug) Genode::log("Cpu::kill_thread(", thread,")");
 
 		Genode::Lock::Guard lock_guard(_threads_lock);
 
@@ -208,7 +215,7 @@ public:
 		Thread_info *thread_info = _threads.first()->find_by_cap(thread);
 		if(!thread_info)
 		{
-			Genode::error("Thread with capability ", thread.local_name(), " not found!");
+			Genode::error("Thread ", thread, " not found!");
 			return;
 		}
 

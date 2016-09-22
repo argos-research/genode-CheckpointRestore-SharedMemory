@@ -42,10 +42,12 @@ void Component::construct(Genode::Env &env)
 	env.ram().free(static_cap_cast<Ram_dataspace>(ds0));
 
 	// Creating new capability reuses the freed capability number
-	Dataspace_capability ds3   = env.ram().alloc(2*4096);
+	Dataspace_capability ds3   = env.ram().alloc(4096);
 	unsigned int*        addr3 = env.rm().attach(ds3);
+	log("ds0 = ", ds0, ", addr0 = ", addr0);
 	log("ds3 = ", ds3, ", addr3 = ", addr3);
 	log("Read ds3: ", *addr3, ", ", *(addr3+1));
+	log("Result of compare of ds0 and ds3: ", ds0 == ds3);
 
 	log("--- Reusing cap ended ---");
 }
