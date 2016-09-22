@@ -47,7 +47,7 @@ void print_list(List<My_info> &list)
 
 	for(; curr; curr = curr->next())
 	{
-		log("cap: ", curr->cap.local_name(),
+		log("cap: ", curr->cap,
 				" addr: ", Hex(curr->addr),
 				" valid: ", curr->valid?"true":"false");
 	}

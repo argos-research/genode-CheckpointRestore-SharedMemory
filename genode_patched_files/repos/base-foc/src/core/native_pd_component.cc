@@ -22,16 +22,19 @@ Native_capability Native_pd_component::task_cap()
 	return Native_capability(_pd_session._pd.native_task());
 }
 
+
 Native_capability Native_pd_component::request(uint32_t selector)
 {
 	log("Implement me: ", __func__);
 	return Native_capability();
 }
 
+
 void Native_pd_component::install(Native_capability cap, uint32_t selector)
 {
 	log("Implement me: ", __func__);
 }
+
 
 Native_pd_component::Native_pd_component(Pd_session_component &pd_session,
                                          char const *args)

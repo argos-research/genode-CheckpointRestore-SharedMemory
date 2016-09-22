@@ -9,7 +9,28 @@
 #include <base/log.h>
 #include <base/component.h>
 #include <base/attached_ram_dataspace.h>
-#include <util/general.h>
+
+void dump_mem(const void *mem, unsigned int size)
+{
+	using namespace Genode;
+
+	const char *p = reinterpret_cast<const char*>(mem);
+
+	log("Block: [", Hex((addr_t)mem), ", ", Hex((addr_t)mem + (addr_t)size), ")");
+	for(unsigned int i = 0; i < size/16+1; i++)
+	{
+		log(Hex(i*16, Hex::PREFIX, Hex::PAD),
+				"  ", Hex(p[i*16+0],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+1],  Hex::OMIT_PREFIX, Hex::PAD),
+				" ",  Hex(p[i*16+2],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+3],  Hex::OMIT_PREFIX, Hex::PAD),
+				"  ", Hex(p[i*16+4],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+5],  Hex::OMIT_PREFIX, Hex::PAD),
+				" ",  Hex(p[i*16+6],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+7],  Hex::OMIT_PREFIX, Hex::PAD),
+				"  ", Hex(p[i*16+8],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+9],  Hex::OMIT_PREFIX, Hex::PAD),
+				" ",  Hex(p[i*16+10], Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+11], Hex::OMIT_PREFIX, Hex::PAD),
+				"  ", Hex(p[i*16+12], Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+13], Hex::OMIT_PREFIX, Hex::PAD),
+				" ",  Hex(p[i*16+14], Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+15], Hex::OMIT_PREFIX, Hex::PAD));
+	}
+
+}
 
 using namespace Genode;
 
@@ -32,7 +53,7 @@ void Component::construct(Genode::Env &env)
 	addr_t data0 = 0x1234affe;
 	addr_t data1 = 0xbabe5678;
 
-	Rtcr::dump_mem(print_ptr, 0x10);
+	dump_mem(print_ptr, 0x10);
 
 	/*
 	 * Special pointer that has the same type as the data.
@@ -49,7 +70,7 @@ void Component::construct(Genode::Env &env)
 
 	ptr = spec_ptr;
 
-	Rtcr::dump_mem(print_ptr, 0x10);
+	dump_mem(print_ptr, 0x10);
 
 	log("End: ptr = ", ptr);
 	log("Stored bytes: ", diff);

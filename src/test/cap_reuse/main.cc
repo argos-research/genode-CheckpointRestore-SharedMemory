@@ -25,9 +25,9 @@ void Component::construct(Genode::Env &env)
 	unsigned int* addr1 = env.rm().attach(ds1);
 	unsigned int* addr2 = env.rm().attach(ds2);
 
-	log("ds0 = ", ds0.local_name(), ", addr0 = ", addr0);
-	log("ds1 = ", ds1.local_name(), ", addr1 = ", addr1);
-	log("ds2 = ", ds2.local_name(), ", addr2 = ", addr2);
+	log("ds0 = ", ds0, ", addr0 = ", addr0);
+	log("ds1 = ", ds1, ", addr1 = ", addr1);
+	log("ds2 = ", ds2, ", addr2 = ", addr2);
 
 	log("Writing to ds0");
 
@@ -44,7 +44,7 @@ void Component::construct(Genode::Env &env)
 	// Creating new capability reuses the freed capability number
 	Dataspace_capability ds3   = env.ram().alloc(2*4096);
 	unsigned int*        addr3 = env.rm().attach(ds3);
-	log("ds3 = ", ds3.local_name(), ", addr3 = ", addr3);
+	log("ds3 = ", ds3, ", addr3 = ", addr3);
 	log("Read ds3: ", *addr3, ", ", *(addr3+1));
 
 	log("--- Reusing cap ended ---");

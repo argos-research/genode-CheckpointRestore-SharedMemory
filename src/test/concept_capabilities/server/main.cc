@@ -10,6 +10,7 @@
 #include <base/sleep.h>
 #include <base/component.h>
 #include <base/rpc_server.h>
+#include <base/heap.h>
 #include <root/component.h>
 #include <timer_session/connection.h>
 #include <pd_session/pd_session.h>
