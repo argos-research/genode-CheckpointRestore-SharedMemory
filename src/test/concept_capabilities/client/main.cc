@@ -29,5 +29,7 @@ void Component::construct(Genode::Env &env)
 	log("Sending native pd cap");
 	resource_service.provide(env.pd().native_pd());
 
+	log("My native pd cap: ", env.pd().native_pd());
+
 	sleep_forever();
 }

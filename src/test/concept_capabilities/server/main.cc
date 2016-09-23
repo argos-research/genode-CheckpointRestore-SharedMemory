@@ -15,7 +15,7 @@
 #include <timer_session/connection.h>
 #include <pd_session/pd_session.h>
 
-/* Fiasco.OC includes */
+/* foc includes */
 #include <foc_native_pd/client.h>
 
 /* Resource includes */
@@ -100,11 +100,12 @@ struct Resource::Main
 		log("Announcing Resource service");
 		env.parent().announce(session_ep.manage(root));
 
+		log("Entering main loop");
 		while(true)
 		{
 			if(cli_res.native_pd_cap.valid())
 			{
-				log("Valid pd_cap");
+				log("Valid pd_cap ", cli_res.native_pd_cap);
 
 				Genode::Capability<Genode::Foc_native_pd> foc_pd_cap =
 						Genode::static_cap_cast<Genode::Foc_native_pd>(cli_res.native_pd_cap);
