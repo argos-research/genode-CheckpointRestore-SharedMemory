@@ -227,7 +227,12 @@ struct Resource::Main
 			if(cli_res.thread_cap.valid())
 			{
 				log("  valid thread");
+				//Genode::Thread_state ts = Genode::Cpu_thread_client{cli_res.thread_cap}.state();
+				//log(Genode::Hex(ts.cpu_exception));
+				log("  pausing thread");
 				Genode::Cpu_thread_client{cli_res.thread_cap}.pause();
+				//ts = Genode::Cpu_thread_client{cli_res.thread_cap}.state();
+				//log(Genode::Hex(ts.cpu_exception));
 
 				if(cli_res.attached0)
 				{
@@ -251,7 +256,10 @@ struct Resource::Main
 					log("  sub_ds_cap1 already detached");
 				}
 
+				log("  resuming thread");
 				Genode::Cpu_thread_client{cli_res.thread_cap}.resume();
+				//ts = Genode::Cpu_thread_client{cli_res.thread_cap}.state();
+				//log(Genode::Hex(ts.cpu_exception));
 			}
 			else
 			{

@@ -22,7 +22,7 @@ void Component::construct(Genode::Env &env)
 	log("Initialization started");
 	Timer::Connection timer {env};
 
-	log("Requesting session to Resource service");
+	log("Connecting to Resource service");
 	Resource::Connection resource_service {env};
 
 	log("Sending main thread cap");
