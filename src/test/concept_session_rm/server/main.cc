@@ -126,7 +126,7 @@ struct Resource::Main
 	Resource::Root               root;
 	Genode::Signal_handler<Main> fault_handler;
 	Timer::Connection            timer;
-	unsigned                     i = 0;
+	unsigned                     i;
 	Genode::Signal_handler<Main> timer_handler;
 
 	void handle_fault()
@@ -168,12 +168,8 @@ struct Resource::Main
 		if(cli_res.thread_cap.valid())
 		{
 			log("  valid thread");
-			//Genode::Thread_state ts = Genode::Cpu_thread_client{cli_res.thread_cap}.state();
-			//log(Genode::Hex(ts.cpu_exception));
 			log("  pausing thread");
 			Genode::Cpu_thread_client{cli_res.thread_cap}.pause();
-			//ts = Genode::Cpu_thread_client{cli_res.thread_cap}.state();
-			//log(Genode::Hex(ts.cpu_exception));
 
 			if(cli_res.attached0)
 			{
@@ -199,8 +195,6 @@ struct Resource::Main
 
 			log("  resuming thread");
 			Genode::Cpu_thread_client{cli_res.thread_cap}.resume();
-			//ts = Genode::Cpu_thread_client{cli_res.thread_cap}.state();
-			//log(Genode::Hex(ts.cpu_exception));
 		}
 		else
 		{
@@ -217,6 +211,7 @@ struct Resource::Main
 		root          (session_ep, sliced_heap, cli_res),
 		fault_handler (env.ep(), *this, &Main::handle_fault),
 		timer         (env),
+		i             (0),
 		timer_handler (env.ep(), *this, &Main::handle_timer)
 	{
 		using Genode::log;
