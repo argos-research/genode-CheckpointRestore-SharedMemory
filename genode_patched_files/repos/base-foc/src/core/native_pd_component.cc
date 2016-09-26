@@ -27,23 +27,43 @@ Native_capability Native_pd_component::task_cap()
 }
 
 
-Native_capability Native_pd_component::request(Native_capability to_pd, addr_t to_sel, addr_t from_sel)
+Native_capability Native_pd_component::request(addr_t from_sel)
 {
 	using namespace Fiasco;
 
 	log("Hello from ", __func__);
 
+	Capability<Native_pd> to_pd;
+	addr_t to_sel;
+
 	// Read capability from this pd to remote pd directly
-	l4_task_map(to_pd.data()->kcap(), _pd_session.native_pd().data()->kcap(),
+	l4_msgtag_t tag = l4_task_map(to_pd.data()->kcap(), _pd_session.native_pd().data()->kcap(),
 			l4_obj_fpage((l4_cap_idx_t)from_sel, 0, L4_FPAGE_RWX),
 			((l4_cap_idx_t)to_sel | L4_ITEM_MAP));
 
-	// 1. Read capability from this pd to core's pd
-	l4_task_map(L4_BASE_TASK_CAP, _pd_session.native_pd().data()->kcap(),
-			l4_obj_fpage((l4_cap_idx_t)from_sel, 0, L4_FPAGE_RWX),
-			L4_ITEM_MAP);
-	// 2. Return Native_capability
+	if (l4_msgtag_has_error(tag))
+		error("mapping cap failed");
 
+
+	// 1. Create temporary Cap_index
+	Cap_index* idx = cap_idx_alloc()->alloc_range(1);
+
+	// 2. Map target's Cap_index to temporary Cap_index
+	l4_msgtag_t tag = l4_task_map(L4_BASE_TASK_CAP, _pd_session.native_pd().data()->kcap(),
+			l4_obj_fpage((l4_cap_idx_t)from_sel, 0, L4_FPAGE_RWX),
+			idx->kcap() | L4_ITEM_MAP);
+
+	if (l4_msgtag_has_error(tag))
+		error("mapping cap failed");
+
+	// 3. Find temporary Cap_index in Capability_map
+	cap_map()->find();
+
+
+	// 4. Delete temporary Cap_index
+	cap_idx_alloc()->free(idx, 1);
+
+	// 5. Return found capability
 	return Native_capability();
 }
 
