@@ -27,12 +27,12 @@ Native_capability Native_pd_component::task_cap()
 }
 
 
-Native_capability Native_pd_component::request(addr_t from_sel)
+Native_capability Native_pd_component::request(addr_t kcap)
 {
 	using namespace Fiasco;
 
 	log("Hello from ", __func__);
-
+/*
 	Capability<Native_pd> to_pd;
 	addr_t to_sel;
 
@@ -43,28 +43,33 @@ Native_capability Native_pd_component::request(addr_t from_sel)
 
 	if (l4_msgtag_has_error(tag))
 		error("mapping cap failed");
-
+*/
 
 	// 1. Create temporary Cap_index
-	Cap_index* idx = cap_idx_alloc()->alloc_range(1);
+	Cap_index *idx = cap_map()->insert(platform_specific()->cap_id_alloc()->alloc());
+	printf("Cap_index: %d %x\n", idx->id(), idx->kcap());
 
 	// 2. Map target's Cap_index to temporary Cap_index
 	l4_msgtag_t tag = l4_task_map(L4_BASE_TASK_CAP, _pd_session.native_pd().data()->kcap(),
-			l4_obj_fpage((l4_cap_idx_t)from_sel, 0, L4_FPAGE_RWX),
+			l4_obj_fpage((l4_cap_idx_t)kcap, 0, L4_FPAGE_RWX),
 			idx->kcap() | L4_ITEM_MAP);
 
 	if (l4_msgtag_has_error(tag))
 		error("mapping cap failed");
 
+	printf("Cap_index: %d %x\n", idx->id(), idx->kcap());
+
 	// 3. Find temporary Cap_index in Capability_map
-	cap_map()->find();
+	//cap_map()->find();
 
 
 	// 4. Delete temporary Cap_index
-	cap_idx_alloc()->free(idx, 1);
+	//cap_idx_alloc()->free(idx, 1);
 
 	// 5. Return found capability
-	return Native_capability();
+	Native_capability cap = Native_capability(*idx);
+	printf("Data: %d %x, Cap.local_name: %d\n", cap.data()->id(), cap.data()->kcap(), cap.local_name());
+	return cap;
 }
 
 

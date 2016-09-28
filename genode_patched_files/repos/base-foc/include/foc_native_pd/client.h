@@ -28,7 +28,7 @@ struct Genode::Foc_native_pd_client : Rpc_client<Foc_native_pd>
 
 	Native_capability task_cap() { return call<Rpc_task_cap>(); }
 
-	Native_capability request(uint32_t selector) { return call<Rpc_request>(selector); }
+	Native_capability request(addr_t kcap) { return call<Rpc_request>(kcap); }
 
 	void install(Native_capability cap, uint32_t selector) { call<Rpc_install>(cap, selector); }
 };

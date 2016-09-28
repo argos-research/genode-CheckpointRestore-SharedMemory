@@ -111,7 +111,8 @@ struct Resource::Main
 						Genode::static_cap_cast<Genode::Foc_native_pd>(cli_res.native_pd_cap);
 
 				Genode::Foc_native_pd_client foc_pd_client{foc_pd_cap};
-				foc_pd_client.request(1);
+				Genode::Native_capability cap = foc_pd_client.request(0x1000);
+				log("  ", cap);
 				foc_pd_client.install(foc_pd_cap, 1);
 			}
 			else
