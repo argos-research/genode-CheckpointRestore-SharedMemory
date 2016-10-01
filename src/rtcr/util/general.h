@@ -7,7 +7,7 @@
 #ifndef _INCLUDE__RTCR_UTIL__GENERAL_H_
 #define _INCLUDE__RTCR_UTIL__GENERAL_H_
 
-#include "../ram_session_component.h"
+#include "../intercept/ram_session_component.h"
 #include "../target_copy.h"
 
 namespace Rtcr
