@@ -15,6 +15,8 @@
 namespace Rtcr {
 	struct Attached_region_info;
 	class Region_map_component;
+
+	constexpr bool region_map_verbose_debug = false;
 }
 
 /**
@@ -85,7 +87,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = region_map_verbose_debug;
 
 	/**
 	 * Entrypoint which manages this Region map

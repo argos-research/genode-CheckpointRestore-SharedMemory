@@ -22,6 +22,10 @@ namespace Rtcr {
 	struct Attachable_dataspace_info;
 	class Fault_handler;
 	class Ram_session_component;
+
+	constexpr bool ad_verbose_debug = false;
+	constexpr bool fh_verbose_debug = false;
+	constexpr bool ram_verbose_debug = false;
 }
 
 /**
@@ -94,7 +98,7 @@ struct Rtcr::Attachable_dataspace_info : public Genode::List<Attachable_dataspac
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = true;
+	static constexpr bool verbose_debug = ad_verbose_debug;
 
 	/**
 	 * Reference Managed_region_info to which this dataspace belongs
@@ -235,7 +239,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = fh_verbose_debug;
 	/**
 	 * Signal_receiver on which the page fault handler waits
 	 */
@@ -355,7 +359,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = ram_verbose_debug;
 
 	/**
 	 * Environment of creator component (usually rtcr)

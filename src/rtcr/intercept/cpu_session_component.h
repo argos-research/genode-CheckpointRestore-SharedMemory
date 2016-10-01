@@ -16,6 +16,8 @@
 namespace Rtcr {
 	struct Thread_info;
 	class Cpu_session_component;
+
+	constexpr bool cpu_verbose_debug = false;
 }
 
 /**
@@ -62,7 +64,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = cpu_verbose_debug;
 
 	/**
 	 * Environment of creator component (usually rtcr)
