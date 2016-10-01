@@ -19,6 +19,8 @@
 
 namespace Rtcr {
 	class Target_child;
+
+	constexpr bool child_verbose_debug = false;
 }
 
 /**
@@ -30,7 +32,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = false;
+	static constexpr bool verbose_debug = child_verbose_debug;
 
 	/**
 	 * Child's unique name and filename of child's rom module
@@ -97,17 +99,12 @@ private:
 		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name,
 				bool use_inc_ckpt = true, Genode::size_t granularity = 1)
 		:
-			ep (ep),
-			pd (env, md_alloc, this->ep, name),
-			cpu(env, md_alloc, pd.parent_cap(), name),
-			ram(env, md_alloc, name, use_inc_ckpt, granularity),
-			rom(env, name)
+			ep  (ep),
+			pd  (env, md_alloc, this->ep, name),
+			cpu (env, md_alloc, this->ep, pd.parent_cap(), name),
+			ram (env, md_alloc, this->ep, name, use_inc_ckpt, granularity),
+			rom (env, name)
 		{
-			// Manage child's custom resources
-			this->ep.manage(pd);
-			this->ep.manage(cpu);
-			this->ep.manage(ram);
-
 			// Donate ram quota to child
 			// TODO Replace static quota donation with the amount of quota, the child needs
 			Genode::size_t donate_quota = 1024*1024;
@@ -119,13 +116,7 @@ private:
 		/**
 		 * Destructor
 		 */
-		~Resources()
-		{
-			// Remove custom resources from entrypoint
-			ep.dissolve(ram);
-			ep.dissolve(cpu);
-			ep.dissolve(pd);
-		}
+		~Resources() { }
 	} _resources;
 
 	/**
@@ -172,19 +163,19 @@ public:
 			Genode::Service_registry &parent_services, const char *name,
 			bool use_inc_ckpt = true, Genode::size_t granularity = 1)
 	:
-		_name           (name),
-		_env            (env),
-		_md_alloc       (md_alloc),
-		_use_inc_ckpt   (use_inc_ckpt),
-		_resources_ep   (_env, 16*1024, "resources ep"),
-		_child_ep       (_env, 16*1024, "child ep"),
-		_granularity    (granularity),
-		_resources      (_env, _resources_ep, _md_alloc, _name.string(), _use_inc_ckpt, _granularity),
-		_initial_thread (_resources.cpu, _resources.pd.cap(), _name.string()),
-		_address_space  (_resources.pd.address_space()),
-		_parent_services(parent_services),
-		_local_services (),
-		_child_services (),
+		_name            (name),
+		_env             (env),
+		_md_alloc        (md_alloc),
+		_use_inc_ckpt    (use_inc_ckpt),
+		_resources_ep    (_env, 16*1024, "resources ep"),
+		_child_ep        (_env, 16*1024, "child ep"),
+		_granularity     (granularity),
+		_resources       (_env, _resources_ep, _md_alloc, _name.string(), _use_inc_ckpt, _granularity),
+		_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
+		_address_space   (_resources.pd.address_space()),
+		_parent_services (parent_services),
+		_local_services  (),
+		_child_services  (),
 		_child(_resources.rom.dataspace(), Genode::Dataspace_capability(),
 				_resources.pd.cap(),  _resources.pd,
 				_resources.ram.cap(), _resources.ram,

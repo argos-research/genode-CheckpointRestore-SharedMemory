@@ -90,7 +90,7 @@ private:
 	static constexpr bool verbose_debug = region_map_verbose_debug;
 
 	/**
-	 * Entrypoint which manages this Region map
+	 * Entrypoint which manages this object
 	 */
 	Genode::Entrypoint                 &_ep;
 	/**

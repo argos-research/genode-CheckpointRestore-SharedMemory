@@ -41,7 +41,7 @@ private:
 	 */
 	Genode::Allocator          &_md_alloc;
 	/**
-	 * TODO Needed?
+	 * Entrypoint to manage itself
 	 */
 	Genode::Entrypoint         &_ep;
 	/**
@@ -68,7 +68,7 @@ public:
 	 *
 	 * \param env      Environment to create a session to parent's PD service
 	 * \param md_alloc Allocator for the custom Region maps
-	 * \param ep       Entrypoint for managing the custom Region maps
+	 * \param ep       Entrypoint for managing the custom Region maps and itself
 	 * \param label    Label for parent's PD session
 	 */
 	Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *label)
@@ -81,6 +81,8 @@ public:
 		_stack_area   (_ep, _md_alloc, _parent_pd.stack_area(),    "stack_area"),
 		_linker_area  (_ep, _md_alloc, _parent_pd.linker_area(),   "linker_area")
 	{
+		_ep.manage(*this);
+
 		if(verbose_debug) Genode::log("Pd_session_component created");
 	}
 
@@ -89,6 +91,8 @@ public:
 	 */
 	~Pd_session_component()
 	{
+		_ep.dissolve(*this);
+
 		if(verbose_debug) Genode::log("Pd_session_component destroyed");
 	}
 

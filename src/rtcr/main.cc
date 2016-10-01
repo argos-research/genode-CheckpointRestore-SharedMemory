@@ -37,6 +37,8 @@ struct Rtcr::Main
 	{
 		env.parent().announce(root_ep.manage(root));
 
+		env.parent().session("RAM");
+
 		Genode::sleep_forever();
 	}
 };

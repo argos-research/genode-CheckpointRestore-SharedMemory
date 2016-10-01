@@ -370,6 +370,10 @@ private:
 	 */
 	Genode::Allocator                 &_md_alloc;
 	/**
+	 * Entrypoint to manage itself
+	 */
+	Genode::Entrypoint                &_ep;
+	/**
 	 * Indicator whether to use incremental checkpointing
 	 */
 	const bool                         _use_inc_ckpt;
@@ -443,24 +447,29 @@ public:
 	 *
 	 * \param env         Environment for creating a session to parent's RAM service
 	 * \param md_alloc    Allocator for Managed_region_info and Attachable_dataspace_info
+	 * \param ep          Entrypoint for managing itself
 	 * \param name        Label for parent's Ram session
 	 * \param granularity Size of Dataspaces designated for the managed dataspaces in multiple of a pagesize
 	 */
-	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, const char *name,
-			bool use_inc_ckpt = true, Genode::size_t granularity = 1)
+	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+			const char *name, bool use_inc_ckpt = true, Genode::size_t granularity = 1)
 	:
-		_env       (env),
-		_md_alloc  (md_alloc),
-		_use_inc_ckpt(use_inc_ckpt),
-		_parent_ram(env, name),
-		_parent_rm (env),
-		_mr_infos_lock(),
-		_mr_infos(),
-		_receiver(),
-		_page_fault_handler(env, _receiver, _mr_infos),
-		_granularity(granularity)
+		_env                (env),
+		_md_alloc           (md_alloc),
+		_ep                 (ep),
+		_use_inc_ckpt       (use_inc_ckpt),
+		_parent_ram         (env, name),
+		_parent_rm          (env),
+		_mr_infos_lock      (),
+		_mr_infos           (),
+		_receiver           (),
+		_page_fault_handler (env, _receiver, _mr_infos),
+		_granularity        (granularity)
 	{
 		_page_fault_handler.start();
+
+		_ep.manage(*this);
+
 		if(verbose_debug) Genode::log("Ram_session_component created");
 	}
 
@@ -469,6 +478,8 @@ public:
 	 */
 	~Ram_session_component()
 	{
+		_ep.dissolve(*this);
+
 		Managed_region_info *curr_md = nullptr;
 
 		// Remove page fault handler from all Region_maps,

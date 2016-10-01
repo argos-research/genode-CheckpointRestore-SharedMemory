@@ -75,6 +75,10 @@ private:
 	 */
 	Genode::Allocator             &_md_alloc;
 	/**
+	 * Entrypoint to manage itself
+	 */
+	Genode::Entrypoint            &_ep;
+	/**
 	 * Parent Pd session, usually from core; used for creating a thread
 	 */
 	Genode::Pd_session_capability  _parent_pd_cap;
@@ -98,18 +102,23 @@ public:
 	 *
 	 * \param env           Environment for creating a session to parent's Cpu service
 	 * \param md_alloc      Allocator for Thread_info
+	 * \param ep            Entrypoint for managing itself
 	 * \param parent_pd_cap Capability to parent's Pd session for creating new threads
 	 * \param name          Label for parent's Cpu session
 	 */
-	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Pd_session_capability parent_pd_cap, const char *name)
+	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+			Genode::Pd_session_capability parent_pd_cap, const char *name)
 	:
-		_env          (env),
-		_md_alloc     (md_alloc),
-		_parent_pd_cap(parent_pd_cap),
-		_parent_cpu   (env, name),
-		_threads_lock (),
-		_threads      ()
+		_env           (env),
+		_md_alloc      (md_alloc),
+		_ep            (ep),
+		_parent_pd_cap (parent_pd_cap),
+		_parent_cpu    (env, name),
+		_threads_lock  (),
+		_threads       ()
 	{
+		_ep.manage(*this);
+
 		if(verbose_debug) Genode::log("Cpu_session_component created");
 	}
 
@@ -118,6 +127,8 @@ public:
 	 */
 	~Cpu_session_component()
 	{
+		_ep.dissolve(*this);
+
 		while(Thread_info *thread_info = _threads.first())
 		{
 			// Remove thread from list
