@@ -21,22 +21,27 @@ namespace Rtcr {
 struct Rtcr::Main
 {
 	enum { ROOT_STACK_SIZE = 16*1024 };
-	Genode::Env             &env;
-	Genode::Heap             md_heap         { env.ram(), env.rm() };
-	Genode::Service_registry parent_services { };
-	Genode::Entrypoint       root_ep         { env, ROOT_STACK_SIZE, "rtcr_root_ep" };
-	Rtcr::Root               root            { root_ep, md_heap };
+	Genode::Env              &env;
+	Genode::Heap              md_heap;
+	Genode::Service_registry  parent_services;
+	Genode::Entrypoint        root_ep;
+	Rtcr::Root                root;
 
-	Main(Genode::Env &env_) : env(env_)
+	Main(Genode::Env &env)
+	:
+		env             (env),
+		md_heap         (env.ram(), env.rm()),
+		parent_services (),
+		root_ep         (env, ROOT_STACK_SIZE, "rtcr_root_ep"),
+		root            (root_ep, md_heap)
 	{
-		//Target_child child { env, md_heap, parent_services, "sheep_counter" };
 		env.parent().announce(root_ep.manage(root));
 
 		Genode::sleep_forever();
 	}
 };
 
-Genode::size_t Component::stack_size() { return 64*1024; }
+Genode::size_t Component::stack_size() { return 32*1024; }
 
 void Component::construct(Genode::Env &env)
 {
