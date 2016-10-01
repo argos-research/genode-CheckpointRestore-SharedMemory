@@ -22,6 +22,7 @@ namespace Rtcr {
 	struct Attachable_dataspace_info;
 	class Fault_handler;
 	class Ram_session_component;
+	class Ram_service;
 
 	constexpr bool ad_verbose_debug = false;
 	constexpr bool fh_verbose_debug = false;
