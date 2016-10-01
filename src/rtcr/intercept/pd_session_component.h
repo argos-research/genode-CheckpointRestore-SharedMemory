@@ -18,7 +18,7 @@
 namespace Rtcr {
 	class Pd_session_component;
 
-	constexpr bool pd_verbose_debug = false;
+	constexpr bool pd_verbose_debug = true;
 }
 
 /**
@@ -73,13 +73,13 @@ public:
 	 */
 	Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *label)
 	:
-		_env          (env),
-		_md_alloc     (md_alloc),
-		_ep           (ep),
-		_parent_pd    (env, label),
-		_address_space(_ep, _md_alloc, _parent_pd.address_space(), "address_space"),
-		_stack_area   (_ep, _md_alloc, _parent_pd.stack_area(),    "stack_area"),
-		_linker_area  (_ep, _md_alloc, _parent_pd.linker_area(),   "linker_area")
+		_env           (env),
+		_md_alloc      (md_alloc),
+		_ep            (ep),
+		_parent_pd     (env, label),
+		_address_space (_ep, _md_alloc, _parent_pd.address_space(), "address_space"),
+		_stack_area    (_ep, _md_alloc, _parent_pd.stack_area(),    "stack_area"),
+		_linker_area   (_ep, _md_alloc, _parent_pd.linker_area(),   "linker_area")
 	{
 		_ep.manage(*this);
 
@@ -140,44 +140,93 @@ public:
 
 	void assign_parent(Genode::Capability<Genode::Parent> parent) override
 	{
-		if(verbose_debug) Genode::log("Pd::assign_parent()");
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "assign_parent", "\033[0m(", parent,")");
+		}
+
 		_parent_pd.assign_parent(parent);
 	}
 
 	bool assign_pci(Genode::addr_t addr, Genode::uint16_t bdf) override
 	{
-		if(verbose_debug) Genode::log("Pd::assign_pci()");
-		return _parent_pd.assign_pci(addr, bdf);
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "assign_pci", "\033[0m(addr=", addr,", bdf=", bdf,")");
+		}
+
+		bool result = _parent_pd.assign_pci(addr, bdf);
+
+		if(verbose_debug)
+		{
+			Genode::log("  result: ", result);
+		}
+
+		return result;
 	}
 
 	Signal_source_capability alloc_signal_source() override
 	{
-		if(verbose_debug) Genode::log("Pd::alloc_signal_source()");
-		return _parent_pd.alloc_signal_source();
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "alloc_signal_source", "\033[0m()");
+		}
+
+		Signal_source_capability result = _parent_pd.alloc_signal_source();
+
+		if(verbose_debug)
+		{
+			Genode::log("  result: ", result);
+		}
+
+		return result;
 	}
 
 	void free_signal_source(Signal_source_capability cap) override
 	{
-		if(verbose_debug) Genode::log("Pd::free_signal_source()");
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "free_signal_source", "\033[0m(", cap, ")");
+		}
+
 		_parent_pd.free_signal_source(cap);
 	}
 
 	Genode::Capability<Genode::Signal_context> alloc_context(Signal_source_capability source,
 			unsigned long imprint) override
 	{
-		if(verbose_debug) Genode::log("Pd::alloc_context()");
-		return _parent_pd.alloc_context(source, imprint);
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "alloc_context", "\033[0m(source ", source, ", imprint=", Genode::Hex(imprint), ")");
+		}
+
+		Genode::Capability<Genode::Signal_context> result = _parent_pd.alloc_context(source, imprint);
+
+		if(verbose_debug)
+		{
+			Genode::log("  result: ", result);
+		}
+
+		return result;
 	}
 
 	void free_context(Genode::Capability<Genode::Signal_context> cap) override
 	{
-		if(verbose_debug) Genode::log("Pd::free_context()");
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "free_context", "\033[0m(", cap, ")");
+		}
+
 		_parent_pd.free_context(cap);
 	}
 
 	void submit(Genode::Capability<Genode::Signal_context> context, unsigned cnt) override
 	{
-		if(verbose_debug) Genode::log("Pd::submit()");
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "submit", "\033[0m(context ", context, ", cnt=", cnt,")");
+		}
+
 		_parent_pd.submit(context, cnt);
 	}
 
@@ -185,15 +234,16 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Pd::alloc_rpc_cap(", ep, ")");
+			Genode::log("Pd::\033[33m", "alloc_rpc_cap", "\033[0m(", ep, ")");
 		}
 
-		Genode::Native_capability result {_parent_pd.alloc_rpc_cap(ep)};
+		Genode::Native_capability result = _parent_pd.alloc_rpc_cap(ep);
 
 		if(verbose_debug)
 		{
-			Genode::log("  result_cap: ", result);
+			Genode::log("  result: ", result);
 		}
+
 		return result;
 	}
 
@@ -201,8 +251,9 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Pd::free_rpc_cap(", cap,")");
+			Genode::log("Pd::\033[33m", "free_rpc_cap", "\033[0m(", cap,")");
 		}
+
 		_parent_pd.free_rpc_cap(cap);
 	}
 
@@ -211,8 +262,19 @@ public:
 	 */
 	Genode::Capability<Genode::Region_map> address_space() override
 	{
-		if(verbose_debug) Genode::log("Pd::address_space()");
-		return _address_space.Rpc_object<Genode::Region_map>::cap();
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "address_space", "\033[0m()");
+		}
+
+		Genode::Capability<Genode::Region_map> result = _address_space.Rpc_object<Genode::Region_map>::cap();
+
+		if(verbose_debug)
+		{
+			Genode::log("  result: ", result);
+		}
+
+		return result;
 	}
 
 	/**
@@ -220,8 +282,19 @@ public:
 	 */
 	Genode::Capability<Genode::Region_map> stack_area() override
 	{
-		if(verbose_debug) Genode::log("Pd::stack_area()");
-		return _stack_area.Rpc_object<Genode::Region_map>::cap();
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "stack_area", "\033[0m()");
+		}
+
+		Genode::Capability<Genode::Region_map> result = _stack_area.Rpc_object<Genode::Region_map>::cap();
+
+		if(verbose_debug)
+		{
+			Genode::log("  result: ", result);
+		}
+
+		return result;
 	}
 
 	/**
@@ -229,14 +302,36 @@ public:
 	 */
 	Genode::Capability<Genode::Region_map> linker_area() override
 	{
-		if(verbose_debug) Genode::log("Pd::linker_area()");
-		return _linker_area.Rpc_object<Genode::Region_map>::cap();
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "linker_area", "\033[0m()");
+		}
+
+		Genode::Capability<Genode::Region_map> result = _linker_area.Rpc_object<Genode::Region_map>::cap();
+
+		if(verbose_debug)
+		{
+			Genode::log("  result: ", result);
+		}
+
+		return result;
 	}
 
 	Genode::Capability<Native_pd> native_pd() override
 	{
-		if(verbose_debug) Genode::log("Pd::native_pd()");
-		return _parent_pd.native_pd();
+		if(verbose_debug)
+		{
+			Genode::log("Pd::\033[33m", "native_pd", "\033[0m()");
+		}
+
+		Genode::Capability<Native_pd> result = _parent_pd.native_pd();
+
+		if(verbose_debug)
+		{
+			Genode::log("  result: ", result);
+		}
+
+		return result;
 	}
 
 };
