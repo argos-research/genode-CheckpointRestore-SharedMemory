@@ -11,16 +11,18 @@
 #include <base/env.h>
 #include <base/child.h>
 #include <rom_session/connection.h>
+#include <base/service.h>
 
 /* Rtcr includes */
 #include "intercept/cpu_session_component.h"
 #include "intercept/pd_session_component.h"
 #include "intercept/ram_session_component.h"
+#include "intercept/rm_session.h"
 
 namespace Rtcr {
 	class Target_child;
 
-	constexpr bool child_verbose_debug = false;
+	constexpr bool child_verbose_debug = true;
 }
 
 /**
@@ -201,18 +203,12 @@ public:
 	/**
 	 * Pause child
 	 */
-	void pause()
-	{
-		_resources.cpu.pause_threads();
-	}
+	void pause()  { _resources.cpu.pause_threads();  }
 
 	/**
 	 * Resume child
 	 */
-	void resume()
-	{
-		_resources.cpu.resume_threads();
-	}
+	void resume() { _resources.cpu.resume_threads(); }
 
 
 	/****************************
@@ -223,7 +219,7 @@ public:
 
 	Genode::Service *resolve_session_request(const char *service_name, const char *args)
 	{
-		if(verbose_debug) Genode::log("Session request: ", service_name, " ", args);
+		if(verbose_debug) Genode::log("Target_child::\033[33m", "resolve_session_request", "\033[0m(", service_name, " ", args, ")");
 
 		// TODO Support grandchildren: PD, CPU, and RAM session has also to be provided to them
 
@@ -244,9 +240,40 @@ public:
 		if(service)
 			return service;
 
+/*		if(!Genode::strcmp(service_name, "RM"))
+		{
+			Rm_root *root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
+			service = new (_md_alloc) Genode::Local_service(service_name, root);
+			_local_services.insert(service);
+			if(verbose_debug) Genode::log("  inserted service into local_services");
+		}
+*/
+/*
+		// XXX Service is LOG or Timer (temporary solution until these services are also intercepted by Rtcr)
+		if(Genode::strcmp(service_name, "LOG") || Genode::strcmp(service_name, "Timer"))
+		{
+			service = new (_md_alloc) Genode::Parent_service(service_name);
+			_parent_services.insert(service);
+		}
+*/
 		// Service not known: Assume parent provides it; fill parent service registry on demand
 		if(!service)
 		{
+			// TODO Store allocated objects for a later deallocate, when the child is removed
+/*
+			// Find root object
+			Genode::Root *root = nullptr;
+			if(Genode::strcmp(service_name, "Rm_session"))
+			{
+				root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
+			}
+
+			service = new (_md_alloc) Genode::Local_service(service_name, root);
+			_local_services.insert(service);
+
+			if(verbose_debug) Genode::log("  inserted service into local_services");
+*/
+
 			service = new (_md_alloc) Genode::Parent_service(service_name);
 			_parent_services.insert(service);
 			if(verbose_debug) Genode::log("  inserted service into parent_services");

@@ -16,7 +16,7 @@ namespace Rtcr {
 	struct Attached_region_info;
 	class Region_map_component;
 
-	constexpr bool region_map_verbose_debug = true;
+	constexpr bool region_map_verbose_debug = false;
 }
 
 /**
@@ -100,19 +100,19 @@ private:
 	/**
 	 * Wrapped region map from parent, usually core
 	 */
-	Genode::Region_map_client          _parent_rm;
+	Genode::Region_map_client           _parent_region_map;
 	/**
 	 * Name of the Region map for debugging
 	 */
-	Genode::String<32>                 _label;
+	Genode::String<32>                  _label;
 	/**
 	 * Lock to make _attached_regions thread-safe
 	 */
-	Genode::Lock                       _attached_regions_lock;
+	Genode::Lock                        _attached_regions_lock;
 	/**
 	 * List of client's dataspaces and their corresponding local addresses
 	 */
-	Genode::List<Attached_region_info> _attached_regions;
+	Genode::List<Attached_region_info>  _attached_regions;
 
 public:
 	/**
@@ -121,15 +121,17 @@ public:
 	 * \param ep       Entrypoint for managing the custom Region map
 	 * \param md_alloc Allocator for attachments
 	 * \param rm_cap   Capability to parent's Region map
+	 * \param label    Name of the Region map (e.g. address space, stack area, custom)
 	 */
-	Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc, Genode::Capability<Region_map> rm_cap, const char *label)
+	Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
+			Genode::Capability<Region_map> rm_cap, const char *label)
 	:
-		_ep(ep),
-		_md_alloc(md_alloc),
-		_parent_rm(rm_cap),
-		_label(label),
-		_attached_regions_lock(),
-		_attached_regions()
+		_ep                    (ep),
+		_md_alloc              (md_alloc),
+		_parent_region_map     (rm_cap),
+		_label                 (label),
+		_attached_regions_lock (),
+		_attached_regions      ()
 	{
 		_ep.manage(*this);
 		if(verbose_debug) Genode::log("Region_map_component created");
@@ -143,13 +145,19 @@ public:
 		_ep.dissolve(*this);
 
 		// Destroy all Regions through detach method
-		Attached_region_info *curr_at_info;
-
-		Genode::Lock::Guard lock_guard(_attached_regions_lock);
+		Attached_region_info *curr_at_info = nullptr;
 
 		while((curr_at_info = _attached_regions.first()))
 			detach(curr_at_info->addr);
 		if(verbose_debug) Genode::log("Region_map_component destroyed");
+	}
+
+	/**
+	 * Return the capability to parent's Region map
+	 */
+	Genode::Capability<Genode::Region_map> parent_cap()
+	{
+		return _parent_region_map;
 	}
 
 	/**
@@ -176,19 +184,19 @@ public:
 		{
 			if(use_local_addr)
 			{
-				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
+				Genode::log("Rmap<", _label.string(),">::\033[33m", "attach", "\033[0m(",
 						"ds ",       ds_cap,
-						", size=",       Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
+						", size=",       Genode::Hex(size),
 						", offset=",     offset,
-						", local_addr=", Genode::Hex(local_addr, Genode::Hex::PREFIX, Genode::Hex::PAD),
+						", local_addr=", Genode::Hex(local_addr),
 						", exe=",        executable?"1":"0",
 						")");
 			}
 			else
 			{
-				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
+				Genode::log("Rmap<", _label.string(),">::\033[33m", "attach", "\033[0m(",
 						"ds ",   ds_cap,
-						", size=",   Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
+						", size=",   Genode::Hex(size),
 						", offset=", offset,
 						", exe=",    executable?"1":"0",
 						")");
@@ -196,7 +204,7 @@ public:
 		}
 
 		// Attach dataspace to real Region map
-		Region_map::Local_addr addr = _parent_rm.attach(
+		Region_map::Local_addr addr = _parent_region_map.attach(
 				ds_cap, size, offset, use_local_addr, local_addr, executable);
 
 		Genode::size_t ds_size = Genode::Dataspace_client{ds_cap}.size();
@@ -228,10 +236,10 @@ public:
 	 */
 	void detach(Region_map::Local_addr local_addr)
 	{
-		if(verbose_debug) Genode::log("Rm<", _label.string(),">::\033[33m", "detach", "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
+		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", "detach", "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
 
 		// Detach from real region map
-		_parent_rm.detach(local_addr);
+		_parent_region_map.detach(local_addr);
 
 		// Find region
 		Genode::Lock::Guard lock_guard(_attached_regions_lock);
@@ -252,16 +260,16 @@ public:
 
 	void fault_handler(Genode::Signal_context_capability handler)
 	{
-		if(verbose_debug)Genode::log("Rm<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(", handler, ")");
+		if(verbose_debug)Genode::log("Rmap<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(", handler, ")");
 
-		_parent_rm.fault_handler(handler);
+		_parent_region_map.fault_handler(handler);
 	}
 
 	State state()
 	{
-		if(verbose_debug) Genode::log("Rm<", _label.string(),">::\033[33m", "state", "\033[0m()");
+		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", "state", "\033[0m()");
 
-		auto result = _parent_rm.state();
+		auto result = _parent_region_map.state();
 
 		const char* type = result.type == Genode::Region_map::State::READ_FAULT ? "READ_FAULT" :
 				result.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
@@ -274,9 +282,9 @@ public:
 
 	Genode::Dataspace_capability dataspace()
 	{
-		if(verbose_debug) Genode::log("Rm<", _label.string(),">::\033[33m", "dataspace", "\033[0m()");
+		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", "dataspace", "\033[0m()");
 
-		auto result = _parent_rm.dataspace();
+		auto result = _parent_region_map.dataspace();
 
 		if(verbose_debug) Genode::log("  result: ", result);
 
