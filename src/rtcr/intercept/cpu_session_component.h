@@ -195,7 +195,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Cpu::create_thread(name=", name.string(), ")");
+			Genode::log("Cpu::\033[33m", "create_thread", "\033[0m(name=", name.string(), ")");
 		}
 
 		/**
@@ -209,7 +209,7 @@ public:
 
 		if(verbose_debug)
 		{
-			Genode::log("  thread_cap: ", thread_cap);
+			Genode::log("  result: ", thread_cap);
 		}
 
 		return thread_cap;
@@ -220,7 +220,7 @@ public:
 	 */
 	void kill_thread(Genode::Thread_capability thread) override
 	{
-		if(verbose_debug) Genode::log("Cpu::kill_thread(", thread,")");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "kill_thread", "\033[0m(", thread,")");
 
 		Genode::Lock::Guard lock_guard(_threads_lock);
 
@@ -241,44 +241,75 @@ public:
 
 	void exception_sigh(Genode::Signal_context_capability handler) override
 	{
-		if(verbose_debug) Genode::log("Cpu::exception_sigh()");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "exception_sigh", "\033[0m(", handler, ")");
+
 		_parent_cpu.exception_sigh(handler);
 	}
 
 	Genode::Affinity::Space affinity_space() const override
 	{
-		if(verbose_debug) Genode::log("Cpu::affinity_space()");
-		return _parent_cpu.affinity_space();
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "affinity_space", "\033[0m()");
+
+		auto result = _parent_cpu.affinity_space();
+
+		if(verbose_debug) Genode::log("  result: ", result.width(), "x", result.height(), " (", result.total(), ")");
+
+		return result;
 	}
 
 	Genode::Dataspace_capability trace_control() override
 	{
-		if(verbose_debug) Genode::log("Cpu::trace_control()");
-		return _parent_cpu.trace_control();;
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "trace_control", "\033[0m()");
+
+		auto result = _parent_cpu.trace_control();
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 
 	Quota quota() override
 	{
-		if(verbose_debug) Genode::log("Cpu::quota()");
-		return _parent_cpu.quota();
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "quota", "\033[0m()");
+
+		auto result = _parent_cpu.quota();
+
+		if(verbose_debug) Genode::log("  result: super_period_us=", result.super_period_us, ", us=", result.us);
+
+		return result;
 	}
 
 	int ref_account(Genode::Cpu_session_capability c) override
 	{
-		if(verbose_debug) Genode::log("Cpu::ref_accout()");
-		return _parent_cpu.ref_account(c);
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "ref_account", "\033[0m(", c, ")");
+
+		auto result = _parent_cpu.ref_account(c);
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 
 	int transfer_quota(Genode::Cpu_session_capability c, Genode::size_t q) override
 	{
-		if(verbose_debug) Genode::log("Cpu::transfer_quota()");
-		return _parent_cpu.transfer_quota(c, q);
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "transfer_quota", "\033[0m(to ", c, "quota=", q, ")");
+
+		auto result = _parent_cpu.transfer_quota(c, q);
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 
 	Genode::Capability<Native_cpu> native_cpu() override
 	{
-		if(verbose_debug) Genode::log("Cpu::native_cpu()");
-		return _parent_cpu.native_cpu();
+		if(verbose_debug) Genode::log("Cpu::\033[33m", "native_cpu", "\033[0m()");
+
+		auto result = _parent_cpu.native_cpu();
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 };
 

@@ -526,10 +526,7 @@ public:
 	 */
 	Genode::Ram_dataspace_capability alloc(Genode::size_t size, Genode::Cache_attribute cached) override
 	{
-		if(verbose_debug)
-		{
-			Genode::log("Ram::\033[33m", "alloc", "\033[0m(size=", Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),")");
-		}
+		if(verbose_debug) Genode::log("Ram::\033[33m", "alloc", "\033[0m(size=", Genode::Hex(size),")");
 
 		if(_use_inc_ckpt)
 		{
@@ -638,7 +635,12 @@ public:
 		}
 		else
 		{
-			return _parent_ram.alloc(size, cached);
+
+			auto result = _parent_ram.alloc(size, cached);
+
+			if(verbose_debug) Genode::log("  result: ", result);
+
+			return result;
 		}
 	}
 
@@ -679,33 +681,46 @@ public:
 
 	int ref_account(Genode::Ram_session_capability ram_session) override
 	{
-		if(verbose_debug)
-		{
-			Genode::log("Ram::\033[33m", "ref_account", "\033[0m(ref=", ram_session, ")");
-		}
+		if(verbose_debug) Genode::log("Ram::\033[33m", "ref_account", "\033[0m(ref=", ram_session, ")");
 
-		return _parent_ram.ref_account(ram_session);
+		auto result = _parent_ram.ref_account(ram_session);
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 
 	int transfer_quota(Genode::Ram_session_capability ram_session, Genode::size_t amount) override
 	{
-		if(verbose_debug)
-		{
-			Genode::log("Ram::\033[33m", "transfer_quota", "\033[0m(to=", ram_session, ", size=", amount, ")");
-		}
-		return _parent_ram.transfer_quota(ram_session, amount);
+		if(verbose_debug) Genode::log("Ram::\033[33m", "transfer_quota", "\033[0m(to=", ram_session, ", size=", amount, ")");
+
+		auto result = _parent_ram.transfer_quota(ram_session, amount);
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 
 	Genode::size_t quota() override
 	{
 		if(verbose_debug) Genode::log("Ram::\033[33m", "quota", "\033[0m()");
-		return _parent_ram.quota();
+
+		auto result = _parent_ram.quota();
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 
 	Genode::size_t used() override
 	{
 		if(verbose_debug) Genode::log("Ram::\033[33m", "used", "\033[0m(");
-		return _parent_ram.used();
+
+		auto result = _parent_ram.used();
+
+		if(verbose_debug) Genode::log("  result: ", result);
+
+		return result;
 	}
 
 };

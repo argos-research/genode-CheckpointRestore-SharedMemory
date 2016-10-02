@@ -16,7 +16,7 @@ namespace Rtcr {
 	struct Attached_region_info;
 	class Region_map_component;
 
-	constexpr bool region_map_verbose_debug = false;
+	constexpr bool region_map_verbose_debug = true;
 }
 
 /**
@@ -177,7 +177,7 @@ public:
 			if(use_local_addr)
 			{
 				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
-						"ds_cap=",       ds_cap,
+						"ds ",       ds_cap,
 						", size=",       Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
 						", offset=",     offset,
 						", local_addr=", Genode::Hex(local_addr, Genode::Hex::PREFIX, Genode::Hex::PAD),
@@ -187,7 +187,7 @@ public:
 			else
 			{
 				Genode::log("Rm<", _label.string(),">::\033[33m", "attach", "\033[0m(",
-						"ds_cap=",   ds_cap,
+						"ds ",   ds_cap,
 						", size=",   Genode::Hex(size, Genode::Hex::PREFIX, Genode::Hex::PAD),
 						", offset=", offset,
 						", exe=",    executable?"1":"0",
@@ -228,12 +228,7 @@ public:
 	 */
 	void detach(Region_map::Local_addr local_addr)
 	{
-		if(verbose_debug)
-		{
-			Genode::log("Rm<", _label.string(),">::\033[33m", "detach", "\033[0m(",
-					"local_addr=", Genode::Hex(local_addr, Genode::Hex::PREFIX, Genode::Hex::PAD),
-					")");
-		}
+		if(verbose_debug) Genode::log("Rm<", _label.string(),">::\033[33m", "detach", "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
 
 		// Detach from real region map
 		_parent_rm.detach(local_addr);
@@ -252,50 +247,40 @@ public:
 		_attached_regions.remove(region);
 		destroy(_md_alloc, region);
 
-		if(verbose_debug)
-		{
-			Genode::log("  Detached dataspace from the local address ", Genode::Hex(local_addr));
-		}
+		if(verbose_debug) Genode::log("  Detached dataspace from the local address ", Genode::Hex(local_addr));
 	}
 
 	void fault_handler(Genode::Signal_context_capability handler)
 	{
-		if(verbose_debug)
-		{
-			Genode::log("Rm<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(",
-					"handler_cap=", handler,
-					")");
-		}
+		if(verbose_debug)Genode::log("Rm<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(", handler, ")");
 
 		_parent_rm.fault_handler(handler);
 	}
 
 	State state()
 	{
-		if(verbose_debug)
-		{
-			Genode::log("Rm<", _label.string(),">::state()");
-		}
+		if(verbose_debug) Genode::log("Rm<", _label.string(),">::\033[33m", "state", "\033[0m()");
 
-		return _parent_rm.state();
+		auto result = _parent_rm.state();
+
+		const char* type = result.type == Genode::Region_map::State::READ_FAULT ? "READ_FAULT" :
+				result.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
+				result.type == Genode::Region_map::State::EXEC_FAULT ? "EXEC_FAULT" : "READY";
+
+		if(verbose_debug) Genode::log("  result: ", type, " pf_addr=", Genode::Hex(result.addr));
+
+		return result;
 	}
 
 	Genode::Dataspace_capability dataspace()
 	{
-		if(verbose_debug)
-		{
-			Genode::log("Rm<", _label.string(),">::\033[33m", "dataspace", "\033[0m()");
-		}
+		if(verbose_debug) Genode::log("Rm<", _label.string(),">::\033[33m", "dataspace", "\033[0m()");
 
-		Genode::Dataspace_capability ds_cap = _parent_rm.dataspace();
+		auto result = _parent_rm.dataspace();
 
-		if(verbose_debug)
-		{
-			Genode::log("  Created managed dataspace (", ds_cap, ")",
-					" from Region_map (", _parent_rm, ")");
-		}
+		if(verbose_debug) Genode::log("  result: ", result);
 
-		return ds_cap;
+		return result;
 	}
 };
 
