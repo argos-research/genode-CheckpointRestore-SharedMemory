@@ -240,14 +240,14 @@ public:
 		if(service)
 			return service;
 
-/*		if(!Genode::strcmp(service_name, "RM"))
+		if(!Genode::strcmp(service_name, "RM"))
 		{
 			Rm_root *root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
 			service = new (_md_alloc) Genode::Local_service(service_name, root);
 			_local_services.insert(service);
 			if(verbose_debug) Genode::log("  inserted service into local_services");
 		}
-*/
+
 /*
 		// XXX Service is LOG or Timer (temporary solution until these services are also intercepted by Rtcr)
 		if(Genode::strcmp(service_name, "LOG") || Genode::strcmp(service_name, "Timer"))
@@ -263,7 +263,7 @@ public:
 /*
 			// Find root object
 			Genode::Root *root = nullptr;
-			if(Genode::strcmp(service_name, "Rm_session"))
+			if(!Genode::strcmp(service_name, "RM"))
 			{
 				root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
 			}
