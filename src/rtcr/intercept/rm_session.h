@@ -26,7 +26,7 @@ namespace Rtcr {
 }
 
 /**
- * List element for a Region_map created by a Rm_session
+ * List element for managing Region_map_components created through an Rm_session
  */
 struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
 {
@@ -54,7 +54,7 @@ struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
 };
 
 /**
- * List element for a Rm_session
+ * List element for managing Rm_session_components
  */
 struct Rtcr::Rm_session_info : Genode::List<Rm_session_info>::Element
 {
@@ -114,13 +114,20 @@ public:
 		Region_map_info *rms_info = nullptr;
 		while((rms_info = _region_map_infos.first()))
 			destroy(rms_info->region_map.cap());
-
 	}
 
+
+	/******************************
+	 ** Rm session Rpc interface **
+	 ******************************/
+
+	/**
+	 * Create a virtual Region map, its real counter part and a list element to manage them
+	 */
 	Genode::Capability<Genode::Region_map> create(Genode::size_t size)
 	{
 		if(verbose_debug) Genode::log("Rm::\033[33m", "create", "\033[0m(size=", size, ")");
-/*
+
 		// Create real Region_map from parent
 		auto parent_cap = _parent_rm.create(size);
 
@@ -137,18 +144,17 @@ public:
 
 		if(verbose_debug) Genode::log("  result: ", new_region_map->cap());
 		return new_region_map->cap();
-*/
-		auto result = _parent_rm.create(size);
-		if(verbose_debug) Genode::log("  result: ", result);
-		return result;
 	}
 
+	/**
+	 * Destroying the virtual Region map, its real counter part, and the list element it was managed in
+	 *
+	 * XXX Untested! During the implementation time, the destroy method was not working.
+	 */
 	void destroy(Genode::Capability<Genode::Region_map> region_map_cap)
 	{
 		if(verbose_debug) Genode::log("Rm::\033[33m", "destroy", "\033[0m(", region_map_cap, ")");
 
-		_parent_rm.destroy(region_map_cap);
-/*
 		// Find list element for the given Capability
 		Genode::Lock::Guard lock (_infos_lock);
 		Region_map_info *rms_info = _region_map_infos.first();
@@ -159,6 +165,7 @@ public:
 		{
 			if(verbose_debug) Genode::log("  deleting ", rms_info->region_map.cap());
 
+			Genode::error("Issuing Rm_session::destroy, which is bugged and hangs up.");
 			// Destroy real Region_map from parent
 			_parent_rm.destroy(rms_info->region_map.parent_cap());
 
@@ -173,7 +180,7 @@ public:
 		{
 			Genode::error("No Region map with ", region_map_cap, " found!");
 		}
-*/
+
 	}
 };
 
