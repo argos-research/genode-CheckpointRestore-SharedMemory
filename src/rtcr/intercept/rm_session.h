@@ -59,10 +59,12 @@ struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
 struct Rtcr::Rm_session_info : Genode::List<Rm_session_info>::Element
 {
 	Rm_session_component &rms;
+	const char           *args;
 
-	Rm_session_info(Rm_session_component &rms)
+	Rm_session_info(Rm_session_component &rms, const char* args)
 	:
-		rms(rms)
+		rms  (rms),
+		args (args)
 	{ }
 
 	/**
@@ -203,10 +205,12 @@ protected:
 	{
 		Genode::log("Rm_root::\033[33m", "_create_session", "\033[0m(", args,")");
 		// Create virtual Rm_session
-		Rm_session_component *new_rms = new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep);
+		Rm_session_component *new_rms =
+				new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep);
 
 		// Create and insert list element
-		Rm_session_info *new_rms_info = new (md_alloc()) Rm_session_info(*new_rms);
+		Rm_session_info *new_rms_info =
+				new (md_alloc()) Rm_session_info(*new_rms, args);
 		Genode::Lock::Guard lock(_infos_lock);
 		_rms_infos.insert(new_rms_info);
 
