@@ -258,6 +258,9 @@ public:
 		if(verbose_debug) Genode::log("  Detached dataspace from the local address ", Genode::Hex(local_addr));
 	}
 
+	/**
+	 * TODO intercept fault_handler cap and rpc_object creation. The latter is achieved by intercepting Signal_context creation.
+	 */
 	void fault_handler(Genode::Signal_context_capability handler)
 	{
 		if(verbose_debug)Genode::log("Rmap<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(", handler, ")");
