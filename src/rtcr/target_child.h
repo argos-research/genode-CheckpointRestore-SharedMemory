@@ -18,6 +18,7 @@
 #include "intercept/pd_session_component.h"
 #include "intercept/ram_session_component.h"
 #include "intercept/rm_session.h"
+#include "intercept/log_session.h"
 
 namespace Rtcr {
 	class Target_child;
@@ -243,6 +244,13 @@ public:
 		if(!Genode::strcmp(service_name, "RM"))
 		{
 			Rm_root *root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
+			service = new (_md_alloc) Genode::Local_service(service_name, root);
+			_local_services.insert(service);
+			if(verbose_debug) Genode::log("  inserted service into local_services");
+		}
+		else if(!Genode::strcmp(service_name, "LOG"))
+		{
+			Log_root *root = new (_md_alloc) Log_root(_env, _md_alloc, _resources_ep);
 			service = new (_md_alloc) Genode::Local_service(service_name, root);
 			_local_services.insert(service);
 			if(verbose_debug) Genode::log("  inserted service into local_services");
