@@ -17,8 +17,8 @@ namespace Rtcr {
 	class Log_session_component;
 	class Log_root;
 
-	constexpr bool log_verbose_debug = true;
-	constexpr bool log_root_verbose_debug = true;
+	constexpr bool log_verbose_debug = false;
+	constexpr bool log_root_verbose_debug = false;
 }
 
 /**
@@ -62,7 +62,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = rm_verbose_debug;
+	static constexpr bool verbose_debug = log_verbose_debug;
 	/**
 	 * Allocator for Rpc objects created by this session and also for monitoring list elements
 	 */
@@ -114,7 +114,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = rm_root_verbose_debug;
+	static constexpr bool verbose_debug = log_root_verbose_debug;
 
 	/**
 	 * Environment of Rtcr; is forwarded to a created session object
