@@ -53,7 +53,7 @@ struct Rtcr::Signal_context_info : Genode::List<Signal_context_info>::Element
 	Genode::Signal_context_capability sc_cap;
 	Genode::Capability<Genode::Signal_source>  ss_cap;
 	/**
-	 * imprint is an opaque number (Source pd_session/pd_session.h),
+	 * imprint is an opaque number (Source: pd_session/pd_session.h),
 	 * which is associated with the pointer of a Signal_context in Signal_receiver::manage
 	 *
 	 * It is sent with each signal.
@@ -124,7 +124,8 @@ private:
 	 */
 	Genode::Env           &_env;
 	/**
-	 * TODO Needed?
+	 * Allocator for list elements which monitor the Signal_source,
+	 * Signal_context and Native_capability creation and destruction
 	 */
 	Genode::Allocator     &_md_alloc;
 	/**
@@ -176,11 +177,6 @@ private:
 public:
 	/**
 	 * Constructor
-	 *
-	 * \param env      Environment to create a session to parent's PD service
-	 * \param md_alloc Allocator for the custom Region maps
-	 * \param ep       Entrypoint for managing the custom Region maps and itself
-	 * \param label    Label for parent's PD session
 	 */
 	Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *label)
 	:
@@ -203,9 +199,6 @@ public:
 		if(verbose_debug) Genode::log("Pd_session_component created");
 	}
 
-	/**
-	 * Destructor
-	 */
 	~Pd_session_component()
 	{
 		_ep.dissolve(*this);
@@ -213,43 +206,13 @@ public:
 		if(verbose_debug) Genode::log("Pd_session_component destroyed");
 	}
 
-	/**
-	 * Return the capability to parent's PD session
-	 */
-	Genode::Pd_session_capability parent_cap()
-	{
-		return _parent_pd.cap();
-	}
-
-	/**
-	 * Return Address space component
-	 *
-	 * \return Reference to Region_map_component of the address space
-	 */
-	Rtcr::Region_map_component &address_space_component()
-	{
-		return _address_space;
-	}
-
-	/**
-	 * Return Stack area component
-	 *
-	 * \return Reference to Region_map_component of the stack area
-	 */
-	Rtcr::Region_map_component &stack_area_component()
-	{
-		return _stack_area;
-	}
-
-	/**
-	 * Return Linker area component
-	 *
-	 * \return Reference to Region_map_component of the linker area
-	 */
-	Rtcr::Region_map_component &linker_area_component()
-	{
-		return _linker_area;
-	}
+	Genode::Pd_session_capability         parent_cap()              { return _parent_pd.cap(); }
+	Region_map_component                 &address_space_component() { return _address_space;   }
+	Region_map_component                 &stack_area_component()    { return _stack_area;      }
+	Region_map_component                 &linker_area_component()   { return _linker_area;     }
+	Genode::List<Signal_source_info>     &signal_source_infos()     { return _ss_infos;        }
+	Genode::List<Signal_context_info>    &signal_context_infos()    { return _sc_infos;        }
+	Genode::List<Native_capability_info> &native_capability_infos() { return _nc_infos;        }
 
 	/**************************
 	 ** Pd_session interface **
