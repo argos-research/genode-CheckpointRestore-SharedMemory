@@ -19,6 +19,7 @@
 #include "intercept/ram_session_component.h"
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"
+#include "intercept/timer_session.h"
 
 namespace Rtcr {
 	class Target_child;
@@ -140,8 +141,6 @@ private:
 	Genode::Service_registry      &_parent_services;
 	/**
 	 * Registry for local services.
-	 *
-	 * TODO Are there any local services provided to the children?
 	 */
 	Genode::Service_registry       _local_services;
 	/**
@@ -255,6 +254,13 @@ public:
 		else if(!Genode::strcmp(service_name, "LOG"))
 		{
 			Log_root *root = new (_md_alloc) Log_root(_env, _md_alloc, _resources_ep);
+			service = new (_md_alloc) Genode::Local_service(service_name, root);
+			_local_services.insert(service);
+			if(verbose_debug) Genode::log("  inserted service into local_services");
+		}
+		else if(!Genode::strcmp(service_name, "Timer"))
+		{
+			Timer_root *root = new (_md_alloc) Timer_root(_env, _md_alloc, _resources_ep);
 			service = new (_md_alloc) Genode::Local_service(service_name, root);
 			_local_services.insert(service);
 			if(verbose_debug) Genode::log("  inserted service into local_services");
