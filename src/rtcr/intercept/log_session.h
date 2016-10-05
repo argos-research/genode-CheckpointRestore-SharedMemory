@@ -86,7 +86,10 @@ public:
 		if(verbose_debug) Genode::log("\033[33m", "Log_session_component", "\033[0m created");
 	}
 
-	~Log_session_component() { }
+	~Log_session_component()
+	{
+		if(verbose_debug) Genode::log("\033[33m", "Log_session_component", "\033[0m destructed");
+	}
 
 	/*******************************
 	 ** Log session Rpc interface **
@@ -200,6 +203,21 @@ public:
 	{
 		if(verbose_debug) Genode::log("\033[33m", "Log_root", "\033[0m created");
 	}
+
+    ~Log_root()
+    {
+        Log_session_info *info = nullptr;
+
+        while((info = _session_infos.first()))
+        {
+            _session_infos.remove(info);
+            Genode::destroy(_md_alloc, info);
+        }
+
+        if(verbose_debug) Genode::log("\033[33m", "Log_root", "\033[0m destructed");
+    }
+
+	Genode::List<Log_session_info> &session_infos() { return _session_infos; }
 };
 
 #endif /* _RTCR_LOG_SESSION_H_ */

@@ -16,7 +16,7 @@
 
 // TODO rename ALL class names and ctor/dtor names and debug variables
 namespace Rtcr {
-	struct Templates_rpc_object_info;
+	struct Template_rpc_object_info;
 	struct Template_session_info;
 	class Template_session_component;
 	class Template_root;
@@ -29,11 +29,10 @@ namespace Rtcr {
 /**
  * List element for monitoring Rpc objects created by the virtual session object
  */
-struct Rtcr::Templates_rpc_object_info : Genode::List<Templates_rpc_object_info>::Element
+struct Rtcr::Template_rpc_object_info : Genode::List<Template_rpc_object_info>::Element
 {
 	/**
-	 * Reference to the rpc object,
-	 * encapsulates a capability which is the main reason for storing it
+	 * Reference to session object; encapsulates capability and object's state
 	 */
 	Template_rpc_object_component &rpc_object;
 
@@ -66,8 +65,7 @@ struct Rtcr::Templates_rpc_object_info : Genode::List<Templates_rpc_object_info>
 struct Rtcr::Template_session_info : Genode::List<Template_session_info>::Element
 {
 	/**
-	 * Reference to the session object,
-	 * encapsulates a capability which is the main reason for storing it
+	 * Reference to the session object; encapsulates capability and object's state
 	 */
 	Template_session_component &session;
 	/**
@@ -102,7 +100,7 @@ private:
 	 */
 	static constexpr bool verbose_debug = template_verbose_debug;
 	/**
-	 * Allocator for Rpc objects created by this session and also for monitoring list elements
+	 * Allocator for Rpc objects created by this session and also for monitoring structures
 	 */
 	Genode::Allocator             &_md_alloc;
 	/**
@@ -114,6 +112,16 @@ private:
 	 */
 	// TODO use correct connection to parent's session and rename ALL occurences of this variable
 	Genode::Template_connection    _parent_template;
+    /**
+     * Lock for infos list
+     */ 
+    // TODO create as many locks as there are lists and protect the access to each list with a corresponding lock
+    Genode::Lock                            _infos_lock;
+    /**
+     * List for monitoring Rpc object
+     */ 
+    // TODO create as many lists as needed
+    Genode::List<Template_rpc_object_info> _rpc_object_infos;
 
 public:
 	Template_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *args)
@@ -125,7 +133,24 @@ public:
 		if(verbose_debug) Genode::log("\033[33m", "Template_session_component", "\033[0m created");
 	}
 
-	~Template_session_component() { }
+    // TODO destroy all allocated objects
+	~Template_session_component() 
+    { 
+        Template_rpc_object_info *info = nullptr;
+        
+        while((info = _rpc_object_infos.first()))
+        {
+            _rpc_object_infos.remove(info);
+            Genode::destroy(_md_alloc, info);
+        }
+        
+        // TODO adjust name
+        if(verbose_debug) Genode::log("\033[33m", "Template_session_component", "\033[0m destructed");
+    }
+    
+    // TODO create getter/setter methods for them
+    Genode::List<Template_rpc_object_info> &rpc_object_infos() { return _rpc_object_infos; }
+    void rpc_object_infos(Genode::List<Template_rpc_object_info> &infos) { _rpc_object_infos = infos; }
 
 	// TODO adjust comment
 	/************************************
@@ -136,7 +161,7 @@ public:
 	 * TODO Implement session's methods
 	 * you want to create monitoring list elements, whenever an Rpc object is created by a method
 	 * also, you want to delete monitoring list elements, whenever an Rpc object is deleted by a method
-	 * Compare other intercepted sessions (e.g. Rm_session.h)
+	 * Compare other intercepted sessions (e.g. rm_session.h)
 	 */
 
 	Genode::size_t method_with_result(String const &arg1, String const &arg2)
@@ -251,6 +276,24 @@ public:
 		// TODO adjust string
 		if(verbose_debug) Genode::log("\033[33m", "Template_root", "\033[0m created");
 	}
+    
+    ~Template_root()
+    {
+        Template_session_info *info = nullptr;
+        
+        while((info = _session_infos.first()))
+        {
+            _session_infos.remove(info);
+            Genode::destroy(_md_alloc, info);
+        }
+        
+        // TODO adjust name
+        if(verbose_debug) Genode::log("\033[33m", "Template_root", "\033[0m destructed");
+    }
+    
+    // TODO create getter/setter
+    Genode::List<Template_session_info> &session_infos() { return _session_infos;  }
+    void session_infos(Genode::List<Template_session_info> &infos) { _session_infos = infos; }
 };
 
 // TODO adjust comment

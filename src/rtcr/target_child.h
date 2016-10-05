@@ -90,24 +90,23 @@ private:
 		 * Parent's Rom session (usually from core)
 		 */
 		Genode::Rom_connection       rom;
+
 		/**
 		 * Constructor
-		 *
-		 * \param env         Local environment
-		 * \param ep          Entrypoint for child's resources
-		 * \param md_alloc    Local allocator
-		 * \param name        Child's unique name and also name of the rom module
-		 * \param granularity Granularity for incremental checkpointing in multiple of pagesize
 		 */
 		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name,
 				bool use_inc_ckpt = true, Genode::size_t granularity = 1)
 		:
 			ep  (ep),
-			pd  (env, md_alloc, this->ep, name),
-			cpu (env, md_alloc, this->ep, pd.parent_cap(), name),
-			ram (env, md_alloc, this->ep, name, use_inc_ckpt, granularity),
+			pd  (env, md_alloc, ep, name),
+			cpu (env, md_alloc, ep, pd.parent_cap(), name),
+			ram (env, md_alloc, ep, name, use_inc_ckpt, granularity),
 			rom (env, name)
 		{
+			ep.manage(pd);
+			ep.manage(cpu);
+			ep.manage(ram);
+
 			// Donate ram quota to child
 			// TODO Replace static quota donation with the amount of quota, the child needs
 			Genode::size_t donate_quota = 1024*1024;
@@ -119,7 +118,12 @@ private:
 		/**
 		 * Destructor
 		 */
-		~Resources() { }
+		~Resources()
+		{
+			ep.dissolve(ram);
+			ep.dissolve(cpu);
+			ep.dissolve(pd);
+		}
 	} _resources;
 
 	/**

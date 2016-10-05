@@ -27,9 +27,14 @@ namespace Rtcr {
 
 /**
  * List element for managing Region_map_components created through an Rm_session
+ *
+ * Provides information about Region_map capability, and attached regions
  */
 struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
 {
+	/**
+	 * Reference to session object; encapsulates capability and object's state
+	 */
 	Region_map_component &region_map;
 
 	Region_map_info(Region_map_component &region_map)
@@ -37,13 +42,6 @@ struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
 		region_map(region_map)
 	{ }
 
-	/**
-	 * Find list element by Capability of the virtual Region_map
-	 *
-	 * \param cap Capability to search for
-	 *
-	 * \return List element with the specified Capability
-	 */
 	Region_map_info *find_by_cap(Genode::Capability<Genode::Region_map> cap)
 	{
 		if(cap == region_map.cap())
@@ -58,7 +56,13 @@ struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
  */
 struct Rtcr::Rm_session_info : Genode::List<Rm_session_info>::Element
 {
+	/**
+	 * Reference to the session object; encapsulates capability and object's state
+	 */
 	Rm_session_component &rms;
+	/**
+	 * Arguments provided for creating the session object
+	 */
 	const char           *args;
 
 	Rm_session_info(Rm_session_component &rms, const char* args)
@@ -67,13 +71,6 @@ struct Rtcr::Rm_session_info : Genode::List<Rm_session_info>::Element
 		args (args)
 	{ }
 
-	/**
-	 * Find list element by pointer of the virtual Rm_session_component
-	 *
-	 * \param cap Capability to search for
-	 *
-	 * \return List element with the specified Capability
-	 */
 	Rm_session_info *find_by_ptr(Rm_session_component *ptr)
 	{
 		if(ptr == &rms)
@@ -92,10 +89,25 @@ private:
 	 */
 	static constexpr bool verbose_debug = rm_verbose_debug;
 
+	/**
+	 * Allocator for Rpc objects created by this session and also for monitoring structures
+	 */
 	Genode::Allocator             &_md_alloc;
+	/**
+	 * Entrypoint for managing created Rpc objects
+	 */
 	Genode::Entrypoint            &_ep;
+	/**
+	 * Parent's session connection which is used by the intercepted methods
+	 */
 	Genode::Rm_connection          _parent_rm;
+    /**
+     * Lock for infos list
+     */
 	Genode::Lock                   _infos_lock;
+    /**
+     * List for monitoring Rpc object
+     */
 	Genode::List<Region_map_info>  _region_map_infos;
 
 public:
@@ -115,9 +127,16 @@ public:
 		// Destroy all list elements through destroy method
 		Region_map_info *rms_info = nullptr;
 		while((rms_info = _region_map_infos.first()))
+		{
+			_region_map_infos.remove(rms_info);
 			destroy(rms_info->region_map.cap());
+		}
+
+		if(verbose_debug) Genode::log("\033[33m", "Rm_session_component", "\033[0m destructed");
 	}
 
+	Genode::List<Region_map_info> &region_map_infos() { return _region_map_infos; }
+    void region_map_infos(Genode::List<Region_map_info> &infos) { _region_map_infos = infos; }
 
 	/******************************
 	 ** Rm session Rpc interface **
@@ -182,10 +201,13 @@ public:
 		{
 			Genode::error("No Region map with ", region_map_cap, " found!");
 		}
-
 	}
 };
 
+/**
+ * Virtual Root session object to intercept Rm session object creation
+ * This enables the Rtcr component to monitor capabilities created for Rm session objects
+ */
 class Rtcr::Rm_root : public Genode::Root_component<Rm_session_component>
 {
 private:
@@ -194,10 +216,25 @@ private:
 	 */
 	static constexpr bool verbose_debug = rm_root_verbose_debug;
 
+	/**
+	 * Environment of Rtcr; is forwarded to a created session object
+	 */
 	Genode::Env                   &_env;
+	/**
+	 * Allocator for session objects and monitoring list elements
+	 */
 	Genode::Allocator             &_md_alloc;
+	/**
+	 * Entrypoint for managing session objects
+	 */
 	Genode::Entrypoint            &_ep;
+	/**
+	 * Lock for infos list
+	 */
 	Genode::Lock                   _infos_lock;
+	/**
+	 * List for monitoring Rm session objects
+	 */
 	Genode::List<Rm_session_info>  _rms_infos;
 
 protected:
@@ -244,6 +281,22 @@ public:
 	{
 		if(verbose_debug) Genode::log("\033[33m", "Rm_root", "\033[0m created");
 	}
+
+    ~Rm_root()
+    {
+        Rm_session_info *info = nullptr;
+
+        while((info = _rms_infos.first()))
+        {
+            _rms_infos.remove(info);
+            Genode::destroy(_md_alloc, info);
+        }
+
+        if(verbose_debug) Genode::log("\033[33m", "Rm_root", "\033[0m destructed");
+    }
+
+	Genode::List<Rm_session_info> &rms_infos() { return _rms_infos; }
+    void rms_infos(Genode::List<Rm_session_info> &infos) { _rms_infos = infos; }
 };
 
 #endif /* _RTCR_RM_SESSION_H_ */

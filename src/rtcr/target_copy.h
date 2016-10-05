@@ -7,8 +7,11 @@
 #ifndef _RTCR_TARGET_COPY_H_
 #define _RTCR_TARGET_COPY_H_
 
+/* Genode includes */
 #include <util/list.h>
 #include <region_map/client.h>
+
+/* Rtcr includes */
 #include "target_child.h"
 
 namespace Rtcr {
@@ -28,9 +31,9 @@ struct Rtcr::Copied_dataspace_info : public Genode::List<Copied_dataspace_info>:
 
 	Copied_dataspace_info(Genode::Dataspace_capability ds_cap, Genode::addr_t addr, Genode::size_t size)
 	:
-		ds_cap(ds_cap),
-		rel_addr(addr),
-		size(size)
+		ds_cap   (ds_cap),
+		rel_addr (addr),
+		size     (size)
 	{ }
 
 	/**

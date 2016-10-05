@@ -13,7 +13,6 @@
 
 /* Rtcr includes */
 #include "../../rtcr/target_child.h"
-#include "../../rtcr/util/general.h"
 
 namespace Rtcr {
 	struct Main;

@@ -194,16 +194,12 @@ public:
 		_nc_infos_lock (),
 		_nc_infos      ()
 	{
-		_ep.manage(*this);
-
-		if(verbose_debug) Genode::log("Pd_session_component created");
+		if(verbose_debug) Genode::log("\033[33m", "Pd_session_component", "\033[0m created");
 	}
 
 	~Pd_session_component()
 	{
-		_ep.dissolve(*this);
-
-		if(verbose_debug) Genode::log("Pd_session_component destroyed");
+		if(verbose_debug) Genode::log("\033[33m", "Pd_session_component", "\033[0m destructed");
 	}
 
 	Genode::Pd_session_capability         parent_cap()              { return _parent_pd.cap(); }

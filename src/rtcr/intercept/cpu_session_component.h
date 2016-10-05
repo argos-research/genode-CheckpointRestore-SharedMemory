@@ -117,9 +117,7 @@ public:
 		_threads_lock  (),
 		_threads       ()
 	{
-		_ep.manage(*this);
-
-		if(verbose_debug) Genode::log("Cpu_session_component created");
+		if(verbose_debug) Genode::log("\033[33m", "Cpu_session_component", "\033[0m created");
 	}
 
 	/**
@@ -127,8 +125,6 @@ public:
 	 */
 	~Cpu_session_component()
 	{
-		_ep.dissolve(*this);
-
 		while(Thread_info *thread_info = _threads.first())
 		{
 			// Remove thread from list
@@ -137,28 +133,11 @@ public:
 			destroy(_md_alloc, thread_info);
 		}
 
-		if(verbose_debug) Genode::log("Cpu_session_component destroyed");
+		if(verbose_debug) Genode::log("\033[33m", "Cpu_session_component", "\033[0m destructed");
 	}
 
-	/**
-	 * Return parent's Cpu session capability
-	 *
-	 * \return Parent's Cpu session capability
-	 */
-	Genode::Cpu_session_capability parent_cap()
-	{
-		return _parent_cpu.cap();
-	}
-
-	/**
-	 * Return list of client's threads
-	 *
-	 * \return Reference to the internal threads list
-	 */
-	Genode::List<Thread_info> &threads()
-	{
-		return _threads;
-	}
+	Genode::Cpu_session_capability  parent_cap()   { return _parent_cpu.cap(); }
+	Genode::List<Thread_info>      &thread_infos() { return _threads;          }
 
 	/**
 	 * Pause all threads

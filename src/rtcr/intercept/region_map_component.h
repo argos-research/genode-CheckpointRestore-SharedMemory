@@ -117,11 +117,6 @@ private:
 public:
 	/**
 	 * Constructor
-	 *
-	 * \param ep       Entrypoint for managing the custom Region map
-	 * \param md_alloc Allocator for attachments
-	 * \param rm_cap   Capability to parent's Region map
-	 * \param label    Name of the Region map (e.g. address space, stack area, custom)
 	 */
 	Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
 			Genode::Capability<Region_map> rm_cap, const char *label)
@@ -134,7 +129,8 @@ public:
 		_attached_regions      ()
 	{
 		_ep.manage(*this);
-		if(verbose_debug) Genode::log("Region_map_component created");
+
+		if(verbose_debug) Genode::log("\033[33m", "Region_map_component", "\033[0m created");
 	}
 
 	/**
@@ -149,7 +145,8 @@ public:
 
 		while((curr_at_info = _attached_regions.first()))
 			detach(curr_at_info->addr);
-		if(verbose_debug) Genode::log("Region_map_component destroyed");
+
+		if(verbose_debug) Genode::log("\033[33m", "Region_map_component", "\033[0m destructed");
 	}
 
 	/**
@@ -259,7 +256,7 @@ public:
 	}
 
 	/**
-	 * TODO intercept fault_handler cap and rpc_object creation. The latter is achieved by intercepting Signal_context creation.
+	 * TODO intercept fault_handler cap
 	 */
 	void fault_handler(Genode::Signal_context_capability handler)
 	{
