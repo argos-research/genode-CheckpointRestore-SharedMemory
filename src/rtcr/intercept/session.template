@@ -1,7 +1,7 @@
 /*
  * \brief  Intercepting (TODO insert name) session
  * \author
- * \date
+ * \date   yyyy-mm-dd
  */
 
 // TODO insert specific session name
@@ -92,7 +92,8 @@ struct Rtcr::Template_session_info : Genode::List<Template_session_info>::Elemen
  * Virtual session object to intercept Rpc object creation and
  * state modifications of the wrapped, parent session object
  */
-class Rtcr::Template_session_component : public Genode::Rpc_object<Genode::Log_session>
+ // TODO adjust template variable of Rpc_object
+class Rtcr::Template_session_component : public Genode::Rpc_object<Genode::Template_session>
 {
 private:
 	/**
@@ -112,6 +113,17 @@ private:
 	 */
 	// TODO use correct connection to parent's session and rename ALL occurences of this variable
 	Genode::Template_connection    _parent_template;
+
+	/**
+	 * Parent's session state
+	 */
+	struct State_info
+	{
+		// TODO insert member attributes which describe the state of the session object
+		Genode::Dataspace_capability cap     {}; // Calls standard ctor
+		unsigned                     num     {};
+		bool                         boolean {};
+	} _parent_state;
     /**
      * Lock for infos list
      */ 
@@ -130,7 +142,7 @@ public:
 		_ep         (ep),
 		_parent_template (env, args)
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Template_session_component", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
     // TODO destroy all allocated objects
@@ -144,8 +156,7 @@ public:
             Genode::destroy(_md_alloc, info);
         }
         
-        // TODO adjust name
-        if(verbose_debug) Genode::log("\033[33m", "Template_session_component", "\033[0m destructed");
+        if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
     }
     
     // TODO create getter/setter methods for them
@@ -166,7 +177,8 @@ public:
 
 	Genode::size_t method_with_result(String const &arg1, String const &arg2)
 	{
-		if(verbose_debug) Genode::log("Log::\033[33m", "method_with_result", "\033[0m(str1=", arg1.string(), ", arg2=", arg2.string(), ")");
+		// TODO adjust name
+		if(verbose_debug) Genode::log("Template::\033[33m", __func__, "\033[0m(str1=", arg1.string(), ", arg2=", arg2.string(), ")");
 		auto result = _parent_template.method_with_result(arg1, arg2);
 		if(verbose_debug) Genode::log("  result: ", result);
 
@@ -175,7 +187,8 @@ public:
 
 	void method_without_result(String const &arg1, String const &arg2)
 	{
-		if(verbose_debug) Genode::log("Log::\033[33m", "method_without_result", "\033[0m(str1=", arg1.string(), ", arg2=", arg2.string(), ")");
+		// TODO adjust name
+		if(verbose_debug) Genode::log("Template::\033[33m", __func__, "\033[0m(str1=", arg1.string(), ", arg2=", arg2.string(), ")");
 		_parent_template.method_without_result(arg1, arg2);
 	}
 
@@ -220,7 +233,8 @@ protected:
 	 */
 	Template_session_component *_create_session(const char *args)
 	{
-		Genode::log("Log_root::\033[33m", "_create_session", "\033[0m(", args,")");
+		// TODO adjust name
+		if(verbose_debug) Genode::log("Template_root::\033[33m", __func__, "\033[0m(", args,")");
 
 		// TODO prepare args for Template_session_component
 
@@ -242,7 +256,8 @@ protected:
 	 */
 	void _destroy_session(Template_session_component *session)
 	{
-		if(verbose_debug) Genode::log("Log_root::\033[33m", "_destroy_session", "\033[0m(ptr=", session,")");
+		// TODO adjust name
+		if(verbose_debug) Genode::log("Template_root::\033[33m", __func__, "\033[0m(ptr=", session,")");
 		// Find and destroy list element and its session object
 		Template_session_info *info = _session_infos.first();
 		if(info) info = info->find_by_ptr(session);
@@ -273,8 +288,7 @@ public:
 		_infos_lock    (),
 		_session_infos ()
 	{
-		// TODO adjust string
-		if(verbose_debug) Genode::log("\033[33m", "Template_root", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
     
     ~Template_root()
@@ -287,8 +301,7 @@ public:
             Genode::destroy(_md_alloc, info);
         }
         
-        // TODO adjust name
-        if(verbose_debug) Genode::log("\033[33m", "Template_root", "\033[0m destructed");
+        if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
     }
     
     // TODO create getter/setter
