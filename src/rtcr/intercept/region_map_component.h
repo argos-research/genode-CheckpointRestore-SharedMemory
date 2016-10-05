@@ -102,6 +102,13 @@ private:
 	 */
 	Genode::Region_map_client           _parent_region_map;
 	/**
+	 * Parent's session state
+	 */
+	struct State_info
+	{
+		Genode::Signal_context_capability fault_handler {};
+	} _parent_state;
+	/**
 	 * Name of the Region map for debugging
 	 */
 	Genode::String<32>                  _label;
@@ -149,23 +156,8 @@ public:
 		if(verbose_debug) Genode::log("\033[33m", "Region_map_component", "\033[0m destructed");
 	}
 
-	/**
-	 * Return the capability to parent's Region map
-	 */
-	Genode::Capability<Genode::Region_map> parent_cap()
-	{
-		return _parent_region_map;
-	}
-
-	/**
-	 * Return list of attached regions
-	 *
-	 * \return Reference to the internal attached regions
-	 */
-	Genode::List<Attached_region_info> &attached_regions()
-	{
-		return _attached_regions;
-	}
+	Genode::Capability<Genode::Region_map> parent_cap() { return _parent_region_map; }
+	Genode::List<Attached_region_info> &attached_regions() { return _attached_regions; }
 
 	/******************************
 	 ** Region map Rpc interface **
@@ -255,13 +247,10 @@ public:
 		if(verbose_debug) Genode::log("  Detached dataspace from the local address ", Genode::Hex(local_addr));
 	}
 
-	/**
-	 * TODO intercept fault_handler cap
-	 */
 	void fault_handler(Genode::Signal_context_capability handler)
 	{
 		if(verbose_debug)Genode::log("Rmap<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(", handler, ")");
-
+		_parent_state.fault_handler = handler;
 		_parent_region_map.fault_handler(handler);
 	}
 

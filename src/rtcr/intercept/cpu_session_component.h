@@ -87,6 +87,13 @@ private:
 	 */
 	Genode::Cpu_connection         _parent_cpu;
 	/**
+	 * Parent's session state
+	 */
+	struct State_info
+	{
+		Genode::Signal_context_capability exception_sigh {};
+	} _parent_state;
+	/**
 	 * Lock to make _threads thread-safe
 	 */
 	Genode::Lock                   _threads_lock;
@@ -221,7 +228,7 @@ public:
 	void exception_sigh(Genode::Signal_context_capability handler) override
 	{
 		if(verbose_debug) Genode::log("Cpu::\033[33m", "exception_sigh", "\033[0m(", handler, ")");
-
+		_parent_state.exception_sigh = handler;
 		_parent_cpu.exception_sigh(handler);
 	}
 
