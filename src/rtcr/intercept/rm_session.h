@@ -119,7 +119,7 @@ public:
 		_infos_lock       (),
 		_region_map_infos ()
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Rm_session_component", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	~Rm_session_component()
@@ -132,7 +132,7 @@ public:
 			destroy(rms_info->region_map.cap());
 		}
 
-		if(verbose_debug) Genode::log("\033[33m", "Rm_session_component", "\033[0m destructed");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	Genode::List<Region_map_info> &region_map_infos() { return _region_map_infos; }
@@ -147,7 +147,7 @@ public:
 	 */
 	Genode::Capability<Genode::Region_map> create(Genode::size_t size)
 	{
-		if(verbose_debug) Genode::log("Rm::\033[33m", "create", "\033[0m(size=", size, ")");
+		if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(size=", size, ")");
 
 		// Create real Region_map from parent
 		auto parent_cap = _parent_rm.create(size);
@@ -174,7 +174,7 @@ public:
 	 */
 	void destroy(Genode::Capability<Genode::Region_map> region_map_cap)
 	{
-		if(verbose_debug) Genode::log("Rm::\033[33m", "destroy", "\033[0m(", region_map_cap, ")");
+		if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(", region_map_cap, ")");
 
 		// Find list element for the given Capability
 		Genode::Lock::Guard lock (_infos_lock);
@@ -240,7 +240,7 @@ private:
 protected:
 	Rm_session_component *_create_session(const char *args)
 	{
-		Genode::log("Rm_root::\033[33m", "_create_session", "\033[0m(", args,")");
+		if(verbose_debug) Genode::log("Rm_root::\033[33m", __func__, "\033[0m(", args,")");
 		// Create virtual Rm_session
 		Rm_session_component *new_rms =
 				new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep);
@@ -279,7 +279,7 @@ public:
 		_infos_lock (),
 		_rms_infos  ()
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Rm_root", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
     ~Rm_root()
@@ -292,7 +292,7 @@ public:
             Genode::destroy(_md_alloc, info);
         }
 
-        if(verbose_debug) Genode::log("\033[33m", "Rm_root", "\033[0m destructed");
+        if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
     }
 
 	Genode::List<Rm_session_info> &rms_infos() { return _rms_infos; }

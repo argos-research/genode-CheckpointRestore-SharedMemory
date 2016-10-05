@@ -194,12 +194,12 @@ public:
 		_nc_infos_lock (),
 		_nc_infos      ()
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Pd_session_component", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	~Pd_session_component()
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Pd_session_component", "\033[0m destructed");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	Genode::Pd_session_capability         parent_cap()              { return _parent_pd.cap(); }
@@ -216,14 +216,14 @@ public:
 
 	void assign_parent(Genode::Capability<Genode::Parent> parent) override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "assign_parent", "\033[0m(", parent,")");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m(", parent,")");
 
 		_parent_pd.assign_parent(parent);
 	}
 
 	bool assign_pci(Genode::addr_t addr, Genode::uint16_t bdf) override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "assign_pci", "\033[0m(addr=", addr,", bdf=", bdf,")");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m(addr=", addr,", bdf=", bdf,")");
 
 		auto result = _parent_pd.assign_pci(addr, bdf);
 
@@ -234,7 +234,7 @@ public:
 
 	Signal_source_capability alloc_signal_source() override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "alloc_signal_source", "\033[0m()");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m()");
 
 		auto result_cap = _parent_pd.alloc_signal_source();
 
@@ -250,7 +250,7 @@ public:
 
 	void free_signal_source(Signal_source_capability cap) override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "free_signal_source", "\033[0m(", cap, ")");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m(", cap, ")");
 
 		// Find list element
 		Genode::Lock::Guard guard(_ss_infos_lock);
@@ -276,7 +276,7 @@ public:
 	Genode::Signal_context_capability alloc_context(Signal_source_capability source,
 			unsigned long imprint) override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "alloc_context", "\033[0m(source ", source, ", imprint=", Genode::Hex(imprint), ")");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m(source ", source, ", imprint=", Genode::Hex(imprint), ")");
 
 		auto result_cap = _parent_pd.alloc_context(source, imprint);
 
@@ -292,7 +292,7 @@ public:
 
 	void free_context(Genode::Signal_context_capability cap) override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "free_context", "\033[0m(", cap, ")");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m(", cap, ")");
 
 		// Find list element
 		Genode::Lock::Guard guard(_sc_infos_lock);
@@ -317,7 +317,7 @@ public:
 
 	void submit(Genode::Signal_context_capability context, unsigned cnt) override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "submit", "\033[0m(context ", context, ", cnt=", cnt,")");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m(context ", context, ", cnt=", cnt,")");
 
 		_parent_pd.submit(context, cnt);
 	}
@@ -340,7 +340,7 @@ public:
 
 	void free_rpc_cap(Genode::Native_capability cap) override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "free_rpc_cap", "\033[0m(", cap,")");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m(", cap,")");
 
 		// Find list element
 		Genode::Lock::Guard guard(_nc_infos_lock);
@@ -368,7 +368,7 @@ public:
 	 */
 	Genode::Capability<Genode::Region_map> address_space() override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "address_space", "\033[0m()");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m()");
 
 		auto result = _address_space.Rpc_object<Genode::Region_map>::cap();
 
@@ -382,7 +382,7 @@ public:
 	 */
 	Genode::Capability<Genode::Region_map> stack_area() override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "stack_area", "\033[0m()");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m()");
 
 		auto result = _stack_area.Rpc_object<Genode::Region_map>::cap();
 
@@ -396,7 +396,7 @@ public:
 	 */
 	Genode::Capability<Genode::Region_map> linker_area() override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "linker_area", "\033[0m()");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m()");
 
 		auto result = _linker_area.Rpc_object<Genode::Region_map>::cap();
 
@@ -407,7 +407,7 @@ public:
 
 	Genode::Capability<Native_pd> native_pd() override
 	{
-		if(verbose_debug) Genode::log("Pd::\033[33m", "native_pd", "\033[0m()");
+		if(verbose_debug) Genode::log("Pd::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_pd.native_pd();
 

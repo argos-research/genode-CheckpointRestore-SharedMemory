@@ -83,12 +83,12 @@ public:
 		_ep         (ep),
 		_parent_log (env, args)
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Log_session_component", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	~Log_session_component()
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Log_session_component", "\033[0m destructed");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	/*******************************
@@ -97,7 +97,7 @@ public:
 
 	Genode::size_t write(String const &string)
 	{
-		if(verbose_debug) Genode::log("Log::\033[33m", "write", "\033[0m(", string.string(),")");
+		if(verbose_debug) Genode::log("Log::\033[33m", __func__, "\033[0m(", string.string(),")");
 		auto result = _parent_log.write(string);
 		if(verbose_debug) Genode::log("  result: ", result);
 
@@ -146,7 +146,7 @@ protected:
 	 */
 	Log_session_component *_create_session(const char *args)
 	{
-		Genode::log("Log_root::\033[33m", "_create_session", "\033[0m(", args,")");
+		if(verbose_debug) Genode::log("Log_root::\033[33m", __func__, "\033[0m(", args,")");
 
 		// Extracting label from args
 		char label_buf[128];
@@ -171,7 +171,7 @@ protected:
 	 */
 	void _destroy_session(Log_session_component *session)
 	{
-		if(verbose_debug) Genode::log("Log_root::\033[33m", "_destroy_session", "\033[0m(ptr=", session,")");
+		if(verbose_debug) Genode::log("Log_root::\033[33m", __func__, "\033[0m(ptr=", session,")");
 		// Find and destroy list element and its session object
 		Log_session_info *info = _session_infos.first();
 		if(info) info = info->find_by_ptr(session);
@@ -201,7 +201,7 @@ public:
 		_infos_lock    (),
 		_session_infos ()
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Log_root", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
     ~Log_root()
@@ -214,7 +214,7 @@ public:
             Genode::destroy(_md_alloc, info);
         }
 
-        if(verbose_debug) Genode::log("\033[33m", "Log_root", "\033[0m destructed");
+        if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
     }
 
 	Genode::List<Log_session_info> &session_infos() { return _session_infos; }

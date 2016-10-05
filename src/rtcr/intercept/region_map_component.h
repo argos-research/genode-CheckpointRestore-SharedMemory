@@ -137,7 +137,7 @@ public:
 	{
 		_ep.manage(*this);
 
-		if(verbose_debug) Genode::log("\033[33m", "Region_map_component", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	/**
@@ -153,7 +153,7 @@ public:
 		while((curr_at_info = _attached_regions.first()))
 			detach(curr_at_info->addr);
 
-		if(verbose_debug) Genode::log("\033[33m", "Region_map_component", "\033[0m destructed");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	Genode::Capability<Genode::Region_map> parent_cap() { return _parent_region_map; }
@@ -173,7 +173,7 @@ public:
 		{
 			if(use_local_addr)
 			{
-				Genode::log("Rmap<", _label.string(),">::\033[33m", "attach", "\033[0m(",
+				Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(",
 						"ds ",       ds_cap,
 						", size=",       Genode::Hex(size),
 						", offset=",     offset,
@@ -183,7 +183,7 @@ public:
 			}
 			else
 			{
-				Genode::log("Rmap<", _label.string(),">::\033[33m", "attach", "\033[0m(",
+				Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(",
 						"ds ",   ds_cap,
 						", size=",   Genode::Hex(size),
 						", offset=", offset,
@@ -225,7 +225,7 @@ public:
 	 */
 	void detach(Region_map::Local_addr local_addr)
 	{
-		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", "detach", "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
+		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
 
 		// Detach from real region map
 		_parent_region_map.detach(local_addr);
@@ -249,14 +249,14 @@ public:
 
 	void fault_handler(Genode::Signal_context_capability handler)
 	{
-		if(verbose_debug)Genode::log("Rmap<", _label.string(),">::\033[33m", "fault_handler", "\033[0m(", handler, ")");
+		if(verbose_debug)Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(", handler, ")");
 		_parent_state.fault_handler = handler;
 		_parent_region_map.fault_handler(handler);
 	}
 
 	State state()
 	{
-		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", "state", "\033[0m()");
+		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_region_map.state();
 
@@ -271,7 +271,7 @@ public:
 
 	Genode::Dataspace_capability dataspace()
 	{
-		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", "dataspace", "\033[0m()");
+		if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_region_map.dataspace();
 

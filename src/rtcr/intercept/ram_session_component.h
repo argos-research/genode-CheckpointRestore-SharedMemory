@@ -448,7 +448,7 @@ public:
 	{
 		_page_fault_handler.start();
 
-		if(verbose_debug) Genode::log("\033[33m", "Ram_session_component", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	/**
@@ -465,7 +465,7 @@ public:
 			_destroy_rds_info(*rds_info);
 		}
 
-		if(verbose_debug) Genode::log("\033[33m", "Ram_session_component", "\033[0m destructed");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	Genode::Ram_session_capability    parent_cap()          { return _parent_ram.cap(); }
@@ -484,7 +484,7 @@ public:
 	 */
 	Genode::Ram_dataspace_capability alloc(Genode::size_t size, Genode::Cache_attribute cached) override
 	{
-		if(verbose_debug) Genode::log("Ram::\033[33m", "alloc", "\033[0m(size=", Genode::Hex(size),")");
+		if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(size=", Genode::Hex(size),")");
 
 		if(_use_inc_ckpt)
 		{
@@ -616,7 +616,7 @@ public:
 	 */
 	void free(Genode::Ram_dataspace_capability ds_cap) override
 	{
-		if(verbose_debug) Genode::log("Ram::\033[33m", "free", "\033[0m()");
+		if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(", ds_cap, ")");
 
 		Genode::Lock::Guard lock_guard(_rds_infos_lock);
 
@@ -640,7 +640,7 @@ public:
 
 	int ref_account(Genode::Ram_session_capability ram_session) override
 	{
-		if(verbose_debug) Genode::log("Ram::\033[33m", "ref_account", "\033[0m(ref=", ram_session, ")");
+		if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(ref=", ram_session, ")");
 
 		auto result = _parent_ram.ref_account(ram_session);
 
@@ -649,10 +649,9 @@ public:
 		return result;
 	}
 
-	// TODO store the Ram quota transfers
 	int transfer_quota(Genode::Ram_session_capability ram_session, Genode::size_t amount) override
 	{
-		if(verbose_debug) Genode::log("Ram::\033[33m", "transfer_quota", "\033[0m(to=", ram_session, ", size=", amount, ")");
+		if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(to=", ram_session, ", size=", amount, ")");
 
 		auto result = _parent_ram.transfer_quota(ram_session, amount);
 
@@ -663,7 +662,7 @@ public:
 
 	Genode::size_t quota() override
 	{
-		if(verbose_debug) Genode::log("Ram::\033[33m", "quota", "\033[0m()");
+		if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_ram.quota();
 
@@ -674,7 +673,7 @@ public:
 
 	Genode::size_t used() override
 	{
-		if(verbose_debug) Genode::log("Ram::\033[33m", "used", "\033[0m(");
+		if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_ram.used();
 

@@ -124,7 +124,7 @@ public:
 		_threads_lock  (),
 		_threads       ()
 	{
-		if(verbose_debug) Genode::log("\033[33m", "Cpu_session_component", "\033[0m created");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	/**
@@ -140,7 +140,7 @@ public:
 			destroy(_md_alloc, thread_info);
 		}
 
-		if(verbose_debug) Genode::log("\033[33m", "Cpu_session_component", "\033[0m destructed");
+		if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 	}
 
 	Genode::Cpu_session_capability  parent_cap()   { return _parent_cpu.cap(); }
@@ -181,7 +181,7 @@ public:
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Cpu::\033[33m", "create_thread", "\033[0m(name=", name.string(), ")");
+			Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 		}
 
 		/**
@@ -206,7 +206,7 @@ public:
 	 */
 	void kill_thread(Genode::Thread_capability thread) override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "kill_thread", "\033[0m(", thread,")");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(", thread,")");
 
 		Genode::Lock::Guard lock_guard(_threads_lock);
 
@@ -227,14 +227,14 @@ public:
 
 	void exception_sigh(Genode::Signal_context_capability handler) override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "exception_sigh", "\033[0m(", handler, ")");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(", handler, ")");
 		_parent_state.exception_sigh = handler;
 		_parent_cpu.exception_sigh(handler);
 	}
 
 	Genode::Affinity::Space affinity_space() const override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "affinity_space", "\033[0m()");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_cpu.affinity_space();
 
@@ -245,7 +245,7 @@ public:
 
 	Genode::Dataspace_capability trace_control() override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "trace_control", "\033[0m()");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_cpu.trace_control();
 
@@ -256,7 +256,7 @@ public:
 
 	Quota quota() override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "quota", "\033[0m()");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_cpu.quota();
 
@@ -267,7 +267,7 @@ public:
 
 	int ref_account(Genode::Cpu_session_capability c) override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "ref_account", "\033[0m(", c, ")");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(", c, ")");
 
 		auto result = _parent_cpu.ref_account(c);
 
@@ -278,7 +278,7 @@ public:
 
 	int transfer_quota(Genode::Cpu_session_capability c, Genode::size_t q) override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "transfer_quota", "\033[0m(to ", c, "quota=", q, ")");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(to ", c, "quota=", q, ")");
 
 		auto result = _parent_cpu.transfer_quota(c, q);
 
@@ -289,7 +289,7 @@ public:
 
 	Genode::Capability<Native_cpu> native_cpu() override
 	{
-		if(verbose_debug) Genode::log("Cpu::\033[33m", "native_cpu", "\033[0m()");
+		if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m()");
 
 		auto result = _parent_cpu.native_cpu();
 
