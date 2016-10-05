@@ -157,12 +157,6 @@ public:
 	/**
 	 * Constructor
 	 *
-	 * \param env             Local environment
-	 * \param md_alloc        Local allocator for child's resources and for storing services
-	 * \param parent_services Registry for services provided by parent. It is shared by all children.
-	 * \param name            Child's unique name and filename of child's rom module
-	 * \param granularity     Granularity for incremental checkpointing in multiple of pagesize
-	 *
 	 * TODO Separate child's name and filename to support multiple child's with the same rom module
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
@@ -223,7 +217,7 @@ public:
 
 	Genode::Service *resolve_session_request(const char *service_name, const char *args)
 	{
-		if(verbose_debug) Genode::log("Target_child::\033[33m", "resolve_session_request", "\033[0m(", service_name, " ", args, ")");
+		if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", args, ")");
 
 		// TODO Support grandchildren: PD, CPU, and RAM session has also to be provided to them
 
@@ -244,6 +238,7 @@ public:
 		if(service)
 			return service;
 
+		// Intercept these sessions
 		if(!Genode::strcmp(service_name, "RM"))
 		{
 			Rm_root *root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
@@ -266,35 +261,12 @@ public:
 			if(verbose_debug) Genode::log("  inserted service into local_services");
 		}
 
-/*
-		// XXX Service is LOG or Timer (temporary solution until these services are also intercepted by Rtcr)
-		if(Genode::strcmp(service_name, "LOG") || Genode::strcmp(service_name, "Timer"))
-		{
-			service = new (_md_alloc) Genode::Parent_service(service_name);
-			_parent_services.insert(service);
-		}
-*/
-		// Service not known: Assume parent provides it; fill parent service registry on demand
+		// Service not known, cannot intercept its methods
 		if(!service)
 		{
-			// TODO Store allocated objects for a later deallocate, when the child is removed
-/*
-			// Find root object
-			Genode::Root *root = nullptr;
-			if(!Genode::strcmp(service_name, "RM"))
-			{
-				root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
-			}
-
-			service = new (_md_alloc) Genode::Local_service(service_name, root);
-			_local_services.insert(service);
-
-			if(verbose_debug) Genode::log("  inserted service into local_services");
-*/
-
 			service = new (_md_alloc) Genode::Parent_service(service_name);
 			_parent_services.insert(service);
-			if(verbose_debug) Genode::log("  inserted service into parent_services");
+			Genode::warning("Unknown service: ", service_name);
 		}
 
 		return service;
