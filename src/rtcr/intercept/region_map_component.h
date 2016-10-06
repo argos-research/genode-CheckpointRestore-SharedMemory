@@ -14,6 +14,9 @@
 #include <region_map/client.h>
 #include <dataspace/client.h>
 
+/* Rtcr includes */
+#include "ram_session_component.h"
+
 namespace Rtcr {
 	struct Attached_region_info;
 	class Region_map_component;
