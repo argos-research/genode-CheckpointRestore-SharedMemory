@@ -47,33 +47,28 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 		ds_cap(ds_cap), size(size), offset(offset), addr(local_addr), executable(executable)
 	{  }
 
-	/**
-	 * Find Region which contains the addr
-	 *
-	 * \param  addr Local address in parent's region map
-	 * \return Attached_region_info which contains the local address
-	 */
 	Attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
 		if((addr >= this->addr) && (addr <= this->addr + size))
 			return this;
-		Attached_region_info *region = next();
-		return region ? region->find_by_addr(addr) : 0;
+		Attached_region_info *info = next();
+		return info ? info->find_by_addr(addr) : 0;
 	}
 
-	/**
-	 * Find Attached_region_info by using a specific Dataspace_capability
-	 *
-	 * \param cap Dataspace_capability
-	 *
-	 * \return Attached_region_info with the corresponding Capability
-	 */
 	Attached_region_info *find_by_cap(Genode::Dataspace_capability cap)
 	{
 		if(cap == ds_cap)
 			return this;
-		Attached_region_info *ar_info = next();
-		return ar_info ? ar_info->find_by_cap(cap) : 0;
+		Attached_region_info *info = next();
+		return info ? info->find_by_cap(cap) : 0;
+	}
+
+	Attached_region_info *find_by_cr_info(Copied_region_info &cr_info)
+	{
+		if(cr_info.orig_ds_cap == ds_cap && cr_info.rel_addr == addr)
+			return this;
+		Attached_region_info *info = next();
+		return info ? info->find_by_cr_info(cr_info) : 0;
 	}
 };
 
