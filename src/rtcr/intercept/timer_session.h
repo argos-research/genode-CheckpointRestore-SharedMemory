@@ -17,8 +17,8 @@ namespace Rtcr {
 	class Timer_session_component;
 	class Timer_root;
 
-	constexpr bool timer_verbose_debug = true;
-	constexpr bool timer_root_verbose_debug = true;
+	constexpr bool timer_verbose_debug = false;
+	constexpr bool timer_root_verbose_debug = false;
 }
 
 

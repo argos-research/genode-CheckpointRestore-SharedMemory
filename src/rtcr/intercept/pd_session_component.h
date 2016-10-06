@@ -21,7 +21,7 @@ namespace Rtcr {
 	struct Native_capability_info;
 	class Pd_session_component;
 
-	constexpr bool pd_verbose_debug = true;
+	constexpr bool pd_verbose_debug = false;
 }
 
 /**
