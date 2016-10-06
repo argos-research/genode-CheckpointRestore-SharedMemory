@@ -1,0 +1,159 @@
+/*
+ * \brief  Intercepting (TODO insert name) session
+ * \author
+ * \date   yyyy-mm-dd
+ */
+
+// TODO change name
+#include "session.h.template"
+
+using namespace Rtcr;
+
+
+Template_rpc_object_info::Template_rpc_object_info(Template_rpc_object_component &rpc_object)
+:
+    rpc_object(rpc_object)
+{ }
+
+
+// TODO adjust intercepted session capability
+Template_rpc_object_info::Template_rpc_object_info *find_by_cap(Genode::Capability<Genode::Intercepted_session> cap)
+{
+    if(cap == rpc_object.cap())
+        return this;
+    Template_rpc_object_info *info = next();
+    return info ? info->find_by_cap(cap) : 0;
+}
+
+
+Template_session_info::Template_session_info(Template_session_component &comp, const char* args)
+:
+    session(comp),
+    args(args)
+{ }
+
+
+Template_session_info *Template_session_info::find_by_ptr(Template_session_component *ptr)
+{
+    if(ptr == &session)
+        return this;
+    Template_session_info *info = next();
+    return info ? info->find_by_ptr(ptr) : 0;
+}
+
+
+Template_session_component::Template_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *args)
+:
+    _md_alloc   (md_alloc),
+    _ep         (ep),
+    _parent_template (env, args)
+{
+    if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+}
+
+
+// TODO destroy all allocated objects
+Template_session_component::~Template_session_component() 
+{ 
+    Template_rpc_object_info *info = nullptr;
+    
+    while((info = _rpc_object_infos.first()))
+    {
+        _rpc_object_infos.remove(info);
+        Genode::destroy(_md_alloc, info);
+    }
+    
+    if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+}
+
+
+Genode::size_t Template_session_component::method_with_result(String const &arg1, String const &arg2)
+{
+    // TODO adjust name
+    if(verbose_debug) Genode::log("Template::\033[33m", __func__, "\033[0m(str1=", arg1.string(), ", arg2=", arg2.string(), ")");
+    auto result = _parent_template.method_with_result(arg1, arg2);
+    if(verbose_debug) Genode::log("  result: ", result);
+
+    return result;
+}
+
+
+void Template_session_component::method_without_result(String const &arg1, String const &arg2)
+{
+    // TODO adjust name
+    if(verbose_debug) Genode::log("Template::\033[33m", __func__, "\033[0m(str1=", arg1.string(), ", arg2=", arg2.string(), ")");
+    _parent_template.method_without_result(arg1, arg2);
+}
+
+
+Template_session_component *Template_root::_create_session(const char *args)
+{
+    // TODO adjust name
+    if(verbose_debug) Genode::log("Template_root::\033[33m", __func__, "\033[0m(", args,")");
+
+    // TODO prepare args for Template_session_component
+
+    // Create virtual session object
+    Template_session_component *new_session =
+            new (md_alloc()) Template_session_component(_env, _md_alloc, _ep, args);
+
+    // Create and insert list element
+    Template_session_info *new_session_info =
+            new (md_alloc()) Template_session_info(*new_session, args);
+    Genode::Lock::Guard guard(_infos_lock);
+    _session_infos.insert(new_session_info);
+
+    return new_session;
+}
+
+
+void Template_root::_destroy_session(Template_session_component *session)
+{
+    // TODO adjust name
+    if(verbose_debug) Genode::log("Template_root::\033[33m", __func__, "\033[0m(ptr=", session,")");
+    // Find and destroy list element and its session object
+    Template_session_info *info = _session_infos.first();
+    if(info) info = info->find_by_ptr(session);
+    if(info)
+    {
+        // Remove and destroy list element
+        _session_infos.remove(info);
+        destroy(_md_alloc, info);
+
+        // Destroy virtual session object
+        destroy(_md_alloc, session);
+    }
+    // No list element found
+    else
+    {
+        // TODO adjust string
+        Genode::error("Template_root: Session not found in the list");
+    }
+}
+
+
+Template_root::Template_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep)
+:
+    Root_component<Template_session_component>(session_ep, md_alloc),
+    _env           (env),
+    _md_alloc      (md_alloc),
+    _ep            (session_ep),
+    _infos_lock    (),
+    _session_infos ()
+{
+    if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+}
+
+
+Template_root::~Template_root()
+{
+    Template_session_info *info = nullptr;
+    
+    while((info = _session_infos.first()))
+    {
+        _session_infos.remove(info);
+        Genode::destroy(_md_alloc, info);
+    }
+    
+    if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+}
