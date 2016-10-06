@@ -7,6 +7,7 @@
 #ifndef _RTCR_REGION_MAP_COMPONENT_H_
 #define _RTCR_REGION_MAP_COMPONENT_H_
 
+/* Genode includes */
 #include <base/log.h>
 #include <base/rpc_server.h>
 #include <region_map/client.h>
@@ -45,7 +46,17 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 			Genode::off_t offset, Genode::addr_t local_addr, bool executable)
 	:
 		ds_cap(ds_cap), size(size), offset(offset), addr(local_addr), executable(executable)
-	{  }
+	{ }
+
+	/**
+	 * If this attached dataspace is managed, return its Managed_region_map_info, else return nullptr
+	 */
+	/*Managed_region_map_info *managed_dataspace(Genode::List<Ram_dataspace_info> &rds_infos)
+	{
+		Ram_dataspace_info *rds_info = rds_infos.first();
+		if(rds_info) rds_info = rds_info->find_by_cap(ds_cap);
+		return rds_info ? rds_info->mrm_info : nullptr;
+	}*/
 
 	Attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
@@ -63,13 +74,13 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 		return info ? info->find_by_cap(cap) : 0;
 	}
 
-	Attached_region_info *find_by_cr_info(Copied_region_info &cr_info)
+	/*Attached_region_info *find_by_cr_info(Copied_region_info &cr_info)
 	{
 		if(cr_info.orig_ds_cap == ds_cap && cr_info.rel_addr == addr)
 			return this;
 		Attached_region_info *info = next();
 		return info ? info->find_by_cr_info(cr_info) : 0;
-	}
+	}*/
 };
 
 /**
