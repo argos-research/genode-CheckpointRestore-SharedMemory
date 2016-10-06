@@ -8,20 +8,6 @@
 
 using namespace Rtcr;
 
-Thread_info::Thread_info(Genode::Thread_capability thread_cap)
-:
-	thread_cap(thread_cap)
-{ }
-
-
-Thread_info *Thread_info::find_by_cap(Genode::Thread_capability cap)
-{
-	if(thread_cap == cap)
-		return this;
-	Thread_info *thread_info = next();
-	return thread_info ? thread_info->find_by_cap(cap) : 0;
-}
-
 
 Cpu_session_component::Cpu_session_component(
 		Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,

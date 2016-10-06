@@ -13,31 +13,15 @@
 #include <cpu_session/connection.h>
 #include <cpu_thread/client.h>
 
+/* Rtcr includes */
+#include "../monitoring/thread_info.h"
+
 namespace Rtcr {
-	struct Thread_info;
 	class Cpu_session_component;
 
 	constexpr bool cpu_verbose_debug = false;
 }
 
-/**
- * Struct which holds a thread capability which belong to the client
- */
-struct Rtcr::Thread_info : Genode::List<Rtcr::Thread_info>::Element
-{
-	/**
-	 * Capability of the thread
-	 */
-	Genode::Thread_capability thread_cap;
-
-	/**
-	 * Constructor
-	 */
-	Thread_info(Genode::Thread_capability thread_cap);
-
-	Thread_info *find_by_cap(Genode::Thread_capability cap);
-
-};
 
 /**
  * This custom Cpu session intercepts the creation and destruction of threads by the client
