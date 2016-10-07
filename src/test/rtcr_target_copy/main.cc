@@ -26,21 +26,29 @@ struct Rtcr::Main
 	Genode::Env              &env;
 	Genode::Heap              md_heap;
 	Genode::Service_registry  parent_services;
+	Timer::Connection         timer;
 
 	Main(Genode::Env &env_)
 	:
 		env             (env_),
 		md_heap         (env.ram(), env.rm()),
-		parent_services ()
+		parent_services (),
+		timer           (env)
 	{
-		Target_child child { env, md_heap, parent_services, "sheep_counter", true };
+		Target_child child { env, md_heap, parent_services, "sheep_counter", false };
 
+		timer.msleep(3000);
 
+		log("Address space");
+		log(child.pd().address_space_component().attached_regions());
 
+		//Target_copy copy { env, md_heap, child };
+
+		sleep_forever();
 	}
 };
 
-size_t Component::stack_size() { return 64*1024; }
+size_t Component::stack_size() { return 32*1024; }
 
 void Component::construct(Genode::Env &env)
 {
