@@ -7,6 +7,7 @@
 #ifndef _RTCR_THREAD_INFO_COMPONENT_H_
 #define _RTCR_THREAD_INFO_COMPONENT_H_
 
+/* Genode includes */
 #include <util/list.h>
 #include <thread/capability.h>
 

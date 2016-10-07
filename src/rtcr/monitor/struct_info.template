@@ -1,0 +1,18 @@
+/*
+ * \brief  Monitoring TODO information
+ * \author Denis Huber
+ * \date   2016-10-06
+ */
+
+#ifndef _RTCR_TODO_COMPONENT_H_
+#define _RTCR_TODO_COMPONENT_H_
+
+/* Genode includes */
+#include <util/list.h>
+
+namespace Rtcr {
+
+}
+
+
+#endif /* _RTCR_TODO_COMPONENT_H_ */
