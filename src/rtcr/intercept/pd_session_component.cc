@@ -8,54 +8,6 @@
 
 using namespace Rtcr;
 
-Signal_source_info::Signal_source_info(Genode::Capability<Genode::Signal_source> cap)
-:
-	cap(cap)
-{ }
-
-
-Signal_source_info *Signal_source_info::find_by_cap(Genode::Capability<Genode::Signal_source> cap)
-{
-	if(cap == this->cap)
-		return this;
-	Signal_source_info *info = next();
-	return info ? info->find_by_cap(cap) : 0;
-}
-
-
-Signal_context_info::Signal_context_info(Genode::Signal_context_capability sc_cap,
-		Genode::Capability<Genode::Signal_source> ss_cap, unsigned long imprint)
-:
-	sc_cap(sc_cap),
-	ss_cap(ss_cap),
-	imprint(imprint)
-{ }
-
-
-Signal_context_info *Signal_context_info::find_by_sc_cap(Genode::Signal_context_capability cap)
-{
-	if(cap == sc_cap)
-		return this;
-	Signal_context_info *info = next();
-	return info ? info->find_by_sc_cap(cap) : 0;
-}
-
-
-Native_capability_info::Native_capability_info(Genode::Native_capability native_cap, Genode::Native_capability ep_cap)
-:
-	native_cap(native_cap),
-	ep_cap(ep_cap)
-{ }
-
-
-Native_capability_info *Native_capability_info::find_by_native_cap(Genode::Native_capability cap)
-{
-	if(cap == this->native_cap)
-		return this;
-	Native_capability_info *info = next();
-	return info ? info->find_by_native_cap(cap) : 0;
-}
-
 
 Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *label)
 :

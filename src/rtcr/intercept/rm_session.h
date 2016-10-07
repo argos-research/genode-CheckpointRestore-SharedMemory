@@ -14,10 +14,10 @@
 
 /* Rtcr includes */
 #include "region_map_component.h"
+#include "../monitor/region_map_info.h"
+#include "../monitor/rm_session_info.h"
 
 namespace Rtcr {
-	struct Region_map_info;
-	struct Rm_session_info;
 	class Rm_session_component;
 	class Rm_root;
 
@@ -25,42 +25,6 @@ namespace Rtcr {
 	constexpr bool rm_root_verbose_debug = false;
 }
 
-/**
- * List element for managing Region_map_components created through an Rm_session
- *
- * Provides information about Region_map capability, and attached regions
- */
-struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
-{
-	/**
-	 * Reference to session object; encapsulates capability and object's state
-	 */
-	Region_map_component &region_map;
-
-	Region_map_info(Region_map_component &region_map);
-
-	Region_map_info *find_by_cap(Genode::Capability<Genode::Region_map> cap);
-};
-
-/**
- * List element for managing Rm_session_components
- */
-struct Rtcr::Rm_session_info : Genode::List<Rm_session_info>::Element
-{
-	/**
-	 * Reference to the session object; encapsulates capability and object's state
-	 */
-	Rm_session_component &rms;
-	/**
-	 * Arguments provided for creating the session object
-	 */
-	const char           *args;
-
-	Rm_session_info(Rm_session_component &rms, const char* args);
-
-	Rm_session_info *find_by_ptr(Rm_session_component *ptr);
-
-};
 
 class Rtcr::Rm_session_component : public Genode::Rpc_object<Genode::Rm_session>
 {

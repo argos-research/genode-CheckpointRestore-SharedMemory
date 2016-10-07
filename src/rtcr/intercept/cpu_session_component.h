@@ -14,7 +14,7 @@
 #include <cpu_thread/client.h>
 
 /* Rtcr includes */
-#include "../monitoring/thread_info.h"
+#include "../monitor/thread_info.h"
 
 namespace Rtcr {
 	class Cpu_session_component;

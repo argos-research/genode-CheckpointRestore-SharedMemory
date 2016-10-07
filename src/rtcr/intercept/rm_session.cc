@@ -9,37 +9,6 @@
 using namespace Rtcr;
 
 
-Region_map_info::Region_map_info(Region_map_component &region_map)
-:
-	region_map(region_map)
-{ }
-
-
-Region_map_info *Region_map_info::find_by_cap(Genode::Capability<Genode::Region_map> cap)
-{
-	if(cap == region_map.cap())
-		return this;
-	Region_map_info *rm_info = next();
-	return rm_info ? rm_info->find_by_cap(cap) : 0;
-}
-
-
-Rm_session_info::Rm_session_info(Rm_session_component &rms, const char* args)
-:
-	rms  (rms),
-	args (args)
-{ }
-
-
-Rm_session_info *Rm_session_info::find_by_ptr(Rm_session_component *ptr)
-{
-	if(ptr == &rms)
-		return this;
-	Rm_session_info *rms_info = next();
-	return rms_info ? rms_info->find_by_ptr(ptr) : 0;
-}
-
-
 Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep)
 :
 	_md_alloc         (md_alloc),

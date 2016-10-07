@@ -17,35 +17,11 @@
 #include "intercept/ram_session_component.h"
 #include "intercept/cpu_session_component.h"
 #include "intercept/pd_session_component.h"
+#include "monitor/copied_region_info.h"
 
 namespace Rtcr {
-	struct Copied_region_info;
 	class  Target_copy;
 }
-
-struct Rtcr::Copied_region_info : Genode::List<Copied_region_info>::Element
-{
-	Genode::Dataspace_capability orig_ds_cap;
-	Genode::Dataspace_capability copy_ds_cap;
-	Genode::addr_t               rel_addr;
-	Genode::size_t               size;
-	Genode::off_t                offset;
-	bool                         managed;
-
-	Copied_region_info(Genode::Dataspace_capability original,
-			Genode::Dataspace_capability copy,
-			Genode::addr_t rel_addr,
-			Genode::size_t size,
-			Genode::off_t offset,
-			bool managed);
-	Copied_region_info(Attached_region_info &orig_info,
-			Genode::Dataspace_capability copy_ds_cap,
-			bool managed);
-	Copied_region_info *find_by_orig_ds_cap(Genode::Dataspace_capability original);
-	Copied_region_info *find_by_copy_ds_cap(Genode::Dataspace_capability copy);
-	Copied_region_info *find_by_ar_info(Attached_region_info &ar_info);
-
-};
 
 /**
  * Class which holds the information for checkpoint/restore of a Target_child

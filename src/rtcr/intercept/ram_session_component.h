@@ -17,123 +17,16 @@
 #include <util/retry.h>
 #include <util/misc_math.h>
 
+/* Rtcr includes */
+#include "../monitor/ram_dataspace_info.h"
 
 namespace Rtcr {
-	struct Ram_dataspace_info;
-	struct Managed_region_map_info;
-	struct Designated_dataspace_info;
 	class Fault_handler;
 	class Ram_session_component;
 
-	constexpr bool dd_verbose_debug = false;
 	constexpr bool fh_verbose_debug = false;
 	constexpr bool ram_verbose_debug = false;
 }
-
-struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
-{
-	/**
-	 * Allocated Ram dataspace
-	 */
-	Genode::Ram_dataspace_capability ram_ds_cap;
-	/**
-	 * If the pointer is null, then this is an ordinary Ram dataspace.
-	 * If the pointer is not null, then this Ram dataspace is managed.
-	 * A managed Ram dataspace is a Region map consisting of designated dataspaces.
-	 */
-	Managed_region_map_info *mrm_info;
-
-	Ram_dataspace_info(Genode::Ram_dataspace_capability ram_ds_cap,
-			Managed_region_map_info *mrm_info = nullptr);
-
-	Ram_dataspace_info *find_by_cap(Genode::Dataspace_capability cap);
-};
-
-/**
- * This struct holds information about a Region map, its designated Ram dataspaces
- */
-struct Rtcr::Managed_region_map_info
-{
-	/**
-	 * Region_map which is monitored
-	 */
-	Genode::Capability<Genode::Region_map>  region_map_cap;
-	/**
-	 * List of designated Ram dataspaces
-	 */
-	Genode::List<Designated_dataspace_info> dd_infos;
-	/**
-	 * Signal context for receiving pagefaults
-	 */
-	Genode::Signal_context                  context;
-
-	Managed_region_map_info(Genode::Capability<Genode::Region_map> region_map_cap)
-	:
-		region_map_cap(region_map_cap), dd_infos(), context()
-	{ }
-
-};
-
-/**
- * A Designated_dataspace_info belongs to a Managed_region_map_info
- * It holds information about the address in the region map, the size,
- * and whether it is attached in the region map
- */
-struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspace_info>::Element
-{
-	/**
-	 * Enable log output for debugging
-	 */
-	static constexpr bool verbose_debug = dd_verbose_debug;
-
-	/**
-	 * Reference to the Managed_region_map_info to which this dataspace belongs to
-	 */
-	Managed_region_map_info      &mrm_info;
-	/**
-	 * Dataspace which will be attached to / detached from the Managed_region_map_info's Region_map
-	 */
-	Genode::Dataspace_capability  ds_cap;
-	/**
-	 * Starting address of the dataspace; it is a relative address, because it is local
-	 * to the Region_map to which it will be attached
-	 */
-	Genode::addr_t                rel_addr;
-	/**
-	 * Size of the dataspace
-	 */
-	Genode::size_t                size;
-	/**
-	 * Indicates whether this dataspace is attached to its Region_map
-	 *
-	 * If it is set to true, the dataspace ds_cap will be stored during checkpoint,
-	 * then it will be detached, and finally this variable will be set to false.
-	 */
-	bool                          attached;
-
-	/**
-	 * Constructor
-	 */
-	Designated_dataspace_info(Managed_region_map_info &mrm_info, Genode::Dataspace_capability ds_cap,
-			Genode::addr_t addr, Genode::size_t size);
-
-	/**
-	 * Find Attachable_dataspace_info which contains the address addr
-	 *
-	 * \param addr Local address of the corresponding Region_map
-	 *
-	 * \return Attachable_dataspace_info which contains the local address addr
-	 */
-	Designated_dataspace_info *find_by_addr(Genode::addr_t addr);
-	/**
-	 * Attach dataspace and mark it as attached
-	 */
-	void attach();
-	/**
-	 * Detach dataspace and mark it as not attached
-	 */
-	void detach();
-};
 
 /**
  * \brief Page fault handler designated to handle the page faults caused for the

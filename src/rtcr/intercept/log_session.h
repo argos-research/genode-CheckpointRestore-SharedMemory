@@ -12,35 +12,16 @@
 #include <root/component.h>
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../monitor/log_session_info.h"
+
 namespace Rtcr {
-	struct Log_session_info;
 	class Log_session_component;
 	class Log_root;
 
 	constexpr bool log_verbose_debug = false;
 	constexpr bool log_root_verbose_debug = false;
 }
-
-/**
- * List element for monitoring session objects.
- * Each new connection from client to server is monitored here.
- */
-struct Rtcr::Log_session_info : Genode::List<Log_session_info>::Element
-{
-	/**
-	 * Reference to session object,
-	 * encapsulates capability which is the main reason for storing it
-	 */
-	Log_session_component &session;
-	/**
-	 * Arguments provided for creating the session object
-	 */
-	const char            *args;
-
-	Log_session_info(Log_session_component &comp, const char* args);
-
-	Log_session_info *find_by_ptr(Log_session_component *ptr);
-};
 
 /**
  * Virtual session object to intercept Rpc object creation and

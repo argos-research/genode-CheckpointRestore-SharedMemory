@@ -9,21 +9,6 @@
 using namespace Rtcr;
 
 
-Timer_session_info::Timer_session_info(Timer_session_component &comp, const char* args)
-:
-	session(comp),
-	args(args)
-{ }
-
-Timer_session_info* Timer_session_info::find_by_ptr(Timer_session_component *ptr)
-{
-	if(ptr == &session)
-		return this;
-	Timer_session_info *info = next();
-	return info ? info->find_by_ptr(ptr) : 0;
-}
-
-
 Timer_session_component::Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *args)
 :
 	_md_alloc     (md_alloc),

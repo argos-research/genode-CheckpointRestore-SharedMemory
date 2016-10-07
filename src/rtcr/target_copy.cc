@@ -9,58 +9,6 @@
 using namespace Rtcr;
 
 
-Copied_region_info::Copied_region_info(Genode::Dataspace_capability original,
-		Genode::Dataspace_capability copy,
-		Genode::addr_t rel_addr, Genode::size_t size, Genode::off_t offset,
-		bool managed)
-:
-	orig_ds_cap (original),
-	copy_ds_cap (copy),
-	rel_addr    (rel_addr),
-	size        (size),
-	offset      (offset),
-	managed     (managed)
-{ }
-
-
-Copied_region_info::Copied_region_info(Attached_region_info &orig_info, Genode::Dataspace_capability copy_ds_cap, bool managed)
-:
-	orig_ds_cap(orig_info.ds_cap),
-	copy_ds_cap(copy_ds_cap),
-	rel_addr(orig_info.addr),
-	size(orig_info.size),
-	offset(orig_info.offset),
-	managed(managed)
-{ }
-
-
-Copied_region_info *Copied_region_info::find_by_orig_ds_cap(Genode::Dataspace_capability original)
-{
-	if(original == orig_ds_cap)
-		return this;
-	Copied_region_info *info = next();
-	return info ? info->find_by_orig_ds_cap(original) : 0;
-}
-
-
-Copied_region_info *Copied_region_info::find_by_copy_ds_cap(Genode::Dataspace_capability copy)
-{
-	if(copy == copy_ds_cap)
-		return this;
-	Copied_region_info *info = next();
-	return info ? info->find_by_copy_ds_cap(copy) : 0;
-}
-
-
-Copied_region_info *Copied_region_info::find_by_ar_info(Attached_region_info &ar_info)
-{
-	if(ar_info.ds_cap == copy_ds_cap && ar_info.addr == rel_addr)
-		return this;
-	Copied_region_info *info = next();
-	return info ? info->find_by_ar_info(ar_info) : 0;
-}
-
-
 void Target_copy::_copy_threads()
 {
 	Thread_info *curr_th = _threads.first();
@@ -129,7 +77,7 @@ void Target_copy::_delete_copied_region_infos(Genode::List<Copied_region_info> &
 		Copied_region_info *next = copy_info->next();
 
 		Attached_region_info *orig_info = orig_infos.first();
-		if(orig_info) orig_info = orig_info->find_by_cr_info(*copy_info);
+		if(orig_info) orig_info = orig_info->find_by_cap_and_addr(copy_info->orig_ds_cap, copy_info->rel_addr);
 
 		if(!orig_info)
 		{
@@ -164,7 +112,7 @@ void Target_copy::_create_copied_region_infos(Genode::List<Copied_region_info> &
 		Attached_region_info *next = orig_info->next();
 
 		Copied_region_info *copy_info = copy_infos.first();
-		if(copy_info) copy_info = copy_info->find_by_ar_info(*orig_info);
+		if(copy_info) copy_info = copy_info->find_by_cap_and_addr(orig_info->ds_cap, orig_info->rel_addr);
 
 		if(!copy_info)
 		{
@@ -200,7 +148,7 @@ void Target_copy::_copy_dataspaces(Genode::List<Copied_region_info> &copy_infos,
 	while(orig_info)
 	{
 		// Find corresponding copy_info
-		Copied_region_info *copy_info = copy_infos.first()->find_by_ar_info(*orig_info);
+		Copied_region_info *copy_info = copy_infos.first()->find_by_cap_and_addr(orig_info->ds_cap, orig_info->rel_addr);
 		if(!copy_info) Genode::error("No corresponding Copied_region_info for Attached_region_info ", orig_info->ds_cap);
 
 		// Determine whether orig_info's dataspace is managed

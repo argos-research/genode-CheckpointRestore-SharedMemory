@@ -12,8 +12,10 @@
 #include <root/component.h>
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../monitor/timer_session_info.h"
+
 namespace Rtcr {
-	struct Timer_session_info;
 	class Timer_session_component;
 	class Timer_root;
 
@@ -21,26 +23,6 @@ namespace Rtcr {
 	constexpr bool timer_root_verbose_debug = false;
 }
 
-
-/**
- * List element for monitoring session objects.
- * Each new connection from client to server is monitored here.
- */
-struct Rtcr::Timer_session_info : Genode::List<Timer_session_info>::Element
-{
-	/**
-	 * Reference to the session object; encapsulates capability and object's state
-	 */
-	Timer_session_component &session;
-	/**
-	 * Arguments provided for creating the session object
-	 */
-	const char *args;
-
-	Timer_session_info(Timer_session_component &comp, const char* args);
-
-	Timer_session_info *find_by_ptr(Timer_session_component *ptr);
-};
 
 /**
  * Virtual session object to intercept Rpc object creation and

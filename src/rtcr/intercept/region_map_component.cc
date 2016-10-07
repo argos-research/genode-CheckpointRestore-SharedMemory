@@ -9,48 +9,6 @@
 using namespace Rtcr;
 
 
-Attached_region_info::Attached_region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
-		Genode::off_t offset, Genode::addr_t local_addr, bool executable)
-:
-	ds_cap(ds_cap), size(size), offset(offset), addr(local_addr), executable(executable)
-{ }
-
-
-/*Managed_region_map_info *Attached_region_info::managed_dataspace(Genode::List<Ram_dataspace_info> &rds_infos)
-{
-	Ram_dataspace_info *rds_info = rds_infos.first();
-	if(rds_info) rds_info = rds_info->find_by_cap(ds_cap);
-	return rds_info ? rds_info->mrm_info : nullptr;
-}*/
-
-
-Attached_region_info *Attached_region_info::Attached_region_info::find_by_addr(Genode::addr_t addr)
-{
-	if((addr >= this->addr) && (addr <= this->addr + size))
-		return this;
-	Attached_region_info *info = next();
-	return info ? info->find_by_addr(addr) : 0;
-}
-
-
-Attached_region_info *Attached_region_info::find_by_cap(Genode::Dataspace_capability cap)
-{
-	if(cap == ds_cap)
-		return this;
-	Attached_region_info *info = next();
-	return info ? info->find_by_cap(cap) : 0;
-}
-
-
-/*Attached_region_info *Attached_region_info::find_by_cr_info(Copied_region_info &cr_info)
-{
-	if(cr_info.orig_ds_cap == ds_cap && cr_info.rel_addr == addr)
-		return this;
-	Attached_region_info *info = next();
-	return info ? info->find_by_cr_info(cr_info) : 0;
-}*/
-
-
 Region_map_component::Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
 		Genode::Capability<Region_map> rm_cap, const char *label)
 :
@@ -75,7 +33,7 @@ Region_map_component::~Region_map_component()
 	Attached_region_info *curr_at_info = nullptr;
 
 	while((curr_at_info = _attached_regions.first()))
-		detach(curr_at_info->addr);
+		detach(curr_at_info->rel_addr);
 
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 }

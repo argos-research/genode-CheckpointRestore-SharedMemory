@@ -14,42 +14,14 @@
 #include <region_map/client.h>
 #include <dataspace/client.h>
 
-/* Rtcr includes */
+#include "../monitor/attached_region_info.h"
 #include "ram_session_component.h"
 
 namespace Rtcr {
-	struct Attached_region_info;
 	class Region_map_component;
 
 	constexpr bool region_map_verbose_debug = false;
 }
-
-/**
- * Record of an attached dataspace
- */
-struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::Element
-{
-	// TODO comment these members
-	Genode::Dataspace_capability ds_cap;
-	Genode::size_t               size;
-	Genode::off_t                offset;
-	Genode::addr_t               addr;
-	bool                         executable;
-
-	/**
-	 * Constructor
-	 */
-	Attached_region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
-			Genode::off_t offset, Genode::addr_t local_addr, bool executable);
-
-	/**
-	 * If this attached dataspace is managed, return its Managed_region_map_info, else return nullptr
-	 */
-	//Managed_region_map_info *managed_dataspace(Genode::List<Ram_dataspace_info> &rds_infos);
-	Attached_region_info *find_by_addr(Genode::addr_t addr);
-	Attached_region_info *find_by_cap(Genode::Dataspace_capability cap);
-	//Attached_region_info *find_by_cr_info(Copied_region_info &cr_info);
-};
 
 /**
  * This custom Region map intercepts the attach and detach methods to monitor and
