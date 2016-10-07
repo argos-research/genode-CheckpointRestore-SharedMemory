@@ -25,8 +25,6 @@ namespace Rtcr {
 	class Target_child;
 
 	constexpr bool child_verbose_debug = true;
-
-	class Pd_session_component;
 }
 
 /**
