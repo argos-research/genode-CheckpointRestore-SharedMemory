@@ -5,6 +5,7 @@
  */
 
 #include "target_copy.h"
+#include "util/debug.h"
 
 using namespace Rtcr;
 
@@ -29,13 +30,16 @@ void Target_copy::_copy_capabilities()
 
 void Target_copy::_copy_region_maps()
 {
-	// Adjust Copy_region_infos of stack area
+	// Copy Copy_region_infos of stack area
+	if(verbose_debug) Genode::log("  copying stack area");
 	_copy_region_map(_copied_stack_regions, _stack_regions);
 
-	// Adjust Copy_region_infos of linker area
+	// Copy Copy_region_infos of linker area
+	if(verbose_debug) Genode::log("  copying linker area");
 	_copy_region_map(_copied_linker_regions, _linker_regions);
 
-	// Adjust Copy_region_infos of address space
+	// Copy Copy_region_infos of address space
+	if(verbose_debug) Genode::log("  copying address space");
 	_copy_region_map(_copied_address_space_regions, _address_space_regions);
 }
 
@@ -43,12 +47,15 @@ void Target_copy::_copy_region_maps()
 void Target_copy::_copy_region_map(Genode::List<Copied_region_info> &copy_infos, Genode::List<Attached_region_info> &orig_infos)
 {
 	// Delete each Copied_region_info, if the corresponding Attached_region_info is gone
+	if(verbose_debug) Genode::log("    delete unused copy_region_infos");
 	_delete_copied_region_infos(copy_infos, orig_infos);
 
 	// Create each Copied_region_info, if a new Attached_region_info is found
+	if(verbose_debug) Genode::log("    create new copy_region_infos");
 	_create_copied_region_infos(copy_infos, orig_infos);
 
 	// Copy dataspaces
+	if(verbose_debug) Genode::log("    copy dataspaces");
 	_copy_dataspaces(copy_infos, orig_infos);
 }
 
@@ -80,6 +87,13 @@ void Target_copy::_delete_copied_region_infos(Genode::List<Copied_region_info> &
 void Target_copy::_delete_copied_region_info(Copied_region_info &info,
 		Genode::List<Copied_region_info> &infos)
 {
+	// Free ram dataspace, if it is not shared between other Copied_region_infos
+	Copied_region_info *other_info = infos.first()->find_by_copy_cap_and_not_addr(info.copy_ds_cap, info.rel_addr);
+	if(!other_info)
+	{
+		_env.ram().free(Genode::static_cap_cast<Genode::Ram_dataspace>(info.copy_ds_cap));
+	}
+
 	infos.remove(&info);
 	Genode::destroy(_alloc, &info);
 }
@@ -88,26 +102,20 @@ void Target_copy::_delete_copied_region_info(Copied_region_info &info,
 void Target_copy::_create_copied_region_infos(Genode::List<Copied_region_info> &copy_infos,
 		Genode::List<Attached_region_info> &orig_infos)
 {
-	Attached_region_info *orig_info = orig_infos.first();
-
-	while(orig_info)
+	for(Attached_region_info *orig_info = orig_infos.first(); orig_info; orig_info = orig_info->next())
 	{
 		// Skip stack and linker area which are attached in address space
 		if(orig_info->ds_cap == _stack_ds_cap || orig_info->ds_cap == _linker_ds_cap)
 			continue;
 
-		Attached_region_info *next = orig_info->next();
-
 		Copied_region_info *copy_info = copy_infos.first();
-		if(copy_info) copy_info = copy_info->find_by_cap_and_addr(orig_info->ds_cap, orig_info->rel_addr);
+		if(copy_info) copy_info = copy_info->find_by_orig_cap_and_addr(orig_info->ds_cap, orig_info->rel_addr);
 
 		if(!copy_info)
 		{
 			// Create a corresponding Copied_region_info
 			_create_copied_region_info(*orig_info, copy_infos);
 		}
-
-		orig_info = next;
 	}
 }
 
@@ -115,8 +123,21 @@ void Target_copy::_create_copied_region_infos(Genode::List<Copied_region_info> &
 void Target_copy::_create_copied_region_info(Attached_region_info &orig_info,
 		Genode::List<Copied_region_info> &copy_infos)
 {
-	// Allocate a dataspace to copy the content of the original dataspace
-	Genode::Ram_dataspace_capability copy_ds_cap = _env.ram().alloc(orig_info.size);
+	/*
+	 *  Allocate new dataspace, if orig_info's dataspace is not found in copy_infos,
+	 *  else reuse copy_info's copy_ds_cap
+	 */
+	Genode::Ram_dataspace_capability copy_ds_cap;
+	Copied_region_info *copy_info = copy_infos.first();
+	if(copy_info) copy_info = copy_info->find_by_orig_ds_cap(orig_info.ds_cap);
+	if(copy_info)
+	{
+		copy_ds_cap = Genode::static_cap_cast<Genode::Ram_dataspace>(copy_info->copy_ds_cap);
+	}
+	else
+	{
+		copy_ds_cap = _env.ram().alloc(orig_info.size);
+	}
 
 	// Determine whether orig_info's dataspace is managed
 	bool managed = orig_info.managed_dataspace(_ram_dataspace_infos) != nullptr;
@@ -130,13 +151,21 @@ void Target_copy::_create_copied_region_info(Attached_region_info &orig_info,
 void Target_copy::_copy_dataspaces(Genode::List<Copied_region_info> &copy_infos,
 		Genode::List<Attached_region_info> &orig_infos)
 {
-	// Iterate through orig_infos
-	Attached_region_info *orig_info = orig_infos.first();
-	while(orig_info)
+	/*
+	 * Iterate through copy_infos; because all copy_infos have to be filled.
+	 * Wherelse not all orig_infos have to be copied: Stack and linker area.
+	 */
+	for(Copied_region_info *copy_info = copy_infos.first(); copy_info; copy_info = copy_info->next())
 	{
 		// Find corresponding copy_info
-		Copied_region_info *copy_info = copy_infos.first()->find_by_cap_and_addr(orig_info->ds_cap, orig_info->rel_addr);
-		if(!copy_info) Genode::error("No corresponding Copied_region_info for Attached_region_info ", orig_info->ds_cap);
+		Attached_region_info *orig_info =
+				orig_infos.first()->find_by_cap_and_addr(copy_info->orig_ds_cap, copy_info->rel_addr);
+		if(!orig_info)
+		{
+			Genode::error("No corresponding Attached_region_info for Copied_region_info ",
+					copy_info->orig_ds_cap, " -> ", copy_info->copy_ds_cap);
+			return;
+		}
 
 		// Determine whether orig_info's dataspace is managed
 		Managed_region_map_info *mrm_info = orig_info->managed_dataspace(_ram_dataspace_infos);
@@ -148,11 +177,9 @@ void Target_copy::_copy_dataspaces(Genode::List<Copied_region_info> &copy_infos,
 		}
 		else
 		{
-			// Not_managed: Copy whole dataspaces
+			// Not managed: Copy whole dataspaces
 			_copy_dataspace(orig_info->ds_cap, copy_info->copy_ds_cap, orig_info->size);
 		}
-
-		orig_info = orig_info->next();
 	}
 }
 
