@@ -66,12 +66,39 @@ struct Rtcr::Copied_region_info : Genode::List<Copied_region_info>::Element
 		Copied_region_info *info = next();
 		return info ? info->find_by_copy_ds_cap(copy) : 0;
 	}
-	Copied_region_info *find_by_cap_and_addr(Genode::Dataspace_capability cap, Genode::addr_t addr)
+	/**
+	 * Find Copied_region_info with the same orig_ds_cap and the same address (e.g. corresponding Attached_region_info)
+	 */
+	Copied_region_info *find_by_orig_cap_and_addr(Genode::Dataspace_capability cap, Genode::addr_t addr)
 	{
-		if(cap == copy_ds_cap && addr == rel_addr)
+		if(cap == orig_ds_cap && addr == rel_addr)
 			return this;
 		Copied_region_info *info = next();
-		return info ? info->find_by_cap_and_addr(cap, addr) : 0;
+		return info ? info->find_by_orig_cap_and_addr(cap, addr) : 0;
+	}
+	/**
+	 * Find Copied_region_info with the same copy_ds_cap, but another address (e.g. shared ds_cap)
+	 */
+	Copied_region_info *find_by_copy_cap_and_not_addr(Genode::Dataspace_capability cap, Genode::addr_t addr)
+	{
+		if(cap == copy_ds_cap && addr != rel_addr)
+			return this;
+		Copied_region_info *info = next();
+		return info ? info->find_by_copy_cap_and_not_addr(cap, addr) : 0;
+	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, orig_ds_cap);
+		Genode::print(output, " -> ");
+		Genode::print(output, copy_ds_cap);
+		Genode::print(output, " [");
+		Genode::print(output, Hex(rel_addr, Hex::PREFIX, Hex::PAD));
+		Genode::print(output, ", ");
+		Genode::print(output, Hex(rel_addr + size, Hex::PREFIX, Hex::PAD));
+		Genode::print(output, ")");
 	}
 
 };
