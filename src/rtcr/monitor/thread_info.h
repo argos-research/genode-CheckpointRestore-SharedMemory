@@ -24,6 +24,7 @@ struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 	 * Capability of the thread
 	 */
 	Genode::Thread_capability thread_cap;
+	Genode::String<Genode::Cpu_session::THREAD_NAME_LEN> name;
 
 	/**
 	 * Constructor
