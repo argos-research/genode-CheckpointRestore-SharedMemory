@@ -70,6 +70,16 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 		Attached_region_info *info = next();
 		return info ? info->find_by_cap_and_addr(cap, addr) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		Genode::print(output, ds_cap);
+		Genode::print(output, " [");
+		Genode::print(output, rel_addr);
+		Genode::print(output, ", ");
+		Genode::print(output, rel_addr + size);
+		Genode::print(output, ")");
+	}
 };
 
 
