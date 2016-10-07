@@ -20,17 +20,13 @@ void Target_copy::_copy_threads()
 	}
 }
 
-/**
- * Copy meta information of capabilities
- */
+
 void Target_copy::_copy_capabilities()
 {
 	Genode::log(__func__, ": Implement me!");
 }
 
-/**
- * Copy the three standard region maps in a component
- */
+
 void Target_copy::_copy_region_maps()
 {
 	// Adjust Copy_region_infos of stack area
@@ -43,16 +39,7 @@ void Target_copy::_copy_region_maps()
 	_copy_region_map(_copied_address_space_regions, _address_space_regions);
 }
 
-/**
- * \brief Copy a list of Attached_region_infos to the list of Copied_region_infos
- *
- * First, adjust the list of Copied_region_infos to the corresponding list of Attached_region_infos.
- * Whenever a client detaches a dataspace, the corresponding Attached_region_info is deleted.
- * If a corresponding Copied_region_info exists, also delete it.
- * Whenever a client attaches a dataspace, a corresponding Attached_region_info is created.
- * And a corresponding Copied_region_info has to be created.
- * Second, copy the content from the dataspaces of the Attached_region_infos to the dataspaces of Copied_region_infos
- */
+
 void Target_copy::_copy_region_map(Genode::List<Copied_region_info> &copy_infos, Genode::List<Attached_region_info> &orig_infos)
 {
 	// Delete each Copied_region_info, if the corresponding Attached_region_info is gone
@@ -135,7 +122,7 @@ void Target_copy::_create_copied_region_info(Attached_region_info &orig_info,
 	bool managed = orig_info.managed_dataspace(_ram_dataspace_infos) != nullptr;
 
 	// Create and insert Copy_region_info
-	Copied_region_info *new_copy_info = new (_alloc) Copied_region_info(*orig_info, copy_ds_cap, managed);
+	Copied_region_info *new_copy_info = new (_alloc) Copied_region_info(orig_info, copy_ds_cap, managed);
 	copy_infos.insert(new_copy_info);
 }
 
@@ -190,7 +177,7 @@ void Target_copy::_copy_managed_dataspace(Managed_region_map_info &mrm_info, Cop
 
 
 void Target_copy::_copy_dataspace(Genode::Dataspace_capability &source_ds_cap, Genode::Dataspace_capability &dest_ds_cap,
-		Genode::size_t size, Genode::off_t dest_offset = 0)
+		Genode::size_t size, Genode::off_t dest_offset)
 {
 	char *source = _env.rm().attach(source_ds_cap);
 	char *dest   = _env.rm().attach(dest_ds_cap);
@@ -220,6 +207,7 @@ Target_copy::Target_copy(Genode::Env &env, Genode::Allocator &alloc, Target_chil
 	_linker_ds_cap               (child.pd().linker_area_component().dataspace())
 { }
 
+
 void Target_copy::checkpoint()
 {
 	Genode::Lock::Guard guard(_copy_lock);
@@ -232,6 +220,4 @@ void Target_copy::checkpoint()
 
 	// Copy Region_maps
 	_copy_region_maps();
-
-
 }

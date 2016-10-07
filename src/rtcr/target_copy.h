@@ -21,6 +21,8 @@
 
 namespace Rtcr {
 	class  Target_copy;
+
+	constexpr bool copy_verbose_debug = true;
 }
 
 /**
@@ -29,6 +31,11 @@ namespace Rtcr {
 class Rtcr::Target_copy : public Genode::List<Rtcr::Target_copy>::Element
 {
 private:
+	/**
+	 * Enable log output for debugging
+	 */
+	static constexpr bool verbose_debug = copy_verbose_debug;
+
 	Genode::Env                        &_env;
 	Genode::Allocator                  &_alloc;
 	// Shared resources
