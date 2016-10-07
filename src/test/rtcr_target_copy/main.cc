@@ -13,6 +13,7 @@
 
 /* Rtcr includes */
 #include "../../rtcr/target_copy.h"
+//#include "../../rtcr/util/debug.h"
 
 using namespace Genode;
 
@@ -36,13 +37,16 @@ struct Rtcr::Main
 		timer           (env)
 	{
 		Target_child child { env, md_heap, parent_services, "sheep_counter", false };
+		Target_copy copy { env, md_heap, child };
 
-		timer.msleep(3000);
+		timer.msleep(1000);
 
-		log("Address space");
-		log(child.pd().address_space_component().attached_regions());
+		child.pause();
+		copy.checkpoint();
+		//log("Original  Address space\n", child.pd().address_space_component().attached_regions());
+		//log("Copied Address space\n", copy.copied_address_space_regions());
+		child.resume();
 
-		//Target_copy copy { env, md_heap, child };
 
 		sleep_forever();
 	}
