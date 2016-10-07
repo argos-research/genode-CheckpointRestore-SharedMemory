@@ -18,7 +18,6 @@ namespace Rtcr {
 	struct Attached_region_info;
 }
 
-
 /**
  * Record of an attached dataspace
  */
@@ -73,11 +72,13 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 
 	void print(Genode::Output &output) const
 	{
+		using Genode::Hex;
+
 		Genode::print(output, ds_cap);
 		Genode::print(output, " [");
-		Genode::print(output, rel_addr);
+		Genode::print(output, Hex(rel_addr, Hex::PREFIX, Hex::PAD));
 		Genode::print(output, ", ");
-		Genode::print(output, rel_addr + size);
+		Genode::print(output, Hex(rel_addr + size, Hex::PREFIX, Hex::PAD));
 		Genode::print(output, ")");
 	}
 };
