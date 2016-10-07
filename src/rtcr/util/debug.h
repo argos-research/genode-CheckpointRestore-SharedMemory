@@ -88,6 +88,8 @@ namespace Genode
 	void print(Genode::Output &output, Genode::List<STRUCT_INFO> &list)
 	{
 		STRUCT_INFO *info = list.first();
+		if(!info)
+			print(output, "  <empty>");
 		while(info)
 		{
 			print(output, "  ");
