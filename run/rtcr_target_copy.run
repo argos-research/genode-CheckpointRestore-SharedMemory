@@ -30,7 +30,7 @@ install_config {
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Timer"/></provides>
 	</start>
-	<start name="unit_tester-target_copy">
+	<start name="target_copy-tester">
 		<resource name="RAM" quantum="10M"/>
 	</start>
 </config>}
@@ -39,7 +39,7 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init timer unit_tester-target_copy sheep_counter }
+build_boot_image { core init timer target_copy-tester sheep_counter }
 
 append qemu_args " -nographic "
 

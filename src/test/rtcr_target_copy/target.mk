@@ -1,4 +1,4 @@
-TARGET = unit_tester-target_copy
+TARGET = target_copy-tester
 
 SRC_CC += main.cc \
           cpu_session_component.cc \
