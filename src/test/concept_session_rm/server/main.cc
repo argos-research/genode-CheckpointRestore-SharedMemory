@@ -167,9 +167,18 @@ struct Resource::Main
 		log("Iteration #", i);
 		if(cli_res.thread_cap.valid())
 		{
+			Genode::Cpu_thread_client thread_client = Genode::Cpu_thread_client{cli_res.thread_cap};
+
 			log("  valid thread");
 			log("  pausing thread");
-			Genode::Cpu_thread_client{cli_res.thread_cap}.pause();
+			thread_client.pause();
+
+			Genode::Thread_state ts(thread_client.state());
+			log("   r0-r4:  ", Hex(ts.r0,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r1,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r2,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r3, Hex::PREFIX, Hex::PAD),  "  ", Hex(ts.r4, Hex::PREFIX, Hex::PAD));
+			log("   r5-r9:  ", Hex(ts.r5,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r6,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r7,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r8, Hex::PREFIX, Hex::PAD),  "  ", Hex(ts.r9, Hex::PREFIX, Hex::PAD));
+			log("  r10-r12: ", Hex(ts.r10, Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r11, Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r12, Hex::PREFIX, Hex::PAD));
+			log("  sp, lr, ip, cpsr, cpu_e:  ", Hex(ts.sp,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.lr,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.ip,  Hex::PREFIX, Hex::PAD), "  ",
+					Hex(ts.cpsr,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.cpu_exception,  Hex::PREFIX, Hex::PAD));
 
 			if(cli_res.attached0)
 			{
@@ -194,7 +203,7 @@ struct Resource::Main
 			}
 
 			log("  resuming thread");
-			Genode::Cpu_thread_client{cli_res.thread_cap}.resume();
+			thread_client.resume();
 		}
 		else
 		{
