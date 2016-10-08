@@ -5,20 +5,26 @@
  */
 
 #include "target_copy.h"
-#include "util/debug.h"
 
 using namespace Rtcr;
 
 
 void Target_copy::_copy_threads()
 {
-	Thread_info *curr_th = _threads.first();
-	for( ; curr_th; curr_th = curr_th->next())
+	Thread_info *th_info = _threads.first();
+	for( ; th_info; th_info = th_info->next())
 	{
-		Thread_info *new_th = new (_alloc) Thread_info(curr_th->thread_cap);
+		Genode::Cpu_thread_client thread_client(th_info->thread_cap);
+		Genode::Thread_state ts = thread_client.state();
 
-		_copied_threads.insert(new_th);
+		Copied_thread_info *new_cth_info =
+				new (_alloc) Copied_thread_info(th_info->name, ts);
+
+		_copied_threads.insert(new_cth_info);
+
+		Genode::log(*new_cth_info);
 	}
+
 }
 
 

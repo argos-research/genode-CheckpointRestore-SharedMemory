@@ -18,6 +18,7 @@
 #include "intercept/cpu_session_component.h"
 #include "intercept/pd_session_component.h"
 #include "monitor/copied_region_info.h"
+#include "monitor/copied_thread_info.h"
 
 namespace Rtcr {
 	class  Target_copy;
@@ -46,7 +47,7 @@ private:
 	Genode::List<Ram_dataspace_info>   &_ram_dataspace_infos;
 
 	Genode::Lock                        _copy_lock;
-	Genode::List<Thread_info>           _copied_threads;
+	Genode::List<Copied_thread_info>    _copied_threads;
 	Genode::List<Copied_region_info>    _copied_address_space_regions;
 	Genode::List<Copied_region_info>    _copied_stack_regions;
 	Genode::List<Copied_region_info>    _copied_linker_regions;
@@ -121,7 +122,7 @@ private:
 public:
 	Target_copy(Genode::Env &env, Genode::Allocator &alloc, Target_child &child);
 
-	Genode::List<Thread_info>        &copied_threads()               { return _copied_threads;               }
+	Genode::List<Copied_thread_info> &copied_threads()               { return _copied_threads;               }
 	Genode::List<Copied_region_info> &copied_address_space_regions() { return _copied_address_space_regions; }
 	Genode::List<Copied_region_info> &copied_stack_regions()         { return _copied_stack_regions;         }
 	Genode::List<Copied_region_info> &copied_linker_regions()        { return _copied_linker_regions;        }
