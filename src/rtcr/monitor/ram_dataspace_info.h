@@ -26,6 +26,8 @@ struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
 	 * Allocated Ram dataspace
 	 */
 	Genode::Ram_dataspace_capability ram_ds_cap;
+	Genode::size_t                   size;
+	Genode::Cache_attribute          cached;
 	/**
 	 * If the pointer is null, then this is an ordinary Ram dataspace.
 	 * If the pointer is not null, then this Ram dataspace is managed.
@@ -33,10 +35,12 @@ struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
 	 */
 	Managed_region_map_info *mrm_info;
 
-	Ram_dataspace_info(Genode::Ram_dataspace_capability ram_ds_cap,
+	Ram_dataspace_info(Genode::Ram_dataspace_capability ram_ds_cap, Genode::size_t size, Genode::Cache_attribute cached,
 			Managed_region_map_info *mrm_info = nullptr)
 	:
 		ram_ds_cap(ram_ds_cap),
+		size(size),
+		cached(cached),
 		mrm_info(mrm_info)
 	{ }
 
