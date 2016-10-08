@@ -274,7 +274,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		auto result_cap = _parent_ram.alloc(size, cached);
 
 		// Create a Ram_dataspace_info to monitor the newly created Ram_dataspace
-		Ram_dataspace_info *new_rds_info = new (_md_alloc) Ram_dataspace_info(result_cap);
+		Ram_dataspace_info *new_rds_info = new (_md_alloc) Ram_dataspace_info(result_cap, size, cached);
 		Genode::Lock::Guard guard(_rds_infos_lock);
 		_rds_infos.insert(new_rds_info);
 
