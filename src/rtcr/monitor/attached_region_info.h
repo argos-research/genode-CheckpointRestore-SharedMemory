@@ -80,6 +80,7 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 		Genode::print(output, ", ");
 		Genode::print(output, Hex(rel_addr + size, Hex::PREFIX, Hex::PAD));
 		Genode::print(output, ")");
+		Genode::print(output, executable ? " exec" : "");
 	}
 };
 
