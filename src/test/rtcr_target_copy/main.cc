@@ -13,7 +13,7 @@
 
 /* Rtcr includes */
 #include "../../rtcr/target_copy.h"
-//#include "../../rtcr/util/debug.h"
+#include "../../rtcr/util/debug.h"
 
 using namespace Genode;
 
