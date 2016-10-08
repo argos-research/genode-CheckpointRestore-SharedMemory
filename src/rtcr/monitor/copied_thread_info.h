@@ -21,27 +21,28 @@ namespace Rtcr {
  */
 struct Rtcr::Copied_thread_info : Genode::List<Copied_thread_info>::Element
 {
-	Genode::String<Genode::Cpu_session::THREAD_NAME_LEN> name;
-	Genode::addr_t r0, r1, r2, r3, r4, r5, r6,
-			r7, r8, r9, r10, r11, r12;        /* general purpose register 0..12 */
-	Genode::addr_t sp;                        /* stack pointer */
-	Genode::addr_t lr;                        /* link register */
-	Genode::addr_t ip;                        /* instruction pointer */
-	Genode::addr_t cpsr;                      /* current program status register */
-	Genode::addr_t cpu_exception;             /* last hardware exception */
+	Genode::Cpu_session::Name name;
+	Genode::Thread_state ts;
 
-	/**
-	 * Constructor
-	 */
-	Copied_thread_info(Genode::Cpu_session::Name<Genode::Cpu_session::THREAD_NAME_LEN> name,
+	Copied_thread_info(Genode::Cpu_session::Name name,
 			Genode::addr_t r0, Genode::addr_t r1, Genode::addr_t r2, Genode::addr_t r3, Genode::addr_t r4,
 			Genode::addr_t r5, Genode::addr_t r6, Genode::addr_t r7, Genode::addr_t r8, Genode::addr_t r9,
 			Genode::addr_t r10, Genode::addr_t r11, Genode::addr_t r12, Genode::addr_t sp, Genode::addr_t lr,
 			Genode::addr_t ip, Genode::addr_t cpsr, Genode::addr_t cpu_exception)
 	:
 		name(name),
-		r0(r0), r1(r1), r2(r2), r3(r3), r4(r4), r5(r5), r6(r6), r7(r7), r8(r8), r9(r9), r10(r10), r11(r11), r12(r12),
-		sp(sp), lr(lr), ip(ip), cpsr(cpsr), cpu_exception(cpu_exception)
+		ts()
+	{
+		ts.r0 = r0; ts.r1 = r1; ts.r2 = r2; ts.r3 = r3; ts.r4 = r4;
+		ts.r5 = r5; ts.r6 = r6; ts.r7 = r7; ts.r8 = r8; ts.r9 = r9;
+		ts.r10 = r10; ts.r11 = r11; ts.r12 = r12;
+		ts.sp = sp; ts.lr = lr; ts.sp = sp; ts.cpsr = cpsr; ts.cpu_exception = cpu_exception;
+	}
+
+	Copied_thread_info(Genode::Cpu_session::Name name, Genode::Thread_state &ts)
+	:
+		name(name),
+		ts(ts)
 	{ }
 
 	Copied_thread_info *find_by_name(const char *name)
@@ -50,6 +51,24 @@ struct Rtcr::Copied_thread_info : Genode::List<Copied_thread_info>::Element
 			return this;
 		Copied_thread_info *thread_info = next();
 		return thread_info ? thread_info->find_by_name(name) : 0;
+	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "Thread ", name.string(), "\n");
+		Genode::print(output, "r0-r4: ", Hex(ts.r0, Hex::PREFIX, Hex::PAD), " ",
+				Hex(ts.r1, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r2, Hex::PREFIX, Hex::PAD), " ",
+				Hex(ts.r3, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r4, Hex::PREFIX, Hex::PAD), "\n");
+		Genode::print(output, "r5-r9: ", Hex(ts.r5, Hex::PREFIX, Hex::PAD), " ",
+				Hex(ts.r6, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r7, Hex::PREFIX, Hex::PAD), " ",
+				Hex(ts.r8, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r9, Hex::PREFIX, Hex::PAD), "\n");
+		Genode::print(output, "r10-r12: ", Hex(ts.r10, Hex::PREFIX, Hex::PAD), " ",
+				Hex(ts.r11, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r12, Hex::PREFIX, Hex::PAD), "\n");
+		Genode::print(output, "sp, lr, ip, cpsr, cpu_e: ", Hex(ts.sp, Hex::PREFIX, Hex::PAD), " ",
+				Hex(ts.lr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.ip, Hex::PREFIX, Hex::PAD), " ",
+				Hex(ts.cpsr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD), "\n");
 	}
 
 };
