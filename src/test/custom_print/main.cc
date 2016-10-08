@@ -46,9 +46,7 @@ namespace Rtcr {
 
 	void print(Output &output, const B &b)
 	{
-		Genode::print(output, b.var0);
-		Genode::print(output, ", ");
-		Genode::print(output, b.var1);
+		Genode::print(output, b.var0, ", ", b.var1);
 	}
 
 
