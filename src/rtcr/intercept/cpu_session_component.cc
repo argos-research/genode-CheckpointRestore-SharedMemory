@@ -62,10 +62,7 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 		Name const &name, Genode::Affinity::Location affinity, Weight weight,
 		Genode::addr_t utcb)
 {
-	if(verbose_debug)
-	{
-		Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
-	}
+	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 
 	/**
 	 * Note: Use parent's Pd session instead of virtualized Pd session
@@ -74,12 +71,9 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 
 	// Store the thread
 	Genode::Lock::Guard _lock_guard(_threads_lock);
-	_threads.insert(new (_md_alloc) Thread_info(thread_cap));
+	_threads.insert(new (_md_alloc) Thread_info(thread_cap, name));
 
-	if(verbose_debug)
-	{
-		Genode::log("  result: ", thread_cap);
-	}
+	if(verbose_debug) Genode::log("  result: ", thread_cap);
 
 	return thread_cap;
 }
@@ -109,6 +103,7 @@ void Cpu_session_component::kill_thread(Genode::Thread_capability thread)
 void Cpu_session_component::exception_sigh(Genode::Signal_context_capability handler)
 {
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(", handler, ")");
+
 	_parent_state.exception_sigh = handler;
 	_parent_cpu.exception_sigh(handler);
 }
