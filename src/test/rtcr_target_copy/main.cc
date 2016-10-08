@@ -42,6 +42,8 @@ struct Rtcr::Main
 		timer.msleep(1000);
 
 		child.pause();
+		//List<Thread_info> thread_infos = child.cpu().thread_infos();
+		//log(thread_infos);
 		copy.checkpoint();
 		//log("Original  Address space\n", child.pd().address_space_component().attached_regions());
 		//log("Copied Address space\n", copy.copied_address_space_regions());
