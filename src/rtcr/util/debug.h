@@ -60,7 +60,7 @@ namespace Rtcr
 			log("  lr:   ", Hex(ts.lr,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.lr                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
 			log("  ip:   ", Hex(ts.ip,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.ip                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
 			log("  cpsr: ", Hex(ts.cpsr,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.cpsr                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  ce:   ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.cpu_exception         - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log("  c_e:  ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.cpu_exception         - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
 			log("  upf:  ", ts.unresolved_page_fault?"true ":"false", "     ", "  pos: ", Hex((addr_t)&ts.unresolved_page_fault - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
 			log("  exc:  ", ts.exception?"true ":"false",             "     ", "  pos: ", Hex((addr_t)&ts.exception             - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
 			log("  kcap: ", Hex(ts.kcap,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.kcap                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
@@ -76,7 +76,8 @@ namespace Rtcr
 			log("   r0-r4:  ", Hex(ts.r0,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r1,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r2,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r3, Hex::PREFIX, Hex::PAD),  "  ", Hex(ts.r4, Hex::PREFIX, Hex::PAD));
 			log("   r5-r9:  ", Hex(ts.r5,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r6,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r7,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r8, Hex::PREFIX, Hex::PAD),  "  ", Hex(ts.r9, Hex::PREFIX, Hex::PAD));
 			log("  r10-r12: ", Hex(ts.r10, Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r11, Hex::PREFIX, Hex::PAD), "  ", Hex(ts.r12, Hex::PREFIX, Hex::PAD));
-			log("  ip, sp:  ", Hex(ts.ip,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.sp,  Hex::PREFIX, Hex::PAD));
+			log("  sp, lr, ip, cpsr, cpu_e:  ", Hex(ts.sp,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.lr,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.ip,  Hex::PREFIX, Hex::PAD), "  ",
+					Hex(ts.cpsr,  Hex::PREFIX, Hex::PAD), "  ", Hex(ts.cpu_exception,  Hex::PREFIX, Hex::PAD));
 		}
 
 	}
