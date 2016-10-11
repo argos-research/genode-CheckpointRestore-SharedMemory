@@ -22,6 +22,14 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Gen
 	ep.manage(cpu);
 	ep.manage(ram);
 
+	if(verbose_debug)
+	{
+		Genode::log("Managing PD  session ", pd.cap());
+		Genode::log("Managing CPU session ", cpu.cap());
+		Genode::log("Managing RAM session ", ram.cap());
+	}
+
+
 	// Donate ram quota to child
 	// TODO Replace static quota donation with the amount of quota, the child needs
 	Genode::size_t donate_quota = 1024*1024;
@@ -33,6 +41,13 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Gen
 
 Target_child::Resources::~Resources()
 {
+	if(verbose_debug)
+	{
+		Genode::log("Dissolving PD  session ", pd.cap());
+		Genode::log("Dissolving CPU session ", cpu.cap());
+		Genode::log("Dissolving RAM session ", ram.cap());
+	}
+
 	ep.dissolve(ram);
 	ep.dissolve(cpu);
 	ep.dissolve(pd);

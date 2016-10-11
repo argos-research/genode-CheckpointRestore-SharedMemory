@@ -22,7 +22,7 @@ Cpu_session_component::Cpu_session_component(
 	_threads       ()
 
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m wrapping ", parent_cap());
 }
 
 
