@@ -24,11 +24,11 @@ Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &
 Rm_session_component::~Rm_session_component()
 {
 	// Destroy all list elements through destroy method
-	Region_map_info *rms_info = nullptr;
-	while((rms_info = _region_map_infos.first()))
+	Region_map_info *rm_info = nullptr;
+	while((rm_info = _region_map_infos.first()))
 	{
-		_region_map_infos.remove(rms_info);
-		destroy(rms_info->region_map.cap());
+		// Implicitly removes rm_info from the list
+		destroy(rm_info->region_map.cap());
 	}
 
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
@@ -53,8 +53,8 @@ Genode::Capability<Genode::Region_map> Rm_session_component::create(Genode::size
 	Genode::Lock::Guard lock(_infos_lock);
 	_region_map_infos.insert(rm_info);
 
-	if(verbose_debug) Genode::log("  result: ", new_region_map->cap());
-	return new_region_map->cap();
+	if(verbose_debug) Genode::log("  result: ", rm_info->region_map.cap());
+	return rm_info->region_map.cap();
 }
 
 
@@ -64,24 +64,24 @@ void Rm_session_component::destroy(Genode::Capability<Genode::Region_map> region
 
 	// Find list element for the given Capability
 	Genode::Lock::Guard lock (_infos_lock);
-	Region_map_info *rms_info = _region_map_infos.first();
-	if(rms_info) rms_info = rms_info->find_by_cap(region_map_cap);
+	Region_map_info *rm_info = _region_map_infos.first();
+	if(rm_info) rm_info = rm_info->find_by_cap(region_map_cap);
 
 	// If found, delete everything concerning this list element
-	if(rms_info)
+	if(rm_info)
 	{
-		if(verbose_debug) Genode::log("  deleting ", rms_info->region_map.cap());
+		if(verbose_debug) Genode::log("  deleting ", rm_info->region_map.cap());
 
 		Genode::error("Issuing Rm_session::destroy, which is bugged and hangs up.");
 		// Destroy real Region_map from parent
-		_parent_rm.destroy(rms_info->region_map.parent_cap());
+		_parent_rm.destroy(rm_info->region_map.parent_cap());
 
 		// Destroy virtual Region_map
-		Genode::destroy(_md_alloc, &rms_info->region_map);
+		Genode::destroy(_md_alloc, &rm_info->region_map);
 
 		// Remove and destroy list element
-		_region_map_infos.remove(rms_info);
-		Genode::destroy(_md_alloc, rms_info);
+		_region_map_infos.remove(rm_info);
+		Genode::destroy(_md_alloc, rm_info);
 	}
 	else
 	{
