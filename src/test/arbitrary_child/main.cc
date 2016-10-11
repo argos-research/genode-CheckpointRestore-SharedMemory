@@ -38,7 +38,7 @@ void Component::construct(Genode::Env &env)
 {
 	Genode::log("Hello World!");
 
-	Genode::cap_map();
+	//Genode::cap_map();
 
 	test_signal_context_creation(env);
 }
