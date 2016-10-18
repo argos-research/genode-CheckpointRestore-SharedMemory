@@ -33,15 +33,15 @@ struct Rtcr::Copied_cap_coll
 	 * stored attributes!
 	 */
 
-	/* session rpc_object caps */
+	/* session RPC object caps */
 	Genode::List<Log_session_info>   log_session_infos;
 	Genode::List<Rm_session_info>    rm_session_infos;
 	Genode::List<Timer_session_info> timer_session_infos;
 
-	/* rpc_object caps */
+	/* RPC object caps */
 	Genode::List<Native_capability_info> native_cap_infos;
 	Genode::List<Ram_dataspace_info>     ram_dataspace_infos;
-	Genode::List<Region_map_info>        region_map_infos; // component, TODO store only necessary information
+	Genode::List<Region_map_info>        region_map_infos; // stores components, TODO store only necessary information
 	Genode::List<Signal_context_info>    signal_context_infos;
 	Genode::List<Signal_source_info>     signal_source_infos;
 
