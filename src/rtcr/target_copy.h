@@ -39,21 +39,14 @@ private:
 
 	Genode::Env                        &_env;
 	Genode::Allocator                  &_alloc;
-	// Shared resources
-	Genode::List<Thread_info>          &_threads;
-	Genode::List<Attached_region_info> &_address_space_regions;
-	Genode::List<Attached_region_info> &_stack_regions;
-	Genode::List<Attached_region_info> &_linker_regions;
-	Genode::List<Ram_dataspace_info>   &_ram_dataspace_infos;
+	Target_child                       &_child;
 
 	Genode::Lock                        _copy_lock;
 	Genode::List<Copied_thread_info>    _copied_threads;
 	Genode::List<Copied_region_info>    _copied_address_space_regions;
 	Genode::List<Copied_region_info>    _copied_stack_regions;
 	Genode::List<Copied_region_info>    _copied_linker_regions;
-
-	Genode::Dataspace_capability        _stack_ds_cap;
-	Genode::Dataspace_capability        _linker_ds_cap;
+	Copied_cap_coll                     _copied_cap_coll;
 
 	/**
 	 * Copy the capabilities of a thread
@@ -126,6 +119,7 @@ public:
 	Genode::List<Copied_region_info> &copied_address_space_regions() { return _copied_address_space_regions; }
 	Genode::List<Copied_region_info> &copied_stack_regions()         { return _copied_stack_regions;         }
 	Genode::List<Copied_region_info> &copied_linker_regions()        { return _copied_linker_regions;        }
+	Copied_cap_coll                  &copied_cap_coll()              { return _copied_cap_coll;              }
 
 	void checkpoint();
 

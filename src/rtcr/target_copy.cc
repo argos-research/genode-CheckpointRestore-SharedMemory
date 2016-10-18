@@ -11,7 +11,7 @@ using namespace Rtcr;
 
 void Target_copy::_copy_threads()
 {
-	Thread_info *th_info = _threads.first();
+	Thread_info *th_info = _child.cpu().thread_infos().first();
 	for( ; th_info; th_info = th_info->next())
 	{
 		Genode::Cpu_thread_client thread_client(th_info->thread_cap);
@@ -38,15 +38,15 @@ void Target_copy::_copy_region_maps()
 {
 	// Copy Copy_region_infos of stack area
 	if(verbose_debug) Genode::log("  copying stack area");
-	_copy_region_map(_copied_stack_regions, _stack_regions);
+	_copy_region_map(_copied_stack_regions, _child.pd().stack_area_component().attached_regions());
 
 	// Copy Copy_region_infos of linker area
 	if(verbose_debug) Genode::log("  copying linker area");
-	_copy_region_map(_copied_linker_regions, _linker_regions);
+	_copy_region_map(_copied_linker_regions, _child.pd().linker_area_component().attached_regions());
 
 	// Copy Copy_region_infos of address space
 	if(verbose_debug) Genode::log("  copying address space");
-	_copy_region_map(_copied_address_space_regions, _address_space_regions);
+	_copy_region_map(_copied_address_space_regions, _child.pd().address_space_component().attached_regions());
 }
 
 
@@ -111,7 +111,8 @@ void Target_copy::_create_copied_region_infos(Genode::List<Copied_region_info> &
 	for(Attached_region_info *orig_info = orig_infos.first(); orig_info; orig_info = orig_info->next())
 	{
 		// Skip stack and linker area which are attached in address space
-		if(orig_info->ds_cap == _stack_ds_cap || orig_info->ds_cap == _linker_ds_cap)
+		if(orig_info->ds_cap == _child.pd().stack_area_component().dataspace() ||
+				orig_info->ds_cap == _child.pd().linker_area_component().dataspace())
 			continue;
 
 		Copied_region_info *copy_info = copy_infos.first();
@@ -146,7 +147,7 @@ void Target_copy::_create_copied_region_info(Attached_region_info &orig_info,
 	}
 
 	// Determine whether orig_info's dataspace is managed
-	bool managed = orig_info.managed_dataspace(_ram_dataspace_infos) != nullptr;
+	bool managed = orig_info.managed_dataspace(_child.ram().ram_dataspace_infos()) != nullptr;
 
 	// Create and insert Copy_region_info
 	Copied_region_info *new_copy_info = new (_alloc) Copied_region_info(orig_info, copy_ds_cap, managed);
@@ -174,7 +175,7 @@ void Target_copy::_copy_dataspaces(Genode::List<Copied_region_info> &copy_infos,
 		}
 
 		// Determine whether orig_info's dataspace is managed
-		Managed_region_map_info *mrm_info = orig_info->managed_dataspace(_ram_dataspace_infos);
+		Managed_region_map_info *mrm_info = orig_info->managed_dataspace(_child.ram().ram_dataspace_infos());
 
 		if(mrm_info)
 		{
@@ -226,18 +227,13 @@ Target_copy::Target_copy(Genode::Env &env, Genode::Allocator &alloc, Target_chil
 :
 	_env                         (env),
 	_alloc                       (alloc),
-	_threads                     (child.cpu().thread_infos()),
-	_address_space_regions       (child.pd().address_space_component().attached_regions()),
-	_stack_regions               (child.pd().stack_area_component().attached_regions()),
-	_linker_regions              (child.pd().linker_area_component().attached_regions()),
-	_ram_dataspace_infos         (child.ram().ram_dataspace_infos()),
+	_child                       (child),
 	_copy_lock                   (),
 	_copied_threads              (),
 	_copied_address_space_regions(),
 	_copied_stack_regions        (),
 	_copied_linker_regions       (),
-	_stack_ds_cap                (child.pd().stack_area_component().dataspace()),
-	_linker_ds_cap               (child.pd().linker_area_component().dataspace())
+	_copied_cap_coll             ()
 { }
 
 
