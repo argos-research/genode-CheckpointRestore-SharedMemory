@@ -230,10 +230,10 @@ Target_copy::Target_copy(Genode::Env &env, Genode::Allocator &alloc, Target_chil
 	_child                       (child),
 	_copy_lock                   (),
 	_copied_threads              (),
+	_copied_cap_coll             (),
 	_copied_address_space_regions(),
 	_copied_stack_regions        (),
-	_copied_linker_regions       (),
-	_copied_cap_coll             ()
+	_copied_linker_regions       ()
 { }
 
 

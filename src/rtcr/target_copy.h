@@ -19,6 +19,7 @@
 #include "intercept/pd_session_component.h"
 #include "monitor/copied_region_info.h"
 #include "monitor/copied_thread_info.h"
+#include "monitor/copied_cap_coll.h"
 
 namespace Rtcr {
 	class  Target_copy;
@@ -37,16 +38,16 @@ private:
 	 */
 	static constexpr bool verbose_debug = copy_verbose_debug;
 
-	Genode::Env                        &_env;
-	Genode::Allocator                  &_alloc;
-	Target_child                       &_child;
+	Genode::Env                      &_env;
+	Genode::Allocator                &_alloc;
+	Target_child                     &_child;
 
-	Genode::Lock                        _copy_lock;
-	Genode::List<Copied_thread_info>    _copied_threads;
-	Genode::List<Copied_region_info>    _copied_address_space_regions;
-	Genode::List<Copied_region_info>    _copied_stack_regions;
-	Genode::List<Copied_region_info>    _copied_linker_regions;
-	Copied_cap_coll                     _copied_cap_coll;
+	Genode::Lock                      _copy_lock;
+	Genode::List<Copied_thread_info>  _copied_threads;
+	Copied_cap_coll                   _copied_cap_coll;
+	Genode::List<Copied_region_info>  _copied_address_space_regions;
+	Genode::List<Copied_region_info>  _copied_stack_regions;
+	Genode::List<Copied_region_info>  _copied_linker_regions;
 
 	/**
 	 * Copy the capabilities of a thread
