@@ -102,11 +102,6 @@ private:
 	 */
 	Genode::Entrypoint                &_ep;
 	/**
-	 * Indicator whether to use incremental checkpointing
-	 */
-	const bool                         _use_inc_ckpt;
-
-	/**
 	 * Connection to the parent Ram session (usually core's Ram session)
 	 */
 	Genode::Ram_connection             _parent_ram;
@@ -133,6 +128,7 @@ private:
 	/**
 	 * Size of Dataspaces which are associated with the managed dataspace
 	 * _granularity is a multiple of a pagesize (4096 Byte)
+	 * Zero means, no managed dataspaces are used
 	 */
 	Genode::size_t                     _granularity;
 
@@ -147,7 +143,7 @@ public:
 	 * Constructor
 	 */
 	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *name, bool use_inc_ckpt = true, Genode::size_t granularity = 1);
+			const char *name, Genode::size_t granularity = 1);
 	/**
 	 * Destructor
 	 */

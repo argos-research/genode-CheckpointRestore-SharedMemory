@@ -120,12 +120,11 @@ void Ram_session_component::_destroy_rds_info(Ram_dataspace_info &rds_info)
 
 
 Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		const char *name, bool use_inc_ckpt, Genode::size_t granularity)
+		const char *name, Genode::size_t granularity)
 :
 	_env                (env),
 	_md_alloc           (md_alloc),
 	_ep                 (ep),
-	_use_inc_ckpt       (use_inc_ckpt),
 	_parent_ram         (env, name),
 	_parent_rm          (env),
 	_rds_infos_lock     (),
@@ -159,7 +158,8 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 {
 	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(size=", Genode::Hex(size),")");
 
-	if(_use_inc_ckpt)
+	// Use incremental checkpoint
+	if(_granularity > 0)
 	{
 		// Size of a memory page
 		const Genode::size_t PAGESIZE = 4096;
