@@ -36,7 +36,8 @@ struct Rtcr::Main
 		parent_services (),
 		timer           (env)
 	{
-		Target_child child { env, md_heap, parent_services, "sheep_counter", false };
+		Target_child child { env, md_heap, parent_services, "sheep_counter", 0 };
+		child.start();
 		Target_copy copy { env, md_heap, child };
 
 		timer.msleep(1000);
