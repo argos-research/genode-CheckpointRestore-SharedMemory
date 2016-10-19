@@ -51,10 +51,6 @@ private:
 	 */
 	Genode::Allocator  &_md_alloc;
 	/**
-	 * Indicator whether to use incremental checkpointing
-	 */
-	const bool          _use_inc_ckpt;
-	/**
 	 * Entrypoint for managing child's resource-sessions (PD, CPU, RAM)
 	 */
 	Genode::Entrypoint  _resources_ep;
@@ -63,7 +59,8 @@ private:
 	 */
 	Genode::Entrypoint  _child_ep;
 	/**
-	 * Granularity for incremental checkpointing in a multiple of pagesize
+	 * Granularity for incremental checkpointing in a multiple of pagesize;
+	 * zero means do not use incremental checkpointing
 	 */
 	Genode::size_t      _granularity;
 	/**
@@ -95,8 +92,8 @@ private:
 		/**
 		 * Constructor
 		 */
-		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name,
-				bool use_inc_ckpt = true, Genode::size_t granularity = 1);
+		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
+				const char *name, Genode::size_t granularity = 1);
 		/**
 		 * Destructor
 		 */
@@ -124,9 +121,9 @@ private:
 	 */
 	Genode::Service_registry       _child_services;
 	/**
-	 * Chlid object
+	 * Chlid object in heap
 	 */
-	Genode::Child                  _child;
+	Genode::Child                 *_child;
 
 public:
 
@@ -137,7 +134,9 @@ public:
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 			Genode::Service_registry &parent_services, const char *name,
-			bool use_inc_ckpt = true, Genode::size_t granularity = 1);
+			Genode::size_t granularity = 1);
+
+	~Target_child();
 
 	/**
 	 * Return the custom Pd session
@@ -151,6 +150,14 @@ public:
 	 * Return the custom Ram session
 	 */
 	Rtcr::Ram_session_component &ram() { return _resources.ram; }
+	/**
+	 * Start child by creating a Genode::Child object
+	 */
+	void start();
+	/**
+	 * Start child with a checkpointed state
+	 */
+	void start(Target_copy &copy);
 	/**
 	 * Pause child
 	 */

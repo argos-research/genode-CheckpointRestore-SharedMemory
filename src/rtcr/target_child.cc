@@ -9,13 +9,13 @@
 using namespace Rtcr;
 
 
-Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc, const char *name,
-		bool use_inc_ckpt, Genode::size_t granularity)
+Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
+		const char *name, Genode::size_t granularity)
 :
 	ep  (ep),
 	pd  (env, md_alloc, ep, name),
 	cpu (env, md_alloc, ep, pd.parent_cap(), name),
-	ram (env, md_alloc, ep, name, use_inc_ckpt, granularity),
+	ram (env, md_alloc, ep, name, granularity),
 	rom (env, name)
 {
 	ep.manage(pd);
@@ -55,31 +55,60 @@ Target_child::Resources::~Resources()
 
 
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-		Genode::Service_registry &parent_services, const char *name,
-		bool use_inc_ckpt, Genode::size_t granularity)
+		Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
 :
 	_name            (name),
 	_env             (env),
 	_md_alloc        (md_alloc),
-	_use_inc_ckpt    (use_inc_ckpt),
 	_resources_ep    (_env, 16*1024, "resources ep"),
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
-	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _use_inc_ckpt, _granularity),
+	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
 	_local_services  (),
 	_child_services  (),
-	_child(_resources.rom.dataspace(), Genode::Dataspace_capability(),
+	_child           (nullptr)
+{
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m: ", _name.string());
+}
+
+Target_child::~Target_child()
+{
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(): ", _name.string());
+
+	if(_child)
+	{
+		Genode::destroy(_md_alloc, _child);
+	}
+}
+
+void Target_child::start()
+{
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
+
+	_child = new (_md_alloc) Genode::Child(
+			_resources.rom.dataspace(), Genode::Dataspace_capability(),
 			_resources.pd.cap(),  _resources.pd,
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
-			_env.rm(), _address_space, _child_ep.rpc_ep(), *this)
-{
-	if(verbose_debug) Genode::log("Target_child \"", _name.string(), "\" created.");
+			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
 }
 
+void Target_child::start(Target_copy &copy)
+{
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_copy=", &copy,")");
+
+	Target_restorer::restore(*this, copy);
+
+	_child = new (_md_alloc) Genode::Child(
+			_resources.rom.dataspace(), Genode::Dataspace_capability(),
+			_resources.pd.cap(),  _resources.pd,
+			_resources.ram.cap(), _resources.ram,
+			_resources.cpu.cap(), _initial_thread,
+			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
+}
 
 Genode::Service *Target_child::resolve_session_request(const char *service_name, const char *args)
 {
