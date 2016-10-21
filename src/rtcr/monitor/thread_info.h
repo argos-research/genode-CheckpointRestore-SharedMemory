@@ -13,6 +13,9 @@
 #include <thread/capability.h>
 #include <cpu_thread/client.h>
 
+/* Rtcr includes */
+#include "../intercept/cpu_thread_component.h"
+
 namespace Rtcr {
 	struct Thread_info;
 }
@@ -22,21 +25,29 @@ namespace Rtcr {
  */
 struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 {
-	Genode::Thread_capability thread_cap;
-	Genode::Cpu_session::Name name;
+	Cpu_thread_component        &cpu_thread;
+	Genode::Cpu_session::Name    name;
+	Genode::Affinity::Location   affinity;
+	Genode::Cpu_session::Weight  weight;
+	Genode::addr_t               utcb;
 
 	/**
 	 * Constructor
 	 */
-	Thread_info(Genode::Thread_capability thread_cap, Genode::Cpu_session::Name name)
+	Thread_info(Cpu_thread_component &cpu_thread, Genode::Cpu_session::Name name,
+			Genode::Affinity::Location affinity, Genode::Cpu_session::Weight weight,
+			Genode::addr_t utcb)
 	:
-		thread_cap(thread_cap),
-		name(name)
+		cpu_thread (cpu_thread),
+		name       (name),
+		affinity   (affinity),
+		weight     (weight),
+		utcb       (utcb)
 	{ }
 
 	Thread_info *find_by_cap(Genode::Thread_capability cap)
 	{
-		if(thread_cap == cap)
+		if(cap == cpu_thread.cap())
 			return this;
 		Thread_info *thread_info = next();
 		return thread_info ? thread_info->find_by_cap(cap) : 0;
@@ -46,7 +57,7 @@ struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 	{
 		using Genode::Hex;
 
-		Genode::Cpu_thread_client thread_client (thread_cap);
+		Genode::Cpu_thread_client thread_client (cpu_thread.cap());
 		Genode::Thread_state ts (thread_client.state());
 
 		Genode::print(output, "Thread ", name.string(), "\n");
