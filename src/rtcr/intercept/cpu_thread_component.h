@@ -8,6 +8,8 @@
 #define _RTCR_CPU_THREAD_COMPONENT_H_
 
 #include <cpu_thread/client.h>
+#include <base/rpc_server.h>
+#include <base/entrypoint.h>
 
 namespace Rtcr {
 	class Cpu_thread_component;
@@ -15,7 +17,7 @@ namespace Rtcr {
 	constexpr bool cpu_thread_verbose_debug = true;
 }
 
-class Rtcr::Cpu_thread_component : Genode::Rpc_object<Genode::Cpu_thread>
+class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>
 {
 private:
 	/**
@@ -32,6 +34,10 @@ private:
 	 */
 	Genode::Cpu_thread_client           _parent_cpu_thread;
 	/**
+	 * Name of the thread
+	 */
+	Genode::Cpu_session::Name           _name;
+	/**
 	 * Parent's session state
 	 */
 	struct State_info
@@ -40,7 +46,7 @@ private:
 	} _parent_state;
 public:
 
-	Cpu_thread_component(Genode::Entrypoint &ep, Genode::Capability<Genode::Cpu_thread> cpu_th_cap);
+	Cpu_thread_component(Genode::Entrypoint &ep, Genode::Capability<Genode::Cpu_thread> cpu_th_cap, Genode::Cpu_session::Name name);
 	~Cpu_thread_component();
 
 	Genode::Capability<Genode::Cpu_thread> parent_cap() { return _parent_cpu_thread; }
