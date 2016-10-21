@@ -157,7 +157,7 @@ public:
 	/**
 	 * Start child with a checkpointed state
 	 */
-	void start(Target_copy &copy);
+	//void start(Target_copy &copy);
 	/**
 	 * Pause child
 	 */

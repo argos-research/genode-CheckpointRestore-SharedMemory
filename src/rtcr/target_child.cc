@@ -96,7 +96,7 @@ void Target_child::start()
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
 }
 
-void Target_child::start(Target_copy &copy)
+/*void Target_child::start(Target_copy &copy)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_copy=", &copy,")");
 
@@ -108,7 +108,7 @@ void Target_child::start(Target_copy &copy)
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
-}
+}*/
 
 Genode::Service *Target_child::resolve_session_request(const char *service_name, const char *args)
 {
