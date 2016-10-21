@@ -1,6 +1,7 @@
 TARGET = rtcr_child_creator
 
 SRC_CC += main.cc \
+          cpu_thread_component.cc \
           cpu_session_component.cc \
           pd_session_component.cc \
           ram_session_component.cc \
@@ -13,6 +14,7 @@ SRC_CC += main.cc \
 LIBS   += base
 
 vpath cpu_session_component.cc $(REP_DIR)/src/rtcr/intercept
+vpath cpu_thread_component.cc  $(REP_DIR)/src/rtcr/intercept
 vpath pd_session_component.cc  $(REP_DIR)/src/rtcr/intercept
 vpath ram_session_component.cc $(REP_DIR)/src/rtcr/intercept
 vpath region_map_component.cc  $(REP_DIR)/src/rtcr/intercept
