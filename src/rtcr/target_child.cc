@@ -41,16 +41,16 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Gen
 
 Target_child::Resources::~Resources()
 {
+	ep.dissolve(ram);
+	ep.dissolve(cpu);
+	ep.dissolve(pd);
+
 	if(verbose_debug)
 	{
 		Genode::log("Dissolving PD  session ", pd.cap());
 		Genode::log("Dissolving CPU session ", cpu.cap());
 		Genode::log("Dissolving RAM session ", ram.cap());
 	}
-
-	ep.dissolve(ram);
-	ep.dissolve(cpu);
-	ep.dissolve(pd);
 }
 
 
@@ -71,17 +71,15 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_services  (),
 	_child           (nullptr)
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m: ", _name.string());
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
 }
 
 Target_child::~Target_child()
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(): ", _name.string());
-
 	if(_child)
-	{
 		Genode::destroy(_md_alloc, _child);
-	}
+
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m() ", _name.string());
 }
 
 void Target_child::start()
