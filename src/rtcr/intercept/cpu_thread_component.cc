@@ -16,13 +16,13 @@ Cpu_thread_component::Cpu_thread_component(Genode::Entrypoint& ep,
 	_name(name)
 {
 	_ep.manage(*this);
-	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _name.string(), "\033[0m>(parent ", _parent_cpu_thread,")");
 }
 
 Cpu_thread_component::~Cpu_thread_component()
 {
 	_ep.dissolve(*this);
-	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Thread", "\033[0m<\033[35m", _name.string(), "\033[0m> ", _parent_cpu_thread);
 }
 
 Genode::Dataspace_capability Cpu_thread_component::utcb()

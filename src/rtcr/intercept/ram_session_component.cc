@@ -135,7 +135,7 @@ Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator
 {
 	_page_fault_handler.start();
 
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "Ram", "\033[0m(parent ", _parent_ram, ")");
 }
 
 
@@ -150,7 +150,7 @@ Ram_session_component::~Ram_session_component()
 		_destroy_rds_info(*rds_info);
 	}
 
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Ram", "\033[0m ", _parent_ram);
 }
 
 

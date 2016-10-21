@@ -15,13 +15,13 @@ Timer_session_component::Timer_session_component(Genode::Env &env, Genode::Alloc
 	_ep           (ep),
 	_parent_timer (env)
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "Timer", "\033[0m(parent ", _parent_timer, ")");
 }
 
 
 Timer_session_component::~Timer_session_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Timer", "\033[0m ", _parent_timer);
 }
 
 

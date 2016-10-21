@@ -17,7 +17,7 @@ Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &
 	_infos_lock       (),
 	_region_map_infos ()
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "Rm", "\033[0m(parent ", _parent_rm, ")");
 }
 
 
@@ -31,7 +31,7 @@ Rm_session_component::~Rm_session_component()
 		destroy(rm_info->region_map.cap());
 	}
 
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Rm", "\033[0m ", _parent_rm);
 }
 
 

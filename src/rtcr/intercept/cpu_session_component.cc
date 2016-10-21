@@ -33,7 +33,7 @@ Cpu_session_component::Cpu_session_component(
 	_threads       ()
 
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m wrapping ", parent_cap());
+	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
 }
 
 
@@ -44,7 +44,7 @@ Cpu_session_component::~Cpu_session_component()
 		_destroy(thread_info);
 	}
 
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Cpu", "\033[0m ", _parent_cpu);
 }
 
 
@@ -83,8 +83,7 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 	Genode::Lock::Guard _lock_guard(_threads_lock);
 	_threads.insert(new_th_info);
 
-	if(verbose_debug) Genode::log("  Created virtual thread ", new_th_info->cpu_thread.cap(),
-			" from parent cpu thread ", new_th_info->cpu_thread.parent_cap());
+	if(verbose_debug) Genode::log("  Created virtual thread ", new_th_info->cpu_thread.cap());
 
 	return new_th_info->cpu_thread.cap();
 }

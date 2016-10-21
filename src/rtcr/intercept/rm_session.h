@@ -21,8 +21,8 @@ namespace Rtcr {
 	class Rm_session_component;
 	class Rm_root;
 
-	constexpr bool rm_verbose_debug = false;
-	constexpr bool rm_root_verbose_debug = false;
+	constexpr bool rm_verbose_debug = true;
+	constexpr bool rm_root_verbose_debug = true;
 }
 
 

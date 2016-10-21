@@ -14,6 +14,7 @@
 #include <region_map/client.h>
 #include <dataspace/client.h>
 
+/* Rtcr includes */
 #include "../monitor/attached_region_info.h"
 #include "ram_session_component.h"
 

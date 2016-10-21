@@ -25,13 +25,13 @@ Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &
 	_nc_infos_lock (),
 	_nc_infos      ()
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m wrapping ", parent_cap());
+	if(verbose_debug) Genode::log("\033[33m", "Pd", "\033[0m (parent ", _parent_pd, ")");
 }
 
 
 Pd_session_component::~Pd_session_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Pd", "\033[0m ", _parent_pd);
 }
 
 

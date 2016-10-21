@@ -15,13 +15,13 @@ Log_session_component::Log_session_component(Genode::Env &env, Genode::Allocator
 	_ep         (ep),
 	_parent_log (env, args)
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "Log", "\033[0m(parent ", _parent_log,")");
 }
 
 
 Log_session_component::~Log_session_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Log", "\033[0m ", _parent_log);
 }
 
 

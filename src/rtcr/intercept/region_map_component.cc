@@ -21,7 +21,7 @@ Region_map_component::Region_map_component(Genode::Entrypoint &ep, Genode::Alloc
 {
 	_ep.manage(*this);
 
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "Rmap", "\033[0m<\033[35m", _label.string(),"\033[0m>(parent ", _parent_region_map, ")");
 }
 
 
@@ -35,7 +35,7 @@ Region_map_component::~Region_map_component()
 	while((curr_at_info = _attached_regions.first()))
 		detach(curr_at_info->rel_addr);
 
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m", "~Rmap", "\033[0m<\033[35m", _label.string(),"\033[0m> ", _parent_region_map);
 }
 
 
@@ -46,7 +46,8 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 	{
 		if(use_local_addr)
 		{
-			Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(",
+			Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			"\033[33m", __func__, "\033[0m(",
 					"ds ",       ds_cap,
 					", size=",       Genode::Hex(size),
 					", offset=",     offset,
@@ -56,7 +57,8 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 		}
 		else
 		{
-			Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(",
+			Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			"\033[33m", __func__, "\033[0m(",
 					"ds ",   ds_cap,
 					", size=",   Genode::Hex(size),
 					", offset=", offset,
@@ -96,7 +98,8 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 
 void Region_map_component::detach(Region_map::Local_addr local_addr)
 {
-	if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
+	if(verbose_debug) Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			"\033[33m", __func__, "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
 
 	// Detach from real region map
 	_parent_region_map.detach(local_addr);
@@ -121,7 +124,8 @@ void Region_map_component::detach(Region_map::Local_addr local_addr)
 
 void Region_map_component::fault_handler(Genode::Signal_context_capability handler)
 {
-	if(verbose_debug)Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m(", handler, ")");
+	if(verbose_debug)Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			"\033[33m", __func__, "\033[0m(", handler, ")");
 	_parent_state.fault_handler = handler;
 	_parent_region_map.fault_handler(handler);
 }
@@ -129,7 +133,8 @@ void Region_map_component::fault_handler(Genode::Signal_context_capability handl
 
 Genode::Region_map::State Region_map_component::state()
 {
-	if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m()");
+	if(verbose_debug) Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			"\033[33m", __func__, "\033[0m()");
 
 	auto result = _parent_region_map.state();
 
@@ -145,7 +150,8 @@ Genode::Region_map::State Region_map_component::state()
 
 Genode::Dataspace_capability Region_map_component::dataspace()
 {
-	if(verbose_debug) Genode::log("Rmap<", _label.string(),">::\033[33m", __func__, "\033[0m()");
+	if(verbose_debug) Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			"\033[33m", __func__, "\033[0m()");
 
 	auto result = _parent_region_map.dataspace();
 
