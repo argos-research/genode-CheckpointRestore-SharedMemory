@@ -14,7 +14,7 @@ void Target_copy::_copy_threads()
 	Thread_info *th_info = _child.cpu().thread_infos().first();
 	for( ; th_info; th_info = th_info->next())
 	{
-		Genode::Cpu_thread_client thread_client(th_info->thread_cap);
+		Genode::Cpu_thread_client thread_client(th_info->cpu_thread.parent_cap());
 		Genode::Thread_state ts = thread_client.state();
 
 		Copied_thread_info *new_cth_info =
