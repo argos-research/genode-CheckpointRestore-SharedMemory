@@ -15,11 +15,12 @@
 
 /* Rtcr includes */
 #include "../monitor/thread_info.h"
+#include "cpu_thread_component.h"
 
 namespace Rtcr {
 	class Cpu_session_component;
 
-	constexpr bool cpu_verbose_debug = false;
+	constexpr bool cpu_session_verbose_debug = false;
 }
 
 
@@ -32,7 +33,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = cpu_verbose_debug;
+	static constexpr bool verbose_debug = cpu_session_verbose_debug;
 
 	/**
 	 * Environment of creator component (usually rtcr)
@@ -69,6 +70,12 @@ private:
 	 * List of client's thread capabilities
 	 */
 	Genode::List<Thread_info>      _threads;
+
+	/**
+	 * Removes info from Thread_info list, destroys the containing virtual RPC object,
+	 * and destroys the info itself
+	 */
+	void _destroy(Thread_info* info);
 
 public:
 

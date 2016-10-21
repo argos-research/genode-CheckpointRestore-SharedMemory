@@ -9,6 +9,17 @@
 using namespace Rtcr;
 
 
+void Cpu_session_component::_destroy(Thread_info* info)
+{
+	// Remove thread info from list
+	_threads.remove(info);
+
+	// Destroy virtual cpu thread and thread info
+	Genode::destroy(_md_alloc, &info->cpu_thread);
+	Genode::destroy(_md_alloc, info);
+}
+
+
 Cpu_session_component::Cpu_session_component(
 		Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 		Genode::Pd_session_capability parent_pd_cap, const char *name)
@@ -30,10 +41,7 @@ Cpu_session_component::~Cpu_session_component()
 {
 	while(Thread_info *thread_info = _threads.first())
 	{
-		// Remove thread from list
-		_threads.remove(thread_info);
-		// Free memory space from allocator
-		destroy(_md_alloc, thread_info);
+		_destroy(thread_info);
 	}
 
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
@@ -44,7 +52,7 @@ void Cpu_session_component::pause_threads()
 {
 	for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
 	{
-		Genode::Cpu_thread_client{curr_th->thread_cap}.pause();
+		Genode::Cpu_thread_client{curr_th->cpu_thread.parent_cap()}.pause();
 	}
 }
 
@@ -53,7 +61,7 @@ void Cpu_session_component::resume_threads()
 {
 	for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
 	{
-		Genode::Cpu_thread_client{curr_th->thread_cap}.resume();
+		Genode::Cpu_thread_client{curr_th->cpu_thread.parent_cap()}.resume();
 	}
 }
 
@@ -64,18 +72,21 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 {
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 
-	/**
-	 * Note: Use parent's Pd session instead of virtualized Pd session
-	 */
+	// Note: Use parent's Pd session instead of virtualized Pd session
 	Genode::Thread_capability thread_cap = _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
+
+	// Create virtual Cpu_thread and its management list element
+	Cpu_thread_component *new_cpu_thread = new (_md_alloc) Cpu_thread_component(_ep, thread_cap, name);
+	Thread_info *new_th_info = new (_md_alloc) Thread_info(*new_cpu_thread, name, affinity,weight, utcb);
 
 	// Store the thread
 	Genode::Lock::Guard _lock_guard(_threads_lock);
-	_threads.insert(new (_md_alloc) Thread_info(thread_cap, name));
+	_threads.insert(new_th_info);
 
-	if(verbose_debug) Genode::log("  result: ", thread_cap);
+	if(verbose_debug) Genode::log("  Created virtual thread ", new_th_info->cpu_thread.cap(),
+			" from parent cpu thread ", new_th_info->cpu_thread.parent_cap());
 
-	return thread_cap;
+	return new_th_info->cpu_thread.cap();
 }
 
 
@@ -93,9 +104,7 @@ void Cpu_session_component::kill_thread(Genode::Thread_capability thread)
 		return;
 	}
 
-	// Remove and destroy thread from list and allocator
-	_threads.remove(thread_info);
-	destroy(_md_alloc, thread_info);
+	_destroy(thread_info);
 
 	_parent_cpu.kill_thread(thread);
 }
