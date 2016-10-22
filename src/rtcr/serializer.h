@@ -69,12 +69,12 @@ private:
 	 */
 	Genode::size_t _serialize(Rtcr::Thread_info &thread)
 	{
-		Genode::Cpu_thread_client client {thread.thread_cap};
+		Genode::Cpu_thread_client client {thread.cpu_thread.cap()};
 		Genode::Thread_state ts {client.state()};
 
 		if(!ts.paused)
 		{
-			Genode::warning(" Thread ", thread.thread_cap, " not paused.");
+			Genode::warning(" Thread ", thread.cpu_thread.cap(), " not paused.");
 			return 0;
 		}
 
