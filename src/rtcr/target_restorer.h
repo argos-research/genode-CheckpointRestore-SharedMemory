@@ -7,10 +7,19 @@
 #ifndef _RTCR_TARGET_RESTORER_H_
 #define _RTCR_TARGET_RESTORER_H_
 
+/* Genode includes */
+#include <util/list.h>
+
+/* Rtcr includes */
+#include "target_copy.h"
+
 namespace Rtcr {
 	class Target_restorer;
 
-	constexpr bool restart_verbose_debug = true;
+	constexpr bool restore_verbose_debug = true;
+
+	/* forward declaration */
+	class Target_child;
 }
 
 class Rtcr::Target_restorer
@@ -19,7 +28,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = restart_verbose_debug;
+	static constexpr bool verbose_debug = restore_verbose_debug;
 
 	Target_child &_child;
 	Target_copy  &_copy;
@@ -28,11 +37,11 @@ private:
 	void _restore_capabilities();
 	void _restore_region_maps();
 
-	void _restore_region_map(Target_child &child, Genode::List<Copied_region_info> &copy_infos);
+	void _restore_region_map(Genode::List<Attached_region_info> &orig_infos, Genode::List<Copied_region_info> &copy_infos);
 
 public:
 	Target_restorer(Target_child &child, Target_copy &copy);
-	void restore(Target_child &child, Target_copy &copy);
+	void restore();
 
 };
 

@@ -12,7 +12,6 @@
 #include <region_map/client.h>
 
 /* Rtcr includes */
-#include "target_child.h"
 #include "intercept/region_map_component.h"
 #include "intercept/ram_session_component.h"
 #include "intercept/cpu_session_component.h"
@@ -25,6 +24,9 @@ namespace Rtcr {
 	class  Target_copy;
 
 	constexpr bool copy_verbose_debug = true;
+
+	/* forward declarations */
+	class Target_child;
 }
 
 /**

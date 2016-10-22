@@ -5,17 +5,16 @@
  */
 
 #include "target_restorer.h"
+#include "target_child.h"
 
 using namespace Rtcr;
 
 Target_restorer::Target_restorer(Target_child& child, Target_copy& copy)
 :
 	_child(child), _copy(copy)
-{
+{ }
 
-}
-
-void Target_restorer::restore(Target_child &child, Target_copy &copy)
+void Target_restorer::restore()
 {
 	// Restore Threads
 	//_restore_threads();

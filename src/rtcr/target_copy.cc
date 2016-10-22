@@ -5,6 +5,7 @@
  */
 
 #include "target_copy.h"
+#include "target_child.h"
 
 using namespace Rtcr;
 
