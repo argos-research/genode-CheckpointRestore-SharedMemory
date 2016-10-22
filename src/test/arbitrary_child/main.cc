@@ -15,6 +15,8 @@ void test_entrypoint_creation(Genode::Env &env)
 	Genode::log("Creating Entrypoint");
 
 	Genode::Entrypoint ep(env, 12*1024, "test_ep");
+
+	Genode::Entrypoint ep2(env, 12*1024, "test_ep2");
 }
 
 void test_signal_context_creation(Genode::Env &env)
@@ -41,7 +43,7 @@ void Component::construct(Genode::Env &env)
 	Genode::log("Capability map in: ", Genode::cap_map());
 	Genode::log("Cap of RAM session: ", env.ram_session_cap(), " ", Genode::Hex(env.ram_session_cap().data()->kcap()));
 
-	//Genode::cap_map();
-
 	test_entrypoint_creation(env);
+
+	Genode::log("I'm done!");
 }
