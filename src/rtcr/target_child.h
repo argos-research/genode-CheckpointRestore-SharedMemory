@@ -20,6 +20,8 @@
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"
 #include "intercept/timer_session.h"
+#include "target_copy.h"
+#include "target_restorer.h"
 
 namespace Rtcr {
 	class Target_child;
@@ -63,6 +65,10 @@ private:
 	 * zero means do not use incremental checkpointing
 	 */
 	Genode::size_t      _granularity;
+	/**
+	 * Indicates whether the newly created threads shall not be started
+	 */
+	bool                _phase_restore;
 	/**
 	 * Child's resources
 	 */
@@ -157,7 +163,7 @@ public:
 	/**
 	 * Start child with a checkpointed state
 	 */
-	//void start(Target_copy &copy);
+	void start(Target_copy &copy);
 	/**
 	 * Pause child
 	 */

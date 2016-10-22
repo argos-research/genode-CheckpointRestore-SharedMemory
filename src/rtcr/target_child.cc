@@ -63,6 +63,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_resources_ep    (_env, 16*1024, "resources ep"),
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
+	_phase_restore   (false),
 	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
@@ -86,19 +87,25 @@ void Target_child::start()
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
 
+	_phase_restore = false;
+
 	_child = new (_md_alloc) Genode::Child(
 			_resources.rom.dataspace(), Genode::Dataspace_capability(),
 			_resources.pd.cap(),  _resources.pd,
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
+
+
 }
 
-/*void Target_child::start(Target_copy &copy)
+void Target_child::start(Target_copy &copy)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_copy=", &copy,")");
 
-	Target_restorer::restore(*this, copy);
+	Target_restorer restorer(*this, copy);
+
+	_phase_restore = true;
 
 	_child = new (_md_alloc) Genode::Child(
 			_resources.rom.dataspace(), Genode::Dataspace_capability(),
@@ -106,7 +113,11 @@ void Target_child::start()
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
-}*/
+
+	_phase_restore = false;
+
+	//resume();
+}
 
 Genode::Service *Target_child::resolve_session_request(const char *service_name, const char *args)
 {
