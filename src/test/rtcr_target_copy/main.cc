@@ -12,6 +12,7 @@
 #include <timer_session/connection.h>
 
 /* Rtcr includes */
+#include "../../rtcr/target_child.h"
 #include "../../rtcr/target_copy.h"
 #include "../../rtcr/util/debug.h"
 
