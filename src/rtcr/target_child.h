@@ -99,7 +99,7 @@ private:
 		 * Constructor
 		 */
 		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-				const char *name, Genode::size_t granularity = 1);
+				const char *name, Genode::size_t granularity, bool &phase_restore);
 		/**
 		 * Destructor
 		 */

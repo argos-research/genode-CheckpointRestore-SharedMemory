@@ -8,12 +8,30 @@
 
 using namespace Rtcr;
 
-Cpu_thread_component::Cpu_thread_component(Genode::Entrypoint& ep,
-		Genode::Capability<Genode::Cpu_thread> cpu_th_cap, Genode::Cpu_session::Name name)
+Cpu_thread_component::Start_param::Start_param()
 :
-	_ep(ep),
-	_parent_cpu_thread(cpu_th_cap),
-	_name(name)
+	ip(0),
+	sp(0)
+{ }
+
+Cpu_thread_component::State_info::State_info()
+:
+	started        (false),
+	paused         (false),
+	exception_sigh (),
+	single_step    (false),
+	location       ()
+{ }
+
+Cpu_thread_component::Cpu_thread_component(Genode::Entrypoint& ep,
+		Genode::Capability<Genode::Cpu_thread> cpu_th_cap,
+		bool &phase_restore, Genode::Cpu_session::Name name)
+:
+	_ep                (ep),
+	_parent_cpu_thread (cpu_th_cap),
+	_phase_restore     (phase_restore),
+	_name              (name),
+	_start_param       ()
 {
 	_ep.manage(*this);
 	if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _name.string(), "\033[0m>(parent ", _parent_cpu_thread,")");
@@ -38,19 +56,31 @@ void Cpu_thread_component::start(Genode::addr_t ip, Genode::addr_t sp)
 {
 	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m(ip=",
 			Genode::Hex(ip), ", sp=", Genode::Hex(sp), ")");
-	_parent_cpu_thread.start(ip, sp);
+
+	if(_phase_restore)
+	{
+		_start_param.ip = ip;
+		_start_param.sp = sp;
+	}
+	else
+	{
+		_parent_cpu_thread.start(ip, sp);
+		_parent_state.started = true;
+	}
 }
 
 void Cpu_thread_component::pause()
 {
 	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m()");
 	_parent_cpu_thread.pause();
+	_parent_state.paused = true;
 }
 
 void Cpu_thread_component::resume()
 {
 	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m()");
 	_parent_cpu_thread.resume();
+	_parent_state.paused = false;
 }
 
 void Cpu_thread_component::cancel_blocking()
@@ -76,17 +106,18 @@ void Cpu_thread_component::state(const Genode::Thread_state& state)
 	_parent_cpu_thread.state(state);
 }
 
-void Cpu_thread_component::exception_sigh(
-		Genode::Signal_context_capability handler)
+void Cpu_thread_component::exception_sigh(Genode::Signal_context_capability handler)
 {
 	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m(sigh=", handler, ")");
 	_parent_cpu_thread.exception_sigh(handler);
+	_parent_state.exception_sigh = handler;
 }
 
 void Cpu_thread_component::single_step(bool enabled)
 {
 	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m(", enabled, ")");
 	_parent_cpu_thread.single_step(enabled);
+	_parent_state.single_step = enabled;
 }
 
 void Cpu_thread_component::affinity(Genode::Affinity::Location location)
@@ -95,6 +126,7 @@ void Cpu_thread_component::affinity(Genode::Affinity::Location location)
 			location.xpos(), "x", location.ypos(), ", dim=",
 			location.width(), "x", location.height(), ")");
 	_parent_cpu_thread.affinity(location);
+	_parent_state.location = location;
 }
 
 unsigned Cpu_thread_component::trace_control_index()

@@ -55,6 +55,7 @@ private:
 	 * Connection to parent's Cpu session, usually from core; this class wraps this session
 	 */
 	Genode::Cpu_connection         _parent_cpu;
+	bool                          &_phase_restore;
 	/**
 	 * Parent's session state
 	 */
@@ -84,7 +85,7 @@ public:
 	 */
 	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc,
 			Genode::Entrypoint &ep, Genode::Pd_session_capability parent_pd_cap,
-			const char *name);
+			bool &phase_restore, const char *name);
 
 	/**
 	 * Destructor

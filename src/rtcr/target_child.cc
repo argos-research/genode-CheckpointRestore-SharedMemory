@@ -10,11 +10,11 @@ using namespace Rtcr;
 
 
 Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-		const char *name, Genode::size_t granularity)
+		const char *name, Genode::size_t granularity, bool &phase_restore)
 :
 	ep  (ep),
 	pd  (env, md_alloc, ep, name),
-	cpu (env, md_alloc, ep, pd.parent_cap(), name),
+	cpu (env, md_alloc, ep, pd.parent_cap(), phase_restore, name),
 	ram (env, md_alloc, ep, name, granularity),
 	rom (env, name)
 {
@@ -64,7 +64,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_phase_restore   (false),
-	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
+	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity, _phase_restore),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
@@ -115,6 +115,7 @@ void Target_child::start(Target_copy &copy)
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
 
 	_phase_restore = false;
+	restorer.restore();
 
 	//resume();
 }
