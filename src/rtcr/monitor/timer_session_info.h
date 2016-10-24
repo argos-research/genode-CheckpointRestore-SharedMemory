@@ -11,12 +11,12 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/timer_session.h"
+//#include "../intercept/timer_session.h"
 
 namespace Rtcr {
 	struct Timer_session_info;
 
-	// Solve circular dependencies
+	// Forward declaration
 	struct Timer_session_component;
 }
 

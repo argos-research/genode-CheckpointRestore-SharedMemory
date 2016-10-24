@@ -10,13 +10,13 @@
 /* Genode includes */
 #include <util/list.h>
 
-/* Genode includes */
-#include "../intercept/rm_session.h"
+/* Rtcr includes */
+//#include "../intercept/rm_session.h"
 
 namespace Rtcr {
 	struct Rm_session_info;
 
-	// Solve circular dependencies
+	// Forward declaration
 	struct Rm_session_component;
 }
 

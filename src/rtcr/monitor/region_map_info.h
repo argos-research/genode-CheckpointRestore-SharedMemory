@@ -11,12 +11,12 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/rm_session.h"
+//#include "../intercept/rm_session.h"
 
 namespace Rtcr {
 	struct Region_map_info;
 
-	// Solve circular dependencies
+	// Forward declaration
 	struct Region_map_component;
 }
 
