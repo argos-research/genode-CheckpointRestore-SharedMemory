@@ -49,6 +49,31 @@ Cpu_session_component::~Cpu_session_component()
 }
 
 
+void Cpu_session_component::start_threads()
+{
+	for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
+	{
+		auto state = curr_th->cpu_thread.parent_state();
+
+		if(_phase_restore && !state.started && state.ip != 0 && state.sp != 0)
+		{
+			Genode::Cpu_thread_client{curr_th->cpu_thread.parent_cap()}.start(state.ip, state.sp);
+		}
+		else if(_phase_restore && !state.started && (state.ip == 0 || state.sp == 0))
+		{
+			Genode::warning("Starting postponed threads failed: Register invalid (ip=",
+					Genode::Hex(state.ip), ", sp=", Genode::Hex(state.sp), ")");
+		}
+		else
+		{
+			Genode::log("Useless call for ", __func__,
+					" phase_restore=", _phase_restore,
+					", thread_started=", state.started);
+		}
+	}
+}
+
+
 void Cpu_session_component::pause_threads()
 {
 	for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
@@ -182,3 +207,4 @@ Genode::Capability<Genode::Cpu_session::Native_cpu> Cpu_session_component::nativ
 
 	return result;
 }
+

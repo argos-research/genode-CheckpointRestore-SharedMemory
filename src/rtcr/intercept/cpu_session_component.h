@@ -96,6 +96,10 @@ public:
 	Genode::List<Thread_info>      &thread_infos() { return _threads; }
 
 	/**
+	 * Start all threads (for restore; threads were created without using start)
+	 */
+	void start_threads();
+	/**
 	 * Pause all threads
 	 */
 	void pause_threads();
