@@ -10,11 +10,11 @@ using namespace Rtcr;
 
 
 Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-		const char *name, Genode::size_t granularity, bool &phase_restore)
+		const char *name, Genode::size_t granularity)
 :
 	ep  (ep),
 	pd  (env, md_alloc, ep, name),
-	cpu (env, md_alloc, ep, pd.parent_cap(), phase_restore, name),
+	cpu (env, md_alloc, ep, pd.parent_cap(), name),
 	ram (env, md_alloc, ep, name, granularity),
 	rom (env, name)
 {
@@ -54,6 +54,20 @@ Target_child::Resources::~Resources()
 }
 
 
+void Target_child::_restore()
+{
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m()");
+
+	if(!_copy)
+	{
+		Genode::log("No valid copy object!");
+		return;
+	}
+
+
+}
+
+
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 		Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
 :
@@ -64,7 +78,8 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_phase_restore   (false),
-	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity, _phase_restore),
+	_copy            (nullptr),
+	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
@@ -103,9 +118,8 @@ void Target_child::start(Target_copy &copy)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_copy=", &copy,")");
 
-	Target_restorer restorer(*this, copy);
-
 	_phase_restore = true;
+	_copy = &copy;
 
 	_child = new (_md_alloc) Genode::Child(
 			_resources.rom.dataspace(), Genode::Dataspace_capability(),
@@ -114,15 +128,20 @@ void Target_child::start(Target_copy &copy)
 			_resources.cpu.cap(), _initial_thread,
 			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
 
-	_phase_restore = false;
-	restorer.restore();
 
-	//resume();
 }
 
 Genode::Service *Target_child::resolve_session_request(const char *service_name, const char *args)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", args, ")");
+
+	// Restoration hook
+	if(!Genode::strcmp(service_name, "LOG") && _phase_restore)
+	{
+		_restore();
+
+		_phase_restore = false;
+	}
 
 	// TODO Support grandchildren: PD, CPU, and RAM session has also to be provided to them
 
@@ -176,6 +195,7 @@ Genode::Service *Target_child::resolve_session_request(const char *service_name,
 
 	return service;
 }
+
 
 void Target_child::filter_session_args(const char *service, char *args, Genode::size_t args_len)
 {

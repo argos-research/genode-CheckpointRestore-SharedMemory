@@ -22,14 +22,13 @@ void Cpu_session_component::_destroy(Thread_info* info)
 
 Cpu_session_component::Cpu_session_component(
 		Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		Genode::Pd_session_capability parent_pd_cap, bool &phase_restore, const char *name)
+		Genode::Pd_session_capability parent_pd_cap, const char *name)
 :
 	_env           (env),
 	_md_alloc      (md_alloc),
 	_ep            (ep),
 	_parent_pd_cap (parent_pd_cap),
 	_parent_cpu    (env, name),
-	_phase_restore (phase_restore),
 	_threads_lock  (),
 	_threads       ()
 
@@ -46,31 +45,6 @@ Cpu_session_component::~Cpu_session_component()
 	}
 
 	if(verbose_debug) Genode::log("\033[33m", "~Cpu", "\033[0m ", _parent_cpu);
-}
-
-
-void Cpu_session_component::start_threads()
-{
-	for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
-	{
-		auto state = curr_th->cpu_thread.parent_state();
-
-		if(_phase_restore && !state.started && state.ip != 0 && state.sp != 0)
-		{
-			Genode::Cpu_thread_client{curr_th->cpu_thread.parent_cap()}.start(state.ip, state.sp);
-		}
-		else if(_phase_restore && !state.started && (state.ip == 0 || state.sp == 0))
-		{
-			Genode::warning("Starting postponed threads failed: Register invalid (ip=",
-					Genode::Hex(state.ip), ", sp=", Genode::Hex(state.sp), ")");
-		}
-		else
-		{
-			Genode::log("Useless call for ", __func__,
-					" phase_restore=", _phase_restore,
-					", thread_started=", state.started);
-		}
-	}
 }
 
 
@@ -102,7 +76,7 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 	Genode::Thread_capability thread_cap = _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
 
 	// Create virtual Cpu_thread and its management list element
-	Cpu_thread_component *new_cpu_thread = new (_md_alloc) Cpu_thread_component(_ep, thread_cap, _phase_restore, name);
+	Cpu_thread_component *new_cpu_thread = new (_md_alloc) Cpu_thread_component(_ep, thread_cap, name);
 	Thread_info *new_th_info = new (_md_alloc) Thread_info(*new_cpu_thread, name, affinity,weight, utcb);
 
 	// Store the thread

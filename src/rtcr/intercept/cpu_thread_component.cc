@@ -9,26 +9,12 @@
 using namespace Rtcr;
 
 
-Cpu_thread_component::State_info::State_info()
-:
-	started        (false),
-	ip             (0),
-	sp             (0),
-	paused         (false),
-	exception_sigh (),
-	single_step    (false),
-	location       ()
-{ }
-
 Cpu_thread_component::Cpu_thread_component(Genode::Entrypoint& ep,
-		Genode::Capability<Genode::Cpu_thread> cpu_th_cap,
-		bool &phase_restore, Genode::Cpu_session::Name name)
+		Genode::Capability<Genode::Cpu_thread> cpu_th_cap, Genode::Cpu_session::Name name)
 :
 	_ep                (ep),
 	_parent_cpu_thread (cpu_th_cap),
-	_phase_restore     (phase_restore),
-	_name              (name),
-	_parent_state      ()
+	_name              (name)
 {
 	_ep.manage(*this);
 	if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _name.string(), "\033[0m>(parent ", _parent_cpu_thread,")");
@@ -53,17 +39,9 @@ void Cpu_thread_component::start(Genode::addr_t ip, Genode::addr_t sp)
 {
 	if(verbose_debug) Genode::log("Thread<\033[35m", _name.string(), "\033[0m>::\033[33m", __func__, "\033[0m(ip=",
 			Genode::Hex(ip), ", sp=", Genode::Hex(sp), ")");
+	_parent_cpu_thread.start(ip, sp);
+	_parent_state.started = true;
 
-	if(_phase_restore)
-	{
-		_parent_state.ip = ip;
-		_parent_state.sp = sp;
-	}
-	else
-	{
-		_parent_cpu_thread.start(ip, sp);
-		_parent_state.started = true;
-	}
 }
 
 void Cpu_thread_component::pause()

@@ -25,7 +25,7 @@ namespace Rtcr {
 
 	constexpr bool copy_verbose_debug = true;
 
-	/* forward declarations */
+	/* Forward declarations */
 	class Target_child;
 }
 

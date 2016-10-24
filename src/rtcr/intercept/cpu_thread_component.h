@@ -14,7 +14,7 @@
 namespace Rtcr {
 	class Cpu_thread_component;
 
-	constexpr bool cpu_thread_verbose_debug = true;
+	constexpr bool cpu_thread_verbose_debug = false;
 }
 
 class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>
@@ -34,10 +34,6 @@ private:
 	 */
 	Genode::Cpu_thread_client           _parent_cpu_thread;
 	/**
-	 * Indicator for a restore phase: The thread shall not be started immediately, but after the address space is restored
-	 */
-	bool                               &_phase_restore;
-	/**
 	 * Name of the thread
 	 */
 	Genode::Cpu_session::Name           _name;
@@ -46,20 +42,17 @@ private:
 	 */
 	struct State_info
 	{
-		State_info();
-		bool                              started;
-		Genode::addr_t                    ip;
-		Genode::addr_t                    sp;
-		bool                              paused;
-		Genode::Signal_context_capability exception_sigh;
-		bool                              single_step;
-		Genode::Affinity::Location        location;
+		bool                              started        {false};
+		bool                              paused         {false};
+		Genode::Signal_context_capability exception_sigh {};
+		bool                              single_step    {false};
+		Genode::Affinity::Location        location       {};
 	} _parent_state;
 
 public:
 
 	Cpu_thread_component(Genode::Entrypoint &ep, Genode::Capability<Genode::Cpu_thread> cpu_th_cap,
-			bool &phase_restore, Genode::Cpu_session::Name name);
+			Genode::Cpu_session::Name name);
 	~Cpu_thread_component();
 
 	Genode::Capability<Genode::Cpu_thread> parent_cap()   { return _parent_cpu_thread; }

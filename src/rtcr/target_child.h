@@ -66,9 +66,13 @@ private:
 	 */
 	Genode::size_t      _granularity;
 	/**
-	 * Indicates whether the newly created threads shall not be started
+	 * Indicates whether the start of new threads shall be postponed
 	 */
 	bool                _phase_restore;
+	/**
+	 * Pointer to a checkpointed state of the child
+	 */
+	Target_copy        *_copy;
 	/**
 	 * Child's resources
 	 */
@@ -99,7 +103,7 @@ private:
 		 * Constructor
 		 */
 		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-				const char *name, Genode::size_t granularity, bool &phase_restore);
+				const char *name, Genode::size_t granularity);
 		/**
 		 * Destructor
 		 */
@@ -130,6 +134,11 @@ private:
 	 * Chlid object in heap
 	 */
 	Genode::Child                 *_child;
+
+	/**
+	 * Restore state of the child
+	 */
+	void _restore();
 
 public:
 

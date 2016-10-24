@@ -55,7 +55,6 @@ private:
 	 * Connection to parent's Cpu session, usually from core; this class wraps this session
 	 */
 	Genode::Cpu_connection         _parent_cpu;
-	bool                          &_phase_restore;
 	/**
 	 * Parent's session state
 	 */
@@ -85,7 +84,7 @@ public:
 	 */
 	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc,
 			Genode::Entrypoint &ep, Genode::Pd_session_capability parent_pd_cap,
-			bool &phase_restore, const char *name);
+			const char *name);
 
 	/**
 	 * Destructor
@@ -95,10 +94,6 @@ public:
 	Genode::Cpu_session_capability  parent_cap()   { return _parent_cpu.cap(); }
 	Genode::List<Thread_info>      &thread_infos() { return _threads; }
 
-	/**
-	 * Start all threads (for restore; threads were created without using start)
-	 */
-	void start_threads();
 	/**
 	 * Pause all threads
 	 */
