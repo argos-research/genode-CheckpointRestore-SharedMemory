@@ -44,7 +44,7 @@ private:
 	 */
 	Genode::Allocator             &_md_alloc;
 	/**
-	 * Entrypoint to manage itself
+	 * Entrypoint
 	 */
 	Genode::Entrypoint            &_ep;
 	/**

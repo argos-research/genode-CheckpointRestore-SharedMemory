@@ -10,13 +10,13 @@
 /* Genode includes */
 #include <base/env.h>
 #include <base/child.h>
-#include <rom_session/connection.h>
 #include <base/service.h>
 
 /* Rtcr includes */
 #include "intercept/cpu_session_component.h"
 #include "intercept/pd_session_component.h"
 #include "intercept/ram_session_component.h"
+#include "intercept/rom_session_component.h"
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"
 #include "intercept/timer_session.h"
@@ -97,7 +97,7 @@ private:
 		/**
 		 * Parent's Rom session (usually from core)
 		 */
-		Genode::Rom_connection rom;
+		Rom_session_component  rom;
 
 		/**
 		 * Constructor

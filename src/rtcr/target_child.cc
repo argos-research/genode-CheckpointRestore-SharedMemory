@@ -16,17 +16,19 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Gen
 	pd  (env, md_alloc, ep, name),
 	cpu (env, md_alloc, ep, pd.parent_cap(), name),
 	ram (env, md_alloc, ep, name, granularity),
-	rom (env, name)
+	rom (env, md_alloc, ep, name)
 {
 	ep.manage(pd);
 	ep.manage(cpu);
 	ep.manage(ram);
+	ep.manage(rom);
 
 	if(verbose_debug)
 	{
 		Genode::log("Managing PD  session ", pd.cap());
 		Genode::log("Managing CPU session ", cpu.cap());
 		Genode::log("Managing RAM session ", ram.cap());
+		Genode::log("Managing ROM session ", rom.cap());
 	}
 
 
@@ -41,6 +43,7 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Gen
 
 Target_child::Resources::~Resources()
 {
+	ep.dissolve(rom);
 	ep.dissolve(ram);
 	ep.dissolve(cpu);
 	ep.dissolve(pd);
@@ -50,6 +53,7 @@ Target_child::Resources::~Resources()
 		Genode::log("Dissolving PD  session ", pd.cap());
 		Genode::log("Dissolving CPU session ", cpu.cap());
 		Genode::log("Dissolving RAM session ", ram.cap());
+		Genode::log("Dissolving ROM session ", rom.cap());
 	}
 }
 
