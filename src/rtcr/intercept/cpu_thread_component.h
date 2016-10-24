@@ -42,36 +42,28 @@ private:
 	 */
 	Genode::Cpu_session::Name           _name;
 	/**
-	 * Struct to store start parameter in order to postpone the actual start of a thread
-	 *
-	 * This mechanism is used, then a thread is restored: Instead of starting the thread immediately,
-	 * the address space of the component containing this thread is restored
-	 */
-	struct Start_param
-	{
-		Start_param();
-		Genode::addr_t ip;
-		Genode::addr_t sp;
-	} _start_param;
-	/**
 	 * Parent's session state
 	 */
 	struct State_info
 	{
 		State_info();
 		bool                              started;
+		Genode::addr_t                    ip;
+		Genode::addr_t                    sp;
 		bool                              paused;
 		Genode::Signal_context_capability exception_sigh;
 		bool                              single_step;
 		Genode::Affinity::Location        location;
 	} _parent_state;
+
 public:
 
 	Cpu_thread_component(Genode::Entrypoint &ep, Genode::Capability<Genode::Cpu_thread> cpu_th_cap,
 			bool &phase_restore, Genode::Cpu_session::Name name);
 	~Cpu_thread_component();
 
-	Genode::Capability<Genode::Cpu_thread> parent_cap() { return _parent_cpu_thread; }
+	Genode::Capability<Genode::Cpu_thread> parent_cap()   { return _parent_cpu_thread; }
+	State_info                             parent_state() { return _parent_state; }
 
 	/******************************
 	 ** Cpu thread Rpc interface **

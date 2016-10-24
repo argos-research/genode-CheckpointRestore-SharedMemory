@@ -8,15 +8,12 @@
 
 using namespace Rtcr;
 
-Cpu_thread_component::Start_param::Start_param()
-:
-	ip(0),
-	sp(0)
-{ }
 
 Cpu_thread_component::State_info::State_info()
 :
 	started        (false),
+	ip             (0),
+	sp             (0),
 	paused         (false),
 	exception_sigh (),
 	single_step    (false),
@@ -31,7 +28,7 @@ Cpu_thread_component::Cpu_thread_component(Genode::Entrypoint& ep,
 	_parent_cpu_thread (cpu_th_cap),
 	_phase_restore     (phase_restore),
 	_name              (name),
-	_start_param       ()
+	_parent_state      ()
 {
 	_ep.manage(*this);
 	if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _name.string(), "\033[0m>(parent ", _parent_cpu_thread,")");
@@ -59,8 +56,8 @@ void Cpu_thread_component::start(Genode::addr_t ip, Genode::addr_t sp)
 
 	if(_phase_restore)
 	{
-		_start_param.ip = ip;
-		_start_param.sp = sp;
+		_parent_state.ip = ip;
+		_parent_state.sp = sp;
 	}
 	else
 	{
