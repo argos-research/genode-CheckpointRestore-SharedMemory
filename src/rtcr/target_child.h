@@ -11,6 +11,7 @@
 #include <base/env.h>
 #include <base/child.h>
 #include <base/service.h>
+#include <rom_session/client.h>
 
 /* Rtcr includes */
 #include "intercept/cpu_session_component.h"
@@ -188,9 +189,7 @@ public:
 	 ****************************/
 
 	const char *name() const { return _name.string(); }
-
 	Genode::Service *resolve_session_request(const char *service_name, const char *args);
-
 	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
 };
 

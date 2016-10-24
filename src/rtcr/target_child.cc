@@ -109,7 +109,8 @@ void Target_child::start()
 	_phase_restore = false;
 
 	_child = new (_md_alloc) Genode::Child(
-			_resources.rom.dataspace(), Genode::Dataspace_capability(),
+			Genode::Rom_session_client{_resources.rom.parent_cap()}.dataspace(),
+			Genode::Dataspace_capability(),
 			_resources.pd.cap(),  _resources.pd,
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
@@ -126,7 +127,8 @@ void Target_child::start(Target_copy &copy)
 	_copy = &copy;
 
 	_child = new (_md_alloc) Genode::Child(
-			_resources.rom.dataspace(), Genode::Dataspace_capability(),
+			Genode::Rom_session_client{_resources.rom.parent_cap()}.dataspace(),
+			Genode::Dataspace_capability(),
 			_resources.pd.cap(),  _resources.pd,
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
