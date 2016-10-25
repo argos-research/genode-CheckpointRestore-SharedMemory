@@ -10,6 +10,69 @@
 using namespace Rtcr;
 
 
+void Target_copy::_delete_list(Genode::List<Copied_thread_info> &infos)
+{
+	while(Copied_thread_info* info = infos.first())
+	{
+		infos.remove(info);
+		Genode::destroy(_alloc, info);
+	}
+}
+
+
+void Target_copy::_delete_list(Genode::List<Copied_region_info> &infos)
+{
+	while(Copied_region_info* info = infos.first())
+	{
+		infos.remove(info);
+		_env.ram().free(Genode::static_cap_cast<Genode::Ram_dataspace>(info->copy_ds_cap));
+		Genode::destroy(_alloc, info);
+	}
+}
+
+
+void Target_copy::_copy_list(Genode::List<Copied_thread_info> &from_infos,
+		Genode::List<Copied_thread_info> &to_infos)
+{
+	// Exit method, if the list is not empty
+	if(to_infos.first()) return;
+
+	Copied_thread_info *from_info = from_infos.first();
+	while(from_info)
+	{
+		Copied_thread_info *to_info = new (_alloc) Copied_thread_info(from_info->name, from_info->ts);
+		to_infos.insert(to_info);
+
+		from_info = from_info->next();
+	}
+}
+
+
+void Target_copy::_copy_list(Genode::List<Copied_region_info> &from_infos,
+		Genode::List<Copied_region_info> &to_infos)
+{
+	// Exit method, if the list is not empty
+	if(to_infos.first()) return;
+
+	Copied_region_info *from_info = from_infos.first();
+	while(from_info)
+	{
+		// Create new dataspace and copy the contents of the from_info's dataspace
+		Genode::Dataspace_capability new_ds_cap = _env.ram().alloc(from_info->size);
+		_copy_dataspace(from_info->copy_ds_cap, new_ds_cap, from_info->size);
+
+		// Create list element and insert it into to_infos
+		Copied_region_info *to_info = new (_alloc) Copied_region_info(
+				Genode::Dataspace_capability(), new_ds_cap,
+				from_info->rel_addr, from_info->size, from_info->offset, from_info->managed);
+		to_infos.insert(to_info);
+
+		from_info = from_info->next();
+	}
+}
+
+
+
 void Target_copy::_copy_threads()
 {
 	Thread_info *th_info = _child.cpu().thread_infos().first();
@@ -226,17 +289,41 @@ void Target_copy::_copy_dataspace(Genode::Dataspace_capability &source_ds_cap, G
 
 Target_copy::Target_copy(Genode::Env &env, Genode::Allocator &alloc, Target_child &child)
 :
-	_env                         (env),
-	_alloc                       (alloc),
-	_child                       (child),
-	_copy_lock                   (),
-	_copied_threads              (),
-	_copied_cap_coll             (),
-	_copied_address_space_regions(),
-	_copied_stack_regions        (),
-	_copied_linker_regions       ()
+	_env                          (env),
+	_alloc                        (alloc),
+	_child                        (child),
+	_copy_lock                    (),
+	_copied_threads               (),
+	_copied_cap_coll              (),
+	_copied_address_space_regions (),
+	_copied_stack_regions         (),
+	_copied_linker_regions        ()
 { }
 
+
+Target_copy::~Target_copy()
+{
+	_delete_list(_copied_threads);
+	_delete_list(_copied_stack_regions);
+	_delete_list(_copied_linker_regions);
+	_delete_list(_copied_address_space_regions);
+}
+
+Target_copy::Target_copy(Target_copy &other)
+:
+	_env                          (other._env),
+	_alloc                        (other._alloc),
+	_child                        (other._child),
+	_copy_lock                    (),
+	_copied_threads               (),
+	_copied_cap_coll              (),
+	_copied_address_space_regions (),
+	_copied_stack_regions         (),
+	_copied_linker_regions        ()
+{
+	_copy_list(other._copied_threads, _copied_threads);
+	_copy_list(other._copied_address_space_regions, _copied_address_space_regions);
+}
 
 void Target_copy::checkpoint()
 {

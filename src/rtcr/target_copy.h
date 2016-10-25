@@ -16,9 +16,9 @@
 #include "intercept/ram_session_component.h"
 #include "intercept/cpu_session_component.h"
 #include "intercept/pd_session_component.h"
-#include "monitor/copied_region_info.h"
-#include "monitor/copied_thread_info.h"
-#include "monitor/copied_cap_coll.h"
+#include "child_state/copied_region_info.h"
+#include "child_state/copied_thread_info.h"
+#include "child_state/copied_cap_coll.h"
 
 namespace Rtcr {
 	class  Target_copy;
@@ -50,6 +50,33 @@ private:
 	Genode::List<Copied_region_info>  _copied_address_space_regions;
 	Genode::List<Copied_region_info>  _copied_stack_regions;
 	Genode::List<Copied_region_info>  _copied_linker_regions;
+
+	/**
+	 * Deletes all members of the Copied_thread_info list
+	 *
+	 * It is used by primarily by the destructor
+	 */
+	void _delete_list(Genode::List<Copied_thread_info> &infos);
+	/**
+	 * Deletes all members of the Copied_region_info list
+	 *
+	 * It is used by primarily by the destructor
+	 */
+	void _delete_list(Genode::List<Copied_region_info> &infos);
+	/**
+	 * Copy all members of the Copied_thread_info list from_infos to to_infos
+	 *
+	 * It is used by primarily by a constructor
+	 */
+	void _copy_list(Genode::List<Copied_thread_info> &from_infos,
+			Genode::List<Copied_thread_info> &to_infos);
+	/**
+	 * Copy all members of the Copied_region_info list from_infos to to_infos
+	 *
+	 * It is used by primarily by a constructor
+	 */
+	void _copy_list(Genode::List<Copied_region_info> &from_infos,
+			Genode::List<Copied_region_info> &to_infos);
 
 	/**
 	 * Copy the capabilities of a thread
@@ -117,6 +144,8 @@ private:
 
 public:
 	Target_copy(Genode::Env &env, Genode::Allocator &alloc, Target_child &child);
+	~Target_copy();
+	Target_copy(Target_copy &other);
 
 	Genode::List<Copied_thread_info> &copied_threads()               { return _copied_threads;               }
 	Genode::List<Copied_region_info> &copied_address_space_regions() { return _copied_address_space_regions; }
