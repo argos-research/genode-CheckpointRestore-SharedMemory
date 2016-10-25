@@ -11,14 +11,14 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "log_session_info.h"
-#include "rm_session_info.h"
-#include "timer_session_info.h"
-#include "native_capability_info.h"
-#include "ram_dataspace_info.h"
-#include "region_map_info.h"
-#include "signal_context_info.h"
-#include "signal_source_info.h"
+#include "../monitor/log_session_info.h"
+#include "../monitor/rm_session_info.h"
+#include "../monitor/timer_session_info.h"
+#include "../monitor/native_capability_info.h"
+#include "../monitor/ram_dataspace_info.h"
+#include "../monitor/region_map_info.h"
+#include "../monitor/signal_context_info.h"
+#include "../monitor/signal_source_info.h"
 
 
 namespace Rtcr {

@@ -12,7 +12,7 @@
 #include <dataspace/capability.h>
 
 /* Rtcr includes */
-#include "attached_region_info.h"
+#include "../monitor/attached_region_info.h"
 
 namespace Rtcr {
 	struct Copied_region_info;
