@@ -13,18 +13,18 @@
 #include <cpu_session/cpu_session.h>
 
 namespace Rtcr {
-	struct Copied_thread_info;
+	struct Stored_thread_info;
 }
 
 /**
  * Struct which holds a thread capability which belong to the client
  */
-struct Rtcr::Copied_thread_info : Genode::List<Copied_thread_info>::Element
+struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 {
 	Genode::Cpu_session::Name name;
 	Genode::Thread_state ts;
 
-	Copied_thread_info(Genode::Cpu_session::Name name,
+	Stored_thread_info(Genode::Cpu_session::Name name,
 			Genode::addr_t r0, Genode::addr_t r1, Genode::addr_t r2, Genode::addr_t r3, Genode::addr_t r4,
 			Genode::addr_t r5, Genode::addr_t r6, Genode::addr_t r7, Genode::addr_t r8, Genode::addr_t r9,
 			Genode::addr_t r10, Genode::addr_t r11, Genode::addr_t r12, Genode::addr_t sp, Genode::addr_t lr,
@@ -39,17 +39,17 @@ struct Rtcr::Copied_thread_info : Genode::List<Copied_thread_info>::Element
 		ts.sp = sp; ts.lr = lr; ts.sp = sp; ts.cpsr = cpsr; ts.cpu_exception = cpu_exception;
 	}
 
-	Copied_thread_info(Genode::Cpu_session::Name name, Genode::Thread_state &ts)
+	Stored_thread_info(Genode::Cpu_session::Name name, Genode::Thread_state &ts)
 	:
 		name(name),
 		ts(ts)
 	{ }
 
-	Copied_thread_info *find_by_name(const char *name)
+	Stored_thread_info *find_by_name(const char *name)
 	{
 		if(!Genode::strcmp(name, this->name.string()))
 			return this;
-		Copied_thread_info *thread_info = next();
+		Stored_thread_info *thread_info = next();
 		return thread_info ? thread_info->find_by_name(name) : 0;
 	}
 

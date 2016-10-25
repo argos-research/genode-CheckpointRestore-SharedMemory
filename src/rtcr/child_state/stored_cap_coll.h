@@ -22,10 +22,10 @@
 
 
 namespace Rtcr {
-	struct Copied_cap_coll;
+	struct Stored_cap_coll;
 }
 
-struct Rtcr::Copied_cap_coll
+struct Rtcr::Stored_cap_coll
 {
 	/*
 	 * TODO Copy only necessary information instead of keeping shared objects between
@@ -45,7 +45,7 @@ struct Rtcr::Copied_cap_coll
 	Genode::List<Signal_context_info>    signal_context_infos;
 	Genode::List<Signal_source_info>     signal_source_infos;
 
-	Copied_cap_coll()
+	Stored_cap_coll()
 	:
 		log_session_infos    (),
 		rm_session_infos     (),
