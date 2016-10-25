@@ -17,8 +17,8 @@
 #include "intercept/cpu_session_component.h"
 #include "intercept/pd_session_component.h"
 #include "child_state/copied_region_info.h"
-#include "child_state/copied_thread_info.h"
-#include "child_state/copied_cap_coll.h"
+#include "child_state/stored_cap_coll.h"
+#include "child_state/stored_thread_info.h"
 
 namespace Rtcr {
 	class  Target_copy;
@@ -45,8 +45,8 @@ private:
 	Target_child                     &_child;
 
 	Genode::Lock                      _copy_lock;
-	Genode::List<Copied_thread_info>  _copied_threads;
-	Copied_cap_coll                   _copied_cap_coll;
+	Genode::List<Stored_thread_info>  _copied_threads;
+	Stored_cap_coll                   _copied_cap_coll;
 	Genode::List<Copied_region_info>  _copied_address_space_regions;
 	Genode::List<Copied_region_info>  _copied_stack_regions;
 	Genode::List<Copied_region_info>  _copied_linker_regions;
@@ -56,7 +56,7 @@ private:
 	 *
 	 * It is used by primarily by the destructor
 	 */
-	void _delete_list(Genode::List<Copied_thread_info> &infos);
+	void _delete_list(Genode::List<Stored_thread_info> &infos);
 	/**
 	 * Deletes all members of the Copied_region_info list
 	 *
@@ -68,8 +68,8 @@ private:
 	 *
 	 * It is used by primarily by a constructor
 	 */
-	void _copy_list(Genode::List<Copied_thread_info> &from_infos,
-			Genode::List<Copied_thread_info> &to_infos);
+	void _copy_list(Genode::List<Stored_thread_info> &from_infos,
+			Genode::List<Stored_thread_info> &to_infos);
 	/**
 	 * Copy all members of the Copied_region_info list from_infos to to_infos
 	 *
@@ -147,11 +147,11 @@ public:
 	~Target_copy();
 	Target_copy(Target_copy &other);
 
-	Genode::List<Copied_thread_info> &copied_threads()               { return _copied_threads;               }
+	Genode::List<Stored_thread_info> &copied_threads()               { return _copied_threads;               }
 	Genode::List<Copied_region_info> &copied_address_space_regions() { return _copied_address_space_regions; }
 	Genode::List<Copied_region_info> &copied_stack_regions()         { return _copied_stack_regions;         }
 	Genode::List<Copied_region_info> &copied_linker_regions()        { return _copied_linker_regions;        }
-	Copied_cap_coll                  &copied_cap_coll()              { return _copied_cap_coll;              }
+	Stored_cap_coll                  &copied_cap_coll()              { return _copied_cap_coll;              }
 
 	void checkpoint();
 

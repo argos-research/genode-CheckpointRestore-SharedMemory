@@ -9,9 +9,12 @@
 
 using namespace Rtcr;
 
-Target_restorer::Target_restorer(Target_child& child, Target_copy& copy)
+Target_restorer::Target_restorer(Genode::Env &env, Genode::Allocator &alloc, Target_child& child, Target_copy& copy)
 :
-	_child(child), _copy(copy)
+	_env   (env),
+	_alloc (alloc),
+	_child (child),
+	_copy  (copy)
 { }
 
 void Target_restorer::restore()

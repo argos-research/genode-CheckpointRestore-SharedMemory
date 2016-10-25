@@ -30,17 +30,26 @@ private:
 	 */
 	static constexpr bool verbose_debug = restore_verbose_debug;
 
-	Target_child &_child;
-	Target_copy  &_copy;
+	Genode::Env       &_env;
+	Genode::Allocator &_alloc;
+
+	Target_child      &_child;
+	Target_copy       &_copy;
 
 	void _restore_threads();
 	void _restore_capabilities();
 	void _restore_region_maps();
 
+	/**
+	 * \brief Restore Attached_region_infos and their dataspaces in the corresponding region map
+	 *
+	 * First, assign checkpointed dataspaces to child's dataspaces.
+	 * Second, copy content of the
+	 */
 	void _restore_region_map(Genode::List<Attached_region_info> &orig_infos, Genode::List<Copied_region_info> &copy_infos);
 
 public:
-	Target_restorer(Target_child &child, Target_copy &copy);
+	Target_restorer(Genode::Env &env, Genode::Allocator &alloc, Target_child &child, Target_copy &copy);
 	void restore();
 
 };

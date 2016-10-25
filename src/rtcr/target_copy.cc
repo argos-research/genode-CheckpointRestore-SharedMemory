@@ -10,9 +10,9 @@
 using namespace Rtcr;
 
 
-void Target_copy::_delete_list(Genode::List<Copied_thread_info> &infos)
+void Target_copy::_delete_list(Genode::List<Stored_thread_info> &infos)
 {
-	while(Copied_thread_info* info = infos.first())
+	while(Stored_thread_info* info = infos.first())
 	{
 		infos.remove(info);
 		Genode::destroy(_alloc, info);
@@ -31,16 +31,16 @@ void Target_copy::_delete_list(Genode::List<Copied_region_info> &infos)
 }
 
 
-void Target_copy::_copy_list(Genode::List<Copied_thread_info> &from_infos,
-		Genode::List<Copied_thread_info> &to_infos)
+void Target_copy::_copy_list(Genode::List<Stored_thread_info> &from_infos,
+		Genode::List<Stored_thread_info> &to_infos)
 {
 	// Exit method, if the list is not empty
 	if(to_infos.first()) return;
 
-	Copied_thread_info *from_info = from_infos.first();
+	Stored_thread_info *from_info = from_infos.first();
 	while(from_info)
 	{
-		Copied_thread_info *to_info = new (_alloc) Copied_thread_info(from_info->name, from_info->ts);
+		Stored_thread_info *to_info = new (_alloc) Stored_thread_info(from_info->name, from_info->ts);
 		to_infos.insert(to_info);
 
 		from_info = from_info->next();
@@ -81,8 +81,8 @@ void Target_copy::_copy_threads()
 		Genode::Cpu_thread_client thread_client(th_info->cpu_thread.parent_cap());
 		Genode::Thread_state ts = thread_client.state();
 
-		Copied_thread_info *new_cth_info =
-				new (_alloc) Copied_thread_info(th_info->name, ts);
+		Stored_thread_info *new_cth_info =
+				new (_alloc) Stored_thread_info(th_info->name, ts);
 
 		_copied_threads.insert(new_cth_info);
 

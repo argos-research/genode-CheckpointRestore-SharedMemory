@@ -41,9 +41,10 @@ struct Rtcr::Main
 		Target_copy copy { env, md_heap, child };
 		copy.checkpoint();
 
+		Target_copy copy2 { copy };
 
-		Target_child child2 { env, md_heap, parent_services, "sheep_counter", 0 };
-		child2.start(copy);
+		//Target_child child2 { env, md_heap, parent_services, "sheep_counter", 0 };
+		//child2.start(copy);
 
 		Genode::sleep_forever();
 	}
