@@ -24,21 +24,6 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 	Genode::Cpu_session::Name name;
 	Genode::Thread_state ts;
 
-	Stored_thread_info(Genode::Cpu_session::Name name,
-			Genode::addr_t r0, Genode::addr_t r1, Genode::addr_t r2, Genode::addr_t r3, Genode::addr_t r4,
-			Genode::addr_t r5, Genode::addr_t r6, Genode::addr_t r7, Genode::addr_t r8, Genode::addr_t r9,
-			Genode::addr_t r10, Genode::addr_t r11, Genode::addr_t r12, Genode::addr_t sp, Genode::addr_t lr,
-			Genode::addr_t ip, Genode::addr_t cpsr, Genode::addr_t cpu_exception)
-	:
-		name(name),
-		ts()
-	{
-		ts.r0 = r0; ts.r1 = r1; ts.r2 = r2; ts.r3 = r3; ts.r4 = r4;
-		ts.r5 = r5; ts.r6 = r6; ts.r7 = r7; ts.r8 = r8; ts.r9 = r9;
-		ts.r10 = r10; ts.r11 = r11; ts.r12 = r12;
-		ts.sp = sp; ts.lr = lr; ts.sp = sp; ts.cpsr = cpsr; ts.cpu_exception = cpu_exception;
-	}
-
 	Stored_thread_info(Genode::Cpu_session::Name name, Genode::Thread_state &ts)
 	:
 		name(name),

@@ -20,6 +20,9 @@ namespace Rtcr {
 	constexpr bool dd_verbose_debug = false;
 }
 
+/**
+ * Monitors allocated Ram dataspaces
+ */
 struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
 {
 	/**
@@ -78,7 +81,6 @@ struct Rtcr::Managed_region_map_info
 	{ }
 
 };
-
 
 
 /**
