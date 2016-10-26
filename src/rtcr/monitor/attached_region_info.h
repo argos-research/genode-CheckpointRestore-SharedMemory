@@ -26,27 +26,27 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 	/**
 	 * Dataspace capability which is attached
 	 */
-	Genode::Dataspace_capability ds_cap;
+	Genode::Dataspace_capability  ds_cap;
 	/**
 	 * Size of occupied region
 	 */
-	Genode::size_t               size;
+	Genode::size_t                size;
 	/**
 	 * Offset in occupied region
 	 */
-	Genode::off_t                offset;
+	Genode::off_t                 offset;
 	/**
 	 * Address of occupied region
 	 */
-	Genode::addr_t               rel_addr;
+	Genode::addr_t                rel_addr;
 	/**
 	 * Indicates whether occupied region is executable
 	 */
-	bool                         executable;
+	bool                          executable;
 
 
-	Attached_region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size,
-			Genode::off_t offset, Genode::addr_t local_addr, bool executable)
+	Attached_region_info(Genode::Dataspace_capability ds_cap, Genode::size_t size, Genode::off_t offset,
+			Genode::addr_t local_addr, bool executable)
 	:
 		ds_cap(ds_cap), size(size), offset(offset), rel_addr(local_addr), executable(executable)
 	{ }

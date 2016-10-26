@@ -47,7 +47,7 @@ Genode::Capability<Genode::Region_map> Rm_session_component::create(Genode::size
 			new (_md_alloc) Region_map_component(_ep, _md_alloc, parent_cap, "custom");
 
 	// Create list element to where the virtual object is stored
-	Region_map_info *rm_info = new (_md_alloc) Region_map_info(*new_region_map);
+	Region_map_info *rm_info = new (_md_alloc) Region_map_info(*new_region_map, size);
 
 	// Insert list element into list
 	Genode::Lock::Guard lock(_infos_lock);

@@ -98,12 +98,12 @@ public:
 	~Pd_session_component();
 
 	Genode::Pd_session_capability         parent_cap()              { return _parent_pd.cap(); }
-	Region_map_component                 &address_space_component() { return _address_space;   }
-	Region_map_component                 &stack_area_component()    { return _stack_area;      }
-	Region_map_component                 &linker_area_component()   { return _linker_area;     }
-	Genode::List<Signal_source_info>     &signal_source_infos()     { return _ss_infos;        }
-	Genode::List<Signal_context_info>    &signal_context_infos()    { return _sc_infos;        }
-	Genode::List<Native_capability_info> &native_capability_infos() { return _nc_infos;        }
+	Region_map_component&                 address_space_component() { return _address_space;   }
+	Region_map_component&                 stack_area_component()    { return _stack_area;      }
+	Region_map_component&                 linker_area_component()   { return _linker_area;     }
+	Genode::List<Signal_source_info>&     signal_source_infos()     { return _ss_infos;        }
+	Genode::List<Signal_context_info>&    signal_context_infos()    { return _sc_infos;        }
+	Genode::List<Native_capability_info>& native_capability_infos() { return _nc_infos;        }
 
 	/**************************
 	 ** Pd_session interface **
