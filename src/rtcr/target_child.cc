@@ -62,7 +62,7 @@ void Target_child::_restore()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m()");
 
-	if(!_copy)
+	if(!_state_restore)
 	{
 		Genode::log("No valid copy object!");
 		return;
@@ -82,7 +82,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_phase_restore   (false),
-	_copy            (nullptr),
+	_state_restore   (nullptr),
 	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
@@ -119,12 +119,12 @@ void Target_child::start()
 
 }
 
-void Target_child::start(Target_copy &copy)
+void Target_child::start(Target_state &state)
 {
-	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_copy=", &copy,")");
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_state=", &state,")");
 
 	_phase_restore = true;
-	_copy = &copy;
+	_state_restore = &state;
 
 	_child = new (_md_alloc) Genode::Child(
 			Genode::Rom_session_client{_resources.rom.parent_cap()}.dataspace(),

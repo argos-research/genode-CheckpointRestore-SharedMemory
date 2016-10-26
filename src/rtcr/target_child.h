@@ -21,8 +21,7 @@
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"
 #include "intercept/timer_session.h"
-#include "target_copy.h"
-#include "target_restorer.h"
+#include "target_state.h"
 
 namespace Rtcr {
 	class Target_child;
@@ -73,7 +72,7 @@ private:
 	/**
 	 * Pointer to a checkpointed state of the child
 	 */
-	Target_copy        *_copy;
+	Target_state       *_state_restore;
 	/**
 	 * Child's resources
 	 */
@@ -173,7 +172,7 @@ public:
 	/**
 	 * Start child with a checkpointed state
 	 */
-	void start(Target_copy &copy);
+	void start(Target_state &state);
 	/**
 	 * Pause child
 	 */
