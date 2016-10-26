@@ -18,8 +18,31 @@ void Target_state::_delete_list(Genode::List<T> &infos)
 		Genode::destroy(_alloc, info);
 	}
 }
-// Template instanciation
+template void Target_state::_delete_list(Genode::List<Stored_log_session_info> &infos);
 template void Target_state::_delete_list(Genode::List<Stored_thread_info> &infos);
+template void Target_state::_delete_list(Genode::List<Stored_attached_region_info> &infos);
+
+
+void Target_state::_delete_list(Genode::List<Stored_rm_session_info> &infos)
+{
+	while(Stored_rm_session_info* info = infos.first())
+	{
+		infos.remove(info);
+		_delete_list(info->stored_region_map_infos);
+		Genode::destroy(_alloc, info);
+	}
+}
+
+
+void Target_state::_delete_list(Genode::List<Stored_region_map_info> &infos)
+{
+	while(Stored_region_map_info* info = infos.first())
+	{
+		infos.remove(info);
+		_delete_list(info->stored_attached_region_infos);
+		Genode::destroy(_alloc, info);
+	}
+}
 
 
 void Target_state::_delete_list(Genode::List<Stored_dataspace_info> &infos)
@@ -32,32 +55,66 @@ void Target_state::_delete_list(Genode::List<Stored_dataspace_info> &infos)
 	}
 }
 
-
 template <typename T>
 void Target_state::_copy_list(Genode::List<T> &from_infos, Genode::List<T> &to_infos)
 {
-	// Exit, if the list is not empty
-	if(to_infos.first()) return;
+	// Remove list elements from to_infos
+	_delete_list(to_infos);
 
+	// Copy list elements from from_infos
 	T *from_info = from_infos.first();
 	while(from_info)
 	{
-		// Use copy ctor of T
 		T *to_info = new (_alloc) T(*from_info);
 		to_infos.insert(to_info);
-
 		from_info = from_info->next();
 	}
 }
-// Template instanciation
+template void Target_state::_copy_list(Genode::List<Stored_log_session_info> &from_infos, Genode::List<Stored_log_session_info> &to_infos);
 template void Target_state::_copy_list(Genode::List<Stored_thread_info> &from_infos, Genode::List<Stored_thread_info> &to_infos);
+template void Target_state::_copy_list(Genode::List<Stored_attached_region_info> &from_infos, Genode::List<Stored_attached_region_info> &to_infos);
+
+
+void Target_state::_copy_list(Genode::List<Stored_rm_session_info> &from_infos, Genode::List<Stored_rm_session_info> &to_infos)
+{
+	// Remove list elements from to_infos
+	_delete_list(to_infos);
+
+	// Copy list elements from from_infos
+	Stored_rm_session_info *from_info = from_infos.first();
+	while(from_info)
+	{
+		Stored_rm_session_info *to_info = new (_alloc) Stored_rm_session_info(*from_info);
+		_copy_list(from_info->stored_region_map_infos, to_info->stored_region_map_infos);
+		to_infos.insert(to_info);
+		from_info = from_info->next();
+	}
+}
+
+
+void Target_state::_copy_list(Genode::List<Stored_region_map_info> &from_infos, Genode::List<Stored_region_map_info> &to_infos)
+{
+	// Remove list elements from to_infos
+	_delete_list(to_infos);
+
+	// Copy list elements from from_infos
+	Stored_region_map_info *from_info = from_infos.first();
+	while(from_info)
+	{
+		Stored_region_map_info *to_info = new (_alloc) Stored_region_map_info(*from_info);
+		_copy_list(from_info->stored_attached_region_infos, to_info->stored_attached_region_infos);
+		to_infos.insert(to_info);
+		from_info = from_info->next();
+	}
+}
 
 
 void Target_state::_copy_list(Genode::List<Stored_dataspace_info> &from_infos, Genode::List<Stored_dataspace_info> &to_infos)
 {
-	// Exit, if the list is not empty
-	if(to_infos.first()) return;
+	// Remove list elements from to_infos
+	_delete_list(to_infos);
 
+	// Copy list elements from from_infos
 	Stored_dataspace_info *from_info = from_infos.first();
 	while(from_info)
 	{
@@ -65,7 +122,6 @@ void Target_state::_copy_list(Genode::List<Stored_dataspace_info> &from_infos, G
 		Genode::Ram_dataspace_capability new_ds_cap = _env.ram().alloc(from_info->size);
 		_copy_dataspace(from_info->ds_cap, new_ds_cap, from_info->size);
 
-		// Use copy ctor
 		Stored_dataspace_info *to_info = new (_alloc) Stored_dataspace_info(*from_info);
 		to_info->ds_cap = new_ds_cap;
 
