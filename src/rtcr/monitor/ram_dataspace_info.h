@@ -10,7 +10,7 @@
 /* Genode includes */
 #include <util/list.h>
 #include <ram_session/ram_session.h>
-#include <region_map/region_map.h>
+#include <region_map/client.h>
 
 namespace Rtcr {
 	struct Ram_dataspace_info;
