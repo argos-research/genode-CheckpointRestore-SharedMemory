@@ -19,8 +19,11 @@ void Target_state::_delete_list(Genode::List<T> &infos)
 	}
 }
 template void Target_state::_delete_list(Genode::List<Stored_log_session_info> &infos);
+template void Target_state::_delete_list(Genode::List<Stored_timer_session_info> &infos);
 template void Target_state::_delete_list(Genode::List<Stored_thread_info> &infos);
 template void Target_state::_delete_list(Genode::List<Stored_attached_region_info> &infos);
+template void Target_state::_delete_list(Genode::List<Stored_signal_context_info> &infos);
+template void Target_state::_delete_list(Genode::List<Stored_signal_source_info> &infos);
 
 
 void Target_state::_delete_list(Genode::List<Stored_rm_session_info> &infos)
@@ -71,8 +74,11 @@ void Target_state::_copy_list(Genode::List<T> &from_infos, Genode::List<T> &to_i
 	}
 }
 template void Target_state::_copy_list(Genode::List<Stored_log_session_info> &from_infos, Genode::List<Stored_log_session_info> &to_infos);
+template void Target_state::_copy_list(Genode::List<Stored_timer_session_info> &from_infos, Genode::List<Stored_timer_session_info> &to_infos);
 template void Target_state::_copy_list(Genode::List<Stored_thread_info> &from_infos, Genode::List<Stored_thread_info> &to_infos);
 template void Target_state::_copy_list(Genode::List<Stored_attached_region_info> &from_infos, Genode::List<Stored_attached_region_info> &to_infos);
+template void Target_state::_copy_list(Genode::List<Stored_signal_context_info> &from_infos, Genode::List<Stored_signal_context_info> &to_infos);
+template void Target_state::_copy_list(Genode::List<Stored_signal_source_info> &from_infos, Genode::List<Stored_signal_source_info> &to_infos);
 
 
 void Target_state::_copy_list(Genode::List<Stored_rm_session_info> &from_infos, Genode::List<Stored_rm_session_info> &to_infos)
@@ -157,6 +163,8 @@ Target_state::Target_state(Target_state &other)
 	_env   (other._env),
 	_alloc (other._alloc)
 {
+	_copy_list(other._stored_rm_sessions,   _stored_rm_sessions);
+	_copy_list(other._stored_log_sessions,  _stored_log_sessions);
 	_copy_list(other._stored_threads,       _stored_threads);
 	_copy_list(other._stored_address_space, _stored_address_space);
 	_copy_list(other._stored_stack_area,    _stored_stack_area);
@@ -167,6 +175,8 @@ Target_state::Target_state(Target_state &other)
 
 Target_state::~Target_state()
 {
+	_delete_list(_stored_rm_sessions);
+	_delete_list(_stored_log_sessions);
 	_delete_list(_stored_threads);
 	_delete_list(_stored_address_space);
 	_delete_list(_stored_stack_area);

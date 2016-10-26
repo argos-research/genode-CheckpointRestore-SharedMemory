@@ -10,9 +10,6 @@
 /* Genode includes */
 #include <util/list.h>
 
-/* Rtcr includes */
-//#include "../intercept/timer_session.h"
-
 namespace Rtcr {
 	struct Timer_session_info;
 
