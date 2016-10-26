@@ -4,8 +4,8 @@
  * \date   2016-10-26
  */
 
-#ifndef _RTCR_COPIED_LOG_SESSION_INFO__H_
-#define _RTCR_COPIED_LOG_SESSION_INFO__H_
+#ifndef _RTCR_STORED_LOG_SESSION_INFO_H_
+#define _RTCR_STORED_LOG_SESSION_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
@@ -17,9 +17,7 @@ namespace Rtcr {
 	struct Stored_log_session_info;
 }
 
-/**
- * Struct which holds a thread capability which belong to the client
- */
+
 struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::Element
 {
 	/**
@@ -36,13 +34,6 @@ struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::El
 	:
 		kcap(0), badge(0), args("")
 	{ }
-
-	Stored_log_session_info(Log_session_info &info)
-	:
-		kcap  (0),
-		badge (info.session.cap().local_name()),
-		args  (info.args)
-	{}
 
 	Stored_log_session_info *find_by_badge(Genode::uint16_t badge)
 	{
@@ -61,4 +52,4 @@ struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::El
 
 };
 
-#endif /* _RTCR_COPIED_LOG_SESSION_INFO__H_ */
+#endif /* _RTCR_STORED_LOG_SESSION_INFO_H_ */

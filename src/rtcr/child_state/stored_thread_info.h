@@ -4,8 +4,8 @@
  * \date   2016-10-06
  */
 
-#ifndef _RTCR_COPIED_THREAD_INFO_H_
-#define _RTCR_COPIED_THREAD_INFO_H_
+#ifndef _RTCR_STORED_THREAD_INFO_H_
+#define _RTCR_STORED_THREAD_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
@@ -38,22 +38,6 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 		kcap(0), badge(0), started(false), paused(false), exception_sigh_kcap(0),
 		exception_sigh_badge(0), single_step(false), name(), affinity(),
 		weight(), utcb(0), ts()
-	{ }
-
-	Stored_thread_info(Thread_info &info, Genode::Thread_state &ts)
-	:
-		kcap                 (0),
-		badge                (info.cpu_thread.cap().local_name()),
-		started              (info.cpu_thread.parent_state().started),
-		paused               (info.cpu_thread.parent_state().paused),
-		exception_sigh_kcap  (0),
-		exception_sigh_badge (info.cpu_thread.parent_state().exception_sigh.local_name()),
-		single_step          (info.cpu_thread.parent_state().single_step),
-		name                 (info.name),
-		affinity             (info.affinity),
-		weight               (info.weight),
-		utcb                 (info.utcb),
-		ts                   (ts)
 	{ }
 
 	Stored_thread_info *find_by_name(const char *name)
@@ -92,4 +76,4 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 
 };
 
-#endif /* _RTCR_COPIED_THREAD_INFO_H_ */
+#endif /* _RTCR_STORED_THREAD_INFO_H_ */

@@ -42,16 +42,6 @@ struct Rtcr::Stored_dataspace_info : Genode::List<Stored_dataspace_info>::Elemen
 		size(0), cached(Genode::Cache_attribute::UNCACHED), managed(false)
 	{ }
 
-	Stored_dataspace_info(Ram_dataspace_info &info, Genode::Dataspace_capability stored_ds_cap)
-	:
-		kcap    (0),
-		badge   (info.ram_ds_cap.local_name()),
-		ds_cap  (stored_ds_cap),
-		size    (info.size),
-		cached  (info.cached),
-		managed (info.mrm_info ? true : false)
-	{ }
-
 	Stored_dataspace_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

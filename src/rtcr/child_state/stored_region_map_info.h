@@ -1,0 +1,67 @@
+/*
+ * \brief  Structure for storing Region map information
+ * \author Denis Huber
+ * \date   2016-10-26
+ */
+
+#ifndef _RTCR_STORED_REGION_MAP_INFO_H_
+#define _RTCR_STORED_REGION_MAP_INFO_H_
+
+/* Genode includes */
+#include <util/list.h>
+
+/* Rtcr includes */
+#include "../monitor/region_map_info.h"
+
+namespace Rtcr {
+	struct Stored_region_map_info;
+
+	// Forward declaration
+	struct Stored_attached_region_info;
+}
+
+
+struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Element
+{
+	/**
+	 * Child's kcap (kernel capability selector)
+	 */
+	Genode::addr_t    kcap;
+	/**
+	 * Genode's system-global capability identifier
+	 */
+	Genode::uint16_t  badge;
+	Genode::size_t    size;
+	Genode::uint16_t  fault_handler_badge;
+	Genode::List<Stored_attached_region_info> stored_attached_region_infos;
+
+	Stored_region_map_info()
+	:
+		kcap(0), badge(0), size(0), fault_handler_badge(0), stored_attached_region_infos()
+	{ }
+
+	Stored_region_map_info *find_by_badge(Genode::uint16_t badge)
+	{
+		if(badge == this->badge)
+			return this;
+		Stored_region_map_info *info = next();
+		return info ? info->find_by_badge(badge) : 0;
+	}
+
+	/**
+	 * Indicates whether this struct has a list of products
+	 *
+	 * It is used by e.g.  Target_state::_delete_list
+	 */
+	static constexpr bool has_products() { return true; }
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "<", Hex(kcap), ",", badge, "> size=", size);
+	}
+
+};
+
+#endif /* _RTCR_STORED_REGION_MAP_INFO_H_ */

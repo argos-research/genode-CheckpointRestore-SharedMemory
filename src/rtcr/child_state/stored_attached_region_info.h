@@ -15,10 +15,10 @@
 
 
 namespace Rtcr {
-	struct Stored_region_info;
+	struct Stored_attached_region_info;
 }
 
-struct Rtcr::Stored_region_info : Genode::List<Stored_region_info>::Element
+struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_info>::Element
 {
 	/**
 	 * Identifier of the stored dataspace
@@ -29,25 +29,16 @@ struct Rtcr::Stored_region_info : Genode::List<Stored_region_info>::Element
 	Genode::addr_t   rel_addr;
 	bool             executable;
 
-	Stored_region_info()
+	Stored_attached_region_info()
 	:
 		badge(0), size(0), offset(0), rel_addr(0), executable(false)
 	{ }
 
-	Stored_region_info(Attached_region_info &info)
-	:
-		badge      (info.ds_cap.local_name()),
-		size       (info.size),
-		offset     (info.offset),
-		rel_addr   (info.rel_addr),
-		executable (info.executable)
-	{}
-
-	Stored_region_info *find_by_badge(Genode::uint16_t badge)
+	Stored_attached_region_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)
 			return this;
-		Stored_region_info *info = next();
+		Stored_attached_region_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
 	}
 
