@@ -25,10 +25,16 @@
 
 namespace Rtcr {
 	class  Target_state;
+
+	// Forward declaration
+	class Checkpointer;
 }
 
 class Rtcr::Target_state
 {
+	friend class Checkpointer;
+	friend class Restorer;
+
 private:
 	Genode::Env       &_env;
 	Genode::Allocator &_alloc;
