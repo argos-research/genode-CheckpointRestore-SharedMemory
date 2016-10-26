@@ -1,53 +1,76 @@
 /*
- * \brief  Storing RAM dataspaces
+ * \brief  Storing dataspaces
  * \author Denis Huber
  * \date   2016-10-25
  */
 
-#ifndef _RTCR_STORED_RAM_DS_INFO_COMPONENT_H_
-#define _RTCR_STORED_RAM_DS_INFO_COMPONENT_H_
+#ifndef _RTCR_STORED_DATASPACE_INFO_H_
+#define _RTCR_STORED_DATASPACE_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../monitor/ram_dataspace_info.h"
+
 namespace Rtcr {
-	struct Stored_ram_ds_info;
+	struct Stored_dataspace_info;
 }
 
 
-struct Rtcr::Stored_ram_ds_info : Genode::List<Stored_ram_ds_info>::Element
+struct Rtcr::Stored_dataspace_info : Genode::List<Stored_dataspace_info>::Element
 {
 	/**
 	 * Child's kcap (kernel capability selector)
 	 */
-	Genode::addr_t          kcap;
+	Genode::addr_t               kcap;
 	/**
 	 * Genode's system-global capability identifier
 	 */
-	Genode::uint16_t        badge;
-	// TODO include stored state of ram dataspace!
-	Genode::size_t          size;
-	Genode::Cache_attribute cached;
-	bool                    managed;
+	Genode::uint16_t             badge;
+	/**
+	 * Content of dataspace
+	 */
+	Genode::Dataspace_capability ds_cap;
+	Genode::size_t               size;
+	Genode::Cache_attribute      cached;
+	bool                         managed;
 
-	Stored_ram_ds_info(Genode::Ram_dataspace_capability ram_ds_cap, Genode::size_t size,
-			Genode::Cache_attribute cached, bool managed)
+	Stored_dataspace_info()
 	:
-		kcap    (0),
-		badge   (ram_ds_cap.local_name()),
-		size    (size),
-		cached  (cached),
-		managed (managed)
+		kcap(0), badge(0), ds_cap(Genode::Dataspace_capability()),
+		size(0), cached(Genode::Cache_attribute::UNCACHED), managed(false)
 	{ }
 
-	Stored_ram_ds_info *find_by_badge(Genode::uint16_t badge)
+	Stored_dataspace_info(Ram_dataspace_info &info, Genode::Dataspace_capability stored_ds_cap)
+	:
+		kcap    (0),
+		badge   (info.ram_ds_cap.local_name()),
+		ds_cap  (stored_ds_cap),
+		size    (info.size),
+		cached  (info.cached),
+		managed (info.mrm_info ? true : false)
+	{ }
+
+	Stored_dataspace_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)
 			return this;
-		Stored_ram_ds_info *info = next();
+		Stored_dataspace_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
+	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "<", Hex(kcap), ",", badge, "> ",
+				ds_cap,
+				" size=", size,
+				" cached=", static_cast<unsigned>(cached),
+				" man=", managed?"y":"n");
 	}
 };
 
 
-#endif /* _RTCR_STORED_RAM_DS_INFO_COMPONENT_H_ */
+#endif /* _RTCR_STORED_DATASPACE_INFO_H_ */

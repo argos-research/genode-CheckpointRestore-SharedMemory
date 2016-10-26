@@ -4,12 +4,14 @@
  * \date   2016-10-25
  */
 
-#ifndef _RTCR_STORED_REGION_INFO_COMPONENT_H_
-#define _RTCR_STORED_REGION_INFO_COMPONENT_H_
+#ifndef _RTCR_STORED_REGION_INFO_H_
+#define _RTCR_STORED_REGION_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
-#include <dataspace/capability.h>
+
+/* Rtcr includes */
+#include "../monitor/attached_region_info.h"
 
 
 namespace Rtcr {
@@ -18,43 +20,48 @@ namespace Rtcr {
 
 struct Rtcr::Stored_region_info : Genode::List<Stored_region_info>::Element
 {
-	Genode::Dataspace_capability ds_cap;
-	Genode::addr_t               rel_addr;
-	Genode::size_t               size;
-	Genode::off_t                offset;
-	bool                         managed;
+	/**
+	 * Identifier of the stored dataspace
+	 */
+	Genode::uint16_t badge;
+	Genode::size_t   size;
+	Genode::off_t    offset;
+	Genode::addr_t   rel_addr;
+	bool             executable;
 
-	Stored_region_info(Genode::Dataspace_capability ds_cap,
-			Genode::addr_t rel_addr,
-			Genode::size_t size,
-			Genode::off_t offset,
-			bool managed)
+	Stored_region_info()
 	:
-		ds_cap   (ds_cap),
-		rel_addr (rel_addr),
-		size     (size),
-		offset   (offset),
-		managed  (managed)
+		badge(0), size(0), offset(0), rel_addr(0), executable(false)
 	{ }
 
-	Stored_region_info *find_by_ds_cap(Genode::Dataspace_capability cap)
+	Stored_region_info(Attached_region_info &info)
+	:
+		badge      (info.ds_cap.local_name()),
+		size       (info.size),
+		offset     (info.offset),
+		rel_addr   (info.rel_addr),
+		executable (info.executable)
+	{}
+
+	Stored_region_info *find_by_badge(Genode::uint16_t badge)
 	{
-		if(cap == ds_cap)
+		if(badge == this->badge)
 			return this;
 		Stored_region_info *info = next();
-		return info ? info->find_by_ds_cap(cap) : 0;
+		return info ? info->find_by_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, ds_cap);
-		Genode::print(output, " [");
-		Genode::print(output, Hex(rel_addr, Hex::PREFIX, Hex::PAD));
-		Genode::print(output, ", ");
-		Genode::print(output, Hex(rel_addr + size, Hex::PREFIX, Hex::PAD));
-		Genode::print(output, ")");
+		Genode::print(output, "<ref=", badge, ">", "\n",
+				" [",
+				Hex(rel_addr, Hex::PREFIX, Hex::PAD),
+				", ",
+				Hex(rel_addr + size, Hex::PREFIX, Hex::PAD),
+				") ",
+				" exec=", executable?"y":"n");
 	}
 
 };

@@ -1,41 +1,75 @@
 /*
- * \brief  Structure for copying thread information
+ * \brief  Structure for storing thread information
  * \author Denis Huber
  * \date   2016-10-06
  */
 
-#ifndef _RTCR_COPIED_THREAD_INFO_COMPONENT_H_
-#define _RTCR_COPIED_THREAD_INFO_COMPONENT_H_
+#ifndef _RTCR_COPIED_THREAD_INFO_H_
+#define _RTCR_COPIED_THREAD_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
-#include <thread/capability.h>
-#include <cpu_session/cpu_session.h>
+
+/* Rtcr includes */
+#include "../monitor/thread_info.h"
 
 namespace Rtcr {
 	struct Stored_thread_info;
 }
 
-/**
- * Struct which holds a thread capability which belong to the client
- */
+
 struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 {
-	Genode::Cpu_session::Name name;
-	Genode::Thread_state ts;
+	Genode::addr_t              kcap;
+	Genode::uint16_t            badge;
+	bool                        started;
+	bool                        paused;
+	Genode::addr_t              exception_sigh_kcap;
+	Genode::uint16_t            exception_sigh_badge;
+	bool                        single_step;
+	Genode::Cpu_session::Name   name;
+	Genode::Affinity::Location  affinity;
+	Genode::Cpu_session::Weight weight;
+	Genode::addr_t              utcb;
+	Genode::Thread_state        ts;
 
-	Stored_thread_info(Genode::Cpu_session::Name name, Genode::Thread_state &ts)
+	Stored_thread_info()
 	:
-		name(name),
-		ts(ts)
+		kcap(0), badge(0), started(false), paused(false), exception_sigh_kcap(0),
+		exception_sigh_badge(0), single_step(false), name(), affinity(),
+		weight(), utcb(0), ts()
+	{ }
+
+	Stored_thread_info(Thread_info &info, Genode::Thread_state &ts)
+	:
+		kcap                 (0),
+		badge                (info.cpu_thread.cap().local_name()),
+		started              (info.cpu_thread.parent_state().started),
+		paused               (info.cpu_thread.parent_state().paused),
+		exception_sigh_kcap  (0),
+		exception_sigh_badge (info.cpu_thread.parent_state().exception_sigh.local_name()),
+		single_step          (info.cpu_thread.parent_state().single_step),
+		name                 (info.name),
+		affinity             (info.affinity),
+		weight               (info.weight),
+		utcb                 (info.utcb),
+		ts                   (ts)
 	{ }
 
 	Stored_thread_info *find_by_name(const char *name)
 	{
 		if(!Genode::strcmp(name, this->name.string()))
 			return this;
-		Stored_thread_info *thread_info = next();
-		return thread_info ? thread_info->find_by_name(name) : 0;
+		Stored_thread_info *info = next();
+		return info ? info->find_by_name(name) : 0;
+	}
+
+	Stored_thread_info *find_by_badge(Genode::uint16_t badge)
+	{
+		if(badge == this->badge)
+			return this;
+		Stored_thread_info *info = next();
+		return info ? info->find_by_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const
@@ -58,4 +92,4 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 
 };
 
-#endif /* _RTCR_COPIED_THREAD_INFO_COMPONENT_H_ */
+#endif /* _RTCR_COPIED_THREAD_INFO_H_ */
