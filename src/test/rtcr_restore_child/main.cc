@@ -13,7 +13,7 @@
 
 /* Rtcr includes */
 #include "../../rtcr/target_child.h"
-#include "../../rtcr/target_copy.h"
+#include "../../rtcr/target_state.h"
 
 namespace Rtcr {
 	struct Main;
@@ -22,9 +22,9 @@ namespace Rtcr {
 struct Rtcr::Main
 {
 	enum { ROOT_STACK_SIZE = 16*1024 };
-	Genode::Env             &env;
-	Genode::Heap             md_heap         { env.ram(), env.rm() };
-	Genode::Service_registry parent_services { };
+	Genode::Env              &env;
+	Genode::Heap              heap         { env.ram(), env.rm() };
+	Genode::Service_registry  parent_services { };
 
 	Main(Genode::Env &env_) : env(env_)
 	{
@@ -32,20 +32,24 @@ struct Rtcr::Main
 
 		Timer::Connection timer { env };
 
-		Target_child child { env, md_heap, parent_services, "sheep_counter", 0 };
+		Target_child child { env, heap, parent_services, "sheep_counter", 0 };
 		child.start();
 
 		timer.msleep(3000);
 
 		child.pause();
-		Target_copy copy { env, md_heap, child };
-		copy.checkpoint();
+		{
+			log("Creating Target_state through standard ctor");
+			Target_state ts1(env, heap);
+			log("Creating Target_state through copy ctor");
+			Target_state ts2(ts1);
+			log("Creating Target_state through assignment (= copy ctor)");
+			Target_state ts3 = ts2;
+			log("Destructing Target_states");
+		}
 
-		Target_copy copy2 { copy };
 
-		//Target_child child2 { env, md_heap, parent_services, "sheep_counter", 0 };
-		//child2.start(copy);
-
+		log("The End");
 		Genode::sleep_forever();
 	}
 };
