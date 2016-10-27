@@ -137,9 +137,7 @@ Rm_root::Rm_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoi
 
 Rm_root::~Rm_root()
 {
-	Rm_session_info *info = nullptr;
-
-	while((info = _rms_infos.first()))
+	while(Rm_session_info *info = _rms_infos.first())
 	{
 		_rms_infos.remove(info);
 		Genode::destroy(_md_alloc, info);
