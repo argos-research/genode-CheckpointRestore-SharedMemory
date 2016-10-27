@@ -24,11 +24,13 @@
 #include "child_state/stored_signal_source_info.h"
 
 namespace Rtcr {
-	class  Target_state;
+	class Target_state;
 
 	// Forward declaration
 	class Checkpointer;
+	class Restorer;
 }
+
 
 class Rtcr::Target_state
 {

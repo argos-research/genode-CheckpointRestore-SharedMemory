@@ -14,6 +14,7 @@
 /* Rtcr includes */
 #include "../../rtcr/target_child.h"
 #include "../../rtcr/target_state.h"
+#include "../../rtcr/checkpointer.h"
 
 namespace Rtcr {
 	struct Main;
@@ -38,15 +39,8 @@ struct Rtcr::Main
 		timer.msleep(3000);
 
 		child.pause();
-		{
-			log("Creating Target_state through standard ctor");
-			Target_state ts1(env, heap);
-			log("Creating Target_state through copy ctor");
-			Target_state ts2(ts1);
-			log("Creating Target_state through assignment (= copy ctor)");
-			Target_state ts3 = ts2;
-			log("Destructing Target_states");
-		}
+		Target_state ts(env, heap);
+		Checkpointer ckpt(child, ts);
 
 
 		log("The End");

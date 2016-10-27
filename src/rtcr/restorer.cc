@@ -5,5 +5,6 @@
  */
 
 #include "restorer.h"
+#include "target_child.h"
 
 using namespace Rtcr;

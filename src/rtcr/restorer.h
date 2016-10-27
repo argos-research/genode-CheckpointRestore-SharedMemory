@@ -11,11 +11,21 @@
 
 namespace Rtcr {
 	class Restorer;
+
+	// Forward declaration
+	class Target_child;
 }
 
 class Rtcr::Restorer
 {
+private:
+	Target_child &_child;
+	Target_state &_state;
 
+public:
+	Restorer(Target_child &child, Target_state &state);
+
+	void restore();
 };
 
 #endif /* _RTCR_RESTORER_H_ */
