@@ -26,18 +26,20 @@ struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Elem
 	/**
 	 * Child's kcap (kernel capability selector)
 	 */
-	Genode::addr_t    kcap;
+	Genode::addr_t   kcap;
 	/**
 	 * Genode's system-global capability identifier
 	 */
-	Genode::uint16_t  badge;
-	Genode::size_t    size;
-	Genode::uint16_t  fault_handler_badge;
+	Genode::uint16_t badge;
+	Genode::size_t   size;
+	Genode::uint16_t fault_handler_badge;
+	Genode::uint16_t dataspace_badge;
 	Genode::List<Stored_attached_region_info> stored_attached_region_infos;
 
 	Stored_region_map_info()
 	:
-		kcap(0), badge(0), size(0), fault_handler_badge(0), stored_attached_region_infos()
+		kcap(0), badge(0), size(0), fault_handler_badge(0), dataspace_badge(0),
+		stored_attached_region_infos()
 	{ }
 
 	Stored_region_map_info *find_by_badge(Genode::uint16_t badge)

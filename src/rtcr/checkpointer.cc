@@ -8,29 +8,138 @@
 
 using namespace Rtcr;
 
-void Checkpointer::_checkpoint_rm_sessions()
+
+Genode::List<Stored_rm_session_info> Checkpointer::_checkpoint_state(Rm_root &rm_root)
 {
-	Rm_root *rm_root = _child.rm_root();
-	if(!rm_root) return;
+	Genode::List<Stored_rm_session_info> state_infos;
 
-	Genode::List<Rm_session_info> &child_infos = rm_root->rms_infos();
-	Genode::List<Stored_rm_session_info> &state_infos = _state._stored_rm_sessions;
-
-	Rm_session_info *child_info = child_infos.first();
+	Rm_session_info *child_info = rm_root.rms_infos().first();
 	while(child_info)
 	{
 		Stored_rm_session_info *state_info = new (_state._alloc) Stored_rm_session_info();
 
 		state_info->badge = child_info->session.cap().local_name();
-		state_info->kcap  = _capability_map_infos.first()->find_by_badge(state_info->badge);
+		state_info->kcap  = _capability_map_infos.first()->find_by_badge(state_info->badge)->kcap;
 		state_info->args  = child_info->args;
-
+		state_info->stored_region_map_infos = _checkpoint_state(child_info->session);
 
 		state_infos.insert(state_info);
 
 		child_info = child_info->next();
 	}
+
+	return state_infos;
 }
+
+
+Genode::List<Stored_region_map_info> Checkpointer::_checkpoint_state(Rm_session_component &rm_session_comp)
+{
+	Genode::List<Stored_region_map_info> state_infos;
+
+	Region_map_info *child_info = rm_session_comp.region_map_infos().first();
+	while(child_info)
+	{
+		Stored_region_map_info *state_info = new (_state._alloc) Stored_region_map_info();
+
+		state_info->badge = child_info->region_map.cap().local_name();
+		state_info->kcap  = _capability_map_infos.first()->find_by_badge(state_info->badge)->kcap;
+		state_info->size  = child_info->size;
+		state_info->fault_handler_badge = child_info->region_map.parent_state().fault_handler.local_name();
+		state_info->dataspace_badge = Genode::Region_map_client(child_info->region_map.parent_cap()).dataspace().local_name();
+		state_info->stored_attached_region_infos = _checkpoint_state(child_info->region_map);
+
+		child_info = child_info->next();
+	}
+
+	return state_infos;
+}
+
+
+Genode::List<Stored_attached_region_info> Checkpointer::_checkpoint_state(Region_map_component &region_map_comp)
+{
+	Genode::List<Stored_attached_region_info> state_infos;
+
+	Attached_region_info *child_info = region_map_comp.attached_regions().first();
+	while(child_info)
+	{
+		Stored_attached_region_info *state_info = new (_state._alloc) Stored_attached_region_info();
+
+		state_info->badge      = child_info->ds_cap.local_name();
+		state_info->size       = child_info->size;
+		state_info->offset     = child_info->offset;
+		state_info->rel_addr   = child_info->rel_addr;
+		state_info->executable = child_info->executable;
+
+		child_info = child_info->next();
+	}
+
+	return state_infos;
+}
+
+
+Genode::List<Stored_log_session_info> Checkpointer::_checkpoint_state(Log_root &log_root)
+{
+	Genode::List<Stored_log_session_info> state_infos;
+
+	Log_session_info *child_info = log_root.session_infos().first();
+	while(child_info)
+	{
+		Stored_log_session_info *state_info = new (_state._alloc) Stored_log_session_info();
+
+		state_info->badge = child_info->session.cap().local_name();
+		state_info->kcap  = _capability_map_infos.first()->find_by_badge(state_info->badge)->kcap;
+		state_info->args  = child_info->args;
+
+		child_info = child_info->next();
+	}
+
+	return state_infos;
+}
+
+
+Genode::List<Stored_timer_session_info> Checkpointer::_checkpoint_state(Timer_root &timer_root)
+{
+	Genode::List<Stored_log_session_info> state_infos;
+
+	Timer_session_info *child_info = timer_root.session_infos().first();
+	while(child_info)
+	{
+		Stored_timer_session_info *state_info = new (_state._alloc) Stored_timer_session_info();
+
+		state_info->badge      = child_info->session.cap().local_name();
+		state_info->kcap       = _capability_map_infos.first()->find_by_badge(state_info->badge)->kcap;
+		state_info->args       = child_info->args;
+		state_info->sigh_badge = child_info->session.parent_state().sigh.local_name();
+		state_info->timeout    = child_info->session.parent_state().timeout;
+		state_info->periodic   = child_info->session.parent_state().periodic;
+
+		child_info = child_info->next();
+	}
+
+	return state_infos;
+}
+
+
+Genode::List<Stored_signal_context_info> Checkpointer::_checkpoint_state(Pd_session_component &pd_session_comp)
+{
+	Genode::List<Stored_signal_context_info> state_infos;
+
+	Signal_context_info *child_info = pd_session_comp.signal_context_infos().first();
+	while(child_info)
+	{
+		Stored_signal_context_info *state_info = new (_state._alloc) Stored_signal_context_info();
+
+		state_info->badge = child_info->sc_cap.local_name();
+		state_info->kcap  = _capability_map_infos.first()->find_by_badge(state_info->badge)->kcap;
+		state_info->signal_source_badge = child_info->ss_cap.local_name();
+		state_info->imprint = child_info->imprint;
+
+		child_info = child_info->next();
+	}
+
+	return state_infos;
+}
+
 
 Checkpointer::Checkpointer(Target_child &child, Target_state &state)
 :
@@ -39,5 +148,14 @@ Checkpointer::Checkpointer(Target_child &child, Target_state &state)
 
 void Checkpointer::checkpoint()
 {
-	_checkpoint_rm_sessions();
+	Rm_root *rm_root = _child.rm_root();
+	if(rm_root) _state._stored_rm_sessions = _checkpoint_state(*rm_root);
+
+	Log_root *log_root = _child.log_root();
+	if(log_root) _state._stored_log_sessions = _checkpoint_state(*log_root);
+
+	Timer_root *timer_root = _child.timer_root();
+	if(timer_root) _state._stored_timer_sessions = _checkpoint_state(*timer_root);
+
+	_state._stored_threads = _checkpoint_state(_child.cpu());
 }

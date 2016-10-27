@@ -45,9 +45,9 @@ private:
 	Genode::List<Stored_log_session_info>    _stored_log_sessions;
 	Genode::List<Stored_timer_session_info>  _stored_timer_sessions;
 	Genode::List<Stored_thread_info>         _stored_threads;
-	Genode::List<Stored_region_map_info>     _stored_address_space;
-	Genode::List<Stored_region_map_info>     _stored_stack_area;
-	Genode::List<Stored_region_map_info>     _stored_linker_area;
+	Stored_region_map_info                   _stored_address_space;
+	Stored_region_map_info                   _stored_stack_area;
+	Stored_region_map_info                   _stored_linker_area;
 	Genode::List<Stored_dataspace_info>      _stored_dataspaces;
 	Genode::List<Stored_signal_context_info> _stored_signal_contexts;
 	Genode::List<Stored_signal_source_info>  _stored_signal_sources;
@@ -59,13 +59,13 @@ private:
 	void _delete_list(Genode::List<Stored_dataspace_info> &infos);
 
 	template <typename T>
-	void _copy_list(Genode::List<T> &from_infos, Genode::List<T> &to_infos);
-	void _copy_list(Genode::List<Stored_rm_session_info> &from_infos, Genode::List<Stored_rm_session_info> &to_infos);
-	void _copy_list(Genode::List<Stored_region_map_info> &from_infos, Genode::List<Stored_region_map_info> &to_infos);
-	void _copy_list(Genode::List<Stored_dataspace_info> &from_infos, Genode::List<Stored_dataspace_info> &to_infos);
+	Genode::List<T> _copy_list(Genode::List<T> &from_infos);
+	Genode::List<Stored_rm_session_info> _copy_list(Genode::List<Stored_rm_session_info> &from_infos);
+	Genode::List<Stored_region_map_info> _copy_list(Genode::List<Stored_region_map_info> &from_infos);
+	Genode::List<Stored_dataspace_info>  _copy_list(Genode::List<Stored_dataspace_info>  &from_infos);
 
-	void _copy_dataspace(Genode::Dataspace_capability source_ds_cap, Genode::Dataspace_capability dest_ds_cap,
-			Genode::size_t size, Genode::off_t dest_offset = 0);
+	Genode::Dataspace_capability _copy_dataspace(Genode::Dataspace_capability source_ds_cap, Genode::size_t size,
+			Genode::off_t dest_offset = 0);
 
 public:
 	Target_state(Genode::Env &env, Genode::Allocator &alloc);

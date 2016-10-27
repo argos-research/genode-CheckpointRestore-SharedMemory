@@ -61,6 +61,8 @@ public:
 	Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *args);
 	~Timer_session_component();
 
+	State_info &parent_state() { return _parent_state; }
+
 	/************************************
 	 ** Timer session Rpc interface **
 	 ************************************/

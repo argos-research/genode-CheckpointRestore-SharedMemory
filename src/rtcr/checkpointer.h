@@ -9,9 +9,19 @@
 
 /* Genode includes */
 #include <util/list.h>
+#include <region_map/client.h>
 
 /* Rtcr includes */
 #include "target_state.h"
+#include "target_child.h"
+#include "intercept/rm_session.h"
+#include "intercept/region_map_component.h"
+#include "intercept/pd_session_component.h"
+#include "intercept/cpu_session_component.h"
+#include "intercept/ram_session_component.h"
+#include "intercept/rm_session.h"
+#include "intercept/log_session.h"
+#include "intercept/timer_session.h"
 
 namespace Rtcr {
 	class Checkpointer;
@@ -56,11 +66,22 @@ private:
 	static constexpr bool verbose_debug = checkpointer_verbose_debug;
 	Target_child &_child;
 	Target_state &_state;
-
 	Genode::List<Capability_map_info> _capability_map_infos;
 
-	void _checkpoint_rm_sessions();
-	void _checkpoint_list(Genode::List<Rm_session_info> &child_infos, Genode::List<Stored_rm_session_info> &state_infos);
+	Genode::List<Stored_rm_session_info>      _checkpoint_state(Rm_root &rm_root);
+	Genode::List<Stored_region_map_info>      _checkpoint_state(Rm_session_component &rm_session_comp);
+	Genode::List<Stored_attached_region_info> _checkpoint_state(Region_map_component &region_map_comp);
+	Genode::List<Stored_log_session_info>     _checkpoint_state(Log_root &log_root);
+	Genode::List<Stored_timer_session_info>   _checkpoint_state(Timer_root &timer_root);
+	Genode::List<Stored_thread_info>          _checkpoint_state(Cpu_session_component &cpu_session_comp);
+	Genode::List<Stored_signal_context_info>  _checkpoint_state(Pd_session_component &pd_session_comp);
+	Genode::List<Stored_signal_source_info>   _checkpoint_state(Pd_session_component &pd_session_comp);
+
+	Genode::List<Stored_dataspace_info> _checkpoint_dataspaces(Ram_session_component &ram_session_comp,
+			Genode::List<Attached_region_info> &address_space);
+
+	Stored_region_map_info _checkpoint_region_map(Region_map_component &region_map_comp);
+
 
 public:
 	Checkpointer(Target_child &child, Target_state &state);
