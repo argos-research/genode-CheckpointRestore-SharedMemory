@@ -58,20 +58,6 @@ Target_child::Resources::~Resources()
 }
 
 
-void Target_child::_restore()
-{
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m()");
-
-	if(!_state_restore)
-	{
-		Genode::log("No valid copy object!");
-		return;
-	}
-
-
-}
-
-
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 		Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
 :
@@ -81,14 +67,16 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_resources_ep    (_env, 16*1024, "resources ep"),
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
-	_phase_restore   (false),
-	_state_restore   (nullptr),
+	_restorer        (nullptr),
 	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
 	_local_services  (),
 	_child_services  (),
+	_rm_root         (nullptr),
+	_log_root        (nullptr),
+	_timer_root      (nullptr),
 	_child           (nullptr)
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
@@ -106,8 +94,6 @@ void Target_child::start()
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
 
-	_phase_restore = false;
-
 	_child = new (_md_alloc) Genode::Child(
 			Genode::Rom_session_client{_resources.rom.parent_cap()}.dataspace(),
 			Genode::Dataspace_capability(),
@@ -119,12 +105,11 @@ void Target_child::start()
 
 }
 
-void Target_child::start(Target_state &state)
+void Target_child::start(Restorer &restorer)
 {
-	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_state=", &state,")");
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_state=", &restorer,")");
 
-	_phase_restore = true;
-	_state_restore = &state;
+	_restorer = &restorer;
 
 	_child = new (_md_alloc) Genode::Child(
 			Genode::Rom_session_client{_resources.rom.parent_cap()}.dataspace(),
@@ -142,11 +127,11 @@ Genode::Service *Target_child::resolve_session_request(const char *service_name,
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", args, ")");
 
 	// Restoration hook
-	if(!Genode::strcmp(service_name, "LOG") && _phase_restore)
+	if(!Genode::strcmp(service_name, "LOG") && _restorer)
 	{
-		_restore();
+		_restorer->restore();
 
-		_phase_restore = false;
+		_restorer = nullptr;
 	}
 
 	// TODO Support grandchildren: PD, CPU, and RAM session has also to be provided to them
@@ -171,27 +156,27 @@ Genode::Service *Target_child::resolve_session_request(const char *service_name,
 	// Intercept these sessions
 	if(!Genode::strcmp(service_name, "RM"))
 	{
-		Rm_root *root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
-		service = new (_md_alloc) Genode::Local_service(service_name, root);
+		_rm_root = new (_md_alloc) Rm_root(_env, _md_alloc, _resources_ep);
+		service = new (_md_alloc) Genode::Local_service(service_name, _rm_root);
 		_local_services.insert(service);
 		if(verbose_debug) Genode::log("  inserted service into local_services");
 	}
 	else if(!Genode::strcmp(service_name, "LOG"))
 	{
-		Log_root *root = new (_md_alloc) Log_root(_env, _md_alloc, _resources_ep);
-		service = new (_md_alloc) Genode::Local_service(service_name, root);
+		_log_root = new (_md_alloc) Log_root(_env, _md_alloc, _resources_ep);
+		service = new (_md_alloc) Genode::Local_service(service_name, _log_root);
 		_local_services.insert(service);
 		if(verbose_debug) Genode::log("  inserted service into local_services");
 	}
 	else if(!Genode::strcmp(service_name, "Timer"))
 	{
-		Timer_root *root = new (_md_alloc) Timer_root(_env, _md_alloc, _resources_ep);
-		service = new (_md_alloc) Genode::Local_service(service_name, root);
+		_timer_root = new (_md_alloc) Timer_root(_env, _md_alloc, _resources_ep);
+		service = new (_md_alloc) Genode::Local_service(service_name, _timer_root);
 		_local_services.insert(service);
 		if(verbose_debug) Genode::log("  inserted service into local_services");
 	}
 
-	// Service not known, cannot intercept its methods
+	// Service not known, cannot intercept it
 	if(!service)
 	{
 		service = new (_md_alloc) Genode::Parent_service(service_name);

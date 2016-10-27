@@ -22,12 +22,14 @@
 #include "intercept/log_session.h"
 #include "intercept/timer_session.h"
 #include "target_state.h"
+#include "restorer.h"
 
 namespace Rtcr {
 	class Target_child;
 
 	constexpr bool child_verbose_debug = true;
 }
+
 
 /**
  * Encapsulates the policy and creation of the child
@@ -66,13 +68,9 @@ private:
 	 */
 	Genode::size_t      _granularity;
 	/**
-	 * Indicates whether the start of new threads shall be postponed
+	 * Restorer needed for restoring a child
 	 */
-	bool                _phase_restore;
-	/**
-	 * Pointer to a checkpointed state of the child
-	 */
-	Target_state       *_state_restore;
+	Restorer           *_restorer;
 	/**
 	 * Child's resources
 	 */
@@ -130,15 +128,13 @@ private:
 	 * Registry for announced services from this child
 	 */
 	Genode::Service_registry       _child_services;
+	Rm_root                       *_rm_root;
+	Log_root                      *_log_root;
+	Timer_root                    *_timer_root;
 	/**
 	 * Chlid object in heap
 	 */
 	Genode::Child                 *_child;
-
-	/**
-	 * Restore state of the child
-	 */
-	void _restore();
 
 public:
 
@@ -156,23 +152,35 @@ public:
 	/**
 	 * Return the custom Pd session
 	 */
-	Rtcr::Pd_session_component  &pd()  { return _resources.pd;  }
+	Pd_session_component  &pd()  { return _resources.pd;  }
 	/**
 	 * Return the custom Cpu session
 	 */
-	Rtcr::Cpu_session_component &cpu() { return _resources.cpu; }
+	Cpu_session_component &cpu() { return _resources.cpu; }
 	/**
 	 * Return the custom Ram session
 	 */
-	Rtcr::Ram_session_component &ram() { return _resources.ram; }
+	Ram_session_component &ram() { return _resources.ram; }
+	/**
+	 * Return rm root
+	 */
+	Rm_root*    rm_root()    { return _rm_root; }
+	/**
+	 * Return log root
+	 */
+	Log_root*   log_root()   { return _log_root; }
+	/**
+	 * Return timer root
+	 */
+	Timer_root* timer_root() { return _timer_root; }
 	/**
 	 * Start child by creating a Genode::Child object
 	 */
 	void start();
 	/**
-	 * Start child with a checkpointed state
+	 * Start child from a checkpointed state
 	 */
-	void start(Target_state &state);
+	void start(Restorer &restorer);
 	/**
 	 * Pause child
 	 */
