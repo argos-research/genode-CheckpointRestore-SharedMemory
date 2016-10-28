@@ -10,8 +10,6 @@
 /* Genode includes */
 #include <util/list.h>
 
-/* Rtcr includes */
-#include "../monitor/ram_dataspace_info.h"
 
 namespace Rtcr {
 	struct Stored_dataspace_info;

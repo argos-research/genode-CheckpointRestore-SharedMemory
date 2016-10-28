@@ -41,6 +41,7 @@ struct Rtcr::Main
 		child.pause();
 		Target_state ts(env, heap);
 		Checkpointer ckpt(child, ts);
+		//ckpt.checkpoint();
 
 
 		log("The End");

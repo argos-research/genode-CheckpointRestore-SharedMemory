@@ -9,6 +9,7 @@
 #include <timer_session/connection.h>
 #include <rm_session/connection.h>
 #include <base/internal/cap_map.h>
+#include <dataspace/client.h>
 
 void test_entrypoint_creation(Genode::Env &env)
 {
@@ -40,10 +41,12 @@ Genode::size_t Component::stack_size() { return 16*1024; }
 void Component::construct(Genode::Env &env)
 {
 	Genode::log("Hello World!");
-	Genode::log("Capability map in: ", Genode::cap_map());
-	Genode::log("Cap of RAM session: ", env.ram_session_cap(), " ", Genode::Hex(env.ram_session_cap().data()->kcap()));
+	//Genode::log("Capability map in: ", Genode::cap_map());
+	//Genode::log("Cap of RAM session: ", env.ram_session_cap(), " ", Genode::Hex(env.ram_session_cap().data()->kcap()));
 
-	test_entrypoint_creation(env);
+	//test_entrypoint_creation(env);
+
+	Genode::log(Genode::Hex(Genode::Dataspace_client(env.rm().dataspace()).size()));
 
 	Genode::log("I'm done!");
 }

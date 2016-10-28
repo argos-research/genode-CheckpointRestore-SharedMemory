@@ -81,19 +81,19 @@ private:
 		 */
 		Genode::Entrypoint    &ep;
 		/**
-		 * Custom Pd Rpc_object
+		 * Custom PD RPC object
 		 */
 		Pd_session_component   pd;
 		/**
-		 * Custom Cpu Rpc_object
+		 * Custom CPU RPC object
 		 */
 		Cpu_session_component  cpu;
 		/**
-		 * Custom Ram Rpc_object
+		 * Custom RAM RPC object
 		 */
 		Ram_session_component  ram;
 		/**
-		 * Parent's Rom session (usually from core)
+		 * Custom ROM RPC object
 		 */
 		Rom_session_component  rom;
 
@@ -117,7 +117,7 @@ private:
 	 */
 	Genode::Region_map_client      _address_space;
 	/**
-	 * Registry for parent's services (parent of rtcr component). It is shared between all children.
+	 * Registry for parent's services (parent of RTCR component). It is shared between all children.
 	 */
 	Genode::Service_registry      &_parent_services;
 	/**
@@ -128,11 +128,20 @@ private:
 	 * Registry for announced services from this child
 	 */
 	Genode::Service_registry       _child_services;
+	/**
+	 * Root RPC object of custom RM session
+	 */
 	Rm_root                       *_rm_root;
+	/**
+	 * Root RPC object of custom LOG session
+	 */
 	Log_root                      *_log_root;
+	/**
+	 * Root RPC object of custom Timer session
+	 */
 	Timer_root                    *_timer_root;
 	/**
-	 * Chlid object in heap
+	 * Child object
 	 */
 	Genode::Child                 *_child;
 
@@ -162,19 +171,19 @@ public:
 	 */
 	Ram_session_component &ram() { return _resources.ram; }
 	/**
-	 * Return rm root
+	 * Return custom RM root
 	 */
-	Rm_root*    rm_root()    { return _rm_root; }
+	Rm_root* rm_root()           { return _rm_root;       }
 	/**
-	 * Return log root
+	 * Return custom LOG root
 	 */
-	Log_root*   log_root()   { return _log_root; }
+	Log_root* log_root()         { return _log_root;      }
 	/**
-	 * Return timer root
+	 * Return custom Timer root
 	 */
-	Timer_root* timer_root() { return _timer_root; }
+	Timer_root* timer_root()     { return _timer_root;    }
 	/**
-	 * Start child by creating a Genode::Child object
+	 * Start child from scratch
 	 */
 	void start();
 	/**

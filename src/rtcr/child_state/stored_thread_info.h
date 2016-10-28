@@ -24,7 +24,6 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 	Genode::uint16_t            badge;
 	bool                        started;
 	bool                        paused;
-	Genode::addr_t              exception_sigh_kcap;
 	Genode::uint16_t            exception_sigh_badge;
 	bool                        single_step;
 	Genode::Cpu_session::Name   name;
@@ -35,9 +34,8 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 
 	Stored_thread_info()
 	:
-		kcap(0), badge(0), started(false), paused(false), exception_sigh_kcap(0),
-		exception_sigh_badge(0), single_step(false), name(), affinity(),
-		weight(), utcb(0), ts()
+		kcap(0), badge(0), started(false), paused(false), exception_sigh_badge(0),
+		single_step(false), name(), affinity(), weight(), utcb(0), ts()
 	{ }
 
 	Stored_thread_info *find_by_name(const char *name)

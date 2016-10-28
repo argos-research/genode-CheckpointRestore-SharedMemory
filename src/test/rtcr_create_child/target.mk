@@ -10,7 +10,9 @@ SRC_CC += main.cc \
           log_session.cc \
           rm_session.cc \
           timer_session.cc \
-          target_child.cc
+          target_child.cc \
+          checkpointer.cc \
+          restorer.cc
 
 LIBS   += base
 
@@ -24,3 +26,5 @@ vpath log_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath rm_session.cc            $(REP_DIR)/src/rtcr/intercept
 vpath timer_session.cc         $(REP_DIR)/src/rtcr/intercept
 vpath target_child.cc          $(REP_DIR)/src/rtcr
+vpath checkpointer.cc          $(REP_DIR)/src/rtcr
+vpath restorer.cc              $(REP_DIR)/src/rtcr
