@@ -138,7 +138,7 @@ private:
 	/**
 	 * Copy dataspace's content
 	 */
-	void _copy_dataspace(Genode::Dataspace_capability &source_ds_cap, Genode::Dataspace_capability &dest_ds_cap,
+	void _copy_dataspace(Genode::Dataspace_capability source_ds_cap, Genode::Dataspace_capability dest_ds_cap,
 			Genode::size_t size, Genode::off_t dest_offset = 0);
 
 

@@ -13,6 +13,9 @@
 #include <base/env.h>
 
 /* Rtcr includes */
+#include "intercept/log_session.h"
+#include "intercept/rm_session.h"
+#include "intercept/timer_session.h"
 #include "child_state/stored_rm_session_info.h"
 #include "child_state/stored_log_session_info.h"
 #include "child_state/stored_timer_session_info.h"

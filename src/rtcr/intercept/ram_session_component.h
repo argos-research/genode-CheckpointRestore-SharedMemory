@@ -59,6 +59,9 @@ private:
 	 * \return Pointer to Managed_region_map_info which contains the faulting Region_map
 	 */
 	Managed_region_map_info *_find_faulting_mrm_info();
+	/**
+	 * Handles the page fault by attaching a designated dataspace into its region map
+	 */
 	void _handle_fault();
 
 public:

@@ -260,13 +260,13 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		{
 			Genode::log("  Allocated managed dataspace (",
 					"RM=", new_mrm_info->region_map_cap,
-					" DS=", new_rds_info->ram_ds_cap, ")",
+					" DS=", new_rds_info->ds_cap, ")",
 					" containing ", num_dataspaces, "*", ds_size,
 					" + ", (remaining_dataspace_size == 0 ? "" : "1*"), remaining_dataspace_size, " Dataspaces");
 		}
 
 		// Return the stored Ram_dataspace_capability of the Region_map
-		return new_rds_info->ram_ds_cap;
+		return new_rds_info->ds_cap;
 	}
 	else
 	{

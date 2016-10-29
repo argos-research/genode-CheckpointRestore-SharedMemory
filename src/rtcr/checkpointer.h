@@ -14,14 +14,13 @@
 /* Rtcr includes */
 #include "target_state.h"
 #include "target_child.h"
-#include "intercept/rm_session.h"
 #include "intercept/region_map_component.h"
 #include "intercept/pd_session_component.h"
 #include "intercept/cpu_session_component.h"
 #include "intercept/ram_session_component.h"
-#include "intercept/rm_session.h"
-#include "intercept/log_session.h"
-#include "intercept/timer_session.h"
+#include "child_state/stored_attached_region_info.h"
+#include "child_state/stored_dataspace_info.h"
+#include "child_state/stored_log_session_info.h"
 
 namespace Rtcr {
 	class Checkpointer;
@@ -61,6 +60,43 @@ class Rtcr::Checkpointer
 {
 private:
 	/**
+	 * Structure to remember checkpointed dataspaces by storing their badge,
+	 * thus, old dataspaces can be deleted at the end of the checkpoint process
+	 */
+	struct Badge_info : Genode::List<Badge_info>::Element
+	{
+		Genode::uint16_t badge;
+		Badge_info(Genode::uint16_t badge) : badge(badge) { }
+
+		Badge_info *find_by_badge(Genode::uint16_t badge)
+		{
+			if(badge == this->badge)
+				return this;
+			Badge_info *info = next();
+			return info ? info->find_by_badge(badge) : 0;
+		}
+	};
+
+	/**
+	 * Associate a valid badge to a valid dataspace capability
+	 */
+	struct Badge_dataspace_info : Genode::List<Badge_dataspace_info>::Element
+	{
+		Genode::uint16_t badge;
+		Genode::Dataspace_capability ds_cap;
+		Badge_dataspace_info(Genode::uint16_t badge, Genode::Dataspace_capability ds_cap)
+		: badge(badge), ds_cap(ds_cap) { }
+
+		Badge_dataspace_info *find_by_badge(Genode::uint16_t badge)
+		{
+			if(badge == this->badge)
+				return this;
+			Badge_dataspace_info *info = next();
+			return info ? info->find_by_badge(badge) : 0;
+		}
+	};
+
+	/**
 	 * Enable log output for debugging
 	 */
 	static constexpr bool verbose_debug = checkpointer_verbose_debug;
@@ -68,61 +104,28 @@ private:
 	Target_state &_state;
 	Genode::List<Badge_kcap_info> _capability_map_infos;
 
-	/**
-	 * Store Rtcr's RPC object meta data including capability data
-	 */
-	Genode::List<Stored_rm_session_info>      _checkpoint_state(Rm_root &rm_root);
-	Genode::List<Stored_region_map_info>      _checkpoint_state(Rm_session_component &rm_session_comp);
-	Genode::List<Stored_attached_region_info> _checkpoint_state(Region_map_component &region_map_comp);
-	Genode::List<Stored_log_session_info>     _checkpoint_state(Log_root &log_root);
-	Genode::List<Stored_timer_session_info>   _checkpoint_state(Timer_root &timer_root);
-	Genode::List<Stored_thread_info>          _checkpoint_state(Cpu_session_component &cpu_session_comp);
-	Genode::List<Stored_signal_context_info>  _checkpoint_signal_context(Pd_session_component &pd_session_comp);
-	Genode::List<Stored_signal_source_info>   _checkpoint_signal_source(Pd_session_component &pd_session_comp);
-	Stored_region_map_info                    _checkpoint_region_map(Region_map_component &region_map_comp);
+	void _prepare_cap_map_infos   (Genode::List<Badge_kcap_info>             &state_infos, Genode::Dataspace_capability ds_cap,
+	                               Genode::off_t cap_map_start);
+	void _prepare_rm_sessions     (Genode::List<Stored_rm_session_info>      &state_infos, Rm_root               &child_obj);
+	void _prepare_log_sessions    (Genode::List<Stored_log_session_info>     &state_infos, Log_root              &child_obj);
+	void _prepare_timer_sessions  (Genode::List<Stored_timer_session_info>   &state_infos, Timer_root            &child_obj);
+	void _prepare_region_maps     (Genode::List<Stored_region_map_info>      &state_infos, Rm_session_component  &child_obj);
+	void _prepare_attached_regions(Genode::List<Stored_attached_region_info> &state_infos, Region_map_component  &child_obj);
+	void _prepare_threads         (Genode::List<Stored_thread_info>          &state_infos, Cpu_session_component &child_obj);
+	void _prepare_contexts        (Genode::List<Stored_signal_context_info>  &state_infos, Pd_session_component  &child_obj);
+	void _prepare_sources         (Genode::List<Stored_signal_source_info>   &state_infos, Pd_session_component  &child_obj);
+	void _prepare_region_map      (Stored_region_map_info                    &state_info,  Region_map_component  &child_obj);
+	void _prepare_dataspaces      (Genode::List<Stored_dataspace_info>       &state_infos,
+	                               Genode::List<Badge_dataspace_info>        &ds_infos,    Ram_session_component &child_obj);
+	void _prepare_dataspaces      (Genode::List<Stored_dataspace_info>       &state_infos,
+	                               Genode::List<Badge_dataspace_info>        &ds_infos,    Region_map_component  &child_obj);
 
-	/**
-	 * Structure to store visited list elements by storing their badge
-	 */
-	struct Used_badge_info : Genode::List<Used_badge_info>::Element
-	{
-		Genode::uint16_t badge;
-		Used_badge_info(Genode::uint16_t badge) : badge(badge) { }
-
-		Used_badge_info *find_by_badge(Genode::uint16_t badge)
-		{
-			if(badge == this->badge)
-				return this;
-			Used_badge_info *info = next();
-			return info ? info->find_by_badge(badge) : 0;
-		}
-	};
-
-	/**
-	 * Checkpoint all dataspaces into _state._stored_dataspaces
-	 */
 	void _checkpoint_dataspaces();
-	/**
-	 * Checkpoint allocated dataspaces from RAM session
-	 */
-	void _checkpoint_state(Ram_session_component &ram_session_comp,
-			Genode::List<Stored_dataspace_info> &stored_ds_infos, Genode::List<Used_badge_info> &used_infos);
-	/**
-	 * Checkpoint attached dataspaces, which are not allocated by the child, from PD session's Region maps
-	 */
-	void _checkpoint_state(Pd_session_component &pd_session_comp,
-			Genode::List<Stored_dataspace_info> &stored_ds_infos, Genode::List<Used_badge_info> &used_infos);
+	void _update_normal_dataspace(Ram_dataspace_info &ram_ds_info, Stored_dataspace_info &stored_ds_info);
+	void _update_managed_dataspace(Managed_region_map_info &mrm_info, Stored_dataspace_info &stored_ds_info);
+	void _copy_dataspace_content(Genode::Dataspace_capability source_ds_cap, Genode::Dataspace_capability dest_ds_cap,
+			Genode::size_t size, Genode::off_t dest_offset = 0);
 
-	/**
-	 * Copy the whole content from source to destination dataspace
-	 */
-	void _update_normal_dataspace(Genode::Dataspace_capability source_cap, Genode::Dataspace_capability dest_cap,
-			Genode::size_t size, Genode::off_t dest_offset = 0);
-	/**
-	 * Copy only dirty content from source to destination dataspace
-	 */
-	void _update_managed_dataspace(Genode::Dataspace_capability source_cap, Genode::Dataspace_capability dest_cap,
-			Genode::size_t size, Genode::off_t dest_offset = 0);
 
 public:
 	Checkpointer(Target_child &child, Target_state &state);
