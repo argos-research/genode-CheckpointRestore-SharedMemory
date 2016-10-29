@@ -28,7 +28,7 @@ struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
 	/**
 	 * Allocated Ram dataspace
 	 */
-	Genode::Ram_dataspace_capability ram_ds_cap;
+	Genode::Ram_dataspace_capability ds_cap;
 	Genode::size_t                   size;
 	Genode::Cache_attribute          cached;
 	/**
@@ -38,18 +38,18 @@ struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
 	 */
 	Managed_region_map_info *mrm_info;
 
-	Ram_dataspace_info(Genode::Ram_dataspace_capability ram_ds_cap, Genode::size_t size, Genode::Cache_attribute cached,
+	Ram_dataspace_info(Genode::Ram_dataspace_capability ds_cap, Genode::size_t size, Genode::Cache_attribute cached,
 			Managed_region_map_info *mrm_info = nullptr)
 	:
-		ram_ds_cap(ram_ds_cap),
-		size(size),
-		cached(cached),
-		mrm_info(mrm_info)
+		ds_cap   (ds_cap),
+		size     (size),
+		cached   (cached),
+		mrm_info (mrm_info)
 	{ }
 
 	Ram_dataspace_info *find_by_cap(Genode::Dataspace_capability cap)
 	{
-		if(cap == ram_ds_cap)
+		if(cap == ds_cap)
 			return this;
 		Ram_dataspace_info *rds_info = next();
 		return rds_info ? rds_info->find_by_cap(cap) : 0;
@@ -177,8 +177,9 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 				Genode::warning("  designated", Genode::Hex(rel_addr), " != attached=", Genode::Hex(addr));
 			}
 
-			// Mark as attached
+			// Mark as attached and dirty
 			attached = true;
+			dirty = true;
 		}
 		else
 		{
