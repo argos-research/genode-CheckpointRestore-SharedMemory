@@ -35,6 +35,11 @@ struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::El
 		kcap(0), badge(0), args("")
 	{ }
 
+	Stored_log_session_info(Log_session_info &info)
+	:
+		kcap(0), badge(info.session.cap().local_name()), args(info.args)
+	{ }
+
 	Stored_log_session_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

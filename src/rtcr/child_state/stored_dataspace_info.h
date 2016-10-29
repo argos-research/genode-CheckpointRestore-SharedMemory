@@ -10,6 +10,10 @@
 /* Genode includes */
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../monitor/ram_dataspace_info.h"
+#include "../monitor/attached_region_info.h"
+
 
 namespace Rtcr {
 	struct Stored_dataspace_info;
@@ -38,6 +42,18 @@ struct Rtcr::Stored_dataspace_info : Genode::List<Stored_dataspace_info>::Elemen
 	:
 		kcap(0), badge(0), ds_cap(Genode::Dataspace_capability()),
 		size(0), cached(Genode::Cache_attribute::UNCACHED), managed(false)
+	{ }
+
+	Stored_dataspace_info(Ram_dataspace_info &info)
+	:
+		kcap(0), badge(info.ds_cap.local_name()), ds_cap(Genode::Dataspace_capability()),
+		size(info.size), cached(info.cached), managed(info.mrm_info)
+	{ }
+
+	Stored_dataspace_info(Attached_region_info &info)
+	:
+		kcap(0), badge(info.ds_cap.local_name()), ds_cap(Genode::Dataspace_capability()),
+		size(info.size), cached(Genode::Cache_attribute::UNCACHED), managed(false)
 	{ }
 
 	Stored_dataspace_info *find_by_badge(Genode::uint16_t badge)

@@ -42,6 +42,13 @@ struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Elem
 		stored_attached_region_infos()
 	{ }
 
+	Stored_region_map_info(Region_map_info &info)
+	:
+		kcap(0), badge(info.region_map.cap().local_name()), size(info.size),
+		fault_handler_badge(info.region_map.parent_state().fault_handler.local_name()),
+		dataspace_badge(info.ds_cap.local_name()), stored_attached_region_infos()
+	{ }
+
 	Stored_region_map_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

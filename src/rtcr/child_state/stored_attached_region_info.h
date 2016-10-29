@@ -34,6 +34,15 @@ struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_i
 		badge(0), size(0), offset(0), rel_addr(0), executable(false)
 	{ }
 
+	Stored_attached_region_info(Attached_region_info &info)
+	:
+		badge      (info.ds_cap.local_name()),
+		size       (info.size),
+		offset     (info.offset),
+		rel_addr   (info.rel_addr),
+		executable (info.executable)
+	{ }
+
 	Stored_attached_region_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

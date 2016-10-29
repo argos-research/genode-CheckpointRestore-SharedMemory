@@ -11,7 +11,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../monitor/signal_context_info.h"
+#include "../monitor/signal_source_info.h"
 
 namespace Rtcr {
 	struct Stored_signal_source_info;
@@ -32,6 +32,11 @@ struct Rtcr::Stored_signal_source_info : Genode::List<Stored_signal_source_info>
 	Stored_signal_source_info()
 	:
 		kcap(0), badge(0)
+	{ }
+
+	Stored_signal_source_info(Signal_source_info &info)
+	:
+		kcap(0), badge(info.cap.local_name())
 	{ }
 
 	Stored_signal_source_info *find_by_badge(Genode::uint16_t badge)

@@ -39,6 +39,12 @@ struct Rtcr::Stored_rm_session_info : Genode::List<Stored_rm_session_info>::Elem
 		kcap(0), badge(0), args(""), stored_region_map_infos()
 	{ }
 
+	Stored_rm_session_info(Rm_session_info &info)
+	:
+		kcap(0), badge(info.session.cap().local_name()), args(info.args),
+		stored_region_map_infos()
+	{ }
+
 	Stored_rm_session_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

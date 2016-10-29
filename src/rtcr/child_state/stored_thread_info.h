@@ -38,6 +38,15 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 		single_step(false), name(), affinity(), weight(), utcb(0), ts()
 	{ }
 
+	Stored_thread_info(Thread_info &info)
+	:
+		kcap(0), badge(info.cpu_thread.cap().local_name()), started(info.cpu_thread.parent_state().started),
+		paused(info.cpu_thread.parent_state().paused),
+		exception_sigh_badge(info.cpu_thread.parent_state().exception_sigh.local_name()),
+		single_step(info.cpu_thread.parent_state().single_step), name(info.name), affinity(info.affinity),
+		weight(info.weight), utcb(info.utcb), ts()
+	{ }
+
 	Stored_thread_info *find_by_name(const char *name)
 	{
 		if(!Genode::strcmp(name, this->name.string()))

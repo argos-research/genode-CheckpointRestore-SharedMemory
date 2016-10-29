@@ -36,6 +36,12 @@ struct Rtcr::Stored_signal_context_info : Genode::List<Stored_signal_context_inf
 		kcap(0), badge(0), signal_source_badge(0), imprint(0)
 	{ }
 
+	Stored_signal_context_info(Signal_context_info &info)
+	:
+		kcap(0), badge(info.sc_cap.local_name()), signal_source_badge(info.ss_cap.local_name()),
+		imprint(info.imprint)
+	{ }
+
 	Stored_signal_context_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)
