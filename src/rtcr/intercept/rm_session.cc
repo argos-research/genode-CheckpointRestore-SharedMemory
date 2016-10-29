@@ -41,13 +41,14 @@ Genode::Capability<Genode::Region_map> Rm_session_component::create(Genode::size
 
 	// Create real Region_map from parent
 	auto parent_cap = _parent_rm.create(size);
+	Genode::Dataspace_capability ds_cap = Genode::Region_map_client(parent_cap).dataspace();
 
 	// Create virtual Region_map
 	Region_map_component *new_region_map =
 			new (_md_alloc) Region_map_component(_ep, _md_alloc, parent_cap, "custom");
 
 	// Create list element to where the virtual object is stored
-	Region_map_info *rm_info = new (_md_alloc) Region_map_info(*new_region_map, size);
+	Region_map_info *rm_info = new (_md_alloc) Region_map_info(*new_region_map, size, ds_cap);
 
 	// Insert list element into list
 	Genode::Lock::Guard lock(_infos_lock);

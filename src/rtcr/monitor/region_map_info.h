@@ -31,10 +31,14 @@ struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
 	 * Size of the region map
 	 */
 	Genode::size_t        size;
+	/**
+	 * Dataspace representation
+	 */
+	Genode::Dataspace_capability ds_cap;
 
-	Region_map_info(Region_map_component &region_map, Genode::size_t size)
+	Region_map_info(Region_map_component &region_map, Genode::size_t size, Genode::Dataspace_capability ds_cap)
 	:
-		region_map(region_map), size(size)
+		region_map(region_map), size(size), ds_cap(ds_cap)
 	{ }
 
 	Region_map_info *find_by_cap(Genode::Capability<Genode::Region_map> cap)
