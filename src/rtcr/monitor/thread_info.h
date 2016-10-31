@@ -27,7 +27,6 @@ struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 {
 	Cpu_thread_component        &cpu_thread;
 	Genode::Cpu_session::Name    name;
-	Genode::Affinity::Location   affinity;
 	Genode::Cpu_session::Weight  weight;
 	Genode::addr_t               utcb;
 
@@ -35,12 +34,10 @@ struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 	 * Constructor
 	 */
 	Thread_info(Cpu_thread_component &cpu_thread, Genode::Cpu_session::Name name,
-			Genode::Affinity::Location affinity, Genode::Cpu_session::Weight weight,
-			Genode::addr_t utcb)
+			Genode::Cpu_session::Weight weight, Genode::addr_t utcb)
 	:
 		cpu_thread (cpu_thread),
 		name       (name),
-		affinity   (affinity),
 		weight     (weight),
 		utcb       (utcb)
 	{ }

@@ -9,14 +9,16 @@
 using namespace Rtcr;
 
 
-Cpu_thread_component::Cpu_thread_component(Genode::Entrypoint& ep,
-		Genode::Capability<Genode::Cpu_thread> cpu_th_cap, Genode::Cpu_session::Name name)
+Cpu_thread_component::Cpu_thread_component(Genode::Entrypoint& ep, Genode::Capability<Genode::Cpu_thread> cpu_th_cap,
+		Genode::Cpu_session::Name name, Genode::Affinity::Location affinity)
 :
 	_ep                (ep),
 	_parent_cpu_thread (cpu_th_cap),
-	_name              (name)
+	_name              (name),
+	_parent_state      ()
 {
 	_ep.manage(*this);
+	_parent_state.affinity = affinity;
 	if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _name.string(), "\033[0m>(parent ", _parent_cpu_thread,")");
 }
 
@@ -101,7 +103,7 @@ void Cpu_thread_component::affinity(Genode::Affinity::Location location)
 			location.xpos(), "x", location.ypos(), ", dim=",
 			location.width(), "x", location.height(), ")");
 	_parent_cpu_thread.affinity(location);
-	_parent_state.location = location;
+	_parent_state.affinity = location;
 }
 
 unsigned Cpu_thread_component::trace_control_index()

@@ -67,8 +67,7 @@ void Cpu_session_component::resume_threads()
 
 
 Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability /* pd_cap */,
-		Name const &name, Genode::Affinity::Location affinity, Weight weight,
-		Genode::addr_t utcb)
+		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 
@@ -76,8 +75,8 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 	Genode::Thread_capability thread_cap = _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
 
 	// Create virtual Cpu_thread and its management list element
-	Cpu_thread_component *new_cpu_thread = new (_md_alloc) Cpu_thread_component(_ep, thread_cap, name);
-	Thread_info *new_th_info = new (_md_alloc) Thread_info(*new_cpu_thread, name, affinity,weight, utcb);
+	Cpu_thread_component *new_cpu_thread = new (_md_alloc) Cpu_thread_component(_ep, thread_cap, name, affinity);
+	Thread_info *new_th_info = new (_md_alloc) Thread_info(*new_cpu_thread, name, weight, utcb);
 
 	// Store the thread
 	Genode::Lock::Guard _lock_guard(_threads_lock);

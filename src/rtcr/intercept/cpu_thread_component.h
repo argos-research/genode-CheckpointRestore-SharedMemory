@@ -46,13 +46,13 @@ private:
 		bool                              paused         {false};
 		Genode::Signal_context_capability exception_sigh {};
 		bool                              single_step    {false};
-		Genode::Affinity::Location        location       {};
+		Genode::Affinity::Location        affinity       {};
 	} _parent_state;
 
 public:
 
 	Cpu_thread_component(Genode::Entrypoint &ep, Genode::Capability<Genode::Cpu_thread> cpu_th_cap,
-			Genode::Cpu_session::Name name);
+			Genode::Cpu_session::Name name, Genode::Affinity::Location affinity);
 	~Cpu_thread_component();
 
 	Genode::Capability<Genode::Cpu_thread> parent_cap()   { return _parent_cpu_thread; }

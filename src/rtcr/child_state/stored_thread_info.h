@@ -40,10 +40,13 @@ struct Rtcr::Stored_thread_info : Genode::List<Stored_thread_info>::Element
 
 	Stored_thread_info(Thread_info &info)
 	:
-		kcap(0), badge(info.cpu_thread.cap().local_name()), started(info.cpu_thread.parent_state().started),
+		kcap(0), badge(info.cpu_thread.cap().local_name()),
+		started(info.cpu_thread.parent_state().started),
 		paused(info.cpu_thread.parent_state().paused),
 		exception_sigh_badge(info.cpu_thread.parent_state().exception_sigh.local_name()),
-		single_step(info.cpu_thread.parent_state().single_step), name(info.name), affinity(info.affinity),
+		single_step(info.cpu_thread.parent_state().single_step),
+		name(info.name),
+		affinity(info.cpu_thread.parent_state().affinity),
 		weight(info.weight), utcb(info.utcb), ts()
 	{ }
 
