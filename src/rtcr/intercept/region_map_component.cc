@@ -154,6 +154,7 @@ Genode::Dataspace_capability Region_map_component::dataspace()
 			"\033[33m", __func__, "\033[0m()");
 
 	auto result = _parent_region_map.dataspace();
+	_parent_state.ds_cap = result;
 
 	if(verbose_debug) Genode::log("  result: ", result);
 

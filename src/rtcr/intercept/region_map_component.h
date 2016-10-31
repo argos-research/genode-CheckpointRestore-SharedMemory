@@ -54,6 +54,7 @@ private:
 	struct State_info
 	{
 		Genode::Signal_context_capability fault_handler {};
+		Genode::Dataspace_capability ds_cap {};
 	} _parent_state;
 	/**
 	 * Name of the Region map for debugging
