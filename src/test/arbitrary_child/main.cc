@@ -46,7 +46,7 @@ void Component::construct(Genode::Env &env)
 
 	//test_entrypoint_creation(env);
 
-	Genode::log(Genode::Hex(Genode::Dataspace_client(env.rm().dataspace()).size()));
+	//Genode::log(Genode::Hex(Genode::Dataspace_client(env.rm().dataspace()).size()));
 
 	Genode::log("I'm done!");
 }

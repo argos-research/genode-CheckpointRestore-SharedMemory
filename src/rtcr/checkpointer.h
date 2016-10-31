@@ -100,8 +100,9 @@ private:
 	 * Enable log output for debugging
 	 */
 	static constexpr bool verbose_debug = checkpointer_verbose_debug;
-	Target_child &_child;
-	Target_state &_state;
+	Genode::Allocator &_alloc;
+	Target_child      &_child;
+	Target_state      &_state;
 	Genode::List<Badge_kcap_info> _capability_map_infos;
 
 	void _prepare_cap_map_infos   (Genode::List<Badge_kcap_info>             &state_infos, Genode::Dataspace_capability ds_cap,
@@ -120,15 +121,22 @@ private:
 	void _prepare_dataspaces      (Genode::List<Stored_dataspace_info>       &state_infos,
 	                               Genode::List<Badge_dataspace_info>        &ds_infos,    Region_map_component  &child_obj);
 
+	void _detach_designated_dataspaces(Ram_session_component &child_obj);
+
 	void _checkpoint_dataspaces();
-	void _update_normal_dataspace(Ram_dataspace_info &ram_ds_info, Stored_dataspace_info &stored_ds_info);
-	void _update_managed_dataspace(Managed_region_map_info &mrm_info, Stored_dataspace_info &stored_ds_info);
+	void _update_normal_dataspace(Stored_dataspace_info &state_info, Ram_dataspace_info &child_info);
+	void _update_managed_dataspace(Stored_dataspace_info &state_info, Managed_region_map_info &child_info);
 	void _copy_dataspace_content(Genode::Dataspace_capability source_ds_cap, Genode::Dataspace_capability dest_ds_cap,
 			Genode::size_t size, Genode::off_t dest_offset = 0);
 
 
 public:
-	Checkpointer(Target_child &child, Target_state &state);
+	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
+	Checkpointer(const Checkpointer &other) = delete;
+	~Checkpointer();
+
+	Checkpointer& operator=(const Checkpointer &other) = delete;
+
 
 	/**
 	 * Checkpoint all (known) RPC objects and capabilities from _child to _state

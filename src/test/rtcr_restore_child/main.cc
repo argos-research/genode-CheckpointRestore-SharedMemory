@@ -24,7 +24,7 @@ struct Rtcr::Main
 {
 	enum { ROOT_STACK_SIZE = 16*1024 };
 	Genode::Env              &env;
-	Genode::Heap              heap         { env.ram(), env.rm() };
+	Genode::Heap              heap            { env.ram(), env.rm() };
 	Genode::Service_registry  parent_services { };
 
 	Main(Genode::Env &env_) : env(env_)
@@ -38,10 +38,9 @@ struct Rtcr::Main
 
 		timer.msleep(3000);
 
-		child.pause();
 		Target_state ts(env, heap);
-		Checkpointer ckpt(child, ts);
-		//ckpt.checkpoint();
+		Checkpointer ckpt(heap, child, ts);
+		ckpt.checkpoint();
 
 
 		log("The End");
