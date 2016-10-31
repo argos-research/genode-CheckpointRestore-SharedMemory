@@ -33,12 +33,12 @@ struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Elem
 	Genode::uint16_t badge;
 	Genode::size_t   size;
 	Genode::uint16_t fault_handler_badge;
-	Genode::uint16_t dataspace_badge;
+	Genode::uint16_t ds_badge;
 	Genode::List<Stored_attached_region_info> stored_attached_region_infos;
 
 	Stored_region_map_info()
 	:
-		kcap(0), badge(0), size(0), fault_handler_badge(0), dataspace_badge(0),
+		kcap(0), badge(0), size(0), fault_handler_badge(0), ds_badge(0),
 		stored_attached_region_infos()
 	{ }
 
@@ -46,7 +46,7 @@ struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Elem
 	:
 		kcap(0), badge(info.region_map.cap().local_name()), size(info.size),
 		fault_handler_badge(info.region_map.parent_state().fault_handler.local_name()),
-		dataspace_badge(info.ds_cap.local_name()), stored_attached_region_infos()
+		ds_badge(info.ds_cap.local_name()), stored_attached_region_infos()
 	{ }
 
 	Stored_region_map_info *find_by_badge(Genode::uint16_t badge)

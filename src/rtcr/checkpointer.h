@@ -29,7 +29,9 @@ namespace Rtcr {
 	constexpr bool checkpointer_verbose_debug = true;
 }
 
-
+/**
+ * Structure to store badge-kcap tuple from a capability map of a Target_child
+ */
 struct Rtcr::Badge_kcap_info : Genode::List<Badge_kcap_info>::Element
 {
 	Genode::addr_t   kcap;
@@ -60,8 +62,7 @@ class Rtcr::Checkpointer
 {
 private:
 	/**
-	 * Structure to remember checkpointed dataspaces by storing their badge,
-	 * thus, old dataspaces can be deleted at the end of the checkpoint process
+	 * Stores a single badge
 	 */
 	struct Badge_info : Genode::List<Badge_info>::Element
 	{
@@ -76,6 +77,17 @@ private:
 			return info ? info->find_by_badge(badge) : 0;
 		}
 	};
+	/**
+	 * Stores dataspace capabilities of designated_dataspace_info for checkpointing dataspaces
+	 */
+	struct Managed_dataspace_info : Genode::List<Managed_dataspace_info>::Element
+	{
+		Genode::Dataspace_capability ds_cap;
+		Genode::addr_t rel_addr;
+		Genode::size_t size;
+		Managed_dataspace_info(Genode::Dataspace_capability ds_cap, Genode::addr_t rel_addr, Genode::size_t size)
+		: ds_cap(ds_cap), rel_addr(rel_addr), size(size) { }
+	};
 
 	/**
 	 * Associate a valid badge to a valid dataspace capability
@@ -84,8 +96,9 @@ private:
 	{
 		Genode::uint16_t badge;
 		Genode::Dataspace_capability ds_cap;
+		Genode::List<Managed_dataspace_info> infos;
 		Badge_dataspace_info(Genode::uint16_t badge, Genode::Dataspace_capability ds_cap)
-		: badge(badge), ds_cap(ds_cap) { }
+		: badge(badge), ds_cap(ds_cap), infos() { }
 
 		Badge_dataspace_info *find_by_badge(Genode::uint16_t badge)
 		{
@@ -100,43 +113,149 @@ private:
 	 * Enable log output for debugging
 	 */
 	static constexpr bool verbose_debug = checkpointer_verbose_debug;
+	/**
+	 * Allocator for checkpointer personal datastructures. The datastructures which belong to Target_state
+	 * are created with the allocator of Target_state
+	 */
 	Genode::Allocator &_alloc;
+	/**
+	 * Target_child which shall be checkpointed
+	 */
 	Target_child      &_child;
+	/**
+	 * Target_state where the checkpointed state is stored
+	 */
 	Target_state      &_state;
+	/**
+	 * Capability map of Target_child in a condensed form
+	 */
 	Genode::List<Badge_kcap_info> _capability_map_infos;
 
-	void _prepare_cap_map_infos   (Genode::List<Badge_kcap_info>             &state_infos, Genode::Dataspace_capability ds_cap,
-	                               Genode::off_t cap_map_start);
+	/**
+	 * \brief Prepares the capability map state_infos
+	 *
+	 * First the method fetches the capability map information from child's cap map structure in an intercepted dataspace
+	 *
+	 * Second it prepares the capability map state_infos.
+	 * For each badge-kcap tuple found in child's cap map the method checks whether a corresponding list element in state_infos exists.
+	 * If there is no list element, then it is created and marked. Else it is just marked.
+	 * After this, the old badge-kcap tuples, which where not marked, are deleted from state_infos.
+	 * Now an updated capability map is ready to used for the next steps to store the kcap for each RPC object.
+	 */
+	void _prepare_cap_map_infos   (Genode::List<Badge_kcap_info>             &state_infos);
+	/**
+	 * \brief Prepares the RM session list named state_infos
+	 *
+	 * First all list elements of state_info which have a corresponding list element in the child_obj are updated
+	 * (if they do not exist, they are created).
+	 * Second all old list elements of state_info which do not have a corresponding list element in the child_obj are deleted.
+	 */
 	void _prepare_rm_sessions     (Genode::List<Stored_rm_session_info>      &state_infos, Rm_root               &child_obj);
+	/**
+	 * \brief Prepare the LOG session list named state_infos
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_log_sessions    (Genode::List<Stored_log_session_info>     &state_infos, Log_root              &child_obj);
+	/**
+	 * \brief Prepare the Timer session list named state_infos
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_timer_sessions  (Genode::List<Stored_timer_session_info>   &state_infos, Timer_root            &child_obj);
+	/**
+	 * \brief Prepare the region map list named state_infos
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_region_maps     (Genode::List<Stored_region_map_info>      &state_infos, Rm_session_component  &child_obj);
+	/**
+	 * \brief Prepare the attached region list named state_infos
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_attached_regions(Genode::List<Stored_attached_region_info> &state_infos, Region_map_component  &child_obj);
+	/**
+	 * \brief Prepare the thread list named state_infos
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_threads         (Genode::List<Stored_thread_info>          &state_infos, Cpu_session_component &child_obj);
+	/**
+	 * \brief Prepare the signal context list named state_infos
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_contexts        (Genode::List<Stored_signal_context_info>  &state_infos, Pd_session_component  &child_obj);
+	/**
+	 * \brief Prepare the signal source list named state_infos
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_sources         (Genode::List<Stored_signal_source_info>   &state_infos, Pd_session_component  &child_obj);
+	/**
+	 * \brief Prepare a specific region map named state_info
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
 	void _prepare_region_map      (Stored_region_map_info                    &state_info,  Region_map_component  &child_obj);
-	void _prepare_dataspaces      (Genode::List<Stored_dataspace_info>       &state_infos,
-	                               Genode::List<Badge_dataspace_info>        &ds_infos,    Ram_session_component &child_obj);
-	void _prepare_dataspaces      (Genode::List<Stored_dataspace_info>       &state_infos,
-	                               Genode::List<Badge_dataspace_info>        &ds_infos,    Region_map_component  &child_obj);
-
+	/**
+	 * \brief Update the dataspace list named state_infos
+	 *
+	 * All list elements of state_infos which have a corresponding list element in child_obj are updated. If no corresponding
+	 * state_info exists, create it. Also mark every state_info, which was updated, in visited_infos.
+	 */
+	void _update_dataspace_infos  (Genode::List<Stored_dataspace_info>       &state_infos, Ram_session_component &child_obj,
+	                               Genode::List<Badge_dataspace_info>        &visited_infos);
+	/**
+	 * \brief Update the dataspace list named state_infos
+	 *
+	 * Update (or create) a not excluded (found in exclude) and not yet seen (found in visited_infos) state_info list element,
+	 * which corresponds to a list element of child_obj. Also mark every state_info, which was update, in visited_infos.
+	 */
+	void _update_dataspace_infos  (Genode::List<Stored_dataspace_info>       &state_infos, Region_map_component  &child_obj,
+	                               Genode::List<Badge_dataspace_info>        &visited_infos, Genode::List<Badge_info> &exclude);
+	/**
+	 * \brief Update the dataspace list named state_infos
+	 *
+	 * For each region map in an RM session and each RM session in an RM root, call
+	 * _update_dataspace_infos(..., Region_map_component, ...)
+	 */
+	void _update_dataspace_infos  (Genode::List<Stored_dataspace_info>       &state_infos, Rm_root               &child_obj,
+	                               Genode::List<Badge_dataspace_info>        &visited_infos, Genode::List<Badge_info> &exclude);
+	/**
+	 * \brief Delete old list elements from dataspace list named state_infos
+	 *
+	 * Delete all unmarked (not found in visited_infos) list elements
+	 */
+	void _delete_old_dataspace_infos(Genode::List<Stored_dataspace_info> &state_infos, Genode::List<Badge_dataspace_info> &visited_infos);
+	/**
+	 * Create a list of dataspace capabilities which belong to a managed dataspace (i.e. region map dataspace). This list is used
+	 * to identify region maps which are attached to another region map (e.g. the address space) to copy their dataspaces.
+	 */
+	Genode::List<Badge_info> _create_exclude_infos(Region_map_component &address_space, Region_map_component &stack_area,
+			Region_map_component &linker_area, Rm_root *rm_root);
+	/**
+	 * Destroy a list which represents dataspace capabilities belonging to a managed dataspace. See _delete_old_dataspace_infos.
+	 */
+	void _destroy_exclude_infos(Genode::List<Badge_info> &infos);
+	/**
+	 * Detach all designated dataspaces to get a notification for the incremental checkpoint
+	 */
 	void _detach_designated_dataspaces(Ram_session_component &child_obj);
 
-	void _checkpoint_dataspaces();
-	void _update_normal_dataspace(Stored_dataspace_info &state_info, Ram_dataspace_info &child_info);
-	void _update_managed_dataspace(Stored_dataspace_info &state_info, Managed_region_map_info &child_info);
-	void _copy_dataspace_content(Genode::Dataspace_capability source_ds_cap, Genode::Dataspace_capability dest_ds_cap,
-			Genode::size_t size, Genode::off_t dest_offset = 0);
+	void _checkpoint_dataspaces(Genode::List<Stored_dataspace_info> &state_infos, Genode::List<Badge_dataspace_info> &ds_infos);
+	void _update_normal_dataspace(Stored_dataspace_info &state_info, Badge_dataspace_info &visited_info);
+	void _update_managed_dataspace(Stored_dataspace_info &state_info, Managed_region_map_info &managed_ds_infos);
+	void _copy_dataspace_content(Genode::Dataspace_capability src_ds_cap, Genode::Dataspace_capability dst_ds_cap,
+			Genode::size_t size, Genode::off_t dst_offset = 0);
 
 
 public:
 	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
 	Checkpointer(const Checkpointer &other) = delete;
 	~Checkpointer();
-
 	Checkpointer& operator=(const Checkpointer &other) = delete;
-
 
 	/**
 	 * Checkpoint all (known) RPC objects and capabilities from _child to _state
