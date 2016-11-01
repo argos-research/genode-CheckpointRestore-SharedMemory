@@ -51,17 +51,22 @@ struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_i
 		return info ? info->find_by_badge(badge) : 0;
 	}
 
+	Stored_attached_region_info *find_by_badge_and_addr(Genode::uint16_t badge, Genode::addr_t addr)
+	{
+		if(badge == this->badge && addr == this->rel_addr)
+			return this;
+		Stored_attached_region_info *info = next();
+		return info ? info->find_by_badge_and_addr(badge, addr) : 0;
+	}
+
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<ref=", badge, ">", "\n",
-				" [",
-				Hex(rel_addr, Hex::PREFIX, Hex::PAD),
-				", ",
-				Hex(rel_addr + size, Hex::PREFIX, Hex::PAD),
-				") ",
-				" exec=", executable?"y":"n");
+		Genode::print(output, "<ref_badge=", badge, ">",
+				" [", Hex(rel_addr, Hex::PREFIX, Hex::PAD),
+				", ", Hex(rel_addr + size, Hex::PREFIX, Hex::PAD), ")",
+				executable?" exec":"");
 	}
 
 };

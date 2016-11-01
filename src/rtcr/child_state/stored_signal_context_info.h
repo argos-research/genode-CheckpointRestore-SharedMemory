@@ -54,7 +54,7 @@ struct Rtcr::Stored_signal_context_info : Genode::List<Stored_signal_context_inf
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ",", badge, ">",
+		Genode::print(output, "<", Hex(kcap), ", ", badge, ">",
 				" signal_source_badge=", signal_source_badge,
 				", imprint=", Hex(imprint));
 	}

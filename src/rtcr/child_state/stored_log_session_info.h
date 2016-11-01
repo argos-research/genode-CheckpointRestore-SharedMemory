@@ -52,7 +52,7 @@ struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::El
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ",", badge, "> args=", args);
+		Genode::print(output, "<", Hex(kcap), ", ", badge, "> args=", args);
 	}
 
 };

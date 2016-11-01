@@ -59,10 +59,10 @@ struct Rtcr::Stored_timer_session_info : Genode::List<Stored_timer_session_info>
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ",", badge, "> args=", args,
+		Genode::print(output, "<", Hex(kcap), ", ", badge, "> args=", args,
 				", sigh_badge=", sigh_badge,
 				", timeout=", timeout,
-				", periodic=", periodic?"y":"n");
+				", periodic=", periodic?"t":"f");
 	}
 
 };

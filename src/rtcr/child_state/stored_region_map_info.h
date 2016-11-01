@@ -12,6 +12,7 @@
 
 /* Rtcr includes */
 #include "../monitor/region_map_info.h"
+#include "stored_attached_region_info.h"
 
 namespace Rtcr {
 	struct Stored_region_map_info;
@@ -68,7 +69,8 @@ struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Elem
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ",", badge, "> size=", size);
+		Genode::print(output, "<", Hex(kcap), ", ", badge, "> size=", Hex(size),
+				" fault_handler_badge=", fault_handler_badge, " ds_badge=", ds_badge);
 	}
 
 };

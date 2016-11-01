@@ -68,11 +68,11 @@ struct Rtcr::Stored_dataspace_info : Genode::List<Stored_dataspace_info>::Elemen
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ",", badge, "> ",
+		Genode::print(output, "<", Hex(kcap), ", ", badge, "> ",
 				ds_cap,
-				" size=", size,
+				" size=", Hex(size),
 				" cached=", static_cast<unsigned>(cached),
-				" man=", managed?"y":"n");
+				" m=", managed?"t":"f");
 	}
 };
 
