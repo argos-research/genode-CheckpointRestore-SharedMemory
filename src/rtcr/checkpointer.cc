@@ -6,6 +6,7 @@
 
 #include "checkpointer.h"
 
+
 using namespace Rtcr;
 
 
@@ -248,7 +249,7 @@ void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region
 	while(child_info)
 	{
 		state_info = state_infos.first();
-		if(state_info) state_info = state_info->find_by_badge(child_info->ds_cap.local_name());
+		if(state_info) state_info = state_info->find_by_badge_and_addr(child_info->ds_cap.local_name(), child_info->rel_addr);
 
 		// No corresponding state_info => create it
 		if(!state_info)
@@ -272,7 +273,7 @@ void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region
 		child_info = child_obj.attached_regions().first();
 		while(child_info)
 		{
-			if(state_info->badge == child_info->ds_cap.local_name()) break;
+			if(state_info->badge == child_info->ds_cap.local_name() && state_info->rel_addr == child_info->rel_addr) break;
 			child_info = child_info->next();
 		}
 
@@ -458,11 +459,11 @@ void Checkpointer::_prepare_region_map(Stored_region_map_info &state_info, Regio
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info, ", child_obj=", &child_obj, ")");
 
+	state_info.badge = child_obj.cap().local_name();
+
 	// Update state_info
 	state_info.fault_handler_badge = child_obj.parent_state().fault_handler.local_name();
-
-	Genode::Dataspace_capability ds_cap = child_obj.parent_state().ds_cap;
-	if(ds_cap.valid() && state_info.ds_badge == 0) state_info.ds_badge = ds_cap.local_name();
+	state_info.ds_badge = child_obj.parent_state().ds_cap.local_name();
 
 	_prepare_attached_regions(state_info.stored_attached_region_infos, child_obj);
 }
@@ -857,6 +858,8 @@ void Checkpointer::checkpoint()
 		Genode::destroy(_alloc, info);
 	}
 
+	Genode::log(_child);
+	Genode::log(_state);
 	// Resume child
 	//_child.resume();
 }
