@@ -5,6 +5,7 @@
  */
 
 #include "timer_session.h"
+#include "../monitor/timer_session_info.h"
 
 using namespace Rtcr;
 

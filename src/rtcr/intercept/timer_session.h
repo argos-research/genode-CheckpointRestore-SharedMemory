@@ -12,15 +12,15 @@
 #include <root/component.h>
 #include <util/list.h>
 
-/* Rtcr includes */
-#include "../monitor/timer_session_info.h"
-
 namespace Rtcr {
 	class Timer_session_component;
 	class Timer_root;
 
 	constexpr bool timer_verbose_debug = false;
 	constexpr bool timer_root_verbose_debug = false;
+
+	// Forward declaration
+	struct Timer_session_info;
 }
 
 

@@ -14,8 +14,6 @@
 
 /* Rtcr includes */
 #include "region_map_component.h"
-#include "../monitor/region_map_info.h"
-#include "../monitor/rm_session_info.h"
 
 namespace Rtcr {
 	class Rm_session_component;
@@ -23,6 +21,10 @@ namespace Rtcr {
 
 	constexpr bool rm_verbose_debug = true;
 	constexpr bool rm_root_verbose_debug = true;
+
+	// Forward declaration
+	struct Region_map_info;
+	struct Rm_session_info;
 }
 
 

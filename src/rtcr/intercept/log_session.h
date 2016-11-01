@@ -12,15 +12,15 @@
 #include <root/component.h>
 #include <util/list.h>
 
-/* Rtcr includes */
-#include "../monitor/log_session_info.h"
-
 namespace Rtcr {
 	class Log_session_component;
 	class Log_root;
 
 	constexpr bool log_verbose_debug = false;
 	constexpr bool log_root_verbose_debug = false;
+
+	// Forward declaration
+	struct Log_session_info;
 }
 
 /**

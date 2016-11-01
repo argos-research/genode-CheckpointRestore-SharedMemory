@@ -5,6 +5,7 @@
  */
 
 #include "log_session.h"
+#include "../monitor/log_session_info.h"
 
 using namespace Rtcr;
 

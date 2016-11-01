@@ -5,6 +5,8 @@
  */
 
 #include "rm_session.h"
+#include "../monitor/region_map_info.h"
+#include "../monitor/rm_session_info.h"
 
 using namespace Rtcr;
 
