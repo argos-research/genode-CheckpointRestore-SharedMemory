@@ -91,8 +91,9 @@ public:
 	 */
 	~Cpu_session_component();
 
-	Genode::Cpu_session_capability  parent_cap()   { return _parent_cpu.cap(); }
-	Genode::List<Thread_info>      &thread_infos() { return _threads; }
+	Genode::Cpu_session_capability   parent_cap()   { return _parent_cpu.cap(); }
+	Genode::List<Thread_info>       &thread_infos() { return _threads; }
+	const Genode::List<Thread_info> &thread_infos() const { return _threads; }
 
 	/**
 	 * Pause all threads

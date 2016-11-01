@@ -154,6 +154,7 @@ public:
 
 	Genode::Ram_session_capability    parent_cap()          { return _parent_ram.cap(); }
 	Genode::List<Ram_dataspace_info> &ram_dataspace_infos() { return _rds_infos;        }
+	const Genode::List<Ram_dataspace_info> &ram_dataspace_infos() const { return _rds_infos; }
 
 	/***************************
 	 ** Ram_session interface **

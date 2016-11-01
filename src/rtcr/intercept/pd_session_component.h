@@ -104,6 +104,12 @@ public:
 	Genode::List<Signal_source_info>&     signal_source_infos()     { return _ss_infos;        }
 	Genode::List<Signal_context_info>&    signal_context_infos()    { return _sc_infos;        }
 	Genode::List<Native_capability_info>& native_capability_infos() { return _nc_infos;        }
+	const Region_map_component&                 address_space_component() const { return _address_space; }
+	const Region_map_component&                 stack_area_component()    const { return _stack_area;    }
+	const Region_map_component&                 linker_area_component()   const { return _linker_area;   }
+	const Genode::List<Signal_source_info>&     signal_source_infos()     const { return _ss_infos;      }
+	const Genode::List<Signal_context_info>&    signal_context_infos()    const { return _sc_infos;      }
+	const Genode::List<Native_capability_info>& native_capability_infos() const { return _nc_infos;      }
 
 	/**************************
 	 ** Pd_session interface **

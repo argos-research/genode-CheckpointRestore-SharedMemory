@@ -83,6 +83,8 @@ public:
 	Genode::Capability<Genode::Region_map> parent_cap()       { return _parent_region_map; }
 	State_info                             parent_state()     { return _parent_state;      }
 	Genode::List<Attached_region_info>&    attached_regions() { return _attached_regions;  }
+	const State_info                          parent_state()     const { return _parent_state;     }
+	const Genode::List<Attached_region_info>& attached_regions() const { return _attached_regions; }
 
 	/******************************
 	 ** Region map Rpc interface **
