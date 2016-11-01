@@ -116,14 +116,6 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	 * Indicates whether this dataspace is attached to its Region_map
 	 */
 	bool                          attached;
-	/**
-	 * Indicates whether this dataspace is changed since the last checkpoint
-	 */
-	bool                          dirty;
-	/**
-	 * Indicates whether this dataspace has been stored
-	 */
-	bool                          stored;
 
 	/**
 	 * Constructor
@@ -131,11 +123,10 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	Designated_dataspace_info(Managed_region_map_info &mrm_info, Genode::Dataspace_capability ds_cap,
 			Genode::addr_t addr, Genode::size_t size)
 	:
-		mrm_info(mrm_info), ds_cap(ds_cap), rel_addr(addr), size(size), attached(false), dirty(false), stored(false)
+		mrm_info(mrm_info), ds_cap(ds_cap), rel_addr(addr), size(size), attached(false)
 	{
 		// Every new dataspace shall be attached and marked
 		attach();
-		dirty = true;
 	}
 
 	/**
@@ -179,7 +170,6 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 
 			// Mark as attached and dirty
 			attached = true;
-			dirty = true;
 		}
 		else
 		{

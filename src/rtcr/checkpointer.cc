@@ -497,14 +497,20 @@ void Checkpointer::_update_dataspace_infos(Genode::List<Stored_dataspace_info> &
 		// Remember this RAM dataspace
 		Badge_dataspace_info *visited_info =
 				new (_alloc) Badge_dataspace_info(state_info->badge, child_info->ds_cap);
+		// If child has a managed dataspace (from incremental checkpoint mechanism),
+		// then store the capabilities of the designated dataspaces
 		if(child_info->mrm_info)
 		{
 			Designated_dataspace_info *dd_info = child_info->mrm_info->dd_infos.first();
 			while(dd_info)
 			{
-				Managed_dataspace_info *md_info =
-						new (_alloc) Managed_dataspace_info(dd_info->ds_cap, dd_info->rel_addr, dd_info->size);
-				visited_info->infos.insert(md_info);
+				// Store only dirtied dataspaces
+				if(dd_info->attached)
+				{
+					Managed_dataspace_info *md_info =
+							new (_alloc) Managed_dataspace_info(dd_info->ds_cap, dd_info->rel_addr, dd_info->size);
+					visited_info->infos.insert(md_info);
+				}
 				dd_info = dd_info->next();
 			}
 		}
@@ -562,12 +568,15 @@ void Checkpointer::_update_dataspace_infos(Genode::List<Stored_dataspace_info> &
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(ds_infos=", &state_infos, ", child_obj=", &child_obj, ")");
 
+	// Iterate through each RM session
 	Rm_session_info *rm_session_info = child_obj.rms_infos().first();
 	while(rm_session_info)
 	{
+		// Iterate through each region map
 		Region_map_info *region_map_info = rm_session_info->session.region_map_infos().first();
 		while(region_map_info)
 		{
+			// update dataspace list with new dataspaces from this region map
 			_update_dataspace_infos(state_infos, region_map_info->region_map, visited_infos, exclude);
 
 			region_map_info = region_map_info->next();
@@ -674,29 +683,79 @@ void Checkpointer::_detach_designated_dataspaces(Ram_session_component &child_ob
 }
 
 
-void Checkpointer::_checkpoint_dataspaces(Genode::List<Stored_dataspace_info> &state_infos, Genode::List<Badge_dataspace_info> &visited_infos)
+void Checkpointer::_checkpoint_dataspaces(Genode::List<Stored_dataspace_info> &state_infos,
+		Genode::List<Badge_dataspace_info> &visited_infos)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_infos=", &state_infos, ")");
+
+	Stored_dataspace_info *state_info = state_infos.first();
+	while(state_info)
+	{
+		Badge_dataspace_info *visited_info = visited_infos.first();
+		if(visited_info) visited_info = visited_info->find_by_badge(state_info->badge);
+		if(visited_info)
+		{
+			Managed_dataspace_info *md_info = visited_info->infos.first();
+			// Managed dataspace
+			if(md_info)
+			{
+				while(md_info)
+				{
+					if(!md_info->checkpointed)
+						_update_managed_dataspace(*state_info, *md_info);
+					md_info = md_info->next();
+				}
+			}
+			// Not managed dataspace
+			else
+			{
+				if(!visited_info->checkpointed)
+					_update_normal_dataspace(*state_info, *visited_info);
+			}
+		}
+		else
+		{
+			Genode::warning("No visited_info found for state_info ", state_info->badge);
+		}
+
+		state_info = state_info->next();
+	}
 }
 
 
 void Checkpointer::_update_normal_dataspace(Stored_dataspace_info &state_info, Badge_dataspace_info &visited_info)
 {
-	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info, ", child_info=", &visited_info, ")");
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info,
+			", child_info=", &visited_info, ")");
+
+	_copy_dataspace_content(visited_info.ds_cap, state_info.ds_cap, state_info.size);
+	visited_info.checkpointed = true;
 }
 
 
-void Checkpointer::_update_managed_dataspace(Stored_dataspace_info &state_info, Managed_region_map_info &managed_ds_info)
+void Checkpointer::_update_managed_dataspace(Stored_dataspace_info &state_info, Managed_dataspace_info &md_info)
 {
-	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info, ", managed_ds_info=", &managed_ds_info, ")");
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info,
+			", managed_ds_info=", &md_info, ")");
+
+	_copy_dataspace_content(md_info.ds_cap, state_info.ds_cap, state_info.size, md_info.rel_addr);
+	md_info.checkpointed = true;
 }
 
 
 void Checkpointer::_copy_dataspace_content(Genode::Dataspace_capability src_ds_cap, Genode::Dataspace_capability dst_ds_cap,
 		Genode::size_t size, Genode::off_t dst_offset)
 {
-	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(src ", src_ds_cap, ", dst ", dst_ds_cap, ", size=",
-			size, ", dst_offset=", dst_offset, ")");
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(src ", src_ds_cap,
+			", dst ", dst_ds_cap, ", size=", Genode::Hex(size), ", dst_offset=", dst_offset, ")");
+
+	char *src = _state._env.rm().attach(src_ds_cap);
+	char *dst = _state._env.rm().attach(dst_ds_cap);
+
+	Genode::memcpy(dst + dst_offset, src, size);
+
+	_state._env.rm().detach(dst);
+	_state._env.rm().detach(src);
 }
 
 
