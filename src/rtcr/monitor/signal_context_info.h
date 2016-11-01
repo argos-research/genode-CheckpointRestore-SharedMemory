@@ -50,6 +50,13 @@ struct Rtcr::Signal_context_info : Genode::List<Signal_context_info>::Element
 		Signal_context_info *info = next();
 		return info ? info->find_by_sc_cap(cap) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "sc ", sc_cap, ", ss ", ss_cap, ", imprint=", Hex(imprint));
+	}
 };
 
 

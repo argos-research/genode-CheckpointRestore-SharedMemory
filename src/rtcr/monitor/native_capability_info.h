@@ -38,6 +38,13 @@ struct Rtcr::Native_capability_info : Genode::List<Native_capability_info>::Elem
 		Native_capability_info *info = next();
 		return info ? info->find_by_native_cap(cap) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "native ", native_cap, ", ep ", ep_cap);
+	}
 };
 
 

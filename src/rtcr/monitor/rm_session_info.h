@@ -10,12 +10,12 @@
 /* Genode includes */
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../intercept/rm_session.h"
+
 
 namespace Rtcr {
 	struct Rm_session_info;
-
-	// Forward declaration
-	struct Rm_session_component;
 }
 
 /**
@@ -44,6 +44,13 @@ struct Rtcr::Rm_session_info : Genode::List<Rm_session_info>::Element
 			return this;
 		Rm_session_info *info = next();
 		return info ? info->find_by_ptr(ptr) : 0;
+	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "session ", session.cap(), " args=", args);
 	}
 };
 

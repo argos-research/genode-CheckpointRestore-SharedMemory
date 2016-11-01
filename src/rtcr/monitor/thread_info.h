@@ -57,6 +57,7 @@ struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 		Genode::Cpu_thread_client thread_client (cpu_thread.cap());
 		Genode::Thread_state ts (thread_client.state());
 
+		Genode::print(output, "thread ",cpu_thread.cap(), " weight=", weight.value, " utcb=", utcb, "\n");
 		Genode::print(output, "Thread ", name.string(), "\n");
 		Genode::print(output, "r0-r4: ", Hex(ts.r0, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.r1, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r2, Hex::PREFIX, Hex::PAD), " ",
@@ -68,7 +69,7 @@ struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 				Hex(ts.r11, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r12, Hex::PREFIX, Hex::PAD), "\n");
 		Genode::print(output, "sp, lr, ip, cpsr, cpu_e: ", Hex(ts.sp, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.lr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.ip, Hex::PREFIX, Hex::PAD), " ",
-				Hex(ts.cpsr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD), "\n");
+				Hex(ts.cpsr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD));
 	}
 };
 

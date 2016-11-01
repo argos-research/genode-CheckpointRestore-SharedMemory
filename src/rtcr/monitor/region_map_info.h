@@ -48,6 +48,20 @@ struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
 		Region_map_info *info = next();
 		return info ? info->find_by_cap(cap) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "region map ", region_map.cap(), " size=", Hex(size), " ds ", ds_cap);
+
+		Attached_region_info *info = region_map.attached_regions().first();
+		while(info)
+		{
+			Genode::print(output, "  ", *info, "\n");
+			info = info->next();
+		}
+	}
 };
 
 #endif /* _RTCR_REGION_MAP_INFO_H_ */

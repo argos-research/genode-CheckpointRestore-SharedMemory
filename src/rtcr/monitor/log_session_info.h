@@ -4,11 +4,14 @@
  * \date   2016-10-06
  */
 
-#ifndef _RTCR_LOG_SESSION_INFO_COMPONENT_H_
-#define _RTCR_LOG_SESSION_INFO_COMPONENT_H_
+#ifndef _RTCR_LOG_SESSION_INFO_H_
+#define _RTCR_LOG_SESSION_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
+
+/* Rtcr includes */
+#include "../intercept/log_session.h"
 
 namespace Rtcr {
 	struct Log_session_info;
@@ -45,6 +48,13 @@ struct Rtcr::Log_session_info : Genode::List<Log_session_info>::Element
 		Log_session_info *info = next();
 		return info ? info->find_by_ptr(ptr) : nullptr;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "session ", session.cap(), ", args=", args);
+	}
 };
 
-#endif /* _RTCR_LOG_SESSION_INFO_COMPONENT_H_ */
+#endif /* _RTCR_LOG_SESSION_INFO_H_ */

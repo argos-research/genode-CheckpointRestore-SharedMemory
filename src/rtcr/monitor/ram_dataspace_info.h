@@ -54,6 +54,13 @@ struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
 		Ram_dataspace_info *rds_info = next();
 		return rds_info ? rds_info->find_by_cap(cap) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "ds ", ds_cap, ", size=", Hex(size), ", cached=", static_cast<unsigned>(cached));
+	}
 };
 
 
@@ -142,6 +149,13 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 			return this;
 		Designated_dataspace_info *info = next();
 		return info ? info->find_by_addr(addr) : 0;
+	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "ds ", ds_cap, ", rel_addr=", Hex(rel_addr), " size=", Hex(size));
 	}
 	/**
 	 * Attach dataspace and mark it as attached

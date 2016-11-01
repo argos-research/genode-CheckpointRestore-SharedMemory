@@ -35,6 +35,13 @@ struct Rtcr::Signal_source_info : Genode::List<Signal_source_info>::Element
 		Signal_source_info *info = next();
 		return info ? info->find_by_cap(cap) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, cap);
+	}
 };
 
 #endif /* _RTCR_SIGNAL_SOURCE_INFO_COMPONENT_H_ */

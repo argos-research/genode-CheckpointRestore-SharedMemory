@@ -4,17 +4,17 @@
  * \date   2016-10-07
  */
 
-#ifndef _RTCR_TIMER_SESSION_INFO_COMPONENT_H_
-#define _RTCR_TIMER_SESSION_INFO_COMPONENT_H_
+#ifndef _RTCR_TIMER_SESSION_INFO_H_
+#define _RTCR_TIMER_SESSION_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../intercept/timer_session.h"
+
 namespace Rtcr {
 	struct Timer_session_info;
-
-	// Forward declaration
-	struct Timer_session_component;
 }
 
 
@@ -46,6 +46,13 @@ struct Rtcr::Timer_session_info : Genode::List<Timer_session_info>::Element
 		Timer_session_info *info = next();
 		return info ? info->find_by_ptr(ptr) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "session ", session.cap(), ", args=", args);
+	}
 };
 
-#endif /* _RTCR_TIMER_SESSION_INFO_COMPONENT_H_ */
+#endif /* _RTCR_TIMER_SESSION_INFO_H_ */
