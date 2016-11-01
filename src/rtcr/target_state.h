@@ -76,6 +76,8 @@ public:
 	~Target_state();
 
 	Target_state& operator=(const Target_state &other) = delete;
+
+	void print(Genode::Output &output) const;
 };
 
 #endif /* _RTCR_TARGET_STATE_H_ */

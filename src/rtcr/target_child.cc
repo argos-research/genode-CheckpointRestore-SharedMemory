@@ -82,6 +82,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
 }
 
+
 Target_child::~Target_child()
 {
 	if(_child)
@@ -89,6 +90,7 @@ Target_child::~Target_child()
 
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m() ", _name.string());
 }
+
 
 void Target_child::start()
 {
@@ -104,6 +106,7 @@ void Target_child::start()
 
 
 }
+
 
 void Target_child::start(Restorer &restorer)
 {
@@ -121,6 +124,182 @@ void Target_child::start(Restorer &restorer)
 
 
 }
+
+
+void Target_child::print(Genode::Output &output) const
+{
+	using Genode::Hex;
+
+	Genode::print(output, "##########################\n");
+	Genode::print(output, "###    Target_child    ###\n");
+	Genode::print(output, "##########################\n");
+
+	// RM sessions
+	{
+		Genode::print(output, "RM sessions:\n");
+		if(!_rm_root)
+			Genode::print(output, " <empty>\n");
+		else
+		{
+			const Rm_session_info *rm_info = _rm_root->rms_infos().first();
+			if(!rm_info) Genode::print(output, " <empty>\n");
+			while(rm_info)
+			{
+				Genode::print(output, " ", *rm_info, "\n");
+				const Region_map_info *region_map_info = rm_info->session.region_map_infos().first();
+				if(!region_map_info) Genode::print(output, "  <empty>\n");
+				while(region_map_info)
+				{
+					Genode::print(output, "  ", *region_map_info, "\n");
+					const Attached_region_info *attached_info = region_map_info->region_map.attached_regions().first();
+					if(!attached_info) Genode::print(output, "  <empty>\n");
+					while(attached_info)
+					{
+						Genode::print(output, "   ", *attached_info, "\n");
+						attached_info = attached_info->next();
+					}
+					region_map_info = region_map_info->next();
+				}
+				rm_info = rm_info->next();
+			}
+		}
+	}
+	// LOG sessions
+	{
+		Genode::print(output, "LOG sessions:\n");
+		if(!_log_root)
+			Genode::print(output, " <empty>\n");
+		else
+		{
+			const Log_session_info *info = _log_root->session_infos().first();
+			if(!info) Genode::print(output, " <empty>\n");
+			while(info)
+			{
+				Genode::print(output, " ", *info, "\n");
+				info = info->next();
+			}
+
+		}
+	}
+	// Timer sessions
+	{
+		Genode::print(output, "Timer sessions:\n");
+		if(!_timer_root)
+			Genode::print(output, " <empty>\n");
+		else
+		{
+			const Timer_session_info *info = _timer_root->session_infos().first();
+			if(!info) Genode::print(output, " <empty>\n");
+			while(info)
+			{
+				Genode::print(output, " ", *info, "\n");
+				info = info->next();
+			}
+
+		}
+	}
+	// Signal contexts
+	{
+		Genode::print(output, "Signal contexts:\n");
+		const Signal_context_info *info = _resources.pd.signal_context_infos().first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Signal sources
+	{
+		Genode::print(output, "Signal sources:\n");
+		const Signal_source_info *info = _resources.pd.signal_source_infos().first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Threads
+	{
+		Genode::print(output, "Threads:\n");
+		const Thread_info *info = _resources.cpu.thread_infos().first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Address space
+	{
+		Genode::print(output, "Address space:\n");
+		const Region_map_component &region_map = _resources.pd.address_space_component();
+		Genode::print(output, region_map.cap(),
+				", fault_handler ", region_map.parent_state().fault_handler,
+				", ds ", region_map.parent_state().ds_cap, "\n");
+		const Attached_region_info *info = region_map.attached_regions().first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Stack area
+	{
+		Genode::print(output, "Stack area:\n");
+		const Region_map_component &region_map = _resources.pd.stack_area_component();
+		Genode::print(output, region_map.cap(),
+				", fault_handler ", region_map.parent_state().fault_handler,
+				", ds ", region_map.parent_state().ds_cap, "\n");
+		const Attached_region_info *info = region_map.attached_regions().first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Linker area
+	{
+		Genode::print(output, "Linker area:\n");
+		const Region_map_component &region_map = _resources.pd.linker_area_component();
+		Genode::print(output, region_map.cap(),
+				", fault_handler ", region_map.parent_state().fault_handler,
+				", ds ", region_map.parent_state().ds_cap, "\n");
+		const Attached_region_info *info = region_map.attached_regions().first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// RAM allocations
+	{
+		Genode::print(output, "RAM allocations:\n");
+		const Ram_dataspace_info *rd_info = _resources.ram.ram_dataspace_infos().first();
+		if(!rd_info) Genode::print(output, " <empty>\n");
+		while(rd_info)
+		{
+			Genode::print(output, " ", *rd_info, "\n");
+			if(rd_info->mrm_info)
+			{
+				const Designated_dataspace_info *dd_info = rd_info->mrm_info->dd_infos.first();
+				if(!dd_info) Genode::print(output, "  <empty>\n");
+				while(dd_info)
+				{
+					Genode::print(output, "  ", *dd_info, "\n");
+					dd_info = dd_info->next();
+				}
+			}
+			rd_info = rd_info->next();
+		}
+	}
+
+}
+
 
 Genode::Service *Target_child::resolve_session_request(const char *service_name, const char *args)
 {

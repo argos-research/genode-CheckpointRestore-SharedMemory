@@ -207,3 +207,142 @@ Target_state::~Target_state()
 	_delete_list(_stored_dataspaces);
 }
 
+
+void Target_state::print(Genode::Output &output) const
+{
+	using Genode::Hex;
+
+	Genode::print(output, "##########################\n");
+	Genode::print(output, "###    Target_state    ###\n");
+	Genode::print(output, "##########################\n");
+
+	// RM sessions
+	{
+		Genode::print(output, "RM sessions:\n");
+		const Stored_rm_session_info *rm_info = _stored_rm_sessions.first();
+		if(!rm_info) Genode::print(output, " <empty>\n");
+		while(rm_info)
+		{
+			Genode::print(output, " ", *rm_info, "\n");
+			const Stored_region_map_info *region_map_info = rm_info->stored_region_map_infos.first();
+			if(!region_map_info) Genode::print(output, "  <empty>\n");
+			while(region_map_info)
+			{
+				Genode::print(output, "  ", *region_map_info, "\n");
+				const Stored_attached_region_info *attached_info =
+						region_map_info->stored_attached_region_infos.first();
+				if(!attached_info) Genode::print(output, "   <empty>\n");
+				while(attached_info)
+				{
+					Genode::print(output, "   ", *attached_info, "\n");
+					attached_info = attached_info->next();
+				}
+				region_map_info = region_map_info->next();
+			}
+			rm_info = rm_info->next();
+		}
+	}
+	// LOG sessions
+	{
+		Genode::print(output, "LOG sessions:\n");
+		const Stored_log_session_info *info = _stored_log_sessions.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Timer sessions
+	{
+		Genode::print(output, "Timer sessions:\n");
+		const Stored_timer_session_info *info = _stored_timer_sessions.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Signal contexts
+	{
+		Genode::print(output, "Signal contexts:\n");
+		const Stored_signal_context_info *info = _stored_signal_contexts.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Signal sources
+	{
+		Genode::print(output, "Signal sources:\n");
+		const Stored_signal_source_info *info = _stored_signal_sources.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Threads
+	{
+		Genode::print(output, "Threads:\n");
+		const Stored_thread_info *info = _stored_threads.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Address space
+	{
+		Genode::print(output, "Address space:\n");
+		Genode::print(output, _stored_address_space, "\n");
+		const Stored_attached_region_info *info = _stored_address_space.stored_attached_region_infos.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Stack area
+	{
+		Genode::print(output, "Stack area:\n");
+		Genode::print(output, _stored_stack_area, "\n");
+		const Stored_attached_region_info *info = _stored_stack_area.stored_attached_region_infos.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Linker area
+	{
+		Genode::print(output, "Linker area:\n");
+		Genode::print(output, _stored_linker_area, "\n");
+		const Stored_attached_region_info *info = _stored_linker_area.stored_attached_region_infos.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// Dataspaces
+	{
+		Genode::print(output, "Dataspaces:\n");
+		const Stored_dataspace_info *info = _stored_dataspaces.first();
+		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+}
+

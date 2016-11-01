@@ -199,6 +199,7 @@ public:
 	 */
 	void resume() { _resources.cpu.resume_threads(); }
 
+	void print(Genode::Output &output) const;
 
 	/****************************
 	 ** Child-policy interface **
@@ -207,6 +208,7 @@ public:
 	const char *name() const { return _name.string(); }
 	Genode::Service *resolve_session_request(const char *service_name, const char *args);
 	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
+
 };
 
 #endif /* _RTCR_TARGET_CHILD_H_ */
