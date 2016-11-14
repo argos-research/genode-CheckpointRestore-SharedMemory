@@ -790,7 +790,7 @@ void Checkpointer::checkpoint()
 	 * Prepare cap map list
 	 * Prepare state's lists
 	 *   Update state list elements corresponding to child list elements
-	 *     Create new state list elements, if no corresponding child list elements exists
+	 *     Create new state list elements, if no state list exists which corresponds to a child list elements
 	 *   Delete old list elements, if no corresponding child list element exists
 	 *
 	 * Detach all dataspaces for COW
