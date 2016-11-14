@@ -37,9 +37,7 @@ class Genode::Native_pd_component : public Rpc_object<Foc_native_pd>
 
 		Native_capability task_cap() override;
 
-		Native_capability request(addr_t kcap) override;
-
-		void install(Native_capability cap, uint32_t selector) override;
+		void install(Native_capability cap, addr_t kcap) override;
 
 		Native_pd_component(Pd_session_component &pd, char const *args);
 

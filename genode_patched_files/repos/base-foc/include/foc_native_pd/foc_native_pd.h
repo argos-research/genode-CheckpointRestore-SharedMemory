@@ -2,7 +2,6 @@
  * \brief  Fiasco.OC-specific part of the PD session interface
  * \author Stefan Kalkowski
  * \author Norman Feske
- * \author Denis Huber
  * \date   2011-04-14
  */
 
@@ -26,13 +25,11 @@ namespace Genode { struct Foc_native_pd; }
 struct Genode::Foc_native_pd : Pd_session::Native_pd
 {
 	virtual Native_capability task_cap() = 0;
-	virtual Native_capability request(addr_t) = 0;
-	virtual void install(Native_capability, uint32_t) = 0;
+	virtual void install(Native_capability, addr_t) = 0;
 
 	GENODE_RPC(Rpc_task_cap, Native_capability, task_cap);
-	GENODE_RPC(Rpc_request, Native_capability, request, addr_t);
-	GENODE_RPC(Rpc_install, void, install, Native_capability, uint32_t);
-	GENODE_RPC_INTERFACE(Rpc_task_cap, Rpc_request, Rpc_install);
+	GENODE_RPC(Rpc_install, void, install, Native_capability, addr_t);
+	GENODE_RPC_INTERFACE(Rpc_task_cap, Rpc_install);
 };
 
 #endif /* _INCLUDE__FOC_NATIVE_PD__FOC_NATIVE_PD_H_ */

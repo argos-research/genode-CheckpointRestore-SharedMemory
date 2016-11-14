@@ -27,12 +27,12 @@ Native_capability Native_pd_component::task_cap()
 }
 
 
-Native_capability Native_pd_component::request(addr_t kcap)
+/*Native_capability Native_pd_component::request(addr_t kcap)
 {
 	using namespace Fiasco;
 
 	log("Hello from ", __func__);
-/*
+
 	Capability<Native_pd> to_pd;
 	addr_t to_sel;
 
@@ -43,7 +43,7 @@ Native_capability Native_pd_component::request(addr_t kcap)
 
 	if (l4_msgtag_has_error(tag))
 		error("mapping cap failed");
-*/
+
 
 	// 1. Create temporary Cap_index
 	Cap_index *idx = cap_map()->insert(platform_specific()->cap_id_alloc()->alloc());
@@ -70,10 +70,10 @@ Native_capability Native_pd_component::request(addr_t kcap)
 	Native_capability cap = Native_capability(*idx);
 	printf("Data: %d %x, Cap.local_name: %d\n", cap.data()->id(), cap.data()->kcap(), cap.local_name());
 	return cap;
-}
+}*/
 
 
-void Native_pd_component::install(Native_capability cap, uint32_t selector)
+void Native_pd_component::install(Native_capability cap, addr_t kcap)
 {
 	log("Implement me: ", __func__);
 }
