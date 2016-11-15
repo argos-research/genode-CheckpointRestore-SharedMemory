@@ -60,7 +60,8 @@ void init_pd()
 	if(native_pd_cap.valid())
 	{
 		Capability<Foc_native_pd> foc_pd_cap = static_cap_cast<Foc_native_pd>(native_pd_cap);
-		Foc_native_pd_client(foc_pd_cap).cap_map_addr((addr_t) cap_map());
+		Foc_native_pd_client(foc_pd_cap).cap_map_addr((addr_t) cap_idx_alloc());
+		log("from thread_bootstrap: ", cap_idx_alloc());
 	}
 
 }

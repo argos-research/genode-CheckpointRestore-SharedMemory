@@ -5,15 +5,59 @@
  */
 
 #include "checkpointer.h"
-
+#include "util/debug.h"
+#include "base/internal/cap_map.h"
+#include "base/internal/cap_alloc.h"
 
 using namespace Rtcr;
 
 
 void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_infos)
 {
+	using Genode::log;
+	using Genode::Hex;
+	using Genode::addr_t;
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
-	Genode::log(__func__, ": Implement me!");
+	Genode::log(__func__, ": Implementing...");
+
+	Genode::addr_t cap_map_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_addr();
+	log("from ckpt: ", Genode::Hex(cap_map_addr));
+
+	Attached_region_info *info = _child.pd().address_space_component().attached_regions().first();
+	if(info) info = info->find_by_addr_and_exec(cap_map_addr, false);
+	if(info)
+	{
+		log(*info);
+
+		unsigned char *attached_ptr = _state._env.rm().attach(info->ds_cap);
+		log("Attached ds at: ", attached_ptr);
+		const addr_t local_start = (addr_t)attached_ptr;
+		const addr_t child_start = (addr_t)info->rel_addr;
+
+		addr_t local_cap_map_addr = cap_map_addr - child_start + local_start;
+		addr_t local_first = *(addr_t*)local_cap_map_addr - child_start + local_start;
+
+		log("Size of cap_idx_alloc_tpl: ", Hex(sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>)));
+
+		// Capability map consists of list and spin_lock, each occupying 4 bytes
+		//log("Size of Capability_map: ", sizeof(Genode::Capability_map));
+		log("cap_map_addr: ", Hex(cap_map_addr));
+		dump_mem((void*)local_cap_map_addr, 8);
+		// first Cap_index consists of next ptr (4 byte), ref_count (1 byte), and badge (2 byte)
+		//log("Size of Cap_index: ", sizeof(Genode::Cap_index));
+		log("first: ", Hex(*(addr_t*)local_cap_map_addr));
+		dump_mem((void*)local_first, 8);
+
+		dump_mem(Genode::cap_idx_alloc(), 0x1000);
+		Genode::Cap_index *ci = Genode::cap_idx_alloc()->alloc_range(1);
+		log(ci);
+		//dump_mem(((char*)ci)-0x1000, 0x2000);
+	}
+	else
+	{
+		Genode::log("not found");
+	}
 }
 
 
@@ -858,8 +902,8 @@ void Checkpointer::checkpoint()
 		Genode::destroy(_alloc, info);
 	}
 
-	Genode::log(_child);
-	Genode::log(_state);
+	//Genode::log(_child);
+	//Genode::log(_state);
 	// Resume child
 	//_child.resume();
 }

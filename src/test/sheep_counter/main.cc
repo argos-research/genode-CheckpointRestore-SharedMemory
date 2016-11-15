@@ -1,5 +1,5 @@
 /*
- * \brief  Test program which just counts sheeps
+ * \brief  Testprogram which just counts sheeps
  * \author Denis Huber
  * \date   2016-08-04
  *
@@ -27,7 +27,9 @@ void Component::construct(Genode::Env &env)
 	log("Allocating and attaching memory and its dataspace.");
 	unsigned int *addr = env.rm().attach(env.ram().alloc(4096));
 	addr[0] = 1;
-	unsigned int &n = *addr;
+	unsigned int &n = addr[0];
+
+	log("Address of counter: ", addr);
 
 	while(1)
 	{

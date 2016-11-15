@@ -95,7 +95,7 @@ extern "C" void init_main_thread()
 	(void*)env();
 	init_log();
 	/*
-	 * initialises variables in PD session
+	 * Initialise variables in native PD
 	 */
 	init_pd();
 

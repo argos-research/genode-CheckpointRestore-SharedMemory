@@ -81,6 +81,14 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 		Attached_region_info *info = next();
 		return info ? info->find_by_cap_and_addr(cap, addr) : 0;
 	}
+	Attached_region_info *find_by_addr_and_exec(Genode::addr_t addr, bool exec)
+	{
+		if((exec == executable) && (addr >= rel_addr) && (addr <= rel_addr + size))
+			return this;
+		Attached_region_info *info = next();
+		return info ? info->find_by_addr_and_exec(addr, exec) : 0;
+	}
+
 
 	void print(Genode::Output &output) const
 	{
@@ -90,7 +98,7 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 		Genode::print(output, " [");
 		Genode::print(output, Hex(rel_addr, Hex::PREFIX, Hex::PAD));
 		Genode::print(output, ", ");
-		Genode::print(output, Hex(rel_addr + size, Hex::PREFIX, Hex::PAD));
+		Genode::print(output, Hex(rel_addr + size - offset, Hex::PREFIX, Hex::PAD));
 		Genode::print(output, ")");
 		Genode::print(output, executable ? " exec" : "");
 	}

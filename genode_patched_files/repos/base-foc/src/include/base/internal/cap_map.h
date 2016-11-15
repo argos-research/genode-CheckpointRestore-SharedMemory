@@ -31,7 +31,7 @@
 #include <base/exception.h>
 #include <base/stdint.h>
 #include <base/lock_guard.h>
-#include <util/avl_tree.h>
+#include <util/list.h>
 #include <util/noncopyable.h>
 #include <util/string.h>
 

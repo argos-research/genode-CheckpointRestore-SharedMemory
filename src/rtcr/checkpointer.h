@@ -10,6 +10,7 @@
 /* Genode includes */
 #include <util/list.h>
 #include <region_map/client.h>
+#include <foc_native_pd/client.h>
 
 /* Rtcr includes */
 #include "target_state.h"
@@ -26,7 +27,7 @@ namespace Rtcr {
 	class Checkpointer;
 	struct Badge_kcap_info;
 
-	constexpr bool checkpointer_verbose_debug = true;
+	constexpr bool checkpointer_verbose_debug = false;
 }
 
 /**
