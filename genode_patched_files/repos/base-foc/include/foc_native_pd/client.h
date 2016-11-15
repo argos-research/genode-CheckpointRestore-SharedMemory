@@ -26,9 +26,13 @@ struct Genode::Foc_native_pd_client : Rpc_client<Foc_native_pd>
 	explicit Foc_native_pd_client(Capability<Native_pd> cap)
 	: Rpc_client<Foc_native_pd>(static_cap_cast<Foc_native_pd>(cap)) { }
 
-	Native_capability task_cap() { return call<Rpc_task_cap>(); }
+	Native_capability task_cap() override { return call<Rpc_task_cap>(); }
 
-	void install(Native_capability cap, addr_t kcap) { call<Rpc_install>(cap, kcap); }
+	addr_t cap_map_addr() override { return call<Rpc_get_cap_map_addr>(); }
+
+	void cap_map_addr(addr_t addr) override { call<Rpc_set_cap_map_addr>(addr); }
+
+	void install(Native_capability cap, addr_t kcap) override { call<Rpc_install>(cap, kcap); }
 };
 
 #endif /* _INCLUDE__FOC_NATIVE_PD__CLIENT_H_ */
