@@ -58,7 +58,7 @@ struct Rtcr::Attached_region_info : public Genode::List<Attached_region_info>::E
 	{
 		Ram_dataspace_info *rds_info = rds_infos.first();
 		if(rds_info) rds_info = rds_info->find_by_cap(ds_cap);
-		return rds_info ? rds_info->mrm_info : nullptr;
+		return rds_info ? rds_info->mrm_info : 0;
 	}
 	Attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
