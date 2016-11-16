@@ -69,23 +69,32 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 	}
 
 	// Attach dataspace to real Region map
-	Region_map::Local_addr addr = _parent_region_map.attach(
+	Genode::addr_t addr = _parent_region_map.attach(
 			ds_cap, size, offset, use_local_addr, local_addr, executable);
 
-	Genode::size_t ds_size = Genode::Dataspace_client{ds_cap}.size();
+	// Actual size of the attached region; page-aligned
+	Genode::size_t actual_size;
+	if(size == 0)
+	{
+		Genode::size_t ds_size = Genode::Dataspace_client(ds_cap).size();
+		actual_size = Genode::align_addr(ds_size - offset, 12);
+	}
+	else
+	{
+		actual_size = Genode::align_addr(size, 12);
+	}
+	//Genode::log("  actual_size=", Genode::Hex(actual_size));
 
 	// Store information about the attachment
-	Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, ds_size, offset, addr, executable);
+	Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, actual_size, offset, addr, executable);
 
 	if(verbose_debug)
 	{
-		// Dataspace::size() returns a multiple of 4096 bytes (1 Pagesize)
-		Genode::size_t ds_size = Genode::Dataspace_client(ds_cap).size();
-		Genode::size_t num_pages = (Genode::size_t)(ds_size/4096);
+		Genode::size_t num_pages = actual_size/4096;
 
 		Genode::log("  Attached dataspace (", ds_cap, ")",
-		" into [", Genode::Hex((Genode::size_t)addr),
-		", ", Genode::Hex((Genode::size_t)addr+ds_size), ") ",
+		" into [", Genode::Hex(addr),
+		", ", Genode::Hex(addr+actual_size), ") ",
 		num_pages, num_pages==1?" page":" pages");
 	}
 
