@@ -155,8 +155,28 @@ private:
 	 * kcap for each RPC object.
 	 */
 	void _prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_infos);
+	/**
+	 * \brief If ar_info is managed, mark the detached dataspaces by badge, and attach them
+	 *
+	 * If ar_info contains a managed dataspace (allocated through the custom RAM session), then mark the detached
+	 * designated dataspaces and attach them. Now the managed dataspace can be used directly without triggering page faults.
+	 * The marked dataspaces have to be detached to not unnecessarily checkpoint them later
+	 */
 	Genode::List<Badge_info> _mark_attach_designated_dataspaces(Attached_region_info &ar_info);
-	void _detach_unmark_designated_dataspaces(Genode::List<Badge_info> &dd_infos, Attached_region_info &ar_info);
+	/**
+	 * \brief If ar_info is managed AND badge_infos is not empty, detach the previously attached dataspaces and
+	 * delete the badge_infos' elements
+	 *
+	 * If the ar_info contains a managed dataspace (allocated through the custom RAM session) AND badge_infos is
+	 * not empty, then detach the marked designated dataspaces and delete badge_infos' elements
+	 */
+	void _detach_unmark_designated_dataspaces(Genode::List<Badge_info> &badge_infos, Attached_region_info &ar_info);
+	/**
+	 * \brief Return the kcap for a given badge from _capability_map_infos
+	 *
+	 * Return the kcap for a given badge. If there is no, return 0.
+	 */
+	Genode::addr_t find_kcap_by_badge(Genode::uint16_t badge);
 	/**
 	 * \brief Prepares the RM session list named state_infos
 	 *
@@ -215,7 +235,7 @@ private:
 	 */
 	void _prepare_region_map(Stored_region_map_info &state_info,  Region_map_component &child_obj);
 	/**
-	 * \brief Update the dataspace list named state_infos
+	 * \brief Update the dataspace list named state_infos by allocated dataspaces
 	 *
 	 * All list elements of state_infos which have a corresponding list element in child_obj are updated. If no corresponding
 	 * state_info exists, create it. Also mark every state_info, which was updated, in visited_infos.
@@ -223,7 +243,7 @@ private:
 	void _update_dataspace_infos(Genode::List<Stored_dataspace_info> &state_infos, Ram_session_component &child_obj,
 			Genode::List<Badge_dataspace_info> &visited_infos);
 	/**
-	 * \brief Update the dataspace list named state_infos
+	 * \brief Update the dataspace list named state_infos by attached dataspaces of standard region maps
 	 *
 	 * Update (or create) a not excluded (found in exclude) and not yet seen (found in visited_infos) state_info list element,
 	 * which corresponds to a list element of child_obj. Also mark every state_info, which was update, in visited_infos.
@@ -231,7 +251,7 @@ private:
 	void _update_dataspace_infos(Genode::List<Stored_dataspace_info> &state_infos, Region_map_component &child_obj,
 			Genode::List<Badge_dataspace_info> &visited_infos, Genode::List<Badge_info> &exclude);
 	/**
-	 * \brief Update the dataspace list named state_infos
+	 * \brief Update the dataspace list named state_infos by attached dataspaces of extra region maps
 	 *
 	 * For each region map in an RM session and each RM session in an RM root, call
 	 * _update_dataspace_infos(..., Region_map_component, ...)

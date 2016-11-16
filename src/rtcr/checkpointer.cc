@@ -49,7 +49,7 @@ void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_i
 	}
 
 	// Create new badge_kcap list
-	const Genode::size_t struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
+	//const Genode::size_t struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
 	const Genode::size_t array_ele_size = sizeof(Genode::Cap_index);
 	const Genode::size_t array_size     = array_ele_size*4096;
 
@@ -173,6 +173,18 @@ void Checkpointer::_detach_unmark_designated_dataspaces(Genode::List<Badge_info>
 }
 
 
+Genode::addr_t Checkpointer::find_kcap_by_badge(Genode::uint16_t badge)
+{
+	Genode::addr_t kcap = 0;
+
+	Badge_kcap_info *info = _capability_map_infos.first();
+	if(info) info = info->find_by_badge(badge);
+	if(info) kcap = info->kcap;
+
+	return kcap;
+}
+
+
 void Checkpointer::_prepare_rm_sessions(Genode::List<Stored_rm_session_info> &state_infos, Rm_root &child_obj)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_infos=", &state_infos, ", child_obj=", &child_obj, ")");
@@ -193,6 +205,7 @@ void Checkpointer::_prepare_rm_sessions(Genode::List<Stored_rm_session_info> &st
 		if(!state_info)
 		{
 			state_info = new (_state._alloc) Stored_rm_session_info(*child_info);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -247,6 +260,7 @@ void Checkpointer::_prepare_log_sessions(Genode::List<Stored_log_session_info> &
 		if(!state_info)
 		{
 			state_info = new (_state._alloc) Stored_log_session_info(*child_info);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -300,6 +314,7 @@ void Checkpointer::_prepare_timer_sessions(Genode::List<Stored_timer_session_inf
 		if(!state_info)
 		{
 			state_info = new (_state._alloc) Stored_timer_session_info(*child_info);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -356,6 +371,7 @@ void Checkpointer::_prepare_region_maps(Genode::List<Stored_region_map_info> &st
 		if(!state_info)
 		{
 			state_info = new (_state._alloc) Stored_region_map_info(*child_info);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -464,6 +480,7 @@ void Checkpointer::_prepare_threads(Genode::List<Stored_thread_info> &state_info
 		if(!state_info)
 		{
 			state_info = new (_state._alloc) Stored_thread_info(*child_info);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -523,6 +540,7 @@ void Checkpointer::_prepare_contexts(Genode::List<Stored_signal_context_info> &s
 		if(!state_info)
 		{
 			state_info = new (_state._alloc) Stored_signal_context_info(*child_info);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -577,6 +595,7 @@ void Checkpointer::_prepare_sources(Genode::List<Stored_signal_source_info> &sta
 		if(!state_info)
 		{
 			state_info = new (_state._alloc) Stored_signal_source_info(*child_info);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -616,6 +635,7 @@ void Checkpointer::_prepare_region_map(Stored_region_map_info &state_info, Regio
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info, ", child_obj=", &child_obj, ")");
 
 	state_info.badge = child_obj.cap().local_name();
+	state_info.kcap = find_kcap_by_badge(state_info.badge);
 
 	// Update state_info
 	state_info.fault_handler_badge = child_obj.parent_state().fault_handler.local_name();
@@ -646,6 +666,7 @@ void Checkpointer::_update_dataspace_infos(Genode::List<Stored_dataspace_info> &
 		{
 			state_info = new (_state._alloc) Stored_dataspace_info(*child_info);
 			state_info->ds_cap = _state._env.ram().alloc(state_info->size);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
@@ -707,6 +728,7 @@ void Checkpointer::_update_dataspace_infos(Genode::List<Stored_dataspace_info> &
 		{
 			state_info = new (_state._alloc) Stored_dataspace_info(*child_info);
 			state_info->ds_cap = _state._env.ram().alloc(state_info->size);
+			state_info->kcap = find_kcap_by_badge(state_info->badge);
 			state_infos.insert(state_info);
 		}
 
