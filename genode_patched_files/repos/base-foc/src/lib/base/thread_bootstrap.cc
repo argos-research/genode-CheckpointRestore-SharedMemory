@@ -49,7 +49,7 @@ void prepare_reinit_main_thread()
 
 
 /**
- * Sets cap_map_addr in Foc_native_pd
+ * Sets cap_map_info in Foc_native_pd
  */
 void init_pd()
 {
@@ -60,7 +60,7 @@ void init_pd()
 	if(native_pd_cap.valid())
 	{
 		Capability<Foc_native_pd> foc_pd_cap = static_cap_cast<Foc_native_pd>(native_pd_cap);
-		Foc_native_pd_client(foc_pd_cap).cap_map_addr((addr_t) cap_idx_alloc());
+		Foc_native_pd_client(foc_pd_cap).cap_map_info((addr_t) cap_idx_alloc());
 		log("from thread_bootstrap: ", cap_idx_alloc());
 	}
 
