@@ -117,7 +117,7 @@ private:
 	 */
 	static constexpr bool verbose_debug = checkpointer_verbose_debug;
 	/**
-	 * Allocator for checkpointer personal datastructures. The datastructures which belong to Target_state
+	 * Allocator for checkpointer's personal datastructures. The datastructures which belong to Target_state
 	 * are created with the allocator of Target_state
 	 */
 	Genode::Allocator &_alloc;
@@ -148,6 +148,8 @@ private:
 	 * kcap for each RPC object.
 	 */
 	void _prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_infos);
+	Genode::List<Badge_info> _mark_attach_designated_dataspaces(Attached_region_info &ar_info);
+	void _detach_unmark_designated_dataspaces(Genode::List<Badge_info> &dd_infos, Attached_region_info &ar_info);
 	/**
 	 * \brief Prepares the RM session list named state_infos
 	 *

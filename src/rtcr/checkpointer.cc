@@ -21,42 +21,109 @@ void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_i
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 	Genode::log(__func__, ": Implementing...");
 
-	Genode::addr_t cap_map_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_addr();
-	log("from ckpt: ", Genode::Hex(cap_map_addr));
+	// Retrieve cap_idx_alloc_addr
+	Genode::addr_t cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
+	log("from ckpt: ", Genode::Hex(cap_idx_alloc_addr));
 
-	Attached_region_info *info = _child.pd().address_space_component().attached_regions().first();
-	if(info) info = info->find_by_addr_and_exec(cap_map_addr, false);
-	if(info)
+	// Find child's dataspace corresponding to cap_idx_alloc_addr
+	Attached_region_info *ar_info = _child.pd().address_space_component().attached_regions().first();
+	if(ar_info) ar_info = ar_info->find_by_addr_and_exec(cap_idx_alloc_addr, false);
+	if(!ar_info)
 	{
-		log(*info);
-
-		unsigned char *attached_ptr = _state._env.rm().attach(info->ds_cap);
-		log("Attached ds at: ", attached_ptr);
-		const addr_t local_start = (addr_t)attached_ptr;
-		const addr_t child_start = (addr_t)info->rel_addr;
-
-		addr_t local_cap_map_addr = cap_map_addr - child_start + local_start;
-		addr_t local_first = *(addr_t*)local_cap_map_addr - child_start + local_start;
-
-		log("Size of cap_idx_alloc_tpl: ", Hex(sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>)));
-
-		// Capability map consists of list and spin_lock, each occupying 4 bytes
-		//log("Size of Capability_map: ", sizeof(Genode::Capability_map));
-		log("cap_map_addr: ", Hex(cap_map_addr));
-		dump_mem((void*)local_cap_map_addr, 8);
-		// first Cap_index consists of next ptr (4 byte), ref_count (1 byte), and badge (2 byte)
-		//log("Size of Cap_index: ", sizeof(Genode::Cap_index));
-		log("first: ", Hex(*(addr_t*)local_cap_map_addr));
-		dump_mem((void*)local_first, 8);
-
-		dump_mem(Genode::cap_idx_alloc(), 0x1000);
-		Genode::Cap_index *ci = Genode::cap_idx_alloc()->alloc_range(1);
-		log(ci);
-		//dump_mem(((char*)ci)-0x1000, 0x2000);
+		Genode::error("No dataspace found for cap_idx_alloc's datastructure at ", Hex(cap_idx_alloc_addr));
+		throw Genode::Exception();
 	}
-	else
+
+	//log(*ar_info);
+
+	// If ar_info is a managed Ram_dataspace_info, mark detached Designated_dataspace_infos and attach them,
+	// thus, the Checkpointer does not trigger page faults which mark accessed regions
+	Genode::List<Badge_info> marked_badge_infos =
+			_mark_attach_designated_dataspaces(*ar_info);
+
+	// Destroy old badge_kcap list
+	while(Badge_kcap_info *state_info = state_infos.first())
 	{
-		Genode::log("not found");
+		state_infos.remove(state_info);
+		Genode::destroy(_alloc, state_info);
+	}
+
+	// Create new badge_kcap list
+	unsigned char *attached_ptr = _state._env.rm().attach(ar_info->ds_cap);
+	log("Attached ds at: ", attached_ptr);
+	const addr_t local_start = (addr_t)attached_ptr;
+	const addr_t child_start = (addr_t)ar_info->rel_addr;
+
+	addr_t local_cap_idx_alloc_addr = cap_idx_alloc_addr - child_start + local_start;
+
+	//log("Start of dataspace: ", Hex(ar_info->rel_addr));
+	//log("Start of cap_idx_alloc_tpl: ", Hex(cap_idx_alloc_addr));
+	//log("Size of cap_idx_alloc_tpl: ", Hex(sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>)));
+	//log("End of cap_idx_alloc_tpl: ", Hex(cap_idx_alloc_addr + sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>)));
+	//log("End of dataspace: ", Hex(ar_info->rel_addr + ar_info->size - ar_info->offset));
+
+	// Capability map consists of list and spin_lock, each occupying 4 bytes
+	//log("Size of Capability_map: ", sizeof(Genode::Capability_map));
+	log("cap_idx_alloc_addr: ", Hex(cap_idx_alloc_addr));
+	dump_mem((void*)local_cap_idx_alloc_addr, 0x8000);
+
+	//dump_mem(Genode::cap_idx_alloc(), 0x1000);
+	//Genode::Cap_index *ci = Genode::cap_idx_alloc()->alloc_range(1);
+	//log(ci);
+	//dump_mem(((char*)ci)-0x1000, 0x2000);
+
+	// Detach the previously attached Designated_dataspace_infos and delete the list containing marked Designated_dataspace_infos
+	_detach_unmark_designated_dataspaces(marked_badge_infos, *ar_info);
+}
+
+
+Genode::List<Checkpointer::Badge_info> Checkpointer::_mark_attach_designated_dataspaces(Attached_region_info &ar_info)
+{
+	Genode::List<Badge_info> result_infos;
+
+	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.ram().ram_dataspace_infos());
+	if(mrm_info)
+	{
+		Designated_dataspace_info *dd_info = mrm_info->dd_infos.first();
+		while(dd_info)
+		{
+			if(!dd_info->attached)
+			{
+				dd_info->attach();
+
+				Badge_info *new_info = new (_alloc) Badge_info(dd_info->ds_cap.local_name());
+			}
+
+			dd_info = dd_info->next();
+		}
+	}
+
+	return result_infos;
+}
+
+
+void Checkpointer::_detach_unmark_designated_dataspaces(Genode::List<Badge_info> &badge_infos, Attached_region_info &ar_info)
+{
+	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.ram().ram_dataspace_infos());
+	if(mrm_info && badge_infos.first())
+	{
+		Designated_dataspace_info *dd_info = mrm_info->dd_infos.first();
+		while(dd_info)
+		{
+			if(badge_infos.first()->find_by_badge(dd_info->ds_cap.local_name()))
+			{
+				dd_info->detach();
+			}
+
+			dd_info = dd_info->next();
+		}
+	}
+
+	// Delete list elements from badge_infos
+	while(Badge_info *badge_info = badge_infos.first())
+	{
+		badge_infos.remove(badge_info);
+		Genode::destroy(_alloc, badge_info);
 	}
 }
 
