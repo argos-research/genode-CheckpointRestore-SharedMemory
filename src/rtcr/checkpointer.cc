@@ -49,28 +49,72 @@ void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_i
 	}
 
 	// Create new badge_kcap list
-	unsigned char *attached_ptr = _state._env.rm().attach(ar_info->ds_cap);
-	log("Attached ds at: ", attached_ptr);
-	const addr_t local_start = (addr_t)attached_ptr;
-	const addr_t child_start = (addr_t)ar_info->rel_addr;
+	const Genode::size_t struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
+	const Genode::size_t array_ele_size = sizeof(Genode::Cap_index);
+	const Genode::size_t array_size     = array_ele_size*4096;
 
-	addr_t local_cap_idx_alloc_addr = cap_idx_alloc_addr - child_start + local_start;
+	const addr_t child_ds_start     = ar_info->rel_addr;
+	//const addr_t child_ds_end       = child_ds_start + ar_info->size;
+	//const addr_t child_struct_start = cap_idx_alloc_addr;
+	//const addr_t child_struct_end   = child_struct_start + struct_size;
+	//const addr_t child_array_start  = child_struct_start + 8;
+	//const addr_t child_array_end    = child_array_start + array_size;
 
-	//log("Start of dataspace: ", Hex(ar_info->rel_addr));
-	//log("Start of cap_idx_alloc_tpl: ", Hex(cap_idx_alloc_addr));
-	//log("Size of cap_idx_alloc_tpl: ", Hex(sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>)));
-	//log("End of cap_idx_alloc_tpl: ", Hex(cap_idx_alloc_addr + sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>)));
-	//log("End of dataspace: ", Hex(ar_info->rel_addr + ar_info->size - ar_info->offset));
+	const addr_t local_ds_start     = _state._env.rm().attach(ar_info->ds_cap, ar_info->size, ar_info->offset);
+	//const addr_t local_ds_end       = local_ds_start + ar_info->size;
+	const addr_t local_struct_start = cap_idx_alloc_addr - child_ds_start + local_ds_start;
+	//const addr_t local_struct_end   = local_struct_start + struct_size;
+	const addr_t local_array_start  = local_struct_start + 8;
+	const addr_t local_array_end    = local_array_start + array_size;
 
-	// Capability map consists of list and spin_lock, each occupying 4 bytes
-	//log("Size of Capability_map: ", sizeof(Genode::Capability_map));
-	log("cap_idx_alloc_addr: ", Hex(cap_idx_alloc_addr));
-	dump_mem((void*)local_cap_idx_alloc_addr, 0x8000);
+	/*
+	log("child_ds_start:     ", Hex(child_ds_start));
+	log("child_struct_start: ", Hex(child_struct_start));
+	log("child_array_start:  ", Hex(child_array_start));
+	log("child_array_end:    ", Hex(child_array_end));
+	log("child_struct_end:   ", Hex(child_struct_end));
+	log("child_ds_end:       ", Hex(child_ds_end));
 
-	//dump_mem(Genode::cap_idx_alloc(), 0x1000);
-	//Genode::Cap_index *ci = Genode::cap_idx_alloc()->alloc_range(1);
-	//log(ci);
-	//dump_mem(((char*)ci)-0x1000, 0x2000);
+	log("local_ds_start:     ", Hex(local_ds_start));
+	log("local_struct_start: ", Hex(local_struct_start));
+	log("local_array_start:  ", Hex(local_array_start));
+	log("local_array_end:    ", Hex(local_array_end));
+	log("local_struct_end:   ", Hex(local_struct_end));
+	log("local_ds_end:       ", Hex(local_ds_end));
+	*/
+
+	//dump_mem((void*)local_array_start, 0x1200);
+
+	for(addr_t curr = local_array_start; curr < local_array_end; curr += array_ele_size)
+	{
+/*
+		log("  ",
+				Hex(*(Genode::uint8_t*)(curr+0), Hex::OMIT_PREFIX, Hex::PAD),
+				Hex(*(Genode::uint8_t*)(curr+1), Hex::OMIT_PREFIX, Hex::PAD),
+				Hex(*(Genode::uint8_t*)(curr+2), Hex::OMIT_PREFIX, Hex::PAD),
+				Hex(*(Genode::uint8_t*)(curr+3), Hex::OMIT_PREFIX, Hex::PAD), "  ",
+				Hex(*(Genode::uint8_t*)(curr+4), Hex::OMIT_PREFIX, Hex::PAD),
+				Hex(*(Genode::uint8_t*)(curr+5), Hex::OMIT_PREFIX, Hex::PAD),
+				Hex(*(Genode::uint8_t*)(curr+6), Hex::OMIT_PREFIX, Hex::PAD),
+				Hex(*(Genode::uint8_t*)(curr+7), Hex::OMIT_PREFIX, Hex::PAD));
+*/
+		const Genode::size_t badge_offset = 6;
+
+		const Genode::uint16_t badge = *(Genode::uint16_t*)(curr + badge_offset);
+		const Genode::addr_t kcap  = ((curr - local_array_start) / array_ele_size) << 12;
+
+		if(badge != 0 && badge != 0xffff)
+		{
+			Badge_kcap_info *state_info = new (_alloc) Badge_kcap_info(kcap, badge);
+			state_infos.insert(state_info);
+			//log("+ ", Hex(kcap), ": ", badge, " (", Hex(badge), ")");
+		}
+		else
+		{
+			//log("  ", Hex(kcap), ": ", badge);
+		}
+
+	}
 
 	// Detach the previously attached Designated_dataspace_infos and delete the list containing marked Designated_dataspace_infos
 	_detach_unmark_designated_dataspaces(marked_badge_infos, *ar_info);
@@ -92,6 +136,7 @@ Genode::List<Checkpointer::Badge_info> Checkpointer::_mark_attach_designated_dat
 				dd_info->attach();
 
 				Badge_info *new_info = new (_alloc) Badge_info(dd_info->ds_cap.local_name());
+				result_infos.insert(new_info);
 			}
 
 			dd_info = dd_info->next();
@@ -970,7 +1015,18 @@ void Checkpointer::checkpoint()
 	}
 
 	//Genode::log(_child);
-	//Genode::log(_state);
+	Genode::log(_state);
+	// kcap, badge mapping
+	{
+		Genode::log("Capability map:");
+		const Badge_kcap_info *info = _capability_map_infos.first();
+		if(!info) Genode::log(" <empty>\n");
+		while(info)
+		{
+			Genode::log(" ", *info);
+			info = info->next();
+		}
+	}
 	// Resume child
 	//_child.resume();
 }

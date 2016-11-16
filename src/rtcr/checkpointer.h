@@ -56,6 +56,13 @@ struct Rtcr::Badge_kcap_info : Genode::List<Badge_kcap_info>::Element
 		Badge_kcap_info *info = next();
 		return info ? info->find_by_kcap(kcap) : 0;
 	}
+
+	void print(Genode::Output &output) const
+	{
+		using Genode::Hex;
+
+		Genode::print(output, "kcap=", Hex(kcap), ", badge=", badge);
+	}
 };
 
 
