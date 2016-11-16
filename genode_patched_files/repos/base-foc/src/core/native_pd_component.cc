@@ -72,15 +72,15 @@ Native_capability Native_pd_component::task_cap()
 	return cap;
 }*/
 
-addr_t Native_pd_component::cap_map_addr()
+addr_t Native_pd_component::cap_map_info()
 {
-	return _cap_map_addr;
+	return _cap_map_info;
 }
 
 
-void Native_pd_component::cap_map_addr(addr_t addr)
+void Native_pd_component::cap_map_info(addr_t addr)
 {
-	_cap_map_addr = addr;
+	_cap_map_info = addr;
 }
 
 void Native_pd_component::install(Native_capability cap, addr_t kcap)
@@ -92,7 +92,7 @@ void Native_pd_component::install(Native_capability cap, addr_t kcap)
 Native_pd_component::Native_pd_component(Pd_session_component &pd_session,
                                          char const *args)
 :
-	_pd_session(pd_session), _cap_map_addr(0)
+	_pd_session(pd_session), _cap_map_info(0)
 {
 	_pd_session._thread_ep.manage(this);
 }
