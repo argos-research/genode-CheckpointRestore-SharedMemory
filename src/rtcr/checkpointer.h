@@ -211,11 +211,23 @@ private:
 	void _prepare_attached_regions(Genode::List<Stored_attached_region_info> &state_infos,
 			Region_map_component &child_obj);
 	/**
+	 * \brief Prepare a specific CPU session named state_info
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
+	void _prepare_cpu_session(Stored_cpu_session_info &state_info, Cpu_session_component &child_obj);
+	/**
 	 * \brief Prepare the thread list named state_infos
 	 *
 	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
 	 */
 	void _prepare_threads(Genode::List<Stored_thread_info> &state_infos, Cpu_session_component &child_obj);
+	/**
+	 * \brief Prepare a specific PD session named state_info
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
+	void _prepare_pd_session(Stored_pd_session_info &state_info, Pd_session_component &child_obj);
 	/**
 	 * \brief Prepare the signal context list named state_infos
 	 *
@@ -234,6 +246,13 @@ private:
 	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
 	 */
 	void _prepare_region_map(Stored_region_map_info &state_info,  Region_map_component &child_obj);
+	/**
+	 * \brief Prepare a specific RAM session named state_info
+	 *
+	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
+	 */
+	void _prepare_ram_session(Stored_ram_session_info &state_info, Ram_session_component &child_obj);
+
 	/**
 	 * \brief Update the dataspace list named state_infos by allocated dataspaces
 	 *

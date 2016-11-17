@@ -465,6 +465,20 @@ void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region
 }
 
 
+void Checkpointer::_prepare_cpu_session(Stored_cpu_session_info &state_info, Cpu_session_component &child_obj)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info, ", child_obj=", &child_obj, ")");
+
+	state_info.badge = child_obj.cap().local_name();
+	state_info.kcap = find_kcap_by_badge(state_info.badge);
+
+	// Update state_info
+	state_info.exception_sigh_badge = child_obj.parent_state().exception_sigh.local_name();
+
+	_prepare_threads(state_info.stored_thread_infos, child_obj);
+}
+
+
 void Checkpointer::_prepare_threads(Genode::List<Stored_thread_info> &state_infos, Cpu_session_component &child_obj)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_infos=", &state_infos, ", child_obj=", &child_obj, ")");
@@ -522,6 +536,24 @@ void Checkpointer::_prepare_threads(Genode::List<Stored_thread_info> &state_info
 
 		state_info = next_info;
 	}
+}
+
+
+void Checkpointer::_prepare_pd_session(Stored_pd_session_info &state_info, Pd_session_component &child_obj)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info, ", child_obj=", &child_obj, ")");
+
+	state_info.badge = child_obj.cap().local_name();
+	state_info.kcap = find_kcap_by_badge(state_info.badge);
+
+	// Update state_info
+	// Does not have any mutable state besides lists
+
+	_prepare_contexts(state_info.stored_context_infos, child_obj);
+	_prepare_sources(state_info.stored_source_infos, child_obj);
+	_prepare_region_map(state_info.stored_address_space, child_obj.address_space_component());
+	_prepare_region_map(state_info.stored_stack_area, child_obj.stack_area_component());
+	_prepare_region_map(state_info.stored_linker_area, child_obj.linker_area_component());
 }
 
 
@@ -646,6 +678,20 @@ void Checkpointer::_prepare_region_map(Stored_region_map_info &state_info, Regio
 	state_info.ds_badge = child_obj.parent_state().ds_cap.local_name();
 
 	_prepare_attached_regions(state_info.stored_attached_region_infos, child_obj);
+}
+
+
+void Checkpointer::_prepare_ram_session(Stored_ram_session_info &state_info, Ram_session_component &child_obj)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_info=", &state_info, ", child_obj=", &child_obj, ")");
+
+	state_info.badge = child_obj.cap().local_name();
+	state_info.kcap = find_kcap_by_badge(state_info.badge);
+
+	// Update state_info
+
+
+	//_prepare_attached_regions(state_info.stored_attached_region_infos, child_obj);
 }
 
 
@@ -1001,12 +1047,9 @@ void Checkpointer::checkpoint()
 	if(log_root) _prepare_log_sessions(_state._stored_log_sessions, *log_root);
 	Timer_root *timer_root = _child.timer_root();
 	if(timer_root) _prepare_timer_sessions(_state._stored_timer_sessions, *timer_root);
-	_prepare_threads(_state._stored_threads, _child.cpu());
-	_prepare_contexts(_state._stored_signal_contexts, _child.pd());
-	_prepare_sources(_state._stored_signal_sources, _child.pd());
-	_prepare_region_map(_state._stored_address_space, _child.pd().address_space_component());
-	_prepare_region_map(_state._stored_stack_area, _child.pd().stack_area_component());
-	_prepare_region_map(_state._stored_linker_area, _child.pd().linker_area_component());
+	_prepare_cpu_session(_state._stored_cpu_session, _child.cpu());
+	_prepare_pd_session(_state._stored_pd_session, _child.pd());
+	_prepare_ram_session(_state._stored_ram_session, _child.ram());
 
 	// Create exclude list, which determines whether an attached dataspace is a known region map;
 	// if a dataspace is a region map, then it will not be checkpointed, but its dataspaces
@@ -1041,7 +1084,7 @@ void Checkpointer::checkpoint()
 	}
 
 	//Genode::log(_child);
-	//Genode::log(_state);
+	Genode::log(_state);
 	// kcap, badge mapping
 	if(false)
 	{
