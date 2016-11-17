@@ -5,6 +5,7 @@
  */
 
 #include "target_child.h"
+#include "restorer.h"
 
 using namespace Rtcr;
 
@@ -110,7 +111,7 @@ void Target_child::start()
 
 void Target_child::start(Restorer &restorer)
 {
-	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_state=", &restorer,")");
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_restorer=", &restorer,")");
 
 	_restorer = &restorer;
 

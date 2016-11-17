@@ -22,12 +22,14 @@
 #include "intercept/log_session.h"
 #include "intercept/timer_session.h"
 #include "target_state.h"
-#include "restorer.h"
 
 namespace Rtcr {
 	class Target_child;
 
 	constexpr bool child_verbose_debug = true;
+
+	// Forward declaration
+	class Restorer;
 }
 
 
@@ -144,6 +146,8 @@ private:
 	 * Child object
 	 */
 	Genode::Child                 *_child;
+
+	friend class Restorer;
 
 public:
 

@@ -37,7 +37,7 @@ struct Rtcr::Main
 	{
 		env.parent().announce(root_ep.manage(root));
 
-		Genode::sleep_forever();
+		//Genode::sleep_forever();
 	}
 };
 

@@ -15,6 +15,7 @@
 #include "../../rtcr/target_child.h"
 #include "../../rtcr/target_state.h"
 #include "../../rtcr/checkpointer.h"
+#include "../../rtcr/restorer.h"
 
 namespace Rtcr {
 	struct Main;
@@ -42,6 +43,9 @@ struct Rtcr::Main
 		Checkpointer ckpt(heap, child, ts);
 		ckpt.checkpoint();
 
+		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
+		Restorer resto(child_restored, ts);
+		child_restored.start(resto);
 
 		log("The End");
 		Genode::sleep_forever();
