@@ -25,6 +25,10 @@
 #include "child_state/stored_dataspace_info.h"
 #include "child_state/stored_signal_context_info.h"
 #include "child_state/stored_signal_source_info.h"
+#include "child_state/stored_pd_session_info.h"
+#include "child_state/stored_cpu_session_info.h"
+#include "child_state/stored_ram_session_info.h"
+
 
 namespace Rtcr {
 	class Target_state;
@@ -47,13 +51,10 @@ private:
 	Genode::List<Stored_rm_session_info>     _stored_rm_sessions;
 	Genode::List<Stored_log_session_info>    _stored_log_sessions;
 	Genode::List<Stored_timer_session_info>  _stored_timer_sessions;
-	Genode::List<Stored_thread_info>         _stored_threads;
-	Stored_region_map_info                   _stored_address_space;
-	Stored_region_map_info                   _stored_stack_area;
-	Stored_region_map_info                   _stored_linker_area;
+	Stored_pd_session_info                   _stored_pd_session;
+	Stored_cpu_session_info                  _stored_cpu_session;
+	Stored_ram_session_info                  _stored_ram_session;
 	Genode::List<Stored_dataspace_info>      _stored_dataspaces;
-	Genode::List<Stored_signal_context_info> _stored_signal_contexts;
-	Genode::List<Stored_signal_source_info>  _stored_signal_sources;
 
 	template <typename T>
 	void _delete_list(Genode::List<T> &infos);

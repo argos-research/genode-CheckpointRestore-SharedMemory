@@ -174,24 +174,35 @@ Target_state::Target_state(Target_state &other)
 	_stored_log_sessions =    _copy_list(other._stored_log_sessions);
 	// Timer session
 	_stored_timer_sessions =  _copy_list(other._stored_timer_sessions);
-	// Primary CPU session
-	_stored_threads =         _copy_list(other._stored_threads);
 	// Dataspaces
 	_stored_dataspaces =      _copy_list(other._stored_dataspaces);
-	// Signal contexts
-	_stored_signal_contexts = _copy_list(other._stored_signal_contexts);
-	// Signal sources
-	_stored_signal_sources =  _copy_list(other._stored_signal_sources);
 
+	// Primary CPU session
+	_stored_cpu_session = other._stored_cpu_session;
+	// Threads
+	_stored_cpu_session.stored_thread_infos =
+			_copy_list(other._stored_cpu_session.stored_thread_infos);
+	// Primary PD session
+	_stored_pd_session = other._stored_pd_session;
+	// Signal contexts
+	_stored_pd_session.stored_context_infos = _copy_list(other._stored_pd_session.stored_context_infos);
+	// Signal sources
+	_stored_pd_session.stored_source_infos = _copy_list(other._stored_pd_session.stored_source_infos);
 	// Address space
-	_stored_address_space = other._stored_address_space;
-	_stored_address_space.stored_attached_region_infos = _copy_list(other._stored_address_space.stored_attached_region_infos);
+	_stored_pd_session.stored_address_space = other._stored_pd_session.stored_address_space;
+	// Attached regions
+	_stored_pd_session.stored_address_space.stored_attached_region_infos =
+			_copy_list(other._stored_pd_session.stored_address_space.stored_attached_region_infos);
 	// Stack area
-	_stored_stack_area = other._stored_stack_area;
-	_stored_stack_area.stored_attached_region_infos = _copy_list(other._stored_stack_area.stored_attached_region_infos);
+	_stored_pd_session.stored_stack_area = other._stored_pd_session.stored_stack_area;
+	// Attached regions
+	_stored_pd_session.stored_stack_area.stored_attached_region_infos =
+			_copy_list(other._stored_pd_session.stored_stack_area.stored_attached_region_infos);
 	// Linker area
-	_stored_linker_area = other._stored_linker_area;
-	_stored_linker_area.stored_attached_region_infos =   _copy_list(other._stored_linker_area.stored_attached_region_infos);
+	_stored_pd_session.stored_linker_area = other._stored_pd_session.stored_linker_area;
+	// Attached regions
+	_stored_pd_session.stored_linker_area.stored_attached_region_infos =
+			_copy_list(other._stored_pd_session.stored_linker_area.stored_attached_region_infos);
 }
 
 
@@ -200,10 +211,10 @@ Target_state::~Target_state()
 	_delete_list(_stored_rm_sessions);
 	_delete_list(_stored_log_sessions);
 	_delete_list(_stored_timer_sessions);
-	_delete_list(_stored_threads);
-	_delete_list(_stored_address_space.stored_attached_region_infos);
-	_delete_list(_stored_stack_area.stored_attached_region_infos);
-	_delete_list(_stored_linker_area.stored_attached_region_infos);
+	_delete_list(_stored_cpu_session.stored_thread_infos);
+	_delete_list(_stored_pd_session.stored_address_space.stored_attached_region_infos);
+	_delete_list(_stored_pd_session.stored_stack_area.stored_attached_region_infos);
+	_delete_list(_stored_pd_session.stored_linker_area.stored_attached_region_infos);
 	_delete_list(_stored_dataspaces);
 }
 
@@ -264,68 +275,74 @@ void Target_state::print(Genode::Output &output) const
 			info = info->next();
 		}
 	}
-	// Signal contexts
+	// PD session
 	{
-		Genode::print(output, "Signal contexts:\n");
-		const Stored_signal_context_info *info = _stored_signal_contexts.first();
-		if(!info) Genode::print(output, " <empty>\n");
-		while(info)
+		Genode::print(output, "PD session:\n");
+		Genode::print(output, _stored_pd_session, "\n");
+
+		// Signal contexts
+		Genode::print(output, " contexts:\n");
+		const Stored_signal_context_info *context_info =
+				_stored_pd_session.stored_context_infos.first();
+		if(!context_info) Genode::print(output, " <empty>\n");
+		while(context_info)
 		{
-			Genode::print(output, " ", *info, "\n");
-			info = info->next();
+			Genode::print(output, "  ", *context_info, "\n");
+			context_info = context_info->next();
+		}
+
+		// Signal sources
+		Genode::print(output, " sources:\n");
+		const Stored_signal_source_info *source_info =
+				_stored_pd_session.stored_source_infos.first();
+		if(!source_info) Genode::print(output, " <empty>\n");
+		while(source_info)
+		{
+			Genode::print(output, "  ", *source_info, "\n");
+			source_info = source_info->next();
+		}
+
+		// Address space
+		Genode::print(output, " address space:\n");
+		Genode::print(output, _stored_pd_session.stored_address_space, "\n");
+		const Stored_attached_region_info *as_info =
+				_stored_pd_session.stored_address_space.stored_attached_region_infos.first();
+		if(!as_info) Genode::print(output, " <empty>\n");
+		while(as_info)
+		{
+			Genode::print(output, "  ", *as_info, "\n");
+			as_info = as_info->next();
+		}
+
+		// Stack area
+		Genode::print(output, " stack area:\n");
+		Genode::print(output, _stored_pd_session.stored_stack_area, "\n");
+		const Stored_attached_region_info *sa_info =
+				_stored_pd_session.stored_stack_area.stored_attached_region_infos.first();
+		if(!sa_info) Genode::print(output, " <empty>\n");
+		while(sa_info)
+		{
+			Genode::print(output, "  ", *sa_info, "\n");
+			sa_info = sa_info->next();
+		}
+
+		// Linker area
+		Genode::print(output, " linker area:\n");
+		Genode::print(output, _stored_pd_session.stored_linker_area, "\n");
+		const Stored_attached_region_info *la_info =
+				_stored_pd_session.stored_linker_area.stored_attached_region_infos.first();
+		if(!la_info) Genode::print(output, " <empty>\n");
+		while(la_info)
+		{
+			Genode::print(output, "  ", *la_info, "\n");
+			la_info = la_info->next();
 		}
 	}
-	// Signal sources
+	// CPU session
 	{
-		Genode::print(output, "Signal sources:\n");
-		const Stored_signal_source_info *info = _stored_signal_sources.first();
-		if(!info) Genode::print(output, " <empty>\n");
-		while(info)
-		{
-			Genode::print(output, " ", *info, "\n");
-			info = info->next();
-		}
-	}
-	// Threads
-	{
-		Genode::print(output, "Threads:\n");
-		const Stored_thread_info *info = _stored_threads.first();
-		if(!info) Genode::print(output, " <empty>\n");
-		while(info)
-		{
-			Genode::print(output, " ", *info, "\n");
-			info = info->next();
-		}
-	}
-	// Address space
-	{
-		Genode::print(output, "Address space:\n");
-		Genode::print(output, _stored_address_space, "\n");
-		const Stored_attached_region_info *info = _stored_address_space.stored_attached_region_infos.first();
-		if(!info) Genode::print(output, " <empty>\n");
-		while(info)
-		{
-			Genode::print(output, " ", *info, "\n");
-			info = info->next();
-		}
-	}
-	// Stack area
-	{
-		Genode::print(output, "Stack area:\n");
-		Genode::print(output, _stored_stack_area, "\n");
-		const Stored_attached_region_info *info = _stored_stack_area.stored_attached_region_infos.first();
-		if(!info) Genode::print(output, " <empty>\n");
-		while(info)
-		{
-			Genode::print(output, " ", *info, "\n");
-			info = info->next();
-		}
-	}
-	// Linker area
-	{
-		Genode::print(output, "Linker area:\n");
-		Genode::print(output, _stored_linker_area, "\n");
-		const Stored_attached_region_info *info = _stored_linker_area.stored_attached_region_infos.first();
+		Genode::print(output, "CPU session:\n");
+		Genode::print(output, _stored_cpu_session, "\n");
+		const Stored_thread_info *info = _stored_cpu_session.stored_thread_infos.first();
 		if(!info) Genode::print(output, " <empty>\n");
 		while(info)
 		{
