@@ -12,7 +12,8 @@
 
 /* Rtcr includes */
 #include "../monitor/region_map_info.h"
-#include "stored_attached_region_info.h"
+#include "../intercept/region_map_component.h"
+//#include "stored_attached_region_info.h"
 
 namespace Rtcr {
 	struct Stored_region_map_info;
@@ -50,6 +51,13 @@ struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Elem
 		ds_badge(info.ds_cap.local_name()), stored_attached_region_infos()
 	{ }
 
+	Stored_region_map_info(Region_map_component &comp)
+	:
+		kcap(0), badge(comp.cap().local_name()), size(0),
+		fault_handler_badge(comp.parent_state().fault_handler.local_name()),
+		ds_badge(0), stored_attached_region_infos()
+	{ }
+
 	Stored_region_map_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)
@@ -57,13 +65,6 @@ struct Rtcr::Stored_region_map_info : Genode::List<Stored_region_map_info>::Elem
 		Stored_region_map_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
 	}
-
-	/**
-	 * Indicates whether this struct has a list of products
-	 *
-	 * It is used by e.g.  Target_state::_delete_list
-	 */
-	static constexpr bool has_products() { return true; }
 
 	void print(Genode::Output &output) const
 	{
