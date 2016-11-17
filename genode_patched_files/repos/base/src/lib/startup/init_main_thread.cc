@@ -93,11 +93,11 @@ extern "C" void init_main_thread()
 	 * destructor won't be registered for the atexit routine.
 	 */
 	(void*)env();
-	init_log();
 	/*
-	 * Initialise variables in native PD
+	 * Initialise variables in native PD before log session
 	 */
 	init_pd();
+	init_log();
 
 	/* initialize exception handling */
 	init_exception_handling();
