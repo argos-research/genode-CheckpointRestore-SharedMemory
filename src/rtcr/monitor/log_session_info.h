@@ -34,11 +34,16 @@ struct Rtcr::Log_session_info : Genode::List<Log_session_info>::Element
 	 * Arguments provided for creating the session object
 	 */
 	const char            *args;
+	/**
+	 * From child bootstrap
+	 */
+	const bool             bootstraped;
 
-	Log_session_info(Log_session_component &comp, const char* args)
+	Log_session_info(Log_session_component &comp, const char* args, const bool bootstraped)
 	:
-		session(comp),
-		args(args)
+		session     (comp),
+		args        (args),
+		bootstraped (bootstraped)
 	{ }
 
 	Log_session_info *find_by_ptr(Log_session_component *ptr)

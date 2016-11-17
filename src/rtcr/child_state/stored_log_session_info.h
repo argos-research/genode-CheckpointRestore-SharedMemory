@@ -29,15 +29,16 @@ struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::El
 	 */
 	Genode::uint16_t  badge;
 	const char       *args;
+	bool              bootstraped;
 
 	Stored_log_session_info()
 	:
-		kcap(0), badge(0), args("")
+		kcap(0), badge(0), args(""), bootstraped(false)
 	{ }
 
 	Stored_log_session_info(Log_session_info &info)
 	:
-		kcap(0), badge(info.session.cap().local_name()), args(info.args)
+		kcap(0), badge(info.session.cap().local_name()), args(info.args), bootstraped(info.bootstraped)
 	{ }
 
 	Stored_log_session_info *find_by_badge(Genode::uint16_t badge)

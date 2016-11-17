@@ -51,8 +51,9 @@ Log_session_component *Log_root::_create_session(const char *args)
 
 	// Create and insert list element
 	Log_session_info *new_session_info =
-			new (md_alloc()) Log_session_info(*new_session, args);
+			new (md_alloc()) Log_session_info(*new_session, args, _bootstraped);
 	Genode::Lock::Guard guard(_infos_lock);
+	if(_bootstraped) _bootstraped = false;
 	_session_infos.insert(new_session_info);
 
 	return new_session;
@@ -82,14 +83,15 @@ void Log_root::_destroy_session(Log_session_component *session)
 }
 
 
-Log_root::Log_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep)
+Log_root::Log_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool bootstrap)
 :
 	Root_component<Log_session_component>(session_ep, md_alloc),
 	_env           (env),
 	_md_alloc      (md_alloc),
 	_ep            (session_ep),
 	_infos_lock    (),
-	_session_infos ()
+	_session_infos (),
+	_bootstraped   (bootstrap)
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 }

@@ -5,9 +5,9 @@
  */
 
 #include "checkpointer.h"
-#include "util/debug.h"
-#include "base/internal/cap_map.h"
-#include "base/internal/cap_alloc.h"
+//#include "util/debug.h"
+#include <base/internal/cap_map.h>
+#include <base/internal/cap_alloc.h>
 
 using namespace Rtcr;
 
@@ -17,9 +17,10 @@ void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_i
 	using Genode::log;
 	using Genode::Hex;
 	using Genode::addr_t;
+	using Genode::size_t;
+	using Genode::uint16_t;
 
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
-	Genode::log(__func__, ": Implementing...");
 
 	// Retrieve cap_idx_alloc_addr
 	Genode::addr_t cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
@@ -33,8 +34,6 @@ void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_i
 		Genode::error("No dataspace found for cap_idx_alloc's datastructure at ", Hex(cap_idx_alloc_addr));
 		throw Genode::Exception();
 	}
-
-	//log(*ar_info);
 
 	// If ar_info is a managed Ram_dataspace_info, mark detached Designated_dataspace_infos and attach them,
 	// thus, the Checkpointer does not trigger page faults which mark accessed regions
@@ -50,8 +49,8 @@ void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_i
 
 	// Create new badge_kcap list
 	//const Genode::size_t struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
-	const Genode::size_t array_ele_size = sizeof(Genode::Cap_index);
-	const Genode::size_t array_size     = array_ele_size*4096;
+	const size_t array_ele_size = sizeof(Genode::Cap_index);
+	const size_t array_size     = array_ele_size*4096;
 
 	const addr_t child_ds_start     = ar_info->rel_addr;
 	//const addr_t child_ds_end       = child_ds_start + ar_info->size;
@@ -98,10 +97,15 @@ void Checkpointer::_prepare_cap_map_infos(Genode::List<Badge_kcap_info> &state_i
 				Hex(*(Genode::uint8_t*)(curr+6), Hex::OMIT_PREFIX, Hex::PAD),
 				Hex(*(Genode::uint8_t*)(curr+7), Hex::OMIT_PREFIX, Hex::PAD));
 */
-		const Genode::size_t badge_offset = 6;
+		const size_t badge_offset = 6;
 
-		const Genode::uint16_t badge = *(Genode::uint16_t*)(curr + badge_offset);
-		const Genode::addr_t kcap  = ((curr - local_array_start) / array_ele_size) << 12;
+		// Convert address to pointer and dereference it
+		const uint16_t badge = *(uint16_t*)(curr + badge_offset);
+		// Current capability map slot = Compute distance from start to current address of array and
+		// divide it by the element size;
+		// kcap = current capability map slot shifted by 12 bits to the left (last 12 bits are used
+		// by Fiasco.OC for parameters for IPC calls)
+		const addr_t kcap  = ((curr - local_array_start) / array_ele_size) << 12;
 
 		if(badge != 0 && badge != 0xffff)
 		{
@@ -245,7 +249,7 @@ void Checkpointer::_prepare_log_sessions(Genode::List<Stored_log_session_info> &
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(state_infos=", &state_infos, ", child_obj=", &child_obj, ")");
 
-	Log_session_info *child_info = nullptr;
+	Log_session_info        *child_info = nullptr;
 	Stored_log_session_info *state_info = nullptr;
 
 	// Update state_info from child_info
@@ -1037,8 +1041,9 @@ void Checkpointer::checkpoint()
 	}
 
 	//Genode::log(_child);
-	Genode::log(_state);
+	//Genode::log(_state);
 	// kcap, badge mapping
+	if(false)
 	{
 		Genode::log("Capability map:");
 		const Badge_kcap_info *info = _capability_map_infos.first();
