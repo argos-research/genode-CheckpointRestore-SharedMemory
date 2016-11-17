@@ -25,7 +25,7 @@ namespace Rtcr {
 }
 
 /**
- * This virtual Pd session provides virtual Region maps
+ * This virtual Pd session provides custom Region maps
  */
 class Rtcr::Pd_session_component : public Genode::Rpc_object<Genode::Pd_session>
 {
