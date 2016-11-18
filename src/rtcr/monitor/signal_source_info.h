@@ -30,10 +30,14 @@ struct Rtcr::Signal_source_info : Genode::List<Signal_source_info>::Element
 
 	Signal_source_info *find_by_cap(Genode::Capability<Genode::Signal_source> cap)
 	{
-		if(cap == this->cap)
+		return find_by_badge(cap.local_name());
+	}
+	Signal_source_info *find_by_badge(Genode::uint16_t badge)
+	{
+		if(badge == cap.local_name())
 			return this;
 		Signal_source_info *info = next();
-		return info ? info->find_by_cap(cap) : 0;
+		return info ? info->find_by_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const
