@@ -23,7 +23,7 @@ struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_i
 	/**
 	 * Identifier of the stored dataspace
 	 */
-	Genode::uint16_t badge;
+	Genode::uint16_t ref_badge;
 	Genode::size_t   size;
 	Genode::off_t    offset;
 	Genode::addr_t   rel_addr;
@@ -31,12 +31,12 @@ struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_i
 
 	Stored_attached_region_info()
 	:
-		badge(0), size(0), offset(0), rel_addr(0), executable(false)
+		ref_badge(0), size(0), offset(0), rel_addr(0), executable(false)
 	{ }
 
 	Stored_attached_region_info(Attached_region_info &info)
 	:
-		badge      (info.ds_cap.local_name()),
+		ref_badge      (info.ds_cap.local_name()),
 		size       (info.size),
 		offset     (info.offset),
 		rel_addr   (info.rel_addr),
@@ -45,7 +45,7 @@ struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_i
 
 	Stored_attached_region_info *find_by_badge(Genode::uint16_t badge)
 	{
-		if(badge == this->badge)
+		if(badge == this->ref_badge)
 			return this;
 		Stored_attached_region_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
@@ -53,7 +53,7 @@ struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_i
 
 	Stored_attached_region_info *find_by_badge_and_addr(Genode::uint16_t badge, Genode::addr_t addr)
 	{
-		if(badge == this->badge && addr == this->rel_addr)
+		if(badge == this->ref_badge && addr == this->rel_addr)
 			return this;
 		Stored_attached_region_info *info = next();
 		return info ? info->find_by_badge_and_addr(badge, addr) : 0;
@@ -63,7 +63,7 @@ struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_i
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<ref_badge=", badge, ">",
+		Genode::print(output, "<ref_badge=", ref_badge, ">",
 				" [", Hex(rel_addr, Hex::PREFIX, Hex::PAD),
 				", ", Hex(rel_addr + size, Hex::PREFIX, Hex::PAD), ")",
 				executable?" exec":"");

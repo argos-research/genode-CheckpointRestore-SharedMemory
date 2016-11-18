@@ -449,7 +449,7 @@ void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region
 		child_info = child_obj.attached_regions().first();
 		while(child_info)
 		{
-			if(state_info->badge == child_info->ds_cap.local_name() && state_info->rel_addr == child_info->rel_addr) break;
+			if(state_info->ref_badge == child_info->ds_cap.local_name() && state_info->rel_addr == child_info->rel_addr) break;
 			child_info = child_info->next();
 		}
 
