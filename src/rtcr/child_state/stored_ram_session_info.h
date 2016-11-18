@@ -12,6 +12,7 @@
 
 /* Rtcr includes */
 #include "../intercept/ram_session_component.h"
+#include "../util/ref_badge.h"
 
 namespace Rtcr {
 	struct Stored_ram_session_info;
@@ -29,17 +30,17 @@ struct Rtcr::Stored_ram_session_info : Genode::List<Stored_ram_session_info>::El
 	 */
 	Genode::uint16_t  badge;
 	const char       *args;
-	Genode::List<Stored_dataspace_info> stored_dataspace_infos;
+	Genode::List<Ref_badge> ref_badge_infos;
 
 	Stored_ram_session_info()
 	:
-		kcap(0), badge(0), args(""), stored_dataspace_infos()
+		kcap(0), badge(0), args(""), ref_badge_infos()
 	{ }
 
 	Stored_ram_session_info(Ram_session_component &comp)
 	:
 		kcap(0), badge(comp.cap().local_name()), args(""),
-		stored_dataspace_infos()
+		ref_badge_infos()
 	{ }
 
 	Stored_ram_session_info *find_by_badge(Genode::uint16_t badge)
