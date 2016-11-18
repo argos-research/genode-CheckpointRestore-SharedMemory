@@ -24,6 +24,7 @@ template void Target_state::_delete_list(Genode::List<Stored_thread_info> &infos
 template void Target_state::_delete_list(Genode::List<Stored_attached_region_info> &infos);
 template void Target_state::_delete_list(Genode::List<Stored_signal_context_info> &infos);
 template void Target_state::_delete_list(Genode::List<Stored_signal_source_info> &infos);
+template void Target_state::_delete_list(Genode::List<Ref_badge> &infos);
 
 
 void Target_state::_delete_list(Genode::List<Stored_rm_session_info> &infos)
@@ -80,6 +81,7 @@ template Genode::List<Stored_thread_info>          Target_state::_copy_list(Geno
 template Genode::List<Stored_attached_region_info> Target_state::_copy_list(Genode::List<Stored_attached_region_info> &from_infos);
 template Genode::List<Stored_signal_context_info>  Target_state::_copy_list(Genode::List<Stored_signal_context_info> &from_infos);
 template Genode::List<Stored_signal_source_info>   Target_state::_copy_list(Genode::List<Stored_signal_source_info> &from_infos);
+template Genode::List<Ref_badge>                   Target_state::_copy_list(Genode::List<Ref_badge> &from_infos);
 
 
 Genode::List<Stored_rm_session_info> Target_state::_copy_list(Genode::List<Stored_rm_session_info> &from_infos)
@@ -177,11 +179,8 @@ Target_state::Target_state(Target_state &other)
 	// Dataspaces
 	_stored_dataspaces =      _copy_list(other._stored_dataspaces);
 
-	// Primary CPU session
-	_stored_cpu_session = other._stored_cpu_session;
-	// Threads
-	_stored_cpu_session.stored_thread_infos =
-			_copy_list(other._stored_cpu_session.stored_thread_infos);
+
+
 	// Primary PD session
 	_stored_pd_session = other._stored_pd_session;
 	// Signal contexts
@@ -203,6 +202,20 @@ Target_state::Target_state(Target_state &other)
 	// Attached regions
 	_stored_pd_session.stored_linker_area.stored_attached_region_infos =
 			_copy_list(other._stored_pd_session.stored_linker_area.stored_attached_region_infos);
+
+
+	// Primary CPU session
+	_stored_cpu_session = other._stored_cpu_session;
+	// Threads
+	_stored_cpu_session.stored_thread_infos =
+			_copy_list(other._stored_cpu_session.stored_thread_infos);
+
+
+	// Primary RAM session
+	_stored_ram_session = other._stored_ram_session;
+	// Ref_badges
+	_stored_ram_session.ref_badge_infos =
+			_copy_list(other._stored_ram_session.ref_badge_infos);
 }
 
 
@@ -211,10 +224,11 @@ Target_state::~Target_state()
 	_delete_list(_stored_rm_sessions);
 	_delete_list(_stored_log_sessions);
 	_delete_list(_stored_timer_sessions);
-	_delete_list(_stored_cpu_session.stored_thread_infos);
 	_delete_list(_stored_pd_session.stored_address_space.stored_attached_region_infos);
 	_delete_list(_stored_pd_session.stored_stack_area.stored_attached_region_infos);
 	_delete_list(_stored_pd_session.stored_linker_area.stored_attached_region_infos);
+	_delete_list(_stored_cpu_session.stored_thread_infos);
+	_delete_list(_stored_ram_session.ref_badge_infos);
 	_delete_list(_stored_dataspaces);
 }
 
@@ -344,6 +358,18 @@ void Target_state::print(Genode::Output &output) const
 		Genode::print(output, _stored_cpu_session, "\n");
 		const Stored_thread_info *info = _stored_cpu_session.stored_thread_infos.first();
 		if(!info) Genode::print(output, " <empty>\n");
+		while(info)
+		{
+			Genode::print(output, " ", *info, "\n");
+			info = info->next();
+		}
+	}
+	// RAM session
+	{
+		Genode::print(output, "RAM session:\n");
+		Genode::print(output, _stored_ram_session, "\n");
+		const Ref_badge *info = _stored_ram_session.ref_badge_infos.first();
+		if(!info) Genode::print(output, " <empty\n>");
 		while(info)
 		{
 			Genode::print(output, " ", *info, "\n");
