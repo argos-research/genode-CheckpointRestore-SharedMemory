@@ -58,7 +58,7 @@ struct Rtcr::Log_session_info : Genode::List<Log_session_info>::Element
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "session ", session.cap(), ", args=", args);
+		Genode::print(output, "session ", session.cap(), ", args=", args, ", bootstraped=", bootstraped);
 	}
 };
 

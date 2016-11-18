@@ -107,7 +107,7 @@ protected:
 	void _destroy_session(Log_session_component *session);
 
 public:
-	Log_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool bootstrap=false);
+	Log_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool bootstrap=true);
     ~Log_root();
 
 	Genode::List<Log_session_info> &session_infos() { return _session_infos; }
