@@ -22,6 +22,7 @@
 #include "child_state/stored_attached_region_info.h"
 #include "child_state/stored_dataspace_info.h"
 #include "child_state/stored_log_session_info.h"
+#include "util/ref_badge.h"
 
 namespace Rtcr {
 	class Checkpointer;
@@ -69,22 +70,6 @@ struct Rtcr::Badge_kcap_info : Genode::List<Badge_kcap_info>::Element
 class Rtcr::Checkpointer
 {
 private:
-	/**
-	 * Stores a single badge
-	 */
-	struct Badge_info : Genode::List<Badge_info>::Element
-	{
-		Genode::uint16_t badge;
-		Badge_info(Genode::uint16_t badge) : badge(badge) { }
-
-		Badge_info *find_by_badge(Genode::uint16_t badge)
-		{
-			if(badge == this->badge)
-				return this;
-			Badge_info *info = next();
-			return info ? info->find_by_badge(badge) : 0;
-		}
-	};
 	/**
 	 * Stores dataspace capabilities of designated_dataspace_info for checkpointing dataspaces
 	 */
@@ -162,7 +147,7 @@ private:
 	 * designated dataspaces and attach them. Now the managed dataspace can be used directly without triggering page faults.
 	 * The marked dataspaces have to be detached to not unnecessarily checkpoint them later
 	 */
-	Genode::List<Badge_info> _mark_attach_designated_dataspaces(Attached_region_info &ar_info);
+	Genode::List<Ref_badge> _mark_attach_designated_dataspaces(Attached_region_info &ar_info);
 	/**
 	 * \brief If ar_info is managed AND badge_infos is not empty, detach the previously attached dataspaces and
 	 * delete the badge_infos' elements
@@ -170,7 +155,7 @@ private:
 	 * If the ar_info contains a managed dataspace (allocated through the custom RAM session) AND badge_infos is
 	 * not empty, then detach the marked designated dataspaces and delete badge_infos' elements
 	 */
-	void _detach_unmark_designated_dataspaces(Genode::List<Badge_info> &badge_infos, Attached_region_info &ar_info);
+	void _detach_unmark_designated_dataspaces(Genode::List<Ref_badge> &badge_infos, Attached_region_info &ar_info);
 	/**
 	 * \brief Return the kcap for a given badge from _capability_map_infos
 	 *
@@ -252,6 +237,7 @@ private:
 	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
 	 */
 	void _prepare_ram_session(Stored_ram_session_info &state_info, Ram_session_component &child_obj);
+	void _prepare_allocated_dataspaces(Genode::List<Ref_badge> &state_infos, Ram_session_component &child_obj);
 
 	/**
 	 * \brief Update the dataspace list named state_infos by allocated dataspaces
@@ -268,7 +254,7 @@ private:
 	 * which corresponds to a list element of child_obj. Also mark every state_info, which was update, in visited_infos.
 	 */
 	void _update_dataspace_infos(Genode::List<Stored_dataspace_info> &state_infos, Region_map_component &child_obj,
-			Genode::List<Badge_dataspace_info> &visited_infos, Genode::List<Badge_info> &exclude);
+			Genode::List<Badge_dataspace_info> &visited_infos, Genode::List<Ref_badge> &exclude);
 	/**
 	 * \brief Update the dataspace list named state_infos by attached dataspaces of extra region maps
 	 *
@@ -276,7 +262,7 @@ private:
 	 * _update_dataspace_infos(..., Region_map_component, ...)
 	 */
 	void _update_dataspace_infos(Genode::List<Stored_dataspace_info> &state_infos, Rm_root &child_obj,
-			Genode::List<Badge_dataspace_info> &visited_infos, Genode::List<Badge_info> &exclude);
+			Genode::List<Badge_dataspace_info> &visited_infos, Genode::List<Ref_badge> &exclude);
 	/**
 	 * \brief Delete old list elements from dataspace list named state_infos
 	 *
@@ -288,13 +274,13 @@ private:
 	 * Create a list of dataspace capabilities which belong to a managed dataspace (i.e. region map dataspace). This list is used
 	 * to identify region maps which are attached to another region map (e.g. the address space) to copy their dataspaces.
 	 */
-	Genode::List<Badge_info> _create_exclude_infos(Region_map_component &address_space, Region_map_component &stack_area,
+	Genode::List<Ref_badge> _create_exclude_infos(Region_map_component &address_space, Region_map_component &stack_area,
 			Region_map_component &linker_area, Rm_root *rm_root);
 	/**
 	 * Destroy a list which represents dataspace capabilities belonging to a managed dataspace.
 	 * See _delete_old_dataspace_infos.
 	 */
-	void _destroy_exclude_infos(Genode::List<Badge_info> &infos);
+	void _destroy_exclude_infos(Genode::List<Ref_badge> &infos);
 	/**
 	 * Detach all designated dataspaces to get a notification for the incremental checkpoint
 	 */
@@ -302,7 +288,7 @@ private:
 	/**
 	 * \brief Checkpoints the content of dataspaces
 	 *
-	 * Requirements: All state's list elements are synchronised/up-to-date with the child's.
+	 * Requirements: All state_infos's list elements are synchronised/up-to-date with the child's.
 	 * Copies content from the dataspaces from the child to the dataspaces of the state.
 	 * The child is not allowed to free its allocated dataspaces before the dataspace was checkpointed.
 	 */
