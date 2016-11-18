@@ -44,7 +44,7 @@ struct Rtcr::Main
 		ckpt.checkpoint();
 
 		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
-		Restorer resto(child_restored, ts);
+		Restorer resto(heap, child_restored, ts);
 		child_restored.start(resto);
 
 		log("The End");
