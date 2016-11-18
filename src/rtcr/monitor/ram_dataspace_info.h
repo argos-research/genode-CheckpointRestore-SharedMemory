@@ -4,8 +4,8 @@
  * \date   2016-10-06
  */
 
-#ifndef _RTCR_RAM_DATASPACE_INFO_COMPONENT_H_
-#define _RTCR_RAM_DATASPACE_INFO_COMPONENT_H_
+#ifndef _RTCR_RAM_DATASPACE_INFO_H_
+#define _RTCR_RAM_DATASPACE_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
@@ -223,4 +223,4 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	}
 };
 
-#endif /* _RTCR_RAM_DATASPACE_INFO_COMPONENT_H_ */
+#endif /* _RTCR_RAM_DATASPACE_INFO_H_ */
