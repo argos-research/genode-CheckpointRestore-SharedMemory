@@ -74,6 +74,10 @@ private:
 	 */
 	Restorer           *_restorer;
 	/**
+	 * Indicator whether child was bootstraped or not
+	 */
+	bool                _in_bootstrap;
+	/**
 	 * Child's resources
 	 */
 	struct Resources
@@ -202,7 +206,9 @@ public:
 	 * Resume child
 	 */
 	void resume() { _resources.cpu.resume_threads(); }
-
+	/**
+	 * Print method to use it with Genode::log()
+	 */
 	void print(Genode::Output &output) const;
 
 	/****************************

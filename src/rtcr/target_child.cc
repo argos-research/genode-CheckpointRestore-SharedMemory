@@ -69,6 +69,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_restorer        (nullptr),
+	_in_bootstrap    (true),
 	_resources       (_env, _resources_ep, _md_alloc, _name.string(), _granularity),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
@@ -343,6 +344,9 @@ Genode::Service *Target_child::resolve_session_request(const char *service_name,
 	}
 	else if(!Genode::strcmp(service_name, "LOG"))
 	{
+		// Request to the first log session marks the end of the child's bootstrap
+		if(_in_bootstrap) _in_bootstrap = false;
+
 		_log_root = new (_md_alloc) Log_root(_env, _md_alloc, _resources_ep);
 		service = new (_md_alloc) Genode::Local_service(service_name, _log_root);
 		_local_services.insert(service);
