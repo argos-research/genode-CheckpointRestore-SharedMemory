@@ -11,7 +11,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../monitor/thread_info.h"
+#include "../monitor/cpu_thread_info.h"
 
 namespace Rtcr {
 	struct Stored_thread_info;

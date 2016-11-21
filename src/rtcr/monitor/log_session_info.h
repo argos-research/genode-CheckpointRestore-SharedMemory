@@ -1,5 +1,5 @@
 /*
- * \brief  Monitoring log session creation
+ * \brief  Stores LOG session state
  * \author Denis Huber
  * \date   2016-10-06
  */
@@ -8,57 +8,29 @@
 #define _RTCR_LOG_SESSION_INFO_H_
 
 /* Genode includes */
-#include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/log_session.h"
+#include "info_structs.h"
 
 namespace Rtcr {
 	struct Log_session_info;
-	class Log_session_component;
 }
 
-
 /**
- * List element for monitoring session objects.
- * Each new connection from client to server is monitored here.
+ * State information about a LOG session
  */
-struct Rtcr::Log_session_info : Genode::List<Log_session_info>::Element
+struct Rtcr::Log_session_info : Session_rpc_info
 {
-	/**
-	 * Reference to session object,
-	 * encapsulates capability which is the main reason for storing it
-	 */
-	Log_session_component &session;
-	/**
-	 * Arguments provided for creating the session object
-	 */
-	const char            *args;
-	/**
-	 * From child bootstrap
-	 */
-	const bool             bootstraped;
-
-	Log_session_info(Log_session_component &comp, const char* args, const bool bootstraped)
+	Log_session_info(const char* creation_args, bool bootstrapped = false)
 	:
-		session     (comp),
-		args        (args),
-		bootstraped (bootstraped)
+		Session_rpc_info(creation_args, "", bootstrapped)
 	{ }
-
-	Log_session_info *find_by_ptr(Log_session_component *ptr)
-	{
-		if(ptr == &session)
-			return this;
-		Log_session_info *info = next();
-		return info ? info->find_by_ptr(ptr) : nullptr;
-	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "session ", session.cap(), ", args=", args, ", bootstraped=", bootstraped);
+		Session_rpc_info::print(output);
 	}
 };
 

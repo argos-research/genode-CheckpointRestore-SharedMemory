@@ -1,5 +1,5 @@
 /*
- * \brief  Monitoring region map creation/destruction
+ * \brief  Stores Region map state
  * \author Denis Huber
  * \date   2016-10-07
  */
@@ -8,10 +8,9 @@
 #define _RTCR_REGION_MAP_INFO_H_
 
 /* Genode includes */
-#include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/region_map_component.h"
+#include "info_structs.h"
 
 
 namespace Rtcr {
@@ -21,46 +20,29 @@ namespace Rtcr {
 /**
  * List element for managing Region_map_components created through an Rm_session
  */
-struct Rtcr::Region_map_info : Genode::List<Region_map_info>::Element
+struct Rtcr::Region_map_info : Normal_rpc_info
 {
-	/**
-	 * Reference to session object; encapsulates capability and object's state
-	 */
-	Region_map_component &region_map;
 	/**
 	 * Size of the region map
 	 */
-	Genode::size_t        size;
+	const Genode::size_t size;
 	/**
 	 * Dataspace representation
 	 */
-	Genode::Dataspace_capability ds_cap;
+	const Genode::Dataspace_capability ds_cap;
 
-	Region_map_info(Region_map_component &region_map, Genode::size_t size, Genode::Dataspace_capability ds_cap)
+	Region_map_info(Genode::size_t size, Genode::Dataspace_capability ds_cap, bool bootstrapped = false)
 	:
-		region_map(region_map), size(size), ds_cap(ds_cap)
+		Normal_rpc_info(bootstrapped),
+		size(size), ds_cap(ds_cap)
 	{ }
-
-	Region_map_info *find_by_cap(Genode::Capability<Genode::Region_map> cap)
-	{
-		if(cap == region_map.cap())
-			return this;
-		Region_map_info *info = next();
-		return info ? info->find_by_cap(cap) : 0;
-	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "region map ", region_map.cap(), " size=", Hex(size), " ds ", ds_cap);
-
-		Attached_region_info *info = region_map.attached_regions().first();
-		while(info)
-		{
-			Genode::print(output, "  ", *info, "\n");
-			info = info->next();
-		}
+		Genode::print(output, "size=", Hex(size), " ds ", ds_cap, ", ");
+		Normal_rpc_info::print(output);
 	}
 };
 

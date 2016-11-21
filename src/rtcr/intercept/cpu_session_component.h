@@ -13,8 +13,8 @@
 #include <cpu_session/connection.h>
 #include <cpu_thread/client.h>
 
+#include "../monitor/cpu_thread_info.h"
 /* Rtcr includes */
-#include "../monitor/thread_info.h"
 #include "cpu_thread_component.h"
 
 namespace Rtcr {
