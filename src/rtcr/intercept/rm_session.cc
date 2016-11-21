@@ -113,7 +113,8 @@ void Rm_session_component::destroy(Genode::Capability<Genode::Region_map> region
 Rm_session_component *Rm_root::_create_session(const char *args)
 {
 	if(verbose_debug) Genode::log("Rm_root::\033[33m", __func__, "\033[0m(", args,")");
-	// Create virtual Rm_session
+
+	// Create custom Rm_session
 	Rm_session_component *new_session =
 			new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep, _bootstrap_phase);
 

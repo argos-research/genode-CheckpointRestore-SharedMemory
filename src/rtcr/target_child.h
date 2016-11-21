@@ -15,11 +15,11 @@
 
 /* Rtcr includes */
 #include "intercept/cpu_session_component.h"
-#include "intercept/pd_session_component.h"
-#include "intercept/ram_session_component.h"
 #include "intercept/rom_session_component.h"
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"
+#include "intercept/pd_session.h"
+#include "intercept/ram_session.h"
 #include "intercept/timer_session.h"
 #include "target_state.h"
 

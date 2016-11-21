@@ -4,11 +4,10 @@
  * \date   2016-08-12
  */
 
-#ifndef _RTCR_RAM_SESSION_COMPONENT_H_
-#define _RTCR_RAM_SESSION_COMPONENT_H_
+#ifndef _RTCR_RAM_SESSION_H_
+#define _RTCR_RAM_SESSION_H_
 
 /* Genode includes */
-#include <base/log.h>
 #include <base/rpc_server.h>
 #include <ram_session/connection.h>
 #include <rm_session/connection.h>
@@ -18,14 +17,17 @@
 #include <util/misc_math.h>
 
 /* Rtcr includes */
+#include "../monitor/ram_session_info.h"
 #include "../monitor/ram_dataspace_info.h"
 
 namespace Rtcr {
 	class Fault_handler;
 	class Ram_session_component;
+	class Ram_root;
 
 	constexpr bool fh_verbose_debug = false;
 	constexpr bool ram_verbose_debug = false;
+	constexpr bool ram_root_verbose_debug = false;
 }
 
 /**
@@ -51,7 +53,7 @@ private:
 	 * List of region maps and their associated dataspaces
 	 * It must contain Managed_region_map_info
 	 */
-	Genode::List<Ram_dataspace_info> &_rds_infos;
+	Genode::List<Ram_dataspace_info> &_ramds_infos;
 
 	/**
 	 * Find the first faulting Region_map in the list of Ram_dataspaces
@@ -65,11 +67,8 @@ private:
 	void _handle_fault();
 
 public:
-	/**
-	 * Constructor
-	 */
 	Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
-			Genode::List<Ram_dataspace_info> &rds_infos);
+			Genode::List<Ram_dataspace_info> &ramds_infos);
 
 	/**
 	 * Entrypoint of the thread
@@ -79,12 +78,13 @@ public:
 };
 
 /**
- * Virtual Ram_session to monitor the allocation, freeing, and ram quota transfers
+ * Custom RAM session to monitor the allocation, freeing, and ram quota transfers
  *
- * Instead of providing ordinary Ram_dataspaces, it can provide managed dataspaces,
- * which are used to monitor the access to the provided Ram_dataspaces
+ * Instead of providing ordinary RAM dataspaces, it can provide managed dataspaces,
+ * which are used to monitor the access to the provided RAM dataspaces
  */
-class Rtcr::Ram_session_component : public Genode::Rpc_object<Genode::Ram_session>
+class Rtcr::Ram_session_component : public Genode::Rpc_object<Genode::Ram_session>,
+                                    public Genode::List<Ram_session_component>::Element
 {
 private:
 	/**
@@ -93,68 +93,57 @@ private:
 	static constexpr bool verbose_debug = ram_verbose_debug;
 
 	/**
-	 * Environment of creator component (usually rtcr)
+	 * Environment of Rtcr; needed to upgrade RAM quota of the RM session
 	 */
-	Genode::Env                       &_env;
+	Genode::Env             &_env;
 	/**
-	 * Allocator for structures monitring the allocated Ram_dataspaces
+	 * Allocator for structures monitoring the allocated Ram dataspaces
 	 */
-	Genode::Allocator                 &_md_alloc;
+	Genode::Allocator       &_md_alloc;
 	/**
-	 * TODO Needed?
+	 * Reference to Target_child's bootstrap phase
 	 */
-	Genode::Entrypoint                &_ep;
+	bool                    &_bootstrap_phase;
 	/**
 	 * Connection to the parent Ram session (usually core's Ram session)
 	 */
-	Genode::Ram_connection             _parent_ram;
+	Genode::Ram_connection   _parent_ram;
 	/**
 	 * Connection to the parent Rm session for creating new Region_maps (usually core's Rm session)
 	 */
-	Genode::Rm_connection              _parent_rm;
+	Genode::Rm_connection    _parent_rm;
 	/**
-	 * Lock to make the list of ram dataspaces thread-safe
+	 * State of parent's RPC object
 	 */
-	Genode::Lock                       _rds_infos_lock;
-	/**
-	 * List of ram dataspaces
-	 */
-	Genode::List<Ram_dataspace_info>   _rds_infos;
+	Ram_session_info         _parent_state;
 	/**
 	 * Receiver of page faults
 	 */
-	Genode::Signal_receiver            _receiver;
+	Genode::Signal_receiver  _receiver;
 	/**
 	 * Fault handler which marks and attaches dataspaces associated with the faulting address
 	 */
-	Fault_handler                      _page_fault_handler;
+	Fault_handler            _page_fault_handler;
 	/**
 	 * Size of Dataspaces which are associated with the managed dataspace
 	 * _granularity is a multiple of a pagesize (4096 Byte)
 	 * Zero means, no managed dataspaces are used
 	 */
-	Genode::size_t                     _granularity;
+	Genode::size_t           _granularity;
 
 	/**
-	 * Destroy rds_info and all its sub infos (unsynchronized)
+	 * Destroy rds_info and all its sub infos)
 	 */
-	void _destroy_rds_info(Ram_dataspace_info &rds_info);
+	void _destroy_ramds_info(Ram_dataspace_info &rds_info);
 
 public:
-
-	/**
-	 * Constructor
-	 */
-	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *name, Genode::size_t granularity = 1);
-	/**
-	 * Destructor
-	 */
+	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc,
+			const char *name, bool &bootstrap_phase, Genode::size_t granularity = 1);
 	~Ram_session_component();
 
-	Genode::Ram_session_capability    parent_cap()          { return _parent_ram.cap(); }
-	Genode::List<Ram_dataspace_info> &ram_dataspace_infos() { return _rds_infos;        }
-	const Genode::List<Ram_dataspace_info> &ram_dataspace_infos() const { return _rds_infos; }
+	Genode::Ram_session_capability parent_cap() { return _parent_ram.cap(); }
+
+	Ram_session_info &parent_state() { return _parent_state; }
 
 	/***************************
 	 ** Ram_session interface **
@@ -163,7 +152,7 @@ public:
 	/**
 	 * Allocate a Ram_dataspace
 	 *
-	 * For managed Ram_dataspaces (_use_inc_ckpt == true), create a new Region_map and allocate
+	 * For managed Ram_dataspaces (_granularity > 0), create a new Region_map and allocate
 	 * designated Ram_dataspaces for the Region_map and return the Ram_dataspace_capability of the
 	 * Region_map.
 	 */
@@ -179,4 +168,62 @@ public:
 
 };
 
-#endif /* _RTCR_RAM_SESSION_COMPONENT_H_ */
+
+/**
+ * Custom root RPC object to intercept session RPC object creation, modification, and destruction through the root interface
+ */
+class Rtcr::Ram_root : public Genode::Root_component<Ram_session_component>
+{
+private:
+	/**
+	 * Enable log output for debugging
+	 */
+	static constexpr bool verbose_debug = ram_root_verbose_debug;
+
+	/**
+	 * Environment of Rtcr; is forwarded to a created session object
+	 */
+	Genode::Env        &_env;
+	/**
+	 * Allocator for session objects and monitoring list elements
+	 */
+	Genode::Allocator  &_md_alloc;
+	/**
+	 * Entrypoint for managing session objects
+	 */
+	Genode::Entrypoint &_ep;
+	/**
+	 * Reference to Target_child's bootstrap phase
+	 */
+	bool               &_bootstrap_phase;
+	/**
+	 * Name of the session
+	 */
+	const char         *_name;
+	/**
+	 * Granularity of managed dataspaces
+	 */
+	Genode::size_t      _granularity;
+	/**
+	 * Lock for infos list
+	 */
+	Genode::Lock        _objs_lock;
+	/**
+	 * List for monitoring session objects
+	 */
+	Genode::List<Ram_session_component> _session_rpc_objs;
+
+protected:
+	Ram_session_component *_create_session(const char *args);
+	void _destroy_session(Ram_session_component *session);
+
+public:
+	Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
+			const char *name, Genode::size_t granularity, bool &bootstrap_phase);
+    ~Ram_root();
+
+	Genode::List<Ram_session_component> &session_infos() { return _session_rpc_objs; }
+};
+
+
+#endif /* _RTCR_RAM_SESSION_H_ */

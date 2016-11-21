@@ -11,7 +11,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/pd_session_component.h"
+#include "../intercept/pd_session.h"
 
 namespace Rtcr {
 	struct Stored_pd_session_info;

@@ -14,7 +14,7 @@
 /* Rtcr includes */
 #include "../monitor/attached_region_info.h"
 #include "../monitor/region_map_info.h"
-#include "ram_session_component.h"
+#include "ram_session.h"
 
 namespace Rtcr {
 	class Region_map_component;
