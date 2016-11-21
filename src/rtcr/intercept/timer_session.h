@@ -12,23 +12,22 @@
 #include <root/component.h>
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../monitor/timer_session_info.h"
+
 namespace Rtcr {
 	class Timer_session_component;
 	class Timer_root;
 
 	constexpr bool timer_verbose_debug = false;
 	constexpr bool timer_root_verbose_debug = false;
-
-	// Forward declaration
-	struct Timer_session_info;
 }
 
-
 /**
- * Virtual session object to intercept Rpc object creation and
- * state modifications of the wrapped, parent session object
+ * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
-class Rtcr::Timer_session_component : public Genode::Rpc_object<Timer::Session>
+class Rtcr::Timer_session_component : public Genode::Rpc_object<Timer::Session>,
+                                      public Genode::List<Timer_session_component>::Element
 {
 private:
 	/**
@@ -38,30 +37,26 @@ private:
 	/**
 	 * Allocator for Rpc objects created by this session and also for monitoring structures
 	 */
-	Genode::Allocator             &_md_alloc;
+	Genode::Allocator  &_md_alloc;
 	/**
 	 * Entrypoint for managing created Rpc objects
 	 */
-	Genode::Entrypoint            &_ep;
+	Genode::Entrypoint &_ep;
 	/**
 	 * Parent's session connection which is used by the intercepted methods
 	 */
-	Timer::Connection              _parent_timer;
+	Timer::Connection   _parent_timer;
 	/**
-	 * Parent's session state
+	 * State of parent's RPC object
 	 */
-	struct State_info
-	{
-		Genode::Signal_context_capability sigh     {};
-		unsigned                          timeout  {};
-		bool                              periodic {};
-	} _parent_state;
+	Timer_session_info  _parent_state;
 
 public:
-	Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *args);
+	Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+			bool bootstrapped = false);
 	~Timer_session_component();
 
-	State_info &parent_state() { return _parent_state; }
+	Timer_session_info &parent_state() { return _parent_state; }
 
 	/************************************
 	 ** Timer session Rpc interface **
@@ -76,8 +71,7 @@ public:
 };
 
 /**
- * Virtual Root session object to intercept session object creation
- * This enables the Rtcr component to monitor capabilities created for session objects
+ * Custom root RPC object to intercept session RPC object creation, modification, and destruction through the root interface
  */
 class Rtcr::Timer_root : public Genode::Root_component<Timer_session_component>
 {
@@ -90,40 +84,37 @@ private:
 	/**
 	 * Environment of Rtcr; is forwarded to a created session object
 	 */
-	Genode::Env                    &_env;
+	Genode::Env        &_env;
 	/**
 	 * Allocator for session objects and monitoring list elements
 	 */
-	Genode::Allocator              &_md_alloc;
+	Genode::Allocator  &_md_alloc;
 	/**
 	 * Entrypoint for managing session objects
 	 */
-	Genode::Entrypoint             &_ep;
+	Genode::Entrypoint &_ep;
+	/**
+	 * Reference to Target_child's bootstrap phase
+	 */
+	bool               &_bootstrap_phase;
 	/**
 	 * Lock for infos list
 	 */
-	Genode::Lock                      _infos_lock;
+	Genode::Lock        _objs_lock;
 	/**
 	 * List for monitoring session objects
 	 */
-	Genode::List<Timer_session_info>  _session_infos;
+	Genode::List<Timer_session_component> _session_rpc_objs;
 
 protected:
-	/**
-	 * Create session object and its monitoring list element
-	 */
 	Timer_session_component *_create_session(const char *args);
-	/**
-	 * Destroy session object and its monitoring list element
-	 */
 	void _destroy_session(Timer_session_component *session);
 
 public:
-	Timer_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep);
+	Timer_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool &bootstrap_phase);
     ~Timer_root();
     
-    Genode::List<Timer_session_info> &session_infos()           { return _session_infos;  }
-    void session_infos(Genode::List<Timer_session_info> &infos) { _session_infos = infos; }
+    Genode::List<Timer_session_component> &session_infos() { return _session_rpc_objs;  }
 };
 
 #endif /* _RTCR_TIMER_SESSION_H_ */

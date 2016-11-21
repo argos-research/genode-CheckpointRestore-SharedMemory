@@ -25,16 +25,29 @@ struct Rtcr::Region_map_info : Normal_rpc_info
 	/**
 	 * Size of the region map
 	 */
-	const Genode::size_t size;
+	Genode::size_t const size;
 	/**
 	 * Dataspace representation
 	 */
-	const Genode::Dataspace_capability ds_cap;
+	Genode::Dataspace_capability const ds_cap;
+	/**
+	 * Signal context of the fault handler
+	 */
+	Genode::Signal_context_capability sigh_cap;
+	/**
+	 * Lock
+	 */
+	Genode::Lock                       objs_lock;
+	/**
+	 * List of attached regions
+	 */
+	Genode::List<Attached_region_info> normal_objs;
 
 	Region_map_info(Genode::size_t size, Genode::Dataspace_capability ds_cap, bool bootstrapped = false)
 	:
 		Normal_rpc_info(bootstrapped),
-		size(size), ds_cap(ds_cap)
+		size(size), ds_cap(ds_cap), sigh_cap(),
+		objs_lock(), normal_objs()
 	{ }
 
 	void print(Genode::Output &output) const

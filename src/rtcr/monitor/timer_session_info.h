@@ -21,9 +21,14 @@ namespace Rtcr {
  */
 struct Rtcr::Timer_session_info : Session_rpc_info
 {
+	Genode::Signal_context_capability sigh;
+	unsigned timeout;
+	bool     periodic;
+
 	Timer_session_info(const char* creation_args, bool bootstrapped = false)
 	:
-		Session_rpc_info(creation_args, "", bootstrapped)
+		Session_rpc_info(creation_args, "", bootstrapped),
+		sigh(), timeout(0), periodic(false)
 	{ }
 
 	void print(Genode::Output &output) const

@@ -12,22 +12,22 @@
 #include <root/component.h>
 #include <util/list.h>
 
+/* Rtcr includes */
+#include "../monitor/log_session_info.h"
+
 namespace Rtcr {
 	class Log_session_component;
 	class Log_root;
 
 	constexpr bool log_verbose_debug = false;
 	constexpr bool log_root_verbose_debug = false;
-
-	// Forward declaration
-	struct Log_session_info;
 }
 
 /**
- * Virtual session object to intercept Rpc object creation and
- * state modifications of the wrapped, parent session object
+ * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
-class Rtcr::Log_session_component : public Genode::Rpc_object<Genode::Log_session>
+class Rtcr::Log_session_component : public Genode::Rpc_object<Genode::Log_session>,
+                                    public Genode::List<Log_session_component>::Element
 {
 private:
 	/**
@@ -46,10 +46,18 @@ private:
 	 * Parent's session connection which is used by the intercepted methods
 	 */
 	Genode::Log_connection         _parent_log;
+	/**
+	 * State of parent's RPC object
+	 */
+	Log_session_info               _parent_state;
+
 
 public:
-	Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *args);
+	Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+			const char *args, bool bootstrapped = false);
 	~Log_session_component();
+
+	Log_session_info &parent_state() { return _parent_state; }
 
 	/*******************************
 	 ** Log session Rpc interface **
@@ -59,8 +67,7 @@ public:
 };
 
 /**
- * Virtual Root session object to intercept session object creation
- * This enables the Rtcr component to monitor capabilities created for session objects
+ * Custom root RPC object to intercept session RPC object creation, modification, and destruction through the root interface
  */
 class Rtcr::Log_root : public Genode::Root_component<Log_session_component>
 {
@@ -73,27 +80,27 @@ private:
 	/**
 	 * Environment of Rtcr; is forwarded to a created session object
 	 */
-	Genode::Env                    &_env;
+	Genode::Env        &_env;
 	/**
 	 * Allocator for session objects and monitoring list elements
 	 */
-	Genode::Allocator              &_md_alloc;
+	Genode::Allocator  &_md_alloc;
 	/**
 	 * Entrypoint for managing session objects
 	 */
-	Genode::Entrypoint             &_ep;
+	Genode::Entrypoint &_ep;
+	/**
+	 * Reference to Target_child's bootstrap phase
+	 */
+	bool               &_bootstrap_phase;
 	/**
 	 * Lock for infos list
 	 */
-	Genode::Lock                    _infos_lock;
+	Genode::Lock        _objs_lock;
 	/**
-	 * List for monitoring session objects
+	 * List for monitoring session RPC objects
 	 */
-	Genode::List<Log_session_info>  _session_infos;
-	/**
-	 * Mark first log_session as being created during bootstrap phase
-	 */
-	bool                            _bootstraped;
+	Genode::List<Log_session_component> _session_rpc_objs;
 
 protected:
 	/**
@@ -107,10 +114,10 @@ protected:
 	void _destroy_session(Log_session_component *session);
 
 public:
-	Log_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool bootstrap=true);
+	Log_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool &bootstrap_phase);
     ~Log_root();
 
-	Genode::List<Log_session_info> &session_infos() { return _session_infos; }
+	Genode::List<Log_session_component> &session_infos() { return _session_rpc_objs; }
 };
 
 #endif /* _RTCR_LOG_SESSION_H_ */

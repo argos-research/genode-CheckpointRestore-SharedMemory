@@ -9,34 +9,37 @@
 using namespace Rtcr;
 
 
-Region_map_component::Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-		Genode::Capability<Region_map> rm_cap, const char *label)
+Region_map_component::Region_map_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Region_map> region_map_cap,
+		Genode::size_t size, const char *label, bool &bootstrap_phase)
 :
-	_ep                    (ep),
-	_md_alloc              (md_alloc),
-	_parent_region_map     (rm_cap),
-	_label                 (label),
-	_attached_regions_lock (),
-	_attached_regions      ()
+	_md_alloc          (md_alloc),
+	_bootstrap_phase   (bootstrap_phase),
+	_parent_region_map (region_map_cap),
+	_parent_state      (size, _parent_region_map.dataspace(), bootstrap_phase),
+	_label             (label)
 {
-	_ep.manage(*this);
-	_parent_state.ds_cap = _parent_region_map.dataspace();
-
-	if(verbose_debug) Genode::log("\033[33m", "Rmap", "\033[0m<\033[35m", _label.string(),"\033[0m>(parent ", _parent_region_map, ")");
+	if(verbose_debug) Genode::log("\033[33m", "Rmap", "\033[0m<\033[35m", _label, "\033[0m>(parent ", _parent_region_map, ")");
 }
 
 
 Region_map_component::~Region_map_component()
 {
-	_ep.dissolve(*this);
+	while(Attached_region_info *obj = _parent_state.normal_objs.first())
+	{
+		_parent_state.normal_objs.remove(obj);
+		Genode::destroy(_md_alloc, obj);
+	}
 
-	// Destroy all Regions through detach method
-	Attached_region_info *curr_at_info = nullptr;
+	if(verbose_debug) Genode::log("\033[33m", "~Rmap", "\033[0m<\033[35m", _label,"\033[0m> ", _parent_region_map);
+}
 
-	while((curr_at_info = _attached_regions.first()))
-		detach(curr_at_info->rel_addr);
 
-	if(verbose_debug) Genode::log("\033[33m", "~Rmap", "\033[0m<\033[35m", _label.string(),"\033[0m> ", _parent_region_map);
+Region_map_component *Region_map_component::find_by_badge(Genode::uint16_t badge)
+{
+	if(badge == cap().local_name())
+		return this;
+	Region_map_component *obj = next();
+	return obj ? obj->find_by_badge(badge) : 0;
 }
 
 
@@ -47,23 +50,23 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 	{
 		if(use_local_addr)
 		{
-			Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			Genode::log("Rmap<\033[35m", _label,"\033[0m>", "::",
 			"\033[33m", __func__, "\033[0m(",
 					"ds ",       ds_cap,
 					", size=",       Genode::Hex(size),
 					", offset=",     offset,
 					", local_addr=", Genode::Hex(local_addr),
-					", exe=",        executable?"1":"0",
+					", exe=",        executable,
 					")");
 		}
 		else
 		{
-			Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+			Genode::log("Rmap<\033[35m", _label,"\033[0m>", "::",
 			"\033[33m", __func__, "\033[0m(",
 					"ds ",   ds_cap,
 					", size=",   Genode::Hex(size),
 					", offset=", offset,
-					", exe=",    executable?"1":"0",
+					", exe=",    executable,
 					")");
 		}
 	}
@@ -86,7 +89,7 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 	//Genode::log("  actual_size=", Genode::Hex(actual_size));
 
 	// Store information about the attachment
-	Attached_region_info *region = new (_md_alloc) Attached_region_info(ds_cap, actual_size, offset, addr, executable);
+	Attached_region_info *new_obj = new (_md_alloc) Attached_region_info(ds_cap, actual_size, offset, addr, executable, _bootstrap_phase);
 
 	if(verbose_debug)
 	{
@@ -99,8 +102,8 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 	}
 
 	// Store Attached_region_info in a list
-	Genode::Lock::Guard lock_guard(_attached_regions_lock);
-	_attached_regions.insert(region);
+	Genode::Lock::Guard lock_guard(_parent_state.objs_lock);
+	_parent_state.normal_objs.insert(new_obj);
 
 	return addr;
 }
@@ -108,15 +111,15 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 
 void Region_map_component::detach(Region_map::Local_addr local_addr)
 {
-	if(verbose_debug) Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+	if(verbose_debug) Genode::log("Rmap<\033[35m", _label,"\033[0m>", "::",
 			"\033[33m", __func__, "\033[0m(", "local_addr=", Genode::Hex(local_addr), ")");
 
 	// Detach from real region map
 	_parent_region_map.detach(local_addr);
 
 	// Find region
-	Genode::Lock::Guard lock_guard(_attached_regions_lock);
-	Attached_region_info *region = _attached_regions.first()->find_by_addr((Genode::addr_t)local_addr);
+	Genode::Lock::Guard lock_guard(_parent_state.objs_lock);
+	Attached_region_info *region = _parent_state.normal_objs.first()->find_by_addr((Genode::addr_t)local_addr);
 	if(!region)
 	{
 		Genode::warning("Region not found in Rm::detach(). Local address ", Genode::Hex(local_addr),
@@ -125,7 +128,7 @@ void Region_map_component::detach(Region_map::Local_addr local_addr)
 	}
 
 	// Remove and destroy region from list and allocator
-	_attached_regions.remove(region);
+	_parent_state.normal_objs.remove(region);
 	destroy(_md_alloc, region);
 
 	if(verbose_debug) Genode::log("  Detached dataspace from the local address ", Genode::Hex(local_addr));
@@ -134,16 +137,16 @@ void Region_map_component::detach(Region_map::Local_addr local_addr)
 
 void Region_map_component::fault_handler(Genode::Signal_context_capability handler)
 {
-	if(verbose_debug)Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+	if(verbose_debug)Genode::log("Rmap<\033[35m", _label,"\033[0m>", "::",
 			"\033[33m", __func__, "\033[0m(", handler, ")");
-	_parent_state.fault_handler = handler;
+	_parent_state.sigh_cap = handler;
 	_parent_region_map.fault_handler(handler);
 }
 
 
 Genode::Region_map::State Region_map_component::state()
 {
-	if(verbose_debug) Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+	if(verbose_debug) Genode::log("Rmap<\033[35m", _label,"\033[0m>", "::",
 			"\033[33m", __func__, "\033[0m()");
 	auto result = _parent_region_map.state();
 	const char* type = result.type == Genode::Region_map::State::READ_FAULT ? "READ_FAULT" :
@@ -157,7 +160,7 @@ Genode::Region_map::State Region_map_component::state()
 
 Genode::Dataspace_capability Region_map_component::dataspace()
 {
-	if(verbose_debug) Genode::log("Rmap<\033[35m", _label.string(),"\033[0m>", "::",
+	if(verbose_debug) Genode::log("Rmap<\033[35m", _label,"\033[0m>", "::",
 			"\033[33m", __func__, "\033[0m()");
 	auto result = _parent_region_map.dataspace();
 	if(verbose_debug) Genode::log("  result: ", result);

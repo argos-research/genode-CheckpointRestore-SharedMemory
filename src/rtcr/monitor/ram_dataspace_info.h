@@ -54,8 +54,8 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 	{
 		if(cap == ds_cap)
 			return this;
-		Ram_dataspace_info *rds_info = next();
-		return rds_info ? rds_info->find_by_cap(cap) : 0;
+		Ram_dataspace_info *info = next();
+		return info ? info->find_by_cap(cap) : 0;
 	}
 
 	void print(Genode::Output &output) const

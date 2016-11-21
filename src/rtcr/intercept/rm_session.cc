@@ -5,19 +5,58 @@
  */
 
 #include "rm_session.h"
-#include "../monitor/region_map_info.h"
-#include "../monitor/rm_session_info.h"
 
 using namespace Rtcr;
 
 
-Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep)
+Region_map_component *Rm_session_component::_create(Genode::size_t size)
+{
+	// Create real Region_map from parent
+	auto parent_cap = _parent_rm.create(size);
+
+	// Create custom Region_map
+	Region_map_component *new_region_map =
+			new (_md_alloc) Region_map_component(_md_alloc, parent_cap, size, "custom", _bootstrap_phase);
+
+	// Manage custom  RPC object
+	_ep.manage(*new_region_map);
+
+	// Insert custom RPC object into list
+	Genode::Lock::Guard lock(_parent_state.objs_lock);
+	_parent_state.normal_rpc_objs.insert(new_region_map);
+
+	return new_region_map;
+}
+
+
+void Rm_session_component::_destroy(Region_map_component *region_map)
+{
+	// Reverse order as in _create
+	auto parent_cap = region_map->parent_cap();
+
+	// Remove custom RPC object form list
+	Genode::Lock::Guard lock(_parent_state.objs_lock);
+	_parent_state.normal_rpc_objs.remove(region_map);
+
+	// Dissolve custom RPC object
+	_ep.dissolve(*region_map);
+
+	// Destroy custom RPC object
+	Genode::destroy(_md_alloc, region_map);
+
+	// Destroy real Region map from parent
+	_parent_rm.destroy(parent_cap);
+}
+
+
+Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+		bool &bootstrap_phase)
 :
 	_md_alloc         (md_alloc),
 	_ep               (ep),
+	_bootstrap_phase  (bootstrap_phase),
 	_parent_rm        (env),
-	_infos_lock       (),
-	_region_map_infos ()
+	_parent_state     ("", bootstrap_phase)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Rm", "\033[0m(parent ", _parent_rm, ")");
 }
@@ -25,12 +64,9 @@ Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &
 
 Rm_session_component::~Rm_session_component()
 {
-	// Destroy all list elements through destroy method
-	Region_map_info *rm_info = nullptr;
-	while((rm_info = _region_map_infos.first()))
+	while(Region_map_component *obj = _parent_state.normal_rpc_objs.first())
 	{
-		// Implicitly removes rm_info from the list
-		destroy(rm_info->region_map.cap());
+		_destroy(obj);
 	}
 
 	if(verbose_debug) Genode::log("\033[33m", "~Rm", "\033[0m ", _parent_rm);
@@ -41,23 +77,11 @@ Genode::Capability<Genode::Region_map> Rm_session_component::create(Genode::size
 {
 	if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(size=", size, ")");
 
-	// Create real Region_map from parent
-	auto parent_cap = _parent_rm.create(size);
-	Genode::Dataspace_capability ds_cap = Genode::Region_map_client(parent_cap).dataspace();
+	// Create custom Region map
+	Region_map_component *new_region_map = _create(size);
 
-	// Create virtual Region_map
-	Region_map_component *new_region_map =
-			new (_md_alloc) Region_map_component(_ep, _md_alloc, parent_cap, "custom");
-
-	// Create list element to where the virtual object is stored
-	Region_map_info *rm_info = new (_md_alloc) Region_map_info(*new_region_map, size, ds_cap);
-
-	// Insert list element into list
-	Genode::Lock::Guard lock(_infos_lock);
-	_region_map_infos.insert(rm_info);
-
-	if(verbose_debug) Genode::log("  result: ", rm_info->region_map.cap());
-	return rm_info->region_map.cap();
+	if(verbose_debug) Genode::log("  result: ", new_region_map->cap());
+	return new_region_map->cap();
 }
 
 
@@ -65,26 +89,19 @@ void Rm_session_component::destroy(Genode::Capability<Genode::Region_map> region
 {
 	if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(", region_map_cap, ")");
 
-	// Find list element for the given Capability
-	Genode::Lock::Guard lock (_infos_lock);
-	Region_map_info *rm_info = _region_map_infos.first();
-	if(rm_info) rm_info = rm_info->find_by_cap(region_map_cap);
+	// Find RPC object for the given Capability
+	Genode::Lock::Guard lock (_parent_state.objs_lock);
+	Region_map_component *region_map = _parent_state.normal_rpc_objs.first();
+	if(region_map) region_map = region_map->find_by_badge(region_map_cap.local_name());
 
-	// If found, delete everything concerning this list element
-	if(rm_info)
+	// If found, delete everything concerning this RPC object
+	if(region_map)
 	{
-		if(verbose_debug) Genode::log("  deleting ", rm_info->region_map.cap());
+		if(verbose_debug) Genode::log("  deleting ", region_map->cap());
 
 		Genode::error("Issuing Rm_session::destroy, which is bugged and hangs up.");
-		// Destroy real Region_map from parent
-		_parent_rm.destroy(rm_info->region_map.parent_cap());
 
-		// Destroy virtual Region_map
-		Genode::destroy(_md_alloc, &rm_info->region_map);
-
-		// Remove and destroy list element
-		_region_map_infos.remove(rm_info);
-		Genode::destroy(_md_alloc, rm_info);
+		_destroy(region_map);
 	}
 	else
 	{
@@ -97,53 +114,43 @@ Rm_session_component *Rm_root::_create_session(const char *args)
 {
 	if(verbose_debug) Genode::log("Rm_root::\033[33m", __func__, "\033[0m(", args,")");
 	// Create virtual Rm_session
-	Rm_session_component *new_rms =
-			new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep);
+	Rm_session_component *new_session =
+			new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep, _bootstrap_phase);
 
-	// Create and insert list element
-	Rm_session_info *new_rms_info =
-			new (md_alloc()) Rm_session_info(*new_rms, args);
-	Genode::Lock::Guard lock(_infos_lock);
-	_rms_infos.insert(new_rms_info);
+	Genode::Lock::Guard lock(_objs_lock);
+	_session_rpc_objs.insert(new_session);
 
-	return new_rms;
+	return new_session;
 }
 
 
 void Rm_root::_destroy_session(Rm_session_component *session)
 {
-	// Find and destroy list element
-	Rm_session_info *rms_info = _rms_infos.first();
-	if(rms_info) rms_info = rms_info->find_by_ptr(session);
-	if(rms_info)
-	{
-		_rms_infos.remove(rms_info);
-		destroy(_md_alloc, rms_info);
-	}
-
-	// Destroy virtual Rm_session
-	destroy(_md_alloc, session);
+	_session_rpc_objs.remove(session);
+	Genode::destroy(_md_alloc, session);
 }
 
 
-Rm_root::Rm_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep)
+Rm_root::Rm_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
+		bool &bootstrap_phase)
 :
 	Root_component<Rm_session_component>(session_ep, md_alloc),
-	_env        (env),
-	_md_alloc   (md_alloc),
-	_ep         (session_ep),
-	_infos_lock (),
-	_rms_infos  ()
+	_env              (env),
+	_md_alloc         (md_alloc),
+	_ep               (session_ep),
+	_bootstrap_phase  (bootstrap_phase),
+	_objs_lock        (),
+	_session_rpc_objs ()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 }
 
 Rm_root::~Rm_root()
 {
-	while(Rm_session_info *info = _rms_infos.first())
+	while(Rm_session_component *obj = _session_rpc_objs.first())
 	{
-		_rms_infos.remove(info);
-		Genode::destroy(_md_alloc, info);
+		_session_rpc_objs.remove(obj);
+		Genode::destroy(_md_alloc, obj);
 	}
 
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");

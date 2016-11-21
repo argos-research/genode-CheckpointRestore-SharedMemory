@@ -5,16 +5,17 @@
  */
 
 #include "timer_session.h"
-#include "../monitor/timer_session_info.h"
 
 using namespace Rtcr;
 
 
-Timer_session_component::Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, const char *args)
+Timer_session_component::Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+		bool bootstrapped)
 :
 	_md_alloc     (md_alloc),
 	_ep           (ep),
-	_parent_timer (env)
+	_parent_timer (env),
+	_parent_state ("", bootstrapped)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Timer", "\033[0m(parent ", _parent_timer, ")");
 }
@@ -40,6 +41,7 @@ void Timer_session_component::trigger_periodic(unsigned us)
 	if(verbose_debug) Genode::log("Timer::\033[33m", __func__, "\033[0m(us=", us, ")");
 	_parent_state.timeout = us;
 	_parent_state.periodic = true;
+
 	_parent_timer.trigger_periodic(us);
 }
 
@@ -88,13 +90,10 @@ Timer_session_component *Timer_root::_create_session(const char *args)
 
 	// Create virtual session object
 	Timer_session_component *new_session =
-			new (md_alloc()) Timer_session_component(_env, _md_alloc, _ep, args);
+			new (md_alloc()) Timer_session_component(_env, _md_alloc, _ep, _bootstrap_phase);
 
-	// Create and insert list element
-	Timer_session_info *new_session_info =
-			new (md_alloc()) Timer_session_info(*new_session, args);
-	Genode::Lock::Guard guard(_infos_lock);
-	_session_infos.insert(new_session_info);
+	Genode::Lock::Guard guard(_objs_lock);
+	_session_rpc_objs.insert(new_session);
 
 	return new_session;
 }
@@ -103,34 +102,23 @@ Timer_session_component *Timer_root::_create_session(const char *args)
 void Timer_root::_destroy_session(Timer_session_component *session)
 {
 	if(verbose_debug) Genode::log("Timer_root::\033[33m", __func__, "\033[0m(ptr=", session,")");
-	// Find and destroy list element and its session object
-	Timer_session_info *info = _session_infos.first();
-	if(info) info = info->find_by_ptr(session);
-	if(info)
-	{
-		// Remove and destroy list element
-		_session_infos.remove(info);
-		destroy(_md_alloc, info);
 
-		// Destroy virtual session object
-		destroy(_md_alloc, session);
-	}
-	// No list element found
-	else
-	{
-		Genode::error("Timer_root: Session not found in the list");
-	}
+	// Remove and destroy list element
+	_session_rpc_objs.remove(session);
+	destroy(_md_alloc, session);
+
 }
 
 
-Timer_root::Timer_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep)
+Timer_root::Timer_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool &bootstrap_phase)
 :
 	Root_component<Timer_session_component>(session_ep, md_alloc),
-	_env           (env),
-	_md_alloc      (md_alloc),
-	_ep            (session_ep),
-	_infos_lock    (),
-	_session_infos ()
+	_env              (env),
+	_md_alloc         (md_alloc),
+	_ep               (session_ep),
+	_bootstrap_phase  (bootstrap_phase),
+	_objs_lock        (),
+	_session_rpc_objs ()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 }
@@ -138,12 +126,10 @@ Timer_root::Timer_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::En
 
 Timer_root::~Timer_root()
 {
-    Timer_session_info *info = nullptr;
-
-    while((info = _session_infos.first()))
+    while(Timer_session_component *obj = _session_rpc_objs.first())
     {
-        _session_infos.remove(info);
-        Genode::destroy(_md_alloc, info);
+    	_session_rpc_objs.remove(obj);
+        Genode::destroy(_md_alloc, obj);
     }
 
     if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");

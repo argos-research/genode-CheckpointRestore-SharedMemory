@@ -8,14 +8,12 @@
 #define _RTCR_REGION_MAP_COMPONENT_H_
 
 /* Genode includes */
-#include <base/log.h>
-#include <base/allocator.h>
-#include <base/entrypoint.h>
 #include <region_map/client.h>
 #include <dataspace/client.h>
 
 /* Rtcr includes */
 #include "../monitor/attached_region_info.h"
+#include "../monitor/region_map_info.h"
 #include "ram_session_component.h"
 
 namespace Rtcr {
@@ -25,10 +23,10 @@ namespace Rtcr {
 }
 
 /**
- * This custom Region map intercepts the attach and detach methods to monitor and
- * provide the content of this Region map
+ * Custom Region map intercepting RPC methods
  */
-class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>
+class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>,
+                                   public Genode::List<Region_map_component>::Element
 {
 private:
 	/**
@@ -37,54 +35,37 @@ private:
 	static constexpr bool verbose_debug = region_map_verbose_debug;
 
 	/**
-	 * Entrypoint which manages this object
-	 */
-	Genode::Entrypoint                 &_ep;
-	/**
 	 * Allocator for Region map's attachments
 	 */
-	Genode::Allocator                  &_md_alloc;
+	Genode::Allocator         &_md_alloc;
 	/**
-	 * Wrapped region map from parent, usually core
+	 * Reference to Target_child's bootstrap phase
 	 */
-	Genode::Region_map_client           _parent_region_map;
-	/**
-	 * Parent's session state
-	 */
-	struct State_info
-	{
-		Genode::Signal_context_capability fault_handler {};
-		Genode::Dataspace_capability ds_cap {};
-	} _parent_state;
+	bool                      &_bootstrap_phase;
 	/**
 	 * Name of the Region map for debugging
 	 */
-	Genode::String<32>                  _label;
+	const char*                _label;
 	/**
-	 * Lock to make _attached_regions thread-safe
+	 * Wrapped region map from parent, usually core
 	 */
-	Genode::Lock                        _attached_regions_lock;
+	Genode::Region_map_client  _parent_region_map;
 	/**
-	 * List of client's dataspaces and their corresponding local addresses
+	 * State of parent's RPC object
 	 */
-	Genode::List<Attached_region_info>  _attached_regions;
+	Region_map_info            _parent_state;
 
 public:
-	/**
-	 * Constructor
-	 */
-	Region_map_component(Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-			Genode::Capability<Region_map> rm_cap, const char *label);
-	/**
-	 * Destrcutor
-	 */
+	Region_map_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Region_map> region_map_cap,
+			Genode::size_t size, const char *label, bool &bootstrap_phase);
 	~Region_map_component();
 
-	Genode::Capability<Genode::Region_map> parent_cap()       { return _parent_region_map; }
-	State_info                             parent_state()     { return _parent_state;      }
-	Genode::List<Attached_region_info>&    attached_regions() { return _attached_regions;  }
-	const State_info                          parent_state()     const { return _parent_state;     }
-	const Genode::List<Attached_region_info>& attached_regions() const { return _attached_regions; }
+	Genode::Capability<Genode::Region_map> parent_cap() { return _parent_region_map; }
+
+	Region_map_info &parent_state() { return _parent_state; }
+	Region_map_info const &parent_state() const { return _parent_state; }
+
+	Region_map_component *find_by_badge(Genode::uint16_t badge);
 
 	/******************************
 	 ** Region map Rpc interface **
