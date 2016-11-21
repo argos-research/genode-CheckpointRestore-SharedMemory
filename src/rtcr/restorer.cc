@@ -107,6 +107,10 @@ Restorer::~Restorer()
 void Restorer::restore()
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m()");
+
+	Genode::log("Before: \n", _child);
+
+
 	//Create RPC objects with checkpointed state
 	//_prepare_rm_sessions();
 	//_prepare_log_sessions();
@@ -149,5 +153,7 @@ void Restorer::restore()
 	//	Genode::destroy(_alloc, info);
 	//}
 	_destroy_badge_dictionary();
+
+	Genode::log("After: \n", _child);
 
 }
