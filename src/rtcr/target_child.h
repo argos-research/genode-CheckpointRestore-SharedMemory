@@ -11,14 +11,14 @@
 #include <base/env.h>
 #include <base/child.h>
 #include <base/service.h>
-#include <rom_session/client.h>
+#include <rom_session/connection.h>
 
-#include "intercept/cpu_session.h"
 /* Rtcr includes */
+#include "intercept/pd_session.h"
+#include "intercept/cpu_session.h"
+#include "intercept/ram_session.h"
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"
-#include "intercept/pd_session.h"
-#include "intercept/ram_session.h"
 #include "intercept/rom_session.h"
 #include "intercept/timer_session.h"
 #include "target_state.h"
@@ -78,40 +78,57 @@ private:
 	 */
 	bool                _in_bootstrap;
 	/**
+	 * Struct for custom / intercepted services
+	 */
+	struct Custom_services
+	{
+
+		Genode::Allocator &md_alloc;
+
+		Pd_root    *pd_root;
+		Cpu_root   *cpu_root;
+		Ram_root   *ram_root;
+		Rom_root   *rom_root;
+		Rm_root    *rm_root;
+		Log_root   *log_root;
+		Timer_root *timer_root;
+
+		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+				Genode::size_t granularity, bool &bootstrap_phase);
+		~Custom_services();
+	} _custom_services;
+	/**
 	 * Child's resources
 	 */
 	struct Resources
 	{
 		/**
-		 * Entrypoint for managing the custom resources
+		 * Entrypoint for managing the custom resources TODO clean up
 		 */
-		Genode::Entrypoint    &ep;
+		//Genode::Entrypoint     &ep;
 		/**
 		 * Custom PD RPC object
 		 */
-		Pd_session_component   pd;
+		Pd_session_component   &pd;
 		/**
 		 * Custom CPU RPC object
 		 */
-		Cpu_session_component  cpu;
+		Cpu_session_component  &cpu;
 		/**
 		 * Custom RAM RPC object
 		 */
-		Ram_session_component  ram;
+		Ram_session_component  &ram;
 		/**
-		 * Custom ROM RPC object
+		 * Parent's ROM session
 		 */
-		Rom_session_component  rom;
+		Genode::Rom_connection  rom;
 
-		/**
-		 * Constructor
-		 */
-		Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-				const char *name, Genode::size_t granularity);
-		/**
-		 * Destructor
-		 */
+		Resources(Genode::Env &env, Genode::Entrypoint &ep, const char *label, Custom_services &custom_services);
 		~Resources();
+
+		Pd_session_component &init_pd(const char *label, Pd_root &pd_root);
+		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root);
+		Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
 	} _resources;
 
 	/**
@@ -126,26 +143,6 @@ private:
 	 * Registry for parent's services (parent of RTCR component). It is shared between all children.
 	 */
 	Genode::Service_registry      &_parent_services;
-	/**
-	 * Registry for local services.
-	 */
-	Genode::Service_registry       _local_services;
-	/**
-	 * Registry for announced services from this child
-	 */
-	Genode::Service_registry       _child_services;
-	/**
-	 * Root RPC object of custom RM session
-	 */
-	Rm_root                       *_rm_root;
-	/**
-	 * Root RPC object of custom LOG session
-	 */
-	Log_root                      *_log_root;
-	/**
-	 * Root RPC object of custom Timer session
-	 */
-	Timer_root                    *_timer_root;
 	/**
 	 * Child object
 	 */
@@ -162,7 +159,7 @@ public:
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 			Genode::Service_registry &parent_services, const char *name,
-			Genode::size_t granularity = 1);
+			Genode::size_t granularity);
 
 	~Target_child();
 
@@ -179,17 +176,9 @@ public:
 	 */
 	Ram_session_component &ram() { return _resources.ram; }
 	/**
-	 * Return custom RM root
+	 * Return the struct of custom services
 	 */
-	Rm_root* rm_root()           { return _rm_root;       }
-	/**
-	 * Return custom LOG root
-	 */
-	Log_root* log_root()         { return _log_root;      }
-	/**
-	 * Return custom Timer root
-	 */
-	Timer_root* timer_root()     { return _timer_root;    }
+	Custom_services &custom_services() { return _custom_services; }
 	/**
 	 * Start child from scratch
 	 */

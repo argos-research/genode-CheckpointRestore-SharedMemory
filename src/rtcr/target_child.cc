@@ -10,29 +10,38 @@
 using namespace Rtcr;
 
 
-Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Genode::Allocator &md_alloc,
-		const char *name, Genode::size_t granularity)
+Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+		Genode::size_t granularity, bool &bootstrap_phase)
 :
-	ep  (ep),
-	pd  (env, md_alloc, ep, name),
-	cpu (env, md_alloc, ep, pd.parent_cap(), name),
-	ram (env, md_alloc, ep, name, granularity),
-	rom (env, md_alloc, ep, name)
+	md_alloc(md_alloc),
+	pd_root(nullptr), cpu_root(nullptr), ram_root(nullptr),
+	rom_root(nullptr), rm_root(nullptr), log_root(nullptr),
+	timer_root(nullptr)
 {
-	ep.manage(pd);
-	ep.manage(cpu);
-	ep.manage(ram);
-	ep.manage(rom);
+	pd_root  = new (md_alloc) Pd_root(env, md_alloc, ep, bootstrap_phase);
+	cpu_root = new (md_alloc) Cpu_root(env, md_alloc, ep, *pd_root, bootstrap_phase);
+	ram_root = new (md_alloc) Ram_root(env, md_alloc, ep, granularity, bootstrap_phase);
+}
 
-	if(verbose_debug)
-	{
-		Genode::log("Managing PD  session ", pd.cap());
-		Genode::log("Managing CPU session ", cpu.cap());
-		Genode::log("Managing RAM session ", ram.cap());
-		Genode::log("Managing ROM session ", rom.cap());
-	}
+Target_child::Custom_services::~Custom_services()
+{
+	if(timer_root) Genode::destroy(md_alloc, timer_root);
+	if(log_root)   Genode::destroy(md_alloc, log_root);
+	if(rm_root)    Genode::destroy(md_alloc, rm_root);
+	if(rom_root)   Genode::destroy(md_alloc, rom_root);
+	if(ram_root)   Genode::destroy(md_alloc, ram_root);
+	if(cpu_root)   Genode::destroy(md_alloc, cpu_root);
+	if(pd_root)    Genode::destroy(md_alloc, pd_root);
+}
 
 
+Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, const char *label, Custom_services &custom_services)
+:
+	pd  (init_pd(label, *custom_services.pd_root)),
+	cpu (init_cpu(label, *custom_services.cpu_root)),
+	ram (init_ram(label, *custom_services.ram_root)),
+	rom (env, label)
+{
 	// Donate ram quota to child
 	// TODO Replace static quota donation with the amount of quota, the child needs
 	Genode::size_t donate_quota = 1024*1024;
@@ -43,19 +52,35 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Entrypoint &ep, Gen
 
 
 Target_child::Resources::~Resources()
-{
-	ep.dissolve(rom);
-	ep.dissolve(ram);
-	ep.dissolve(cpu);
-	ep.dissolve(pd);
+{ }
 
-	if(verbose_debug)
+
+Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_root &pd_root)
+{
+	char args_buf[160];
+	Genode::snprintf(args_buf, sizeof(args_buf), "ram_quota=%u, label=\"%s\"", 20*1024*sizeof(long), label);
+	Genode::Session_capability pd_cap = pd_root.session(args_buf, Genode::Affinity());
+	Pd_session_component *pd_session = pd_root.session_infos().first();
+	if(pd_session) pd_session = pd_session->find_by_badge(pd_cap.local_name());
+	if(!pd_session)
 	{
-		Genode::log("Dissolving PD  session ", pd.cap());
-		Genode::log("Dissolving CPU session ", cpu.cap());
-		Genode::log("Dissolving RAM session ", ram.cap());
-		Genode::log("Dissolving ROM session ", rom.cap());
+		Genode::error("Creating custom PD session failed: Could not find PD session in PD root");
+		throw Genode::Exception();
 	}
+
+	return *pd_session;
+}
+
+
+Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_root &cpu_root)
+{
+
+}
+
+
+Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_root &ram_root)
+{
+
 }
 
 
@@ -74,11 +99,6 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
-	_local_services  (),
-	_child_services  (),
-	_rm_root         (nullptr),
-	_log_root        (nullptr),
-	_timer_root      (nullptr),
 	_child           (nullptr)
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
