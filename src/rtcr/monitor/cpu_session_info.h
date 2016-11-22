@@ -8,9 +8,11 @@
 #define _RTCR_CPU_SESSION_INFO_H_
 
 /* Genode includes */
+#include <util/list.h>
 
 /* Rtcr includes */
 #include "info_structs.h"
+#include "cpu_thread_info.h"
 
 namespace Rtcr {
 	struct Cpu_session_info;
@@ -21,9 +23,20 @@ namespace Rtcr {
  */
 struct Rtcr::Cpu_session_info : Session_rpc_info
 {
-	Cpu_session_info(const char* creation_args, bool bootstrapped = false)
+	Genode::Signal_context_capability sigh;
+	/**
+	 * Lock to make _threads thread-safe
+	 */
+	Genode::Lock cpu_threads_lock;
+	/**
+	 * List of client's thread capabilities
+	 */
+	Genode::List<Cpu_thread_component> cpu_threads;
+
+	Cpu_session_info(const char* creation_args, bool bootstrapped)
 	:
-		Session_rpc_info(creation_args, "", bootstrapped)
+		Session_rpc_info(creation_args, "", bootstrapped),
+		cpu_threads_lock(), cpu_threads()
 	{ }
 
 	void print(Genode::Output &output) const

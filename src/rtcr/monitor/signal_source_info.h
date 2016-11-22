@@ -25,7 +25,7 @@ struct Rtcr::Signal_source_info : Normal_obj_info, Genode::List<Signal_source_in
 {
 	Genode::Capability<Genode::Signal_source> cap;
 
-	Signal_source_info(Genode::Capability<Genode::Signal_source> cap, bool bootstrapped = false)
+	Signal_source_info(Genode::Capability<Genode::Signal_source> cap, bool bootstrapped)
 	:
 		cap(cap)
 	{ }

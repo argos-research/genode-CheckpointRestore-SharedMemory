@@ -47,7 +47,7 @@ struct Rtcr::Attached_region_info : Normal_obj_info, Genode::List<Attached_regio
 
 
 	Attached_region_info(Genode::Dataspace_capability attached_ds_cap, Genode::size_t size, Genode::off_t offset,
-			Genode::addr_t local_addr, bool executable, bool bootstrapped = false)
+			Genode::addr_t local_addr, bool executable, bool bootstrapped)
 	:
 		Normal_obj_info (bootstrapped),
 		attached_ds_cap (attached_ds_cap),

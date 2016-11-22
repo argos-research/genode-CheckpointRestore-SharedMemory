@@ -25,7 +25,7 @@ struct Rtcr::Timer_session_info : Session_rpc_info
 	unsigned timeout;
 	bool     periodic;
 
-	Timer_session_info(const char* creation_args, bool bootstrapped = false)
+	Timer_session_info(const char* creation_args, bool bootstrapped)
 	:
 		Session_rpc_info(creation_args, "", bootstrapped),
 		sigh(), timeout(0), periodic(false)

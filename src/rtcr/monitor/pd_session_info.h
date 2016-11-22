@@ -28,34 +28,34 @@ struct Rtcr::Pd_session_info : Session_rpc_info
 	/**
 	 * Lock for Signal_sources
 	 */
-	Genode::Lock                         source_lock;
+	Genode::Lock                         signal_sources_lock;
 	/**
 	 * List for monitoring the creation and destruction of Signal_source_capabilities
 	 */
-	Genode::List<Signal_source_info>     source_objs;
+	Genode::List<Signal_source_info>     signal_sources;
 	/**
 	 * Lock for Signal_contexts
 	 */
-	Genode::Lock                         context_lock;
+	Genode::Lock                         signal_contexts_lock;
 	/**
 	 * List for monitoring the creation and destruction of Signal_context_capabilities
 	 */
-	Genode::List<Signal_context_info>    context_objs;
+	Genode::List<Signal_context_info>    signal_contexts;
 	/**
 	 * Lock for Native_capabilities
 	 */
-	Genode::Lock                         native_cap_lock;
+	Genode::Lock                         native_caps_lock;
 	/**
 	 * List for monitoring the creation and destruction of Native_capabilities
 	 */
-	Genode::List<Native_capability_info> native_cap_objs;
+	Genode::List<Native_capability_info> native_caps;
 
-	Pd_session_info(const char* creation_args, bool bootstrapped = false)
+	Pd_session_info(const char* creation_args, bool bootstrapped)
 	:
 		Session_rpc_info(creation_args, "", bootstrapped),
-		source_lock(), source_objs(),
-		context_lock(), context_objs(),
-		native_cap_lock(), native_cap_objs()
+		signal_sources_lock(), signal_sources(),
+		signal_contexts_lock(), signal_contexts(),
+		native_caps_lock(), native_caps()
 	{ }
 
 	void print(Genode::Output &output) const

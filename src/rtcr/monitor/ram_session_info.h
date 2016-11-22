@@ -27,16 +27,16 @@ struct Rtcr::Ram_session_info : Session_rpc_info
 	/**
 	 * Objects lock
 	 */
-	Genode::Lock                     objs_lock;
+	Genode::Lock                     ram_dataspaces_lock;
 	/**
 	 * List of allocated ram dataspaces
 	 */
-	Genode::List<Ram_dataspace_info> normal_objs;
+	Genode::List<Ram_dataspace_info> ram_dataspaces;
 
-	Ram_session_info(const char* creation_args, bool bootstrapped = false)
+	Ram_session_info(const char* creation_args, bool bootstrapped)
 	:
 		Session_rpc_info(creation_args, "", bootstrapped),
-		ref_account_cap(), objs_lock(), normal_objs()
+		ref_account_cap(), ram_dataspaces_lock(), ram_dataspaces()
 	{ }
 
 	void print(Genode::Output &output) const

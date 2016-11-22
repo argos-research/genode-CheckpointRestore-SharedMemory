@@ -26,7 +26,7 @@ struct Rtcr::Native_capability_info : Normal_obj_info, Genode::List<Native_capab
 	Genode::Native_capability ep_cap;
 
 	Native_capability_info(Genode::Native_capability native_cap,
-			Genode::Native_capability ep_cap, bool bootstrapped = false)
+			Genode::Native_capability ep_cap, bool bootstrapped)
 	:
 		Normal_obj_info (bootstrapped),
 		native_cap      (native_cap),

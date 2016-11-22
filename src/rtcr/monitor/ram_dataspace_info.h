@@ -42,7 +42,7 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 	Managed_region_map_info *mrm_info;
 
 	Ram_dataspace_info(Genode::Ram_dataspace_capability ds_cap, Genode::size_t size, Genode::Cache_attribute cached,
-			Managed_region_map_info *mrm_info = nullptr, bool bootstrapped = false)
+			Managed_region_map_info *mrm_info = nullptr, bool bootstrapped)
 	:
 		Normal_obj_info (bootstrapped),
 		ds_cap   (ds_cap),

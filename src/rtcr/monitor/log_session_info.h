@@ -21,7 +21,7 @@ namespace Rtcr {
  */
 struct Rtcr::Log_session_info : Session_rpc_info
 {
-	Log_session_info(const char* creation_args, bool bootstrapped = false)
+	Log_session_info(const char* creation_args, bool bootstrapped)
 	:
 		Session_rpc_info(creation_args, "", bootstrapped)
 	{ }

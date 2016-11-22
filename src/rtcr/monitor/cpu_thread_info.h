@@ -22,17 +22,30 @@ namespace Rtcr {
  */
 struct Rtcr::Cpu_thread_info : Normal_rpc_info
 {
-	const Genode::Cpu_session::Name    name;
-	const Genode::Cpu_session::Weight  weight;
-	const Genode::addr_t               utcb;
+	// Creation arguments
+	Genode::Cpu_session::Name   const name;
+	Genode::Cpu_session::Weight const weight;
+	Genode::addr_t              const utcb;
+
+	// Variable state
+	bool started;
+	bool paused;
+	bool single_step;
+	Genode::Affinity::Location        affinity;
+	Genode::Signal_context_capability sigh;
 
 	Cpu_thread_info(Genode::Cpu_session::Name name, Genode::Cpu_session::Weight weight,
-			Genode::addr_t utcb, bool bootstrapped = false)
+			Genode::addr_t utcb, bool bootstrapped)
 	:
 		Normal_rpc_info (bootstrapped),
-		name            (name),
-		weight          (weight),
-		utcb            (utcb)
+		name        (name),
+		weight      (weight),
+		utcb        (utcb),
+		started     (false),
+		paused      (false),
+		single_step (false),
+		affinity    (),
+		sigh        ()
 	{ }
 
 	void print(Genode::Output &output) const
