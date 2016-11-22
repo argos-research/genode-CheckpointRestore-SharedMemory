@@ -96,6 +96,7 @@ public:
 	Pd_session_info &parent_state() { return _parent_state; }
 	Pd_session_info const &parent_state() const { return _parent_state;}
 
+	Pd_session_component *find_by_badge(Genode::uint16_t badge);
 
 	/**************************
 	 ** Pd_session interface **
@@ -161,10 +162,6 @@ private:
 	 */
 	bool               &_bootstrap_phase;
 	/**
-	 * Name of the sessions
-	 */
-	const char         *_label;
-	/**
 	 * Lock for infos list
 	 */
 	Genode::Lock        _objs_lock;
@@ -179,7 +176,7 @@ protected:
 
 public:
 	Pd_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
-			const char *label, bool &bootstrap_phase);
+			bool &bootstrap_phase);
     ~Pd_root();
 
 	Genode::List<Pd_session_component> &session_infos() { return _session_rpc_objs; }

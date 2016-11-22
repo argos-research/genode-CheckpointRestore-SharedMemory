@@ -57,8 +57,8 @@ private:
 	Rm_session_info        _parent_state;
 
 
-	Region_map_component *_create(Genode::size_t size);
-	void _destroy(Region_map_component *region_map);
+	Region_map_component &_create(Genode::size_t size);
+	void _destroy(Region_map_component &region_map);
 
 public:
 	Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,

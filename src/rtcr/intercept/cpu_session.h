@@ -4,97 +4,82 @@
  * \date   2016-08-10
  */
 
-#ifndef _RTCR_CPU_SESSION_COMPONENT_H_
-#define _RTCR_CPU_SESSION_COMPONENT_H_
+#ifndef _RTCR_CPU_SESSION_H_
+#define _RTCR_CPU_SESSION_H_
 
 /* Genode includes */
-#include <base/log.h>
 #include <base/rpc_server.h>
 #include <cpu_session/connection.h>
 #include <cpu_thread/client.h>
 
-#include "../monitor/cpu_thread_info.h"
 /* Rtcr includes */
 #include "cpu_thread_component.h"
+#include "../monitor/cpu_thread_info.h"
 
 namespace Rtcr {
 	class Cpu_session_component;
+	class Cpu_root;
 
-	constexpr bool cpu_session_verbose_debug = false;
+	constexpr bool cpu_verbose_debug = false;
+	constexpr bool cpu_root_verbose_debug = false;
 }
 
 
 /**
  * This custom Cpu session intercepts the creation and destruction of threads by the client
  */
-class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>
+class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>,
+                                    public Genode::List<Cpu_session_component>::Element
 {
 private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = cpu_session_verbose_debug;
+	static constexpr bool verbose_debug = cpu_verbose_debug;
 
 	/**
 	 * Environment of creator component (usually rtcr)
 	 */
-	Genode::Env                   &_env;
+	Genode::Env        &_env;
 	/**
 	 * Allocator for objects belonging to the monitoring of threads (e.g. Thread_info)
 	 */
-	Genode::Allocator             &_md_alloc;
+	Genode::Allocator  &_md_alloc;
 	/**
 	 * Entrypoint
 	 */
-	Genode::Entrypoint            &_ep;
+	Genode::Entrypoint &_ep;
 	/**
-	 * Parent Pd session, usually from core; used for creating a thread
+	 * Reference to Target_child's bootstrap phase
 	 */
-	Genode::Pd_session_capability  _parent_pd_cap;
+	bool               &_bootstrap_phase;
+	/**
+	 * PD root for the list of all PD sessions known to child
+	 *
+	 * Is used to translate child's known PD session (= custom PD session) to parent's PD session.
+	 */
+	Pd_root            &_pd_root;
 	/**
 	 * Connection to parent's Cpu session, usually from core; this class wraps this session
 	 */
-	Genode::Cpu_connection         _parent_cpu;
+	Genode::Cpu_connection _parent_cpu;
 	/**
-	 * Parent's session state
+	 * State of parent's RPC object
 	 */
-	struct State_info
-	{
-		Genode::Signal_context_capability exception_sigh {};
-	} _parent_state;
-	/**
-	 * Lock to make _threads thread-safe
-	 */
-	Genode::Lock                   _threads_lock;
-	/**
-	 * List of client's thread capabilities
-	 */
-	Genode::List<Thread_info>      _threads;
+	Cpu_session_info       _parent_state;
 
-	/**
-	 * Removes info from Thread_info list, destroys the containing virtual RPC object,
-	 * and destroys the info itself
-	 */
-	void _destroy(Thread_info* info);
+	Cpu_thread_component &_create_thread(Genode::Pd_session_capability pd_cap, Name const &name, Genode::Affinity::Location affinity,
+			Weight weight, Genode::addr_t utcb);
+	void _kill_thread(Cpu_thread_component &cpu_thread);
 
 public:
-
-	/**
-	 * Constructor
-	 */
-	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc,
-			Genode::Entrypoint &ep, Genode::Pd_session_capability parent_pd_cap,
-			const char *name);
-
-	/**
-	 * Destructor
-	 */
+	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+			Pd_root &pd_root, const char *label, bool &bootstrap_phase);
 	~Cpu_session_component();
 
-	Genode::Cpu_session_capability   parent_cap()   { return _parent_cpu.cap(); }
-	State_info                       parent_state() { return _parent_state; }
-	Genode::List<Thread_info>       &thread_infos() { return _threads; }
-	const Genode::List<Thread_info> &thread_infos() const { return _threads; }
+	Genode::Cpu_session_capability parent_cap() { return _parent_cpu.cap(); }
+
+	Cpu_session_info &parent_state() { return _parent_state; }
 
 	/**
 	 * Pause all threads
@@ -110,17 +95,13 @@ public:
 	 ** Cpu_session interface **
 	 ***************************/
 
-	/**
-	 * Create a thread and store its capability in Thread_info
-	 */
-	Genode::Thread_capability create_thread(Genode::Pd_session_capability /* pd_cap */,
+	Genode::Thread_capability create_thread(Genode::Pd_session_capability pd_cap,
 			Name const &name, Genode::Affinity::Location affinity, Weight weight,
 			Genode::addr_t utcb) override;
-	/**
-	 * Destroy thread and its Thread_info
-	 */
-	void kill_thread(Genode::Thread_capability thread) override;
+	void kill_thread(Genode::Thread_capability thread_cap) override;
+
 	void exception_sigh(Genode::Signal_context_capability handler) override;
+
 	Genode::Affinity::Space affinity_space() const override;
 	Genode::Dataspace_capability trace_control() override;
 	Quota quota() override;
@@ -129,4 +110,62 @@ public:
 	Genode::Capability<Native_cpu> native_cpu() override;
 };
 
-#endif /* _RTCR_CPU_SESSION_COMPONENT_H_ */
+
+/**
+ * Custom root RPC object to intercept session RPC object creation, modification, and destruction through the root interface
+ */
+class Rtcr::Cpu_root : public Genode::Root_component<Cpu_session_component>
+{
+private:
+	/**
+	 * Enable log output for debugging
+	 */
+	static constexpr bool verbose_debug = cpu_root_verbose_debug;
+
+	/**
+	 * Environment of Rtcr; is forwarded to a created session object
+	 */
+	Genode::Env        &_env;
+	/**
+	 * Allocator for session objects and monitoring list elements
+	 */
+	Genode::Allocator  &_md_alloc;
+	/**
+	 * Entrypoint for managing session objects
+	 */
+	Genode::Entrypoint &_ep;
+	/**
+	 * Reference to Target_child's bootstrap phase
+	 */
+	bool               &_bootstrap_phase;
+	/**
+	 * Monitor's PD root for the list of all PD sessions known to the child
+	 *
+	 * The PD sessions are used to translate child's PD sessions to parent's PD sessions.
+	 * For creating a CPU thread, child needs to pass a PD session capability. Because the
+	 * custom CPU session uses parent's CPU session (e.g. core's CPU session), it also has
+	 * to pass a PD session which is known by the parent.
+	 */
+	Pd_root            &_pd_root;
+	/**
+	 * Lock for infos list
+	 */
+	Genode::Lock        _objs_lock;
+	/**
+	 * List for monitoring session objects
+	 */
+	Genode::List<Cpu_session_component> _session_rpc_objs;
+
+protected:
+	Cpu_session_component *_create_session(const char *args);
+	void _destroy_session(Cpu_session_component *session);
+
+public:
+	Cpu_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
+			Pd_root &pd_root, bool &bootstrap_phase);
+    ~Cpu_root();
+
+	Genode::List<Cpu_session_component> &session_infos() { return _session_rpc_objs; }
+};
+
+#endif /* _RTCR_CPU_SESSION_H_ */

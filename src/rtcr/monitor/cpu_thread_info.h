@@ -23,7 +23,7 @@ namespace Rtcr {
 struct Rtcr::Cpu_thread_info : Normal_rpc_info
 {
 	// Creation arguments
-	Genode::Cpu_session::Name   const name;
+	const char*                 const name;
 	Genode::Cpu_session::Weight const weight;
 	Genode::addr_t              const utcb;
 
@@ -34,8 +34,8 @@ struct Rtcr::Cpu_thread_info : Normal_rpc_info
 	Genode::Affinity::Location        affinity;
 	Genode::Signal_context_capability sigh;
 
-	Cpu_thread_info(Genode::Cpu_session::Name name, Genode::Cpu_session::Weight weight,
-			Genode::addr_t utcb, bool bootstrapped)
+	Cpu_thread_info(const char* name, Genode::Cpu_session::Weight weight, Genode::addr_t utcb,
+			bool bootstrapped)
 	:
 		Normal_rpc_info (bootstrapped),
 		name        (name),
@@ -52,7 +52,7 @@ struct Rtcr::Cpu_thread_info : Normal_rpc_info
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "name=", name.string(), " weight=", weight.value, " utcb=", Hex(utcb), ", ");
+		Genode::print(output, "name=", name, " weight=", weight.value, " utcb=", Hex(utcb), ", ");
 		Normal_rpc_info::print(output);
 /*		Genode::print(output, "r0-r4: ", Hex(ts.r0, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.r1, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r2, Hex::PREFIX, Hex::PAD), " ",

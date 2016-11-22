@@ -4,33 +4,61 @@
  * \date   2016-08-10
  */
 
-#include "cpu_session_component.h"
+#include "cpu_session.h"
 
 using namespace Rtcr;
 
 
-void Cpu_session_component::_destroy(Thread_info* info)
+Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_capability pd_cap, Name const &name,
+		Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
-	// Remove thread info from list
-	_threads.remove(info);
+	// Create real CPU thread from parent
+	auto cpu_thread_cap = _parent_cpu.create_thread(pd_cap, name, affinity, weight, utcb);
 
-	// Destroy virtual cpu thread and thread info
-	Genode::destroy(_md_alloc, &info->cpu_thread);
-	Genode::destroy(_md_alloc, info);
+	// Create custom CPU thread
+	Cpu_thread_component *new_cpu_thread =
+			new (_md_alloc) Cpu_thread_component(_md_alloc, cpu_thread_cap, name, weight, utcb, affinity, _bootstrap_phase);
+
+	// Manage custom CPU thread
+	_ep.manage(*new_cpu_thread);
+
+	// Insert custom CPU thread into list
+	Genode::Lock::Guard _lock_guard(_parent_state.cpu_threads_lock);
+	_parent_state.cpu_threads.insert(new_cpu_thread);
+
+	return *new_cpu_thread;
 }
 
 
-Cpu_session_component::Cpu_session_component(
-		Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		Genode::Pd_session_capability parent_pd_cap, const char *name)
+void Cpu_session_component::_kill_thread(Cpu_thread_component &cpu_thread)
+{
+	auto parent_cap = cpu_thread.parent_cap();
+
+	// Remove custom CPU thread form list
+	Genode::Lock::Guard lock(_parent_state.cpu_threads_lock);
+	_parent_state.cpu_threads.remove(&cpu_thread);
+
+	// Dissolve custom CPU thread
+	_ep.dissolve(cpu_thread);
+
+	// Destroy custom CPU thread
+	Genode::destroy(_md_alloc, &cpu_thread);
+
+	// Destroy real CPU thread from parent
+	_parent_cpu.kill_thread(parent_cap);
+}
+
+
+Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+		Pd_root &pd_root, const char *label, bool &bootstrap_phase)
 :
-	_env           (env),
-	_md_alloc      (md_alloc),
-	_ep            (ep),
-	_parent_pd_cap (parent_pd_cap),
-	_parent_cpu    (env, name),
-	_threads_lock  (),
-	_threads       ()
+	_env             (env),
+	_md_alloc        (md_alloc),
+	_ep              (ep),
+	_bootstrap_phase (bootstrap_phase),
+	_pd_root         (pd_root),
+	_parent_cpu      (env, label),
+	_parent_state    (label, bootstrap_phase)
 
 {
 	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
@@ -39,9 +67,9 @@ Cpu_session_component::Cpu_session_component(
 
 Cpu_session_component::~Cpu_session_component()
 {
-	while(Thread_info *thread_info = _threads.first())
+	while(Cpu_thread_component *cpu_thread = _parent_state.cpu_threads.first())
 	{
-		_destroy(thread_info);
+		_kill_thread(*cpu_thread);
 	}
 
 	if(verbose_debug) Genode::log("\033[33m", "~Cpu", "\033[0m ", _parent_cpu);
@@ -50,68 +78,81 @@ Cpu_session_component::~Cpu_session_component()
 
 void Cpu_session_component::pause_threads()
 {
-	for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
+	Cpu_thread_component *cpu_thread = _parent_state.cpu_threads.first();
+
+	while(cpu_thread)
 	{
-		Genode::Cpu_thread_client{curr_th->cpu_thread.parent_cap()}.pause();
+		Genode::Cpu_thread_client(cpu_thread->cap()).pause();
+
+		cpu_thread = cpu_thread->next();
 	}
 }
 
 
 void Cpu_session_component::resume_threads()
 {
-	for(Thread_info *curr_th = _threads.first(); curr_th; curr_th = curr_th->next())
+	Cpu_thread_component *cpu_thread = _parent_state.cpu_threads.first();
+
+	while(cpu_thread)
 	{
-		Genode::Cpu_thread_client{curr_th->cpu_thread.parent_cap()}.resume();
+		Genode::Cpu_thread_client(cpu_thread->cap()).resume();
+
+		cpu_thread = cpu_thread->next();
 	}
 }
 
 
-Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability /* pd_cap */,
+Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 
-	// Note: Use parent's Pd session instead of virtualized Pd session
-	Genode::Thread_capability thread_cap = _parent_cpu.create_thread(_parent_pd_cap, name, affinity, weight, utcb);
+	// Find corresponding parent PD session cap for the given custom PD session cap
+	Pd_session_component *pd_session = _pd_root.session_infos().first();
+	if(pd_session) pd_session = pd_session->find_by_badge(pd_cap.local_name());
+	if(!pd_session)
+	{
+		Genode::error("Thread creation failed: PD session ", pd_cap, " is unknown.");
+		throw Genode::Exception();
+	}
 
-	// Create virtual Cpu_thread and its management list element
-	Cpu_thread_component *new_cpu_thread = new (_md_alloc) Cpu_thread_component(_ep, thread_cap, name, affinity);
-	Thread_info *new_th_info = new (_md_alloc) Thread_info(*new_cpu_thread, name, weight, utcb);
+	// Create custom CPU thread
+	Cpu_thread_component new_cpu_thread = _create_thread(pd_session->parent_cap(), name, affinity, weight, utcb);
 
-	// Store the thread
-	Genode::Lock::Guard _lock_guard(_threads_lock);
-	_threads.insert(new_th_info);
-
-	if(verbose_debug) Genode::log("  Created virtual thread ", new_th_info->cpu_thread.cap());
-
-	return new_th_info->cpu_thread.cap();
+	if(verbose_debug) Genode::log("  Created custom CPU thread ", new_cpu_thread.cap());
+	return new_cpu_thread.cap();
 }
 
 
-void Cpu_session_component::kill_thread(Genode::Thread_capability thread)
+void Cpu_session_component::kill_thread(Genode::Thread_capability thread_cap)
 {
-	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(", thread,")");
+	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(", thread_cap,")");
 
-	Genode::Lock::Guard lock_guard(_threads_lock);
+	// Find CPU thread for the given capability
+	Genode::Lock::Guard lock (_parent_state.cpu_threads_lock);
+	Cpu_thread_component *cpu_thread = _parent_state.cpu_threads.first();
+	if(cpu_thread) cpu_thread = cpu_thread->find_by_badge(thread_cap.local_name());
 
-	// Find thread
-	Thread_info *thread_info = _threads.first()->find_by_cap(thread);
-	if(!thread_info)
+	// If found, delete everything concerning this RPC object
+	if(cpu_thread)
 	{
-		Genode::error("Thread ", thread, " not found!");
-		return;
+		if(verbose_debug) Genode::log("  deleting ", cpu_thread->cap());
+
+		Genode::error("Issuing Rm_session::destroy, which is bugged and hangs up.");
+
+		_kill_thread(*cpu_thread);
 	}
-
-	_destroy(thread_info);
-
-	_parent_cpu.kill_thread(thread);
+	else
+	{
+		Genode::error("No Region map with ", thread_cap, " found!");
+	}
 }
 
 void Cpu_session_component::exception_sigh(Genode::Signal_context_capability handler)
 {
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(", handler, ")");
 
-	_parent_state.exception_sigh = handler;
+	_parent_state.sigh = handler;
 	_parent_cpu.exception_sigh(handler);
 }
 
@@ -181,3 +222,56 @@ Genode::Capability<Genode::Cpu_session::Native_cpu> Cpu_session_component::nativ
 	return result;
 }
 
+
+Cpu_session_component *Cpu_root::_create_session(const char *args)
+{
+	if(verbose_debug) Genode::log("Rm_root::\033[33m", __func__, "\033[0m(", args,")");
+
+	// Extracting label from args
+	char label_buf[128];
+	Genode::Arg label_arg = Genode::Arg_string::find_arg(args, "label");
+	label_arg.string(label_buf, sizeof(label_buf), "");
+
+	// Create custom Rm_session
+	Cpu_session_component *new_session =
+			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, _pd_root, label_buf, _bootstrap_phase);
+
+	Genode::Lock::Guard lock(_objs_lock);
+	_session_rpc_objs.insert(new_session);
+
+	return new_session;
+}
+
+
+void Cpu_root::_destroy_session(Cpu_session_component *session)
+{
+	_session_rpc_objs.remove(session);
+	Genode::destroy(_md_alloc, session);
+}
+
+
+Cpu_root::Cpu_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
+		Pd_root &pd_root, bool &bootstrap_phase)
+:
+	Root_component<Cpu_session_component>(session_ep, md_alloc),
+	_env              (env),
+	_md_alloc         (md_alloc),
+	_ep               (session_ep),
+	_bootstrap_phase  (bootstrap_phase),
+	_pd_root          (pd_root),
+	_objs_lock        (),
+	_session_rpc_objs ()
+{
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+}
+
+Cpu_root::~Cpu_root()
+{
+	while(Cpu_session_component *obj = _session_rpc_objs.first())
+	{
+		_session_rpc_objs.remove(obj);
+		Genode::destroy(_md_alloc, obj);
+	}
+
+	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+}

@@ -9,40 +9,40 @@
 using namespace Rtcr;
 
 
-Region_map_component *Rm_session_component::_create(Genode::size_t size)
+Region_map_component &Rm_session_component::_create(Genode::size_t size)
 {
-	// Create real Region_map from parent
+	// Create real Region map from parent
 	auto parent_cap = _parent_rm.create(size);
 
-	// Create custom Region_map
+	// Create custom Region map
 	Region_map_component *new_region_map =
 			new (_md_alloc) Region_map_component(_md_alloc, parent_cap, size, "custom", _bootstrap_phase);
 
-	// Manage custom  RPC object
+	// Manage custom Region map
 	_ep.manage(*new_region_map);
 
-	// Insert custom RPC object into list
-	Genode::Lock::Guard lock(_parent_state.objs_lock);
-	_parent_state.normal_rpc_objs.insert(new_region_map);
+	// Insert custom Region map into list
+	Genode::Lock::Guard lock(_parent_state.region_maps_lock);
+	_parent_state.region_maps.insert(new_region_map);
 
-	return new_region_map;
+	return *new_region_map;
 }
 
 
-void Rm_session_component::_destroy(Region_map_component *region_map)
+void Rm_session_component::_destroy(Region_map_component &region_map)
 {
 	// Reverse order as in _create
-	auto parent_cap = region_map->parent_cap();
+	auto parent_cap = region_map.parent_cap();
 
 	// Remove custom RPC object form list
-	Genode::Lock::Guard lock(_parent_state.objs_lock);
-	_parent_state.normal_rpc_objs.remove(region_map);
+	Genode::Lock::Guard lock(_parent_state.region_maps_lock);
+	_parent_state.region_maps.remove(&region_map);
 
 	// Dissolve custom RPC object
-	_ep.dissolve(*region_map);
+	_ep.dissolve(region_map);
 
 	// Destroy custom RPC object
-	Genode::destroy(_md_alloc, region_map);
+	Genode::destroy(_md_alloc, &region_map);
 
 	// Destroy real Region map from parent
 	_parent_rm.destroy(parent_cap);
@@ -64,9 +64,9 @@ Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &
 
 Rm_session_component::~Rm_session_component()
 {
-	while(Region_map_component *obj = _parent_state.normal_rpc_objs.first())
+	while(Region_map_component *obj = _parent_state.region_maps.first())
 	{
-		_destroy(obj);
+		_destroy(*obj);
 	}
 
 	if(verbose_debug) Genode::log("\033[33m", "~Rm", "\033[0m ", _parent_rm);
@@ -78,10 +78,10 @@ Genode::Capability<Genode::Region_map> Rm_session_component::create(Genode::size
 	if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(size=", size, ")");
 
 	// Create custom Region map
-	Region_map_component *new_region_map = _create(size);
+	Region_map_component new_region_map = _create(size);
 
-	if(verbose_debug) Genode::log("  result: ", new_region_map->cap());
-	return new_region_map->cap();
+	if(verbose_debug) Genode::log("  result: ", new_region_map.cap());
+	return new_region_map.cap();
 }
 
 
@@ -90,8 +90,8 @@ void Rm_session_component::destroy(Genode::Capability<Genode::Region_map> region
 	if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(", region_map_cap, ")");
 
 	// Find RPC object for the given Capability
-	Genode::Lock::Guard lock (_parent_state.objs_lock);
-	Region_map_component *region_map = _parent_state.normal_rpc_objs.first();
+	Genode::Lock::Guard lock (_parent_state.region_maps_lock);
+	Region_map_component *region_map = _parent_state.region_maps.first();
 	if(region_map) region_map = region_map->find_by_badge(region_map_cap.local_name());
 
 	// If found, delete everything concerning this RPC object
@@ -101,7 +101,7 @@ void Rm_session_component::destroy(Genode::Capability<Genode::Region_map> region
 
 		Genode::error("Issuing Rm_session::destroy, which is bugged and hangs up.");
 
-		_destroy(region_map);
+		_destroy(*region_map);
 	}
 	else
 	{

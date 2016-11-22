@@ -197,10 +197,6 @@ private:
 	 */
 	bool               &_bootstrap_phase;
 	/**
-	 * Name of the session
-	 */
-	const char         *_name;
-	/**
 	 * Granularity of managed dataspaces
 	 */
 	Genode::size_t      _granularity;
@@ -219,7 +215,7 @@ protected:
 
 public:
 	Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
-			const char *name, Genode::size_t granularity, bool &bootstrap_phase);
+			Genode::size_t granularity, bool &bootstrap_phase);
     ~Ram_root();
 
 	Genode::List<Ram_session_component> &session_infos() { return _session_rpc_objs; }

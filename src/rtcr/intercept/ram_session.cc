@@ -90,31 +90,44 @@ void Fault_handler::entry()
 
 void Ram_session_component::_destroy_ramds_info(Ram_dataspace_info &ramds_info)
 {
-	 // 1. Remove the Ram_dataspace_info from the list
-	_parent_state.normal_objs.remove(&ramds_info);
 
-	 // 2. If Ram_dataspace is managed, clean up Managed_region_map_info
+	Genode::Ram_dataspace_capability ds_cap =
+			Genode::static_cap_cast<Genode::Ram_dataspace>(ramds_info.ds_cap);
+
+	// Remove the Ram_dataspace_info from the list
+	_parent_state.ram_dataspaces.remove(&ramds_info);
+
+	// If Ram_dataspace is managed, clean up Managed_region_map_info
 	if(ramds_info.mrm_info)
 	{
-		 // 2.1 Remove pagefault handler from Managed_region_map_info
+		// Remove pagefault handler from Managed_region_map_info
 		_receiver.dissolve(&ramds_info.mrm_info->context);
 
-		 // 2.2 Destroy all Designated_dataspace_infos
+		// Destroy all Designated_dataspace_infos
 		while(Designated_dataspace_info *dd_info = ramds_info.mrm_info->dd_infos.first())
 		{
-			// 2.2.1 Remove Designated_dataspace_info from the list
-			ramds_info.mrm_info->dd_infos.remove(dd_info); //
+			Genode::Ram_dataspace_capability designated_ds_cap =
+					Genode::static_cap_cast<Genode::Ram_dataspace>(dd_info->ds_cap);
 
-			// 2.2.2 Destroy Designated_dataspace_info
+			// Remove Designated_dataspace_info from the list
+			ramds_info.mrm_info->dd_infos.remove(dd_info);
+
+			// Destroy Designated_dataspace_info
 			Genode::destroy(_md_alloc, dd_info);
+
+			// Free from parent
+			_parent_ram.free(designated_ds_cap);
 		}
 
-		 // 2.3 Destroy Managed_region_map_info
+		// Destroy Managed_region_map_info
 		Genode::destroy(_md_alloc, ramds_info.mrm_info);
 	}
 
-	 // 3. Destroy Ram_dataspace_info
+	// Destroy Ram_dataspace_info
 	Genode::destroy(_md_alloc, &ramds_info);
+
+	// Free from parent
+	_parent_ram.free(ds_cap);
 }
 
 
@@ -128,7 +141,7 @@ Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator
 	_parent_rm          (env),
 	_parent_state       ("", bootstrap_phase),
 	_receiver           (),
-	_page_fault_handler (env, _receiver, _parent_state.normal_objs),
+	_page_fault_handler (env, _receiver, _parent_state.ram_dataspaces),
 	_granularity        (granularity)
 {
 	_page_fault_handler.start();
@@ -140,7 +153,7 @@ Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator
 Ram_session_component::~Ram_session_component()
 {
 	// Destroy all Ram_dataspace_infos
-	while(Ram_dataspace_info *rds_info = _parent_state.normal_objs.first())
+	while(Ram_dataspace_info *rds_info = _parent_state.ram_dataspaces.first())
 	{
 		_destroy_ramds_info(*rds_info);
 	}
@@ -248,8 +261,8 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		}
 
 		// Insert new Ram_dataspace_info into the list
-		Genode::Lock::Guard lock_guard(_parent_state.objs_lock);
-		_parent_state.normal_objs.insert(new_ramds_info);
+		Genode::Lock::Guard lock_guard(_parent_state.ram_dataspaces_lock);
+		_parent_state.ram_dataspaces.insert(new_ramds_info);
 
 		if(verbose_debug)
 		{
@@ -270,8 +283,8 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 
 		// Create a Ram_dataspace_info to monitor the newly created Ram_dataspace
 		Ram_dataspace_info *new_rds_info = new (_md_alloc) Ram_dataspace_info(result_cap, size, cached, nullptr, _bootstrap_phase);
-		Genode::Lock::Guard guard(_parent_state.objs_lock);
-		_parent_state.normal_objs.insert(new_rds_info);
+		Genode::Lock::Guard guard(_parent_state.ram_dataspaces_lock);
+		_parent_state.ram_dataspaces.insert(new_rds_info);
 
 		if(verbose_debug) Genode::log("  result: ", result_cap);
 
@@ -284,17 +297,16 @@ void Ram_session_component::free(Genode::Ram_dataspace_capability ds_cap)
 {
 	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(", ds_cap, ")");
 
-	Genode::Lock::Guard lock_guard(_parent_state.objs_lock);
+	Genode::Lock::Guard lock_guard(_parent_state.ram_dataspaces_lock);
 
 	// Find the Ram_dataspace_info which monitors the given Ram_dataspace
-	Ram_dataspace_info *rds_info = _parent_state.normal_objs.first();
+	Ram_dataspace_info *rds_info = _parent_state.ram_dataspaces.first();
 	if(rds_info) rds_info = rds_info->find_by_cap(ds_cap);
 
 	// Ram_dataspace_info found?
 	if(rds_info)
 	{
 		_destroy_ramds_info(*rds_info);
-		_parent_ram.free(ds_cap);
 	}
 	else
 	{
@@ -353,9 +365,15 @@ Genode::size_t Ram_session_component::used()
 Ram_session_component *Ram_root::_create_session(const char *args)
 {
 	if(verbose_debug) Genode::log("Ram_root::\033[33m", __func__, "\033[0m(", args,")");
+
+	// Extracting label from args
+	char label_buf[128];
+	Genode::Arg label_arg = Genode::Arg_string::find_arg(args, "label");
+	label_arg.string(label_buf, sizeof(label_buf), "");
+
 	// Create custom RAM session
 	Ram_session_component *new_session =
-			new (md_alloc()) Ram_session_component(_env, _md_alloc, _name, _bootstrap_phase, _granularity);
+			new (md_alloc()) Ram_session_component(_env, _md_alloc, label_buf, _bootstrap_phase, _granularity);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
@@ -378,7 +396,6 @@ Ram_root::Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entryp
 	_env              (env),
 	_md_alloc         (md_alloc),
 	_ep               (session_ep),
-	_name             (name),
 	_granularity      (granularity),
 	_bootstrap_phase  (bootstrap_phase),
 	_objs_lock        (),

@@ -24,9 +24,9 @@ Region_map_component::Region_map_component(Genode::Allocator &md_alloc, Genode::
 
 Region_map_component::~Region_map_component()
 {
-	while(Attached_region_info *obj = _parent_state.normal_objs.first())
+	while(Attached_region_info *obj = _parent_state.attached_regions.first())
 	{
-		_parent_state.normal_objs.remove(obj);
+		_parent_state.attached_regions.remove(obj);
 		Genode::destroy(_md_alloc, obj);
 	}
 
@@ -102,8 +102,8 @@ Genode::Region_map::Local_addr Region_map_component::attach(Genode::Dataspace_ca
 	}
 
 	// Store Attached_region_info in a list
-	Genode::Lock::Guard lock_guard(_parent_state.objs_lock);
-	_parent_state.normal_objs.insert(new_obj);
+	Genode::Lock::Guard lock_guard(_parent_state.attached_regions_lock);
+	_parent_state.attached_regions.insert(new_obj);
 
 	return addr;
 }
@@ -118,8 +118,9 @@ void Region_map_component::detach(Region_map::Local_addr local_addr)
 	_parent_region_map.detach(local_addr);
 
 	// Find region
-	Genode::Lock::Guard lock_guard(_parent_state.objs_lock);
-	Attached_region_info *region = _parent_state.normal_objs.first()->find_by_addr((Genode::addr_t)local_addr);
+	Genode::Lock::Guard lock_guard(_parent_state.attached_regions_lock);
+	Attached_region_info *region = _parent_state.attached_regions.first();
+	if(region) region = region->find_by_addr((Genode::addr_t)local_addr);
 	if(!region)
 	{
 		Genode::warning("Region not found in Rm::detach(). Local address ", Genode::Hex(local_addr),
@@ -128,7 +129,7 @@ void Region_map_component::detach(Region_map::Local_addr local_addr)
 	}
 
 	// Remove and destroy region from list and allocator
-	_parent_state.normal_objs.remove(region);
+	_parent_state.attached_regions.remove(region);
 	destroy(_md_alloc, region);
 
 	if(verbose_debug) Genode::log("  Detached dataspace from the local address ", Genode::Hex(local_addr));
@@ -139,7 +140,7 @@ void Region_map_component::fault_handler(Genode::Signal_context_capability handl
 {
 	if(verbose_debug)Genode::log("Rmap<\033[35m", _label,"\033[0m>", "::",
 			"\033[33m", __func__, "\033[0m(", handler, ")");
-	_parent_state.sigh_cap = handler;
+	_parent_state.sigh = handler;
 	_parent_region_map.fault_handler(handler);
 }
 

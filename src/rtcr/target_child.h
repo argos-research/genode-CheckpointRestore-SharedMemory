@@ -13,8 +13,8 @@
 #include <base/service.h>
 #include <rom_session/client.h>
 
+#include "intercept/cpu_session.h"
 /* Rtcr includes */
-#include "intercept/cpu_session_component.h"
 #include "intercept/rom_session_component.h"
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"

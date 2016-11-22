@@ -11,7 +11,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/cpu_session_component.h"
+#include "../intercept/cpu_session.h"
 
 namespace Rtcr {
 	struct Stored_cpu_session_info;
