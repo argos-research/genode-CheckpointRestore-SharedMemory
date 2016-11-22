@@ -50,13 +50,13 @@ void Rm_session_component::_destroy(Region_map_component &region_map)
 
 
 Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		bool &bootstrap_phase)
+		const char *creation_args, bool &bootstrap_phase)
 :
 	_md_alloc         (md_alloc),
 	_ep               (ep),
 	_bootstrap_phase  (bootstrap_phase),
 	_parent_rm        (env),
-	_parent_state     ("", bootstrap_phase)
+	_parent_state     (creation_args, bootstrap_phase)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Rm", "\033[0m(parent ", _parent_rm, ")");
 }
@@ -116,7 +116,7 @@ Rm_session_component *Rm_root::_create_session(const char *args)
 
 	// Create custom Rm_session
 	Rm_session_component *new_session =
-			new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep, _bootstrap_phase);
+			new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep, args, _bootstrap_phase);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);

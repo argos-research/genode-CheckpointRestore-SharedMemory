@@ -131,15 +131,15 @@ void Ram_session_component::_destroy_ramds_info(Ram_dataspace_info &ramds_info)
 }
 
 
-Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc,
-		const char *name, bool &bootstrap_phase, Genode::size_t granularity)
+Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::size_t granularity,
+		const char *label, const char *creation_args, bool &bootstrap_phase)
 :
 	_env                (env),
 	_md_alloc           (md_alloc),
 	_bootstrap_phase    (bootstrap_phase),
-	_parent_ram         (env, name),
+	_parent_ram         (env, label),
 	_parent_rm          (env),
-	_parent_state       ("", bootstrap_phase),
+	_parent_state       (creation_args, bootstrap_phase),
 	_receiver           (),
 	_page_fault_handler (env, _receiver, _parent_state.ram_dataspaces),
 	_granularity        (granularity)
@@ -373,7 +373,7 @@ Ram_session_component *Ram_root::_create_session(const char *args)
 
 	// Create custom RAM session
 	Ram_session_component *new_session =
-			new (md_alloc()) Ram_session_component(_env, _md_alloc, label_buf, _bootstrap_phase, _granularity);
+			new (md_alloc()) Ram_session_component(_env, _md_alloc, _granularity, label_buf, args, _bootstrap_phase);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
@@ -390,7 +390,7 @@ void Ram_root::_destroy_session(Ram_session_component *session)
 
 
 Ram_root::Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
-		const char* name, Genode::size_t granularity, bool &bootstrap_phase)
+		Genode::size_t granularity, bool &bootstrap_phase)
 :
 	Root_component<Ram_session_component>(session_ep, md_alloc),
 	_env              (env),

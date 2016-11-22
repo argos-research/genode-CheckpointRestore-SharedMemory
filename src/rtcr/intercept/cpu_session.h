@@ -74,7 +74,7 @@ private:
 
 public:
 	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			Pd_root &pd_root, const char *label, bool &bootstrap_phase);
+			Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase);
 	~Cpu_session_component();
 
 	Genode::Cpu_session_capability parent_cap() { return _parent_cpu.cap(); }

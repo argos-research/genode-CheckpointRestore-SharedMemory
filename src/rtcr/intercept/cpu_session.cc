@@ -50,7 +50,7 @@ void Cpu_session_component::_kill_thread(Cpu_thread_component &cpu_thread)
 
 
 Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		Pd_root &pd_root, const char *label, bool &bootstrap_phase)
+		Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase)
 :
 	_env             (env),
 	_md_alloc        (md_alloc),
@@ -58,7 +58,7 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 	_bootstrap_phase (bootstrap_phase),
 	_pd_root         (pd_root),
 	_parent_cpu      (env, label),
-	_parent_state    (label, bootstrap_phase)
+	_parent_state    (creation_args, bootstrap_phase)
 
 {
 	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
@@ -234,7 +234,7 @@ Cpu_session_component *Cpu_root::_create_session(const char *args)
 
 	// Create custom Rm_session
 	Cpu_session_component *new_session =
-			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, _pd_root, label_buf, _bootstrap_phase);
+			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, _pd_root, label_buf, args, _bootstrap_phase);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);

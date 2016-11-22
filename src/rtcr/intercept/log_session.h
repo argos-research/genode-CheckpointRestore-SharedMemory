@@ -54,7 +54,7 @@ private:
 
 public:
 	Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *args, bool bootstrapped = false);
+			const char *label, const char *creation_args, bool bootstrapped = false);
 	~Log_session_component();
 
 	Log_session_info &parent_state() { return _parent_state; }

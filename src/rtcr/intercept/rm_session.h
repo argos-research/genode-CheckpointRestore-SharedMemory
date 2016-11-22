@@ -62,7 +62,7 @@ private:
 
 public:
 	Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			bool &bootstrap_phase);
+			const char *creation_args, bool &bootstrap_phase);
 	~Rm_session_component();
 
 	Rm_session_info &parent_state() { return _parent_state; }

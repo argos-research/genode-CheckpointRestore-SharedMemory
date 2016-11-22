@@ -137,8 +137,8 @@ private:
 	void _destroy_ramds_info(Ram_dataspace_info &rds_info);
 
 public:
-	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc,
-			const char *name, bool &bootstrap_phase, Genode::size_t granularity = 1);
+	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::size_t granularity,
+			const char *label, const char *creation_args, bool &bootstrap_phase);
 	~Ram_session_component();
 
 	Genode::Ram_session_capability parent_cap() { return _parent_ram.cap(); }

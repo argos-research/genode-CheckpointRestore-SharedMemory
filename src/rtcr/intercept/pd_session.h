@@ -79,7 +79,7 @@ private:
 
 public:
 	Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *label, bool &bootstrap_phase);
+			const char *label, const char *creation_args, bool &bootstrap_phase);
 	~Pd_session_component();
 
 	Genode::Pd_session_capability parent_cap() { return _parent_pd.cap(); }

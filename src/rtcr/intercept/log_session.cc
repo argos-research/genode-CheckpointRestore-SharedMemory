@@ -10,12 +10,12 @@ using namespace Rtcr;
 
 
 Log_session_component::Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		const char *args, bool bootstrapped)
+		const char *label, const char *creation_args, bool bootstrapped)
 :
 	_md_alloc     (md_alloc),
 	_ep           (ep),
-	_parent_log   (env, args),
-	_parent_state (args, bootstrapped)
+	_parent_log   (env, label),
+	_parent_state (creation_args, bootstrapped)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Log", "\033[0m(parent ", _parent_log,")");
 }
@@ -48,7 +48,7 @@ Log_session_component *Log_root::_create_session(const char *args)
 
 	// Create virtual session object
 	Log_session_component *new_session =
-			new (md_alloc()) Log_session_component(_env, _md_alloc, _ep, label_buf, _bootstrap_phase);
+			new (md_alloc()) Log_session_component(_env, _md_alloc, _ep, label_buf, args, _bootstrap_phase);
 
 	Genode::Lock::Guard guard(_objs_lock);
 	_session_rpc_objs.insert(new_session);

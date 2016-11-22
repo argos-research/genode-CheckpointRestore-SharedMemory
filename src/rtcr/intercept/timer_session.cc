@@ -10,12 +10,12 @@ using namespace Rtcr;
 
 
 Timer_session_component::Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		bool bootstrapped)
+		const char *creation_args, bool bootstrapped)
 :
 	_md_alloc     (md_alloc),
 	_ep           (ep),
 	_parent_timer (env),
-	_parent_state ("", bootstrapped)
+	_parent_state (creation_args, bootstrapped)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Timer", "\033[0m(parent ", _parent_timer, ")");
 }
@@ -90,7 +90,7 @@ Timer_session_component *Timer_root::_create_session(const char *args)
 
 	// Create virtual session object
 	Timer_session_component *new_session =
-			new (md_alloc()) Timer_session_component(_env, _md_alloc, _ep, _bootstrap_phase);
+			new (md_alloc()) Timer_session_component(_env, _md_alloc, _ep, args, _bootstrap_phase);
 
 	Genode::Lock::Guard guard(_objs_lock);
 	_session_rpc_objs.insert(new_session);

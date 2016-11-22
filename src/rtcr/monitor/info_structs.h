@@ -9,6 +9,7 @@
 
 /* Genode includes */
 #include <util/list.h>
+#include <util/string.h>
 
 namespace Rtcr {
 	struct General_info;
@@ -42,8 +43,8 @@ struct Rtcr::General_info
  */
 struct Rtcr::Session_rpc_info : General_info
 {
-	const char* const creation_args;
-	const char* upgrade_args;
+	Genode::String<160> creation_args;
+	Genode::String<160> upgrade_args;
 
 	Session_rpc_info() : General_info(), creation_args(""), upgrade_args("")
 	{ }

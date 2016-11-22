@@ -53,7 +53,7 @@ private:
 
 public:
 	Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			bool bootstrapped = false);
+			const char *creation_args, bool bootstrapped = false);
 	~Timer_session_component();
 
 	Timer_session_info &parent_state() { return _parent_state; }
