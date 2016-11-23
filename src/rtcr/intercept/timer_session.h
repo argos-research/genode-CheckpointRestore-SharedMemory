@@ -57,6 +57,7 @@ public:
 	~Timer_session_component();
 
 	Timer_session_info &parent_state() { return _parent_state; }
+	Timer_session_info const &parent_state() const { return _parent_state; }
 
 	/************************************
 	 ** Timer session Rpc interface **

@@ -17,7 +17,7 @@ size_t Component::stack_size() { return 64*1024; }
 void Component::construct(Genode::Env &env)
 {
 	char buf[160];
-	Genode::snprintf(buf, sizeof(buf), "ram_quota=%u, label=\"%s\"", 20*1024*sizeof(long), "abc");
+	Genode::snprintf(buf, sizeof(buf), "ram_quota=%x, label=\"%s\"", 20*1024*sizeof(long), "abc");
 
 	log((const char*)buf);
 

@@ -80,6 +80,9 @@ public:
 	Genode::Cpu_session_capability parent_cap() { return _parent_cpu.cap(); }
 
 	Cpu_session_info &parent_state() { return _parent_state; }
+	Cpu_session_info const &parent_state() const { return _parent_state; }
+
+	Cpu_session_component *find_by_badge(Genode::uint16_t badge);
 
 	/**
 	 * Pause all threads

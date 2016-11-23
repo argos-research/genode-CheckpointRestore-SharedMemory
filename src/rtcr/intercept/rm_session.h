@@ -66,6 +66,7 @@ public:
 	~Rm_session_component();
 
 	Rm_session_info &parent_state() { return _parent_state; }
+	Rm_session_info const &parent_state() const { return _parent_state; }
 
 	/******************************
 	 ** Rm session Rpc interface **

@@ -162,6 +162,15 @@ Ram_session_component::~Ram_session_component()
 }
 
 
+Ram_session_component *Ram_session_component::find_by_badge(Genode::uint16_t badge)
+{
+	if(badge == cap().local_name())
+		return this;
+	Ram_session_component *obj = next();
+	return obj ? obj->find_by_badge(badge) : 0;
+}
+
+
 Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t size, Genode::Cache_attribute cached)
 {
 	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(size=", Genode::Hex(size),")");

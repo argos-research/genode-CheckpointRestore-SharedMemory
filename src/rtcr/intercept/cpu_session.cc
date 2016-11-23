@@ -76,6 +76,16 @@ Cpu_session_component::~Cpu_session_component()
 }
 
 
+Cpu_session_component *Cpu_session_component::find_by_badge(Genode::uint16_t badge)
+{
+	if(badge == cap().local_name())
+		return this;
+	Cpu_session_component *obj = next();
+	return obj ? obj->find_by_badge(badge) : 0;
+}
+
+
+
 void Cpu_session_component::pause_threads()
 {
 	Cpu_thread_component *cpu_thread = _parent_state.cpu_threads.first();

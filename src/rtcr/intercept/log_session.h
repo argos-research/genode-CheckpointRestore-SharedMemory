@@ -58,6 +58,7 @@ public:
 	~Log_session_component();
 
 	Log_session_info &parent_state() { return _parent_state; }
+	Log_session_info const &parent_state() const { return _parent_state; }
 
 	/*******************************
 	 ** Log session Rpc interface **

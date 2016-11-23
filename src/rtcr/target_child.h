@@ -11,7 +11,9 @@
 #include <base/env.h>
 #include <base/child.h>
 #include <base/service.h>
+#include <base/snprintf.h>
 #include <rom_session/connection.h>
+#include <cpu_session/cpu_session.h>
 
 /* Rtcr includes */
 #include "intercept/pd_session.h"
@@ -82,30 +84,45 @@ private:
 	 */
 	struct Custom_services
 	{
+		using Genode::Local_service;
+	private:
+		Genode::Env        &_env;
+		Genode::Allocator  &_md_alloc;
+		Genode::Entrypoint &_resource_ep;
+		bool &_bootstrap_phase;
+	public:
+		Pd_root *pd_root = nullptr;
+		Local_service *pd_service = nullptr;
 
-		Genode::Allocator &md_alloc;
+		Cpu_root *cpu_root = nullptr;
+		Local_service *cpu_service = nullptr;
 
-		Pd_root    *pd_root;
-		Cpu_root   *cpu_root;
-		Ram_root   *ram_root;
-		Rom_root   *rom_root;
-		Rm_root    *rm_root;
-		Log_root   *log_root;
-		Timer_root *timer_root;
+		Ram_root *ram_root  = nullptr;
+		Local_service *ram_service = nullptr;
+
+		Rom_root *rom_root  = nullptr;
+		Local_service *rom_service = nullptr;
+
+		Rm_root *rm_root  = nullptr;
+		Local_service *rm_service = nullptr;
+
+		Log_root *log_root  = nullptr;
+		Local_service *log_service = nullptr;
+
+		Timer_root *timer_root  = nullptr;
+		Local_service *timer_service = nullptr;
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 				Genode::size_t granularity, bool &bootstrap_phase);
 		~Custom_services();
+
+		Genode::Service *find(const char *service_name);
 	} _custom_services;
 	/**
 	 * Child's resources
 	 */
 	struct Resources
 	{
-		/**
-		 * Entrypoint for managing the custom resources TODO clean up
-		 */
-		//Genode::Entrypoint     &ep;
 		/**
 		 * Custom PD RPC object
 		 */
@@ -123,7 +140,7 @@ private:
 		 */
 		Genode::Rom_connection  rom;
 
-		Resources(Genode::Env &env, Genode::Entrypoint &ep, const char *label, Custom_services &custom_services);
+		Resources(Genode::Env &env, const char *label, Custom_services &custom_services);
 		~Resources();
 
 		Pd_session_component &init_pd(const char *label, Pd_root &pd_root);

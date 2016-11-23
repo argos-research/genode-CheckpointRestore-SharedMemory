@@ -53,6 +53,7 @@ public:
 	Genode::Capability<Genode::Cpu_thread> parent_cap() { return _parent_cpu_thread; }
 
 	Cpu_thread_info &parent_state() { return _parent_state; }
+	Cpu_thread_info const &parent_state() const { return _parent_state; }
 
 	Cpu_thread_component *find_by_badge(Genode::uint16_t badge);
 
