@@ -61,8 +61,8 @@ struct Rtcr::Session_rpc_info : General_info
 		using Genode::Hex;
 		using Genode::print;
 
+		print(output, "cargs='", creation_args, "', uargs='", upgrade_args, "', ");
 		General_info::print(output);
-		print(output, ", cargs='", creation_args, "', uargs='", upgrade_args, "'");
 	}
 };
 
@@ -95,7 +95,6 @@ struct Rtcr::Normal_rpc_info : General_info
 /**
  * Struct to store information about RPC function invokation (e.g. parameter, return value)
  */
-template<typename T>
 struct Rtcr::Normal_obj_info : General_info
 {
 	// Insert common members
