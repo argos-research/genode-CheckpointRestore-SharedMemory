@@ -35,6 +35,7 @@ struct Rtcr::Rom_session_info : Session_rpc_info
 	{
 		using Genode::Hex;
 
+		Genode::print(output, dataspace, ", sigh ", sigh, ", ");
 		Session_rpc_info::print(output);
 	}
 };

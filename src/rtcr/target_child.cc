@@ -270,13 +270,13 @@ void Target_child::print(Genode::Output &output) const
 			if(!rm_session) print(output, " <empty>\n");
 			while(rm_session)
 			{
-				print(output, " ", rm_session->parent_state(), "\n");
+				print(output, " ", rm_session->cap(), " ", rm_session->parent_state(), "\n");
 
 				Region_map_component const *region_map = rm_session->parent_state().region_maps.first();
 				if(!region_map) print(output, "  <empty>\n");
 				while(region_map)
 				{
-					print(output, "  ", region_map->parent_state(), "\n");
+					print(output, "  ", region_map->cap(), " ", region_map->parent_state(), "\n");
 
 					Attached_region_info const *attached_info = region_map->parent_state().attached_regions.first();
 					if(!attached_info) print(output, "  <empty>\n");
@@ -303,7 +303,7 @@ void Target_child::print(Genode::Output &output) const
 			if(!log_session) print(output, " <empty>\n");
 			while(log_session)
 			{
-				print(output, " ", log_session->parent_state(), "\n");
+				print(output, " ", log_session->cap(), " ", log_session->parent_state(), "\n");
 				log_session = log_session->next();
 			}
 
@@ -320,7 +320,7 @@ void Target_child::print(Genode::Output &output) const
 			if(!timer_session) print(output, " <empty>\n");
 			while(timer_session)
 			{
-				print(output, " ", timer_session->parent_state(), "\n");
+				print(output, " ", timer_session->cap(), " ", timer_session->parent_state(), "\n");
 				timer_session = timer_session->next();
 			}
 
@@ -337,7 +337,7 @@ void Target_child::print(Genode::Output &output) const
 			if(!pd_session) print(output, " <empty>\n");
 			while(pd_session)
 			{
-				print(output, " ", pd_session->parent_state(), "\n");
+				print(output, " ", pd_session->cap(), " ", pd_session->parent_state(), "\n");
 
 				// Signal contexts
 				print(output, " Signal contexts:\n");
@@ -377,7 +377,7 @@ void Target_child::print(Genode::Output &output) const
 
 				// Address space
 				Region_map_component const address_space = pd_session->address_space_component();
-				print(output, " Address space: ", address_space.parent_state(), "\n");
+				print(output, " Address space: ", address_space.cap(), " ", address_space.parent_state(), "\n");
 
 				Attached_region_info const *attached_info = address_space.parent_state().attached_regions.first();
 				if(!attached_info) print(output, "  <empty>\n");
@@ -390,7 +390,7 @@ void Target_child::print(Genode::Output &output) const
 
 				// Stack area
 				Region_map_component const stack_area = pd_session->stack_area_component();
-				print(output, " Stack area: ", stack_area.parent_state(), "\n");
+				print(output, " Stack area: ", stack_area.cap(), " ", stack_area.parent_state(), "\n");
 
 				attached_info = stack_area.parent_state().attached_regions.first();
 				if(!attached_info) print(output, "  <empty>\n");
@@ -403,7 +403,7 @@ void Target_child::print(Genode::Output &output) const
 
 				// Linker area
 				Region_map_component const linker_area = pd_session->linker_area_component();
-				print(output, " Linker area: ", linker_area.parent_state(), "\n");
+				print(output, " Linker area: ", linker_area.cap(), " ", linker_area.parent_state(), "\n");
 
 				attached_info = linker_area.parent_state().attached_regions.first();
 				if(!attached_info) print(output, "  <empty>\n");
@@ -425,7 +425,7 @@ void Target_child::print(Genode::Output &output) const
 		if(!cpu_session) print(output, " <empty>\n");
 		while(cpu_session)
 		{
-			print(output, " ", cpu_session->parent_state(), "\n");
+			print(output, " ", cpu_session->cap(), " ", cpu_session->parent_state(), "\n");
 
 			Cpu_thread_component const *cpu_thread = cpu_session->parent_state().cpu_threads.first();
 			if(!cpu_thread) print(output, "  <empty>\n");
@@ -446,7 +446,7 @@ void Target_child::print(Genode::Output &output) const
 		if(!ram_session) print(output, " <empty>\n");
 		while(ram_session)
 		{
-			print(output, " ", ram_session->parent_state(), "\n");
+			print(output, " ", ram_session->cap(), " ", ram_session->parent_state(), "\n");
 			Ram_dataspace_info const *ramds_info = ram_session->parent_state().ram_dataspaces.first();
 			if(ramds_info->mrm_info)
 			{

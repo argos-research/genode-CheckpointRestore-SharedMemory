@@ -45,7 +45,7 @@ struct Rtcr::Native_capability_info : Normal_obj_info, Genode::List<Native_capab
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "native ", native_cap, ", ep ", ep_cap);
+		Genode::print(output, "native ", native_cap, ", ep ", ep_cap, ", ");
 		Normal_obj_info::print(output);
 	}
 };

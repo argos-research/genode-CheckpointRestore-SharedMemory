@@ -54,7 +54,7 @@ struct Rtcr::Region_map_info : Normal_rpc_info
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "size=", Hex(size), " ds ", ds_cap, ", ");
+		Genode::print(output, "size=", Hex(size), ", ds ", ds_cap, ", sigh ", sigh, ", ");
 		Normal_rpc_info::print(output);
 	}
 };

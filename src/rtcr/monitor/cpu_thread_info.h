@@ -52,9 +52,13 @@ struct Rtcr::Cpu_thread_info : Normal_rpc_info
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "name=", name, " weight=", weight.value, " utcb=", Hex(utcb), ", ");
+		Genode::print(output, "name=", name, ", weigth=", weight.value, ", utcb=", Hex(utcb), ", ");
+		Genode::print(output, "started=", started, ", paused=", paused, ", single_step=", single_step, ", ");
+		Genode::print(output, "affinity=", affinity, ", sigh ", sigh, ", ");
 		Normal_rpc_info::print(output);
-/*		Genode::print(output, "r0-r4: ", Hex(ts.r0, Hex::PREFIX, Hex::PAD), " ",
+
+/*
+		Genode::print(output, "r0-r4: ", Hex(ts.r0, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.r1, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r2, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.r3, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r4, Hex::PREFIX, Hex::PAD), "\n");
 		Genode::print(output, "r5-r9: ", Hex(ts.r5, Hex::PREFIX, Hex::PAD), " ",
@@ -64,7 +68,8 @@ struct Rtcr::Cpu_thread_info : Normal_rpc_info
 				Hex(ts.r11, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r12, Hex::PREFIX, Hex::PAD), "\n");
 		Genode::print(output, "sp, lr, ip, cpsr, cpu_e: ", Hex(ts.sp, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.lr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.ip, Hex::PREFIX, Hex::PAD), " ",
-				Hex(ts.cpsr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD));*/
+				Hex(ts.cpsr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD));
+*/
 	}
 };
 

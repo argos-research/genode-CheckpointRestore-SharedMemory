@@ -43,6 +43,7 @@ struct Rtcr::Ram_session_info : Session_rpc_info
 	{
 		using Genode::Hex;
 
+		Genode::print(output, "ref_account ", ref_account_cap, ", ");
 		Session_rpc_info::print(output);
 	}
 };
