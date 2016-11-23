@@ -11,6 +11,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
+#include "stored_info_structs.h"
 #include "../monitor/signal_source_info.h"
 
 namespace Rtcr {
@@ -18,25 +19,11 @@ namespace Rtcr {
 }
 
 
-struct Rtcr::Stored_signal_source_info : Genode::List<Stored_signal_source_info>::Element
+struct Rtcr::Stored_signal_source_info : Stored_normal_info, Genode::List<Stored_signal_source_info>::Element
 {
-	/**
-	 * Child's kcap (kernel capability selector)
-	 */
-	Genode::addr_t   kcap;
-	/**
-	 * Genode's system-global capability identifier
-	 */
-	Genode::uint16_t badge;
-
-	Stored_signal_source_info()
+	Stored_signal_source_info(Signal_source_info &info, Genode::addr_t targets_kcap)
 	:
-		kcap(0), badge(0)
-	{ }
-
-	Stored_signal_source_info(Signal_source_info &info)
-	:
-		kcap(0), badge(info.cap.local_name())
+		Stored_normal_info(targets_kcap, info.cap.local_name(), info.bootstrapped)
 	{ }
 
 	Stored_signal_source_info *find_by_badge(Genode::uint16_t badge)
@@ -51,7 +38,7 @@ struct Rtcr::Stored_signal_source_info : Genode::List<Stored_signal_source_info>
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ", ", badge, ">");
+		Stored_normal_info::print(output);
 	}
 
 };

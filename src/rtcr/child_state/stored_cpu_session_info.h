@@ -11,6 +11,8 @@
 #include <util/list.h>
 
 /* Rtcr includes */
+#include "stored_info_structs.h"
+#include "stored_cpu_thread_info.h"
 #include "../intercept/cpu_session.h"
 
 namespace Rtcr {
@@ -18,30 +20,20 @@ namespace Rtcr {
 }
 
 
-struct Rtcr::Stored_cpu_session_info : Genode::List<Stored_cpu_session_info>::Element
+struct Rtcr::Stored_cpu_session_info : Stored_session_info, Genode::List<Stored_cpu_session_info>::Element
 {
-	/**
-	 * Child's kcap (kernel capability selector)
-	 */
-	Genode::addr_t    kcap;
-	/**
-	 * Genode's system-global capability identifier
-	 */
-	Genode::uint16_t  badge;
-	const char       *args;
-	Genode::uint16_t  exception_sigh_badge;
-	Genode::List<Stored_thread_info> stored_thread_infos;
+	Genode::uint16_t sigh_badge;
+	Genode::List<Stored_cpu_thread_info> stored_cpu_thread_infos;
 
-	Stored_cpu_session_info()
+	Stored_cpu_session_info(Cpu_session_component &cpu_session, Genode::addr_t targets_kcap)
 	:
-		kcap(0), badge(0), args(""), exception_sigh_badge(0), stored_thread_infos()
-	{ }
-
-	Stored_cpu_session_info(Cpu_session_component &comp)
-	:
-		kcap(0), badge(comp.cap().local_name()), args(""),
-		exception_sigh_badge(comp.parent_state().exception_sigh.local_name()),
-		stored_thread_infos()
+		Stored_session_info(cpu_session.parent_state().creation_args.string(),
+				cpu_session.parent_state().upgrade_args.string(),
+				targets_kcap,
+				cpu_session.cap().local_name(),
+				cpu_session.parent_state().bootstrapped),
+		sigh_badge(cpu_session.parent_state().sigh.local_name()),
+		stored_cpu_thread_infos()
 	{ }
 
 	Stored_cpu_session_info *find_by_badge(Genode::uint16_t badge)
@@ -56,7 +48,8 @@ struct Rtcr::Stored_cpu_session_info : Genode::List<Stored_cpu_session_info>::El
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ", ", badge, "> args=", args, " sigh_badge=", exception_sigh_badge);
+		Genode::print(output, " sigh_badge=", sigh_badge);
+		Stored_session_info::print(output);
 	}
 
 };
