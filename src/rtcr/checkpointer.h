@@ -15,14 +15,8 @@
 /* Rtcr includes */
 #include "target_state.h"
 #include "target_child.h"
-#include "intercept/region_map_component.h"
-#include "child_state/stored_attached_region_info.h"
-#include "child_state/stored_dataspace_info.h"
-#include "child_state/stored_log_session_info.h"
-#include "intercept/cpu_session.h"
-#include "intercept/pd_session.h"
-#include "intercept/ram_session.h"
 #include "util/ref_badge.h"
+#include "util/mapping_orig_copy_info.h"
 
 namespace Rtcr {
 	class Checkpointer;
@@ -206,7 +200,7 @@ private:
 	 *
 	 * For a detailed description there are comments in the method or refer to the description of _prepare_rm_sessions
 	 */
-	void _prepare_threads(Genode::List<Stored_thread_info> &state_infos, Cpu_session_component &child_obj);
+	void _prepare_threads(Genode::List<Stored_cpu_thread_info> &state_infos, Cpu_session_component &child_obj);
 	/**
 	 * \brief Prepare a specific PD session named state_info
 	 *
@@ -312,9 +306,7 @@ private:
 
 public:
 	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
-	Checkpointer(const Checkpointer &other) = delete;
 	~Checkpointer();
-	Checkpointer& operator=(const Checkpointer &other) = delete;
 
 	/**
 	 * Checkpoint all (known) RPC objects and capabilities from _child to _state

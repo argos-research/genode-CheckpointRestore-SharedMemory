@@ -10,7 +10,6 @@
 /* Genode includes */
 #include <util/list.h>
 #include <base/heap.h>
-#include <base/env.h>
 
 /* Rtcr includes */
 #include "child_state/stored_pd_session_info.h"
