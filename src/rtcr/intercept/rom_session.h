@@ -61,6 +61,13 @@ public:
 	Genode::Rom_session_capability parent_cap() { return _parent_rom; }
 
 	Rom_session_info &parent_state() { return _parent_state; }
+	Rom_session_info const &parent_state() const { return _parent_state; }
+
+	Rom_session_component *find_by_badge(Genode::uint16_t badge);
+
+	/*******************************
+	 ** Rom session Rpc interface **
+	 *******************************/
 
 	Genode::Rom_dataspace_capability dataspace() override;
 	bool update() override;

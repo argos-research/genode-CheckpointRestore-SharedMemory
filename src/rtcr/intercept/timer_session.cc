@@ -27,6 +27,15 @@ Timer_session_component::~Timer_session_component()
 }
 
 
+Timer_session_component *Timer_session_component::find_by_badge(Genode::uint16_t badge)
+{
+	if(badge == cap().local_name())
+		return this;
+	Timer_session_component *obj = next();
+	return obj ? obj->find_by_badge(badge) : 0;
+}
+
+
 void Timer_session_component::trigger_once(unsigned us)
 {
 	if(verbose_debug) Genode::log("Timer::\033[33m", __func__, "\033[0m(us=", us, ")");

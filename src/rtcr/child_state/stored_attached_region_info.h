@@ -39,12 +39,12 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 		executable (info.executable)
 	{ }
 
-	Stored_attached_region_info *find_by_attached_ds_badge_and_addr(Genode::uint16_t badge, Genode::addr_t addr)
+	Stored_attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
-		if(badge == attached_ds_badge && addr == rel_addr)
+		if(addr == rel_addr)
 			return this;
 		Stored_attached_region_info *info = next();
-		return info ? info->find_by_attached_ds_badge_and_addr(badge, addr) : 0;
+		return info ? info->find_by_addr(addr) : 0;
 	}
 
 	void print(Genode::Output &output) const

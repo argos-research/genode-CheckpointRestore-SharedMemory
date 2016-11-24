@@ -73,6 +73,15 @@ Rm_session_component::~Rm_session_component()
 }
 
 
+Rm_session_component *Rm_session_component::find_by_badge(Genode::uint16_t badge)
+{
+	if(badge == cap().local_name())
+		return this;
+	Rm_session_component *obj = next();
+	return obj ? obj->find_by_badge(badge) : 0;
+}
+
+
 Genode::Capability<Genode::Region_map> Rm_session_component::create(Genode::size_t size)
 {
 	if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(size=", size, ")");

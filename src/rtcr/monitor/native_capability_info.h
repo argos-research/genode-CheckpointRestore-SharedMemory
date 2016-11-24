@@ -33,12 +33,12 @@ struct Rtcr::Native_capability_info : Normal_obj_info, Genode::List<Native_capab
 		ep_cap          (ep_cap)
 	{ }
 
-	Native_capability_info *find_by_native_cap(Genode::Native_capability cap)
+	Native_capability_info *find_by_native_badge(Genode::uint16_t badge)
 	{
-		if(cap == native_cap)
+		if(badge == native_cap.local_name())
 			return this;
 		Native_capability_info *info = next();
-		return info ? info->find_by_native_cap(cap) : 0;
+		return info ? info->find_by_native_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const

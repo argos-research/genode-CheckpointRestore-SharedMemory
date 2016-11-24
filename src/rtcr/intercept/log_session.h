@@ -60,6 +60,8 @@ public:
 	Log_session_info &parent_state() { return _parent_state; }
 	Log_session_info const &parent_state() const { return _parent_state; }
 
+	Log_session_component *find_by_badge(Genode::uint16_t badge);
+
 	/*******************************
 	 ** Log session Rpc interface **
 	 *******************************/

@@ -21,8 +21,7 @@ namespace Rtcr {
 
 struct Rtcr::Stored_rom_session_info : Stored_session_info, Genode::List<Stored_rom_session_info>::Element
 {
-	Genode::uint16_t                       dataspace_badge;
-	Genode::Ram_dataspace_capability const memory_content;
+	Genode::uint16_t dataspace_badge;
 	Genode::uint16_t sigh_badge;
 
 	Stored_rom_session_info(Rom_session_component &rom_session, Genode::addr_t targets_kcap,
@@ -33,9 +32,8 @@ struct Rtcr::Stored_rom_session_info : Stored_session_info, Genode::List<Stored_
 				targets_kcap,
 				rom_session.cap().local_name(),
 				rom_session.parent_state().bootstrapped),
-		memory_content(copy_ds_cap),
-		dataspace_badge(rom_session.parent_state().dataspace.local_name()),
-		sigh_badge(rom_session.parent_state().sigh.local_name())
+		dataspace_badge (rom_session.parent_state().dataspace.local_name()),
+		sigh_badge      (rom_session.parent_state().sigh.local_name())
 	{ }
 
 	Stored_rom_session_info *find_by_badge(Genode::uint16_t badge)

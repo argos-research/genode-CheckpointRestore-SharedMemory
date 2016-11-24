@@ -33,12 +33,12 @@ struct Rtcr::Signal_context_info : Normal_obj_info, Genode::List<Signal_context_
 		imprint(imprint)
 	{ }
 
-	Signal_context_info *find_by_sc_cap(Genode::Signal_context_capability cap)
+	Signal_context_info *find_by_sc_badge(Genode::uint16_t badge)
 	{
-		if(cap == sc_cap)
+		if(badge == sc_cap.local_name())
 			return this;
 		Signal_context_info *info = next();
-		return info ? info->find_by_sc_cap(cap) : 0;
+		return info ? info->find_by_sc_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const

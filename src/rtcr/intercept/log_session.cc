@@ -27,6 +27,15 @@ Log_session_component::~Log_session_component()
 }
 
 
+Log_session_component *Log_session_component::find_by_badge(Genode::uint16_t badge)
+{
+	if(badge == cap().local_name())
+		return this;
+	Log_session_component *obj = next();
+	return obj ? obj->find_by_badge(badge) : 0;
+}
+
+
 Genode::size_t Log_session_component::write(String const &string)
 {
 	if(verbose_debug) Genode::log("Log::\033[33m", __func__, "\033[0m(", string.string(),")");

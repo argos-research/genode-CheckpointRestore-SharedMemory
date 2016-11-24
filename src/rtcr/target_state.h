@@ -35,8 +35,8 @@ class Rtcr::Target_state
 	friend class Restorer;
 
 private:
-	Genode::Ram_session &_env;
-	Genode::Allocator   &_alloc;
+	Genode::Env       &_env;
+	Genode::Allocator &_alloc;
 
 	Genode::List<Stored_pd_session_info>    _stored_pd_sessions;
 	Genode::List<Stored_cpu_session_info>   _stored_cpu_sessions;

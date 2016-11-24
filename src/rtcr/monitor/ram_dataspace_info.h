@@ -51,12 +51,12 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 		mrm_info (mrm_info)
 	{ }
 
-	Ram_dataspace_info *find_by_cap(Genode::Dataspace_capability cap)
+	Ram_dataspace_info *find_by_badge(Genode::uint16_t badge)
 	{
-		if(cap == ds_cap)
+		if(badge == ds_cap.local_name())
 			return this;
 		Ram_dataspace_info *info = next();
-		return info ? info->find_by_cap(cap) : 0;
+		return info ? info->find_by_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const

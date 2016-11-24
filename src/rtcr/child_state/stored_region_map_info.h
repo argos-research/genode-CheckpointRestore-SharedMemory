@@ -22,9 +22,9 @@ namespace Rtcr {
 
 struct Rtcr::Stored_region_map_info : Stored_normal_info, Genode::List<Stored_region_map_info>::Element
 {
-	Genode::size_t   size;
+	Genode::size_t   const size;
+	Genode::uint16_t const ds_badge;
 	Genode::uint16_t sigh_badge;
-	Genode::uint16_t ds_badge;
 	Genode::List<Stored_attached_region_info> stored_attached_region_infos;
 
 
@@ -52,7 +52,7 @@ struct Rtcr::Stored_region_map_info : Stored_normal_info, Genode::List<Stored_re
 		using Genode::Hex;
 
 		Stored_normal_info::print(output);
-		Genode::print(output, ", size=", size, ", sigh_badge=", sigh_badge, ", ds_badge=", ds_badge);
+		Genode::print(output, ", size=", size, ", ds_badge=", ds_badge, ", sigh_badge=", sigh_badge);
 	}
 
 };

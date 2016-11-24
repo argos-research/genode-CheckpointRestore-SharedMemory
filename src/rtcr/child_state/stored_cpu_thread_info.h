@@ -31,7 +31,7 @@ struct Rtcr::Stored_cpu_thread_info : Stored_normal_info, Genode::List<Stored_cp
 	Genode::uint16_t           sigh_badge;
 	Genode::Thread_state       ts;
 
-	Stored_cpu_thread_info(Cpu_thread_component &cpu_thread, Genode::addr_t targets_kcap, Genode::Thread_state ts)
+	Stored_cpu_thread_info(Cpu_thread_component &cpu_thread, Genode::addr_t targets_kcap)
 	:
 		Stored_normal_info(targets_kcap,
 				cpu_thread.cap().local_name(),
@@ -44,7 +44,7 @@ struct Rtcr::Stored_cpu_thread_info : Stored_normal_info, Genode::List<Stored_cp
 		single_step (cpu_thread.parent_state().single_step),
 		affinity    (cpu_thread.parent_state().affinity),
 		sigh_badge  (cpu_thread.parent_state().sigh.local_name()),
-		ts          (ts)
+		ts          ()
 	{ }
 
 	Stored_cpu_thread_info *find_by_name(const char *name)

@@ -28,11 +28,21 @@ Rtcr::Rom_session_component::~Rom_session_component()
 }
 
 
+Rom_session_component *Rom_session_component::find_by_badge(Genode::uint16_t badge)
+{
+	if(badge == cap().local_name())
+		return this;
+	Rom_session_component *obj = next();
+	return obj ? obj->find_by_badge(badge) : 0;
+}
+
+
 Genode::Rom_dataspace_capability Rtcr::Rom_session_component::dataspace()
 {
 	if(verbose_debug) Genode::log("Rom::\033[33m", __func__, "\033[0m()");
 	auto result = _parent_rom.dataspace();
 	_parent_state.dataspace = result;
+	_parent_state.size = Genode::Dataspace_client(static_cap_cast<Genode::Dataspace>(result)).size();
 	if(verbose_debug) Genode::log("  result: ", result);
 
 	return result;

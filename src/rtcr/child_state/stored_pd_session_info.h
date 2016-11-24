@@ -14,6 +14,7 @@
 #include "stored_info_structs.h"
 #include "stored_signal_context_info.h"
 #include "stored_signal_source_info.h"
+#include "stored_native_capability_info.h"
 #include "stored_region_map_info.h"
 #include "../intercept/pd_session.h"
 
@@ -26,7 +27,7 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
 {
 	Genode::List<Stored_signal_context_info> stored_context_infos;
 	Genode::List<Stored_signal_source_info> stored_source_infos;
-	//Genode::List<Stored_native_capability_info> stored_native_cap_infos;
+	Genode::List<Stored_native_capability_info> stored_native_cap_infos;
 	Stored_region_map_info stored_address_space;
 	Stored_region_map_info stored_stack_area;
 	Stored_region_map_info stored_linker_area;
@@ -38,7 +39,7 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
 				targets_kcap,
 				pd_session.cap().local_name(),
 				pd_session.parent_state().bootstrapped),
-		stored_context_infos(), stored_source_infos(),
+		stored_context_infos(), stored_source_infos(), stored_native_cap_infos(),
 		stored_address_space(pd_session.address_space_component()),
 		stored_stack_area(pd_session.stack_area_component()),
 		stored_linker_area(pd_session.linker_area_component())

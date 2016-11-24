@@ -68,6 +68,8 @@ public:
 	Rm_session_info &parent_state() { return _parent_state; }
 	Rm_session_info const &parent_state() const { return _parent_state; }
 
+	Rm_session_component *find_by_badge(Genode::uint16_t badge);
+
 	/******************************
 	 ** Rm session Rpc interface **
 	 ******************************/

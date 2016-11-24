@@ -63,7 +63,7 @@ struct Rtcr::Attached_region_info : Normal_obj_info, Genode::List<Attached_regio
 	Managed_region_map_info *managed_dataspace(Genode::List<Ram_dataspace_info> &rds_infos)
 	{
 		Ram_dataspace_info *rds_info = rds_infos.first();
-		if(rds_info) rds_info = rds_info->find_by_cap(attached_ds_cap);
+		if(rds_info) rds_info = rds_info->find_by_badge(attached_ds_cap.local_name());
 		return rds_info ? rds_info->mrm_info : 0;
 	}
 	Attached_region_info *find_by_addr(Genode::addr_t addr)
@@ -73,13 +73,6 @@ struct Rtcr::Attached_region_info : Normal_obj_info, Genode::List<Attached_regio
 		Attached_region_info *info = next();
 		return info ? info->find_by_addr(addr) : 0;
 	}
-	Attached_region_info *find_by_cap(Genode::Dataspace_capability cap)
-	{
-		if(cap == attached_ds_cap)
-			return this;
-		Attached_region_info *info = next();
-		return info ? info->find_by_cap(cap) : 0;
-	}
 	Attached_region_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == attached_ds_cap.local_name())
@@ -87,21 +80,6 @@ struct Rtcr::Attached_region_info : Normal_obj_info, Genode::List<Attached_regio
 		Attached_region_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
 	}
-	Attached_region_info *find_by_cap_and_addr(Genode::Dataspace_capability cap, Genode::addr_t addr)
-	{
-		if(cap == attached_ds_cap && addr == rel_addr)
-			return this;
-		Attached_region_info *info = next();
-		return info ? info->find_by_cap_and_addr(cap, addr) : 0;
-	}
-	Attached_region_info *find_by_addr_and_exec(Genode::addr_t addr, bool exec)
-	{
-		if((exec == executable) && (addr >= rel_addr) && (addr <= rel_addr + size))
-			return this;
-		Attached_region_info *info = next();
-		return info ? info->find_by_addr_and_exec(addr, exec) : 0;
-	}
-
 
 	void print(Genode::Output &output) const
 	{
