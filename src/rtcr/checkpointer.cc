@@ -1135,10 +1135,10 @@ void Checkpointer::checkpoint()
 		Genode::destroy(_alloc, info);
 	}
 
-	//Genode::log(_child);
+	Genode::log(_child);
 	Genode::log(_state);
 	// kcap, badge mapping
-	if(false)
+	if(true)
 	{
 		Genode::log("Capability map:");
 		const Badge_kcap_info *info = _capability_map_infos.first();
