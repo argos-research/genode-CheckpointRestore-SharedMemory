@@ -35,19 +35,19 @@ class Rtcr::Target_state
 	friend class Restorer;
 
 private:
-	Genode::Ram_session &_ram;
+	Genode::Ram_session &_env;
 	Genode::Allocator   &_alloc;
 
-	Genode::List<Stored_pd_session_info>     _stored_pd_sessions;
-	Genode::List<Stored_cpu_session_info>    _stored_cpu_sessions;
-	Genode::List<Stored_ram_session_info>    _stored_ram_sessions;
-	Genode::List<Stored_rom_session_info>    _stored_rom_sessions;
-	Genode::List<Stored_rm_session_info>     _stored_rm_sessions;
-	Genode::List<Stored_log_session_info>    _stored_log_sessions;
-	Genode::List<Stored_timer_session_info>  _stored_timer_sessions;
+	Genode::List<Stored_pd_session_info>    _stored_pd_sessions;
+	Genode::List<Stored_cpu_session_info>   _stored_cpu_sessions;
+	Genode::List<Stored_ram_session_info>   _stored_ram_sessions;
+	Genode::List<Stored_rom_session_info>   _stored_rom_sessions;
+	Genode::List<Stored_rm_session_info>    _stored_rm_sessions;
+	Genode::List<Stored_log_session_info>   _stored_log_sessions;
+	Genode::List<Stored_timer_session_info> _stored_timer_sessions;
 
 public:
-	Target_state(Genode::Ram_session &ram, Genode::Allocator &alloc);
+	Target_state(Genode::Env &env, Genode::Allocator &alloc);
 	~Target_state();
 
 	void print(Genode::Output &output) const;

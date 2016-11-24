@@ -9,9 +9,9 @@
 using namespace Rtcr;
 
 
-Target_state::Target_state(Genode::Ram_session &ram, Genode::Allocator &alloc)
+Target_state::Target_state(Genode::Env &env, Genode::Allocator &alloc)
 :
-	_ram   (ram),
+	_env   (env),
 	_alloc (alloc)
 { }
 
