@@ -1,11 +1,12 @@
 /*
- * \brief  List element to store a mapping of badge to dataspace
+ * \brief  List element to store a mapping of original dataspace, copy dataspace,
+ *         and a count how often original dataspace is referenced
  * \author Denis Huber
  * \date   2016-11-24
  */
 
-#ifndef _RTCR_ORIG_BADGE_INFO_H_
-#define _RTCR_ORIG_BADGE_INFO_H_
+#ifndef _RTCR_ORIG_COPY_COUNT_INFO_H_
+#define _RTCR_ORIG_COPY_COUNT_INFO_H_
 
 /* Genode includes */
 #include <util/list.h>
@@ -13,26 +14,27 @@
 /* Rtcr includes */
 
 namespace Rtcr {
-	struct Orig_badge_info;
+	struct Orig_copy_count_info;
 }
 
 /**
  * Structure to store badge-kcap tuple from a capability map of a Target_child
  */
-struct Rtcr::Orig_badge_info : Genode::List<Orig_badge_info>::Element
+struct Rtcr::Orig_copy_count_info : Genode::List<Orig_copy_count_info>::Element
 {
-	Genode::uint16_t orig_badge;
-	Genode::Ram_dataspace_capability copy_dataspace;
+	Genode::Dataspace_capability     orig_ds_cap;
+	Genode::Ram_dataspace_capability copy_ds_cap;
+	Genode::size_t                   size;
 	unsigned ref_count;
 
-	Orig_badge_info(Genode::uint16_t badge, Genode::Ram_dataspace_capability dataspace)
-	: orig_badge(badge), copy_dataspace(dataspace), ref_count(1) { }
+	Orig_copy_count_info(Genode::Dataspace_capability orig_ds_cap, Genode::Ram_dataspace_capability copy_ds_cap, Genode::size_t size)
+	: orig_ds_cap(orig_ds_cap), copy_ds_cap(copy_ds_cap), size(size), ref_count(1) { }
 
-	Orig_badge_info *find_by_badge(Genode::uint16_t badge)
+	Orig_copy_count_info *find_by_badge(Genode::uint16_t badge)
 	{
-		if(badge == this->orig_badge)
+		if(badge == this->orig_ds_cap.local_name())
 			return this;
-		Orig_badge_info *info = next();
+		Orig_copy_count_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
 	}
 
@@ -40,8 +42,9 @@ struct Rtcr::Orig_badge_info : Genode::List<Orig_badge_info>::Element
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "badge=", orig_badge, ", copy_dataspace ", copy_dataspace);
+		Genode::print(output, "orig ds ", orig_ds_cap, ", copy ds ", copy_ds_cap,
+				", size=", Hex(size), ", ref_count=", ref_count);
 	}
 };
 
-#endif /* _RTCR_ORIG_BADGE_INFO_H_ */
+#endif /* _RTCR_ORIG_COPY_COUNT_INFO_H_ */

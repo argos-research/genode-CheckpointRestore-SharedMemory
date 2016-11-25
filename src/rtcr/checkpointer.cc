@@ -12,36 +12,6 @@
 using namespace Rtcr;
 
 
-void Checkpointer::_destroy_memory_to_checkpoint(Genode::List<Orig_copy_info> &memory_infos)
-{
-	while(Orig_copy_info *info = memory_infos.first())
-	{
-		memory_infos.remove(info);
-		Genode::destroy(_alloc, info);
-	}
-}
-
-
-void Checkpointer::_destroy_region_map_dataspaces(Genode::List<Ref_badge> &mands_infos)
-{
-	while(Ref_badge *info = mands_infos.first())
-	{
-		mands_infos.remove(info);
-		Genode::destroy(_alloc, info);
-	}
-}
-
-
-void Checkpointer::_destroy_known_dataspaces(Genode::List<Orig_badge_info> known_infos)
-{
-	while(Orig_badge_info *info = known_infos.first())
-	{
-		known_infos.remove(info);
-		Genode::destroy(_alloc, info);
-	}
-}
-
-
 Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 {
 	using Genode::log;
@@ -155,6 +125,8 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 
 void Checkpointer::_destroy_cap_map_infos(Genode::List<Badge_kcap_info> &cap_map_infos)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	while(Badge_kcap_info *info = cap_map_infos.first())
 	{
 		cap_map_infos.remove(info);
@@ -165,6 +137,8 @@ void Checkpointer::_destroy_cap_map_infos(Genode::List<Badge_kcap_info> &cap_map
 
 Genode::List<Ref_badge> Checkpointer::_mark_attach_designated_dataspaces(Attached_region_info &ar_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::List<Ref_badge> result_infos;
 
 	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.ram().parent_state().ram_dataspaces);
@@ -191,6 +165,8 @@ Genode::List<Ref_badge> Checkpointer::_mark_attach_designated_dataspaces(Attache
 
 void Checkpointer::_detach_unmark_designated_dataspaces(Genode::List<Ref_badge> &badge_infos, Attached_region_info &ar_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.ram().parent_state().ram_dataspaces);
 	if(mrm_info && badge_infos.first())
 	{
@@ -217,6 +193,8 @@ void Checkpointer::_detach_unmark_designated_dataspaces(Genode::List<Ref_badge> 
 
 Genode::addr_t Checkpointer::_find_kcap_by_badge(Genode::uint16_t badge, Genode::List<Badge_kcap_info> &cap_map_infos)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::addr_t kcap = 0;
 
 	Badge_kcap_info *info = cap_map_infos.first();
@@ -279,6 +257,8 @@ void Checkpointer::_prepare_rm_sessions(Genode::List<Stored_rm_session_info> &st
 }
 void Checkpointer::_destroy_stored_rm_session(Stored_rm_session_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	while(Stored_region_map_info *info = stored_info.stored_region_map_infos.first())
 	{
 		stored_info.stored_region_map_infos.remove(info);
@@ -344,6 +324,8 @@ void Checkpointer::_prepare_region_maps(Genode::List<Stored_region_map_info> &st
 }
 void Checkpointer::_destroy_stored_region_map(Stored_region_map_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	while(Stored_attached_region_info *info = stored_info.stored_attached_region_infos.first())
 	{
 		stored_info.stored_attached_region_infos.remove(info);
@@ -377,15 +359,6 @@ void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region
 
 		// No need to update stored_info
 
-		// Remeber to checkpoint dataspace, if it is not already marked
-		Orig_copy_info *oc_info = _memory_to_checkpoint.first();
-		if(oc_info) oc_info = oc_info->find_by_orig_badge(child_info->attached_ds_cap.local_name());
-		if(!oc_info)
-		{
-			oc_info = new (_alloc) Orig_copy_info(child_info->attached_ds_cap, stored_info->memory_content, 0, stored_info->size);
-			_memory_to_checkpoint.insert(oc_info);
-		}
-
 		child_info = child_info->next();
 	}
 
@@ -411,41 +384,59 @@ void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region
 }
 Stored_attached_region_info &Checkpointer::_create_stored_attached_region(Attached_region_info &child_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	// Find attached ds cap
 	Genode::Ram_dataspace_capability ramds_cap;
-	Orig_badge_info *known_info = _known_dataspaces.first();
+	Orig_copy_count_info *known_info = _copy_dataspaces.first();
 	if(known_info) known_info = known_info->find_by_badge(child_info.attached_ds_cap.local_name());
 	if(known_info)
 	{
-		ramds_cap = known_info->copy_dataspace;
+		if(verbose_debug) Genode::log("Dataspace ", child_info.attached_ds_cap, " is already known.");
+
+		ramds_cap = known_info->copy_ds_cap;
 		known_info->ref_count++;
 	}
 	else
 	{
-		ramds_cap = _state._env.ram().alloc(child_info.size);
-		known_info = new (_alloc) Orig_badge_info(child_info.attached_ds_cap.local_name(), ramds_cap);
-		_known_dataspaces.insert(known_info);
+		// Exclude dataspaces which are known region maps (except inc ckpt dataspaces)
+		Ref_badge *region_map_dataspace = _region_map_dataspaces.first();
+		if(region_map_dataspace) region_map_dataspace = region_map_dataspace->find_by_badge(child_info.attached_ds_cap.local_name());
+		if(!region_map_dataspace)
+		{
+			if(verbose_debug) Genode::log("Dataspace ", child_info.attached_ds_cap, " is not known. "
+					"Creating dataspace with size ", Genode::Hex(child_info.size));
+			ramds_cap = _state._env.ram().alloc(child_info.size);
+			known_info = new (_alloc) Orig_copy_count_info(child_info.attached_ds_cap, ramds_cap, child_info.size);
+			_copy_dataspaces.insert(known_info);
+		}
+		else
+		{
+			if(verbose_debug) Genode::log("Dataspace ", child_info.attached_ds_cap, " is a region map");
+		}
 	}
 
 	return *new (_state._alloc) Stored_attached_region_info(child_info, ramds_cap);
 }
 void Checkpointer::_destroy_stored_attached_region(Stored_attached_region_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	// Decrement ref_cound of corresponding known_dataspace entry and delete it, if necessary
-	Orig_badge_info *known_info =_known_dataspaces.first();
+	Orig_copy_count_info *known_info =_copy_dataspaces.first();
 	if(known_info) known_info = known_info->find_by_badge(stored_info.attached_ds_badge);
 	if(known_info)
 	{
 		known_info->ref_count--;
 		if(known_info->ref_count < 1)
 		{
-			_known_dataspaces.remove(known_info);
+			_copy_dataspaces.remove(known_info);
 			Genode::destroy(_alloc, known_info);
 		}
 	}
 	else
 	{
-		Genode::error("No entry in _known_dataspaces for ", stored_info.attached_ds_badge);
+		Genode::error("No entry in _copy_dataspaces for ", stored_info.attached_ds_badge);
 	}
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -505,6 +496,8 @@ void Checkpointer::_prepare_ram_sessions(Genode::List<Stored_ram_session_info> &
 }
 void Checkpointer::_destroy_stored_ram_session(Stored_ram_session_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	while(Stored_ram_dataspace_info *info = stored_info.stored_ramds_infos.first())
 	{
 		stored_info.stored_ramds_infos.remove(info);
@@ -540,15 +533,6 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 
 		// Nothing to update in stored_info
 
-		// Remeber to checkpoint dataspace, if it is not already marked
-		Orig_copy_info *oc_info = _memory_to_checkpoint.first();
-		if(oc_info) oc_info = oc_info->find_by_orig_badge(child_info->ds_cap.local_name());
-		if(!oc_info)
-		{
-			oc_info = new (_alloc) Orig_copy_info(child_info->ds_cap, stored_info->memory_content, 0, stored_info->size);
-			_memory_to_checkpoint.insert(oc_info);
-		}
-
 		child_info = child_info->next();
 	}
 
@@ -574,20 +558,27 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 }
 Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_dataspace_info &child_info)
 {
-	// Find attached ds cap
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
+	// Create orignal_copy dataspace mapping (which is used to checkpoint memory content)
 	Genode::Ram_dataspace_capability ramds_cap;
-	Orig_badge_info *known_info = _known_dataspaces.first();
+	Orig_copy_count_info *known_info = _copy_dataspaces.first();
 	if(known_info) known_info = known_info->find_by_badge(child_info.ds_cap.local_name());
 	if(known_info)
 	{
-		ramds_cap = known_info->copy_dataspace;
+		if(verbose_debug) Genode::log("Dataspace ", child_info.ds_cap, " is already known.");
+
+		ramds_cap = known_info->copy_ds_cap;
 		known_info->ref_count++;
 	}
 	else
 	{
+		if(verbose_debug) Genode::log("Dataspace ", child_info.ds_cap, " is not known. "
+			"Creating dataspace with size ", Genode::Hex(child_info.size));
+
 		ramds_cap = _state._env.ram().alloc(child_info.size);
-		known_info = new (_alloc) Orig_badge_info(child_info.ds_cap.local_name(), ramds_cap);
-		_known_dataspaces.insert(known_info);
+		known_info = new (_alloc) Orig_copy_count_info(child_info.ds_cap, ramds_cap, child_info.size);
+		_copy_dataspaces.insert(known_info);
 	}
 
 	// Find childs_kcap
@@ -597,21 +588,23 @@ Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_datasp
 }
 void Checkpointer::_destroy_stored_ram_dataspace(Stored_ram_dataspace_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	// Decrement ref_cound of corresponding known_dataspace entry and delete it, if necessary
-	Orig_badge_info *known_info =_known_dataspaces.first();
+	Orig_copy_count_info *known_info =_copy_dataspaces.first();
 	if(known_info) known_info = known_info->find_by_badge(stored_info.badge);
 	if(known_info)
 	{
 		known_info->ref_count--;
 		if(known_info->ref_count < 1)
 		{
-			_known_dataspaces.remove(known_info);
+			_copy_dataspaces.remove(known_info);
 			Genode::destroy(_alloc, known_info);
 		}
 	}
 	else
 	{
-		Genode::error("No entry in _known_dataspaces for ", stored_info.badge);
+		Genode::error("No entry in _copy_dataspaces for ", stored_info.badge);
 	}
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -672,6 +665,8 @@ void Checkpointer::_prepare_cpu_sessions(Genode::List<Stored_cpu_session_info> &
 }
 void Checkpointer::_destroy_stored_cpu_session(Stored_cpu_session_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	while(Stored_cpu_thread_info *info = stored_info.stored_cpu_thread_infos.first())
 	{
 		stored_info.stored_cpu_thread_infos.remove(info);
@@ -739,6 +734,8 @@ void Checkpointer::_prepare_cpu_threads(Genode::List<Stored_cpu_thread_info> &st
 }
 void Checkpointer::_destroy_stored_cpu_thread(Stored_cpu_thread_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
@@ -756,6 +753,7 @@ void Checkpointer::_prepare_pd_sessions(Genode::List<Stored_pd_session_info> &st
 	child_info = child_infos.first();
 	while(child_info)
 	{
+		Genode::log(child_info->parent_state());
 		// Find corresponding state_info
 		stored_info = stored_infos.first();
 		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap().local_name());
@@ -812,6 +810,8 @@ void Checkpointer::_prepare_pd_sessions(Genode::List<Stored_pd_session_info> &st
 }
 void Checkpointer::_destroy_stored_pd_session(Stored_pd_session_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	while(Stored_signal_context_info *info = stored_info.stored_context_infos.first())
 	{
 		stored_info.stored_context_infos.remove(info);
@@ -887,6 +887,8 @@ void Checkpointer::_prepare_native_caps(Genode::List<Stored_native_capability_in
 }
 void Checkpointer::_destroy_stored_native_cap(Stored_native_capability_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
@@ -943,6 +945,8 @@ void Checkpointer::_prepare_signal_sources(Genode::List<Stored_signal_source_inf
 }
 void Checkpointer::_destroy_stored_signal_source(Stored_signal_source_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
@@ -999,6 +1003,8 @@ void Checkpointer::_prepare_signal_contexts(Genode::List<Stored_signal_context_i
 }
 void Checkpointer::_destroy_stored_signal_context(Stored_signal_context_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
@@ -1055,6 +1061,8 @@ void Checkpointer::_prepare_log_sessions(Genode::List<Stored_log_session_info> &
 }
 void Checkpointer::_destroy_stored_log_session(Stored_log_session_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
@@ -1114,30 +1122,85 @@ void Checkpointer::_prepare_timer_sessions(Genode::List<Stored_timer_session_inf
 }
 void Checkpointer::_destroy_stored_timer_session(Stored_timer_session_info &stored_info)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
-
-void Checkpointer::_remove_region_map_dataspaces(Genode::List<Ref_badge> &mands_infos, Genode::List<Orig_copy_info> &memory_infos)
+Genode::List<Ref_badge> Checkpointer::_create_region_map_dataspaces(
+			Genode::List<Pd_session_component> &pd_sessions, Genode::List<Rm_session_component> *rm_sessions)
 {
-	Ref_badge *mands_info = mands_infos.first();
-	while(mands_info)
-	{
-		Orig_copy_info *oc_info = memory_infos.first();
-		if(oc_info) oc_info = oc_info->find_by_orig_badge(mands_info->ref_badge);
-		if(oc_info)
-		{
-			memory_infos.remove(oc_info);
-			Genode::destroy(_alloc, oc_info);
-		}
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
-		mands_info = mands_info->next();
+	Genode::List<Ref_badge> result_list;
+
+	// Region maps of PD session
+	Pd_session_component *pd_session = pd_sessions.first();
+	while(pd_session)
+	{
+		Ref_badge *new_ref = nullptr;
+
+		// Address space
+		new_ref = new (_alloc) Ref_badge(pd_session->address_space_component().parent_state().ds_cap.local_name());
+		result_list.insert(new_ref);
+
+		// Stack area
+		new_ref = new (_alloc) Ref_badge(pd_session->stack_area_component().parent_state().ds_cap.local_name());
+		result_list.insert(new_ref);
+
+		// Linker area
+		new_ref = new (_alloc) Ref_badge(pd_session->linker_area_component().parent_state().ds_cap.local_name());
+		result_list.insert(new_ref);
+
+		pd_session = pd_session->next();
 	}
+
+	// Region maps of RM session, if there are any
+	if(rm_sessions)
+	{
+		Rm_session_component *rm_session = rm_sessions->first();
+		while(rm_session)
+		{
+			Region_map_component *region_map = rm_session->parent_state().region_maps.first();
+			while(region_map)
+			{
+				Ref_badge *new_ref = new (_alloc) Ref_badge(region_map->parent_state().ds_cap.local_name());
+				result_list.insert(new_ref);
+
+				region_map = region_map->next();
+			}
+
+			rm_session = rm_session->next();
+		}
+	}
+
+	return result_list;
 }
 
 
-void Checkpointer::_resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_info> &memory_infos)
+Genode::List<Orig_copy_ckpt_info> Checkpointer::_create_memory_to_checkpoint(Genode::List<Orig_copy_count_info> &copy_dataspaces)
 {
+	Genode::List<Orig_copy_ckpt_info> result_list;
+
+	Orig_copy_count_info *occ_info = copy_dataspaces.first();
+	while(occ_info)
+	{
+		Orig_copy_ckpt_info *new_info = new (_alloc) Orig_copy_ckpt_info(occ_info->orig_ds_cap, occ_info->copy_ds_cap,
+				0, occ_info->size);
+		result_list.insert(new_info);
+
+		occ_info = occ_info->next();
+	}
+
+	return result_list;
+}
+
+
+void Checkpointer::_resolve_inc_checkpoint_dataspaces(
+		Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_ckpt_info> &memory_infos)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Ram_session_component *ram_session = ram_sessions.first();
 	while(ram_session)
 	{
@@ -1148,7 +1211,7 @@ void Checkpointer::_resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_c
 			if(ramds_info->mrm_info)
 			{
 				// Find corresponding memory_info
-				Orig_copy_info *memory_info = memory_infos.first();
+				Orig_copy_ckpt_info *memory_info = memory_infos.first();
 				if(memory_info) memory_info = memory_info->find_by_orig_badge(ramds_info->ds_cap.local_name());
 				if(memory_info)
 				{
@@ -1159,7 +1222,7 @@ void Checkpointer::_resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_c
 					Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();
 					if(dd_info && dd_info->attached)
 					{
-						Orig_copy_info *new_oc_info = new (_alloc) Orig_copy_info(dd_info->ds_cap,
+						Orig_copy_ckpt_info *new_oc_info = new (_alloc) Orig_copy_ckpt_info(dd_info->ds_cap,
 								memory_info->copy_ds_cap, dd_info->rel_addr, dd_info->size);
 						memory_infos.insert(new_oc_info);
 
@@ -1176,6 +1239,7 @@ void Checkpointer::_resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_c
 
 		ram_session = ram_session->next();
 	}
+
 }
 
 
@@ -1205,9 +1269,47 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 }
 
 
-void Checkpointer::_checkpoint_dataspaces(Genode::List<Orig_copy_info> &memory_infos)
+void Checkpointer::_destroy_memory_to_checkpoint(Genode::List<Orig_copy_ckpt_info> &memory_infos)
 {
-	Orig_copy_info *memory_info = memory_infos.first();
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
+	while(Orig_copy_ckpt_info *info = memory_infos.first())
+	{
+		memory_infos.remove(info);
+		Genode::destroy(_alloc, info);
+	}
+}
+
+
+void Checkpointer::_destroy_region_map_dataspaces(Genode::List<Ref_badge> &mands_infos)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
+	while(Ref_badge *info = mands_infos.first())
+	{
+		mands_infos.remove(info);
+		Genode::destroy(_alloc, info);
+	}
+}
+
+
+void Checkpointer::_destroy_copy_dataspaces(Genode::List<Orig_copy_count_info> known_infos)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
+	while(Orig_copy_count_info *info = known_infos.first())
+	{
+		known_infos.remove(info);
+		Genode::destroy(_alloc, info);
+	}
+}
+
+
+void Checkpointer::_checkpoint_dataspaces(Genode::List<Orig_copy_ckpt_info> &memory_infos)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
+	Orig_copy_ckpt_info *memory_info = memory_infos.first();
 	while(memory_info)
 	{
 		if(!memory_info->checkpointed)
@@ -1225,6 +1327,10 @@ void Checkpointer::_checkpoint_dataspaces(Genode::List<Orig_copy_info> &memory_i
 void Checkpointer::_checkpoint_dataspace_content(Genode::Dataspace_capability orig_ds_cap,
 		Genode::Ram_dataspace_capability copy_ds_cap, Genode::addr_t copy_rel_addr, Genode::size_t copy_size)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(orig ", orig_ds_cap,
+			", copy ", copy_ds_cap, ", copy_rel_addr=", Genode::Hex(copy_rel_addr),
+			", copy_size=", Genode::Hex(copy_size), ")");
+
 	char *orig = _state._env.rm().attach(orig_ds_cap);
 	char *copy = _state._env.rm().attach(copy_ds_cap);
 
@@ -1239,22 +1345,23 @@ Checkpointer::Checkpointer(Genode::Allocator &alloc, Target_child &child, Target
 :
 	_alloc(alloc), _child(child), _state(state)
 {
-	if(verbose_debug) Genode::log("\033[33m", "Checkpointer", "\033[0m(child=", &_child, ", state=", &_state, ")");
+	if(verbose_debug) Genode::log("\033[33m", "Checkpointer", "\033[0m(...)");
 }
 
 Checkpointer::~Checkpointer()
 {
-	if(verbose_debug) Genode::log("\033[33m", "~Checkpointer", "\033[0m child=", &_child, ", state=", &_state);
+	if(verbose_debug) Genode::log("\033[33m", "~Checkpointer", "\033[0m");
 
 	_destroy_cap_map_infos(_capability_map_infos);
 	_destroy_memory_to_checkpoint(_memory_to_checkpoint);
 	_destroy_region_map_dataspaces(_region_map_dataspaces);
-	_destroy_known_dataspaces(_known_dataspaces);
+	_destroy_copy_dataspaces(_copy_dataspaces);
 }
 
 
 void Checkpointer::checkpoint()
 {
+	using Genode::log;
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 
 	// Pause child
@@ -1263,7 +1370,39 @@ void Checkpointer::checkpoint()
 	// Create mapping of badge to kcap
 	_capability_map_infos = _create_cap_map_infos();
 
+	if(verbose_debug)
+	{
+		Genode::log("Capability map:");
+		Badge_kcap_info const *info = _capability_map_infos.first();
+		if(!info) Genode::log(" <empty>\n");
+		while(info)
+		{
+			Genode::log(" ", *info);
+			info = info->next();
+		}
+	}
+
+	// Create a list of region map dataspaces which are known to child
+	// These dataspaces are ignored when creating copy dataspaces
+	// For new intercepted sessions which trade managed dataspaces between child and themselves,
+	// the region map dataspace capability has to be inserted into this list
+	Genode::List<Rm_session_component> *rm_sessions = nullptr;
+	if(_child.custom_services().rm_root) rm_sessions = &_child.custom_services().rm_root->session_infos();
+	_region_map_dataspaces = _create_region_map_dataspaces(_child.custom_services().pd_root->session_infos(), rm_sessions);
+
+	if(verbose_debug)
+	{
+		Genode::log("Region map dataspaces:");
+		Ref_badge const *info = _region_map_dataspaces.first();
+		while(info)
+		{
+			Genode::log(" ", *info);
+			info = info->next();
+		}
+	}
+
 	// Prepare state lists
+	// implicitly _copy_dataspaces modified with the child's currently known dataspaces and copy dataspaces
 	_prepare_pd_sessions(_state._stored_pd_sessions, _child.custom_services().pd_root->session_infos());
 	_prepare_cpu_sessions(_state._stored_cpu_sessions, _child.custom_services().cpu_root->session_infos());
 	_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
@@ -1274,11 +1413,33 @@ void Checkpointer::checkpoint()
 	if(_child.custom_services().timer_root)
 		_prepare_timer_sessions(_state._stored_timer_sessions, _child.custom_services().timer_root->session_infos());
 
-	// Remove region maps from memory_to_checkpoint
-	_remove_region_map_dataspaces(_region_map_dataspaces, _memory_to_checkpoint);
+	if(verbose_debug)
+	{
+		Genode::log("Copy dataspaces");
+		Orig_copy_count_info *info = _copy_dataspaces.first();
+		while(info)
+		{
+			Genode::log(" ", *info);
+			info = info->next();
+		}
+	}
+
+	// Create list of dataspace capabilities which will be checkpointed in a separate phase
+	_memory_to_checkpoint = _create_memory_to_checkpoint(_copy_dataspaces);
 
 	// Resolve managed dataspaces from incremental checkpoint to simple dataspaces in memory_to_checkpoint
 	_resolve_inc_checkpoint_dataspaces(_child.custom_services().ram_root->session_infos(), _memory_to_checkpoint);
+
+	if(verbose_debug)
+	{
+		Genode::log("Memory to checkpoint");
+		Orig_copy_ckpt_info *info = _memory_to_checkpoint.first();
+		while(info)
+		{
+			Genode::log(" ", *info);
+			info = info->next();
+		}
+	}
 
 	// Detach all designated dataspaces
 	_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
@@ -1286,20 +1447,8 @@ void Checkpointer::checkpoint()
 	// Checkpoint memory in memory_to_checkpoint
 	_checkpoint_dataspaces(_memory_to_checkpoint);
 
-	//Genode::log(_child);
-	//Genode::log(_state);
-	// kcap, badge mapping
-	if(false)
-	{
-		Genode::log("Capability map:");
-		const Badge_kcap_info *info = _capability_map_infos.first();
-		if(!info) Genode::log(" <empty>\n");
-		while(info)
-		{
-			Genode::log(" ", *info);
-			info = info->next();
-		}
-	}
+	if(verbose_debug) Genode::log(_child);
+	if(verbose_debug) Genode::log(_state);
 
 	// Destroy list elements
 	_destroy_cap_map_infos(_capability_map_infos);

@@ -8,6 +8,7 @@
 #define _RTCR_THREAD_INFO_H_
 
 /* Genode includes */
+#include <cpu_session/cpu_session.h>
 #include <thread/capability.h>
 
 /* Rtcr includes */
@@ -23,7 +24,7 @@ namespace Rtcr {
 struct Rtcr::Cpu_thread_info : Normal_rpc_info
 {
 	// Creation arguments
-	const char*                 const name;
+	Genode::Cpu_session::Name   const name;
 	Genode::Cpu_session::Weight const weight;
 	Genode::addr_t              const utcb;
 

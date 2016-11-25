@@ -14,6 +14,8 @@ using namespace Genode;
 
 struct Base
 {
+	unsigned a;
+
 	void print(Genode::Output &output) const
 	{
 		Genode::print(output, "Base");
@@ -22,6 +24,8 @@ struct Base
 
 struct Derived : Base
 {
+	unsigned b;
+
 	void print(Genode::Output &output) const
 	{
 		Base::print(output);
@@ -34,9 +38,10 @@ size_t Component::stack_size() { return 64*1024; }
 
 void Component::construct(Genode::Env &env)
 {
-	Derived d;
+	Derived &d = Derived();
 
-	log(d);
+	log(sizeof(d));
+
 
 	log("Hello world!");
 }

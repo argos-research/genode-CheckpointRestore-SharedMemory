@@ -41,7 +41,7 @@ struct Rtcr::Stored_general_info
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ", ", badge, ">", "bootstrapped=", bootstrapped);
+		Genode::print(output, "<", Hex(kcap), ", ", badge, ">", " bootstrapped=", bootstrapped);
 	}
 };
 

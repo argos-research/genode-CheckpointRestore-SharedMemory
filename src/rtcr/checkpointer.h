@@ -17,13 +17,13 @@
 #include "target_child.h"
 #include "util/ref_badge.h"
 #include "util/badge_kcap_info.h"
-#include "util/orig_badge_info.h"
-#include "util/orig_copy_info.h"
+#include "util/orig_copy_ckpt_info.h"
+#include "util/orig_copy_count_info.h"
 
 namespace Rtcr {
 	class Checkpointer;
 
-	constexpr bool checkpointer_verbose_debug = false;
+	constexpr bool checkpointer_verbose_debug = true;
 }
 
 
@@ -55,11 +55,11 @@ private:
 	/**
 	 * Mapping to find a copy dataspace for a given original dataspace badge
 	 */
-	Genode::List<Orig_badge_info> _known_dataspaces;
+	Genode::List<Orig_copy_count_info> _copy_dataspaces;
 	/**
 	 * Memory regions to checkpoint
 	 */
-	Genode::List<Orig_copy_info> _memory_to_checkpoint;
+	Genode::List<Orig_copy_ckpt_info> _memory_to_checkpoint;
 	/**
 	 * List of dataspace badges which are (known) managed dataspaces
 	 * These dataspaces are not needed to be copied
@@ -67,9 +67,6 @@ private:
 	Genode::List<Ref_badge> _region_map_dataspaces;
 
 
-	void _destroy_memory_to_checkpoint(Genode::List<Orig_copy_info> &memory_infos);
-	void _destroy_region_map_dataspaces(Genode::List<Ref_badge> &mands_infos);
-	void _destroy_known_dataspaces(Genode::List<Orig_badge_info> known_infos);
 	/**
 	 * \brief Prepares the capability map state_infos
 	 *
@@ -135,11 +132,17 @@ private:
 	void _prepare_timer_sessions(Genode::List<Stored_timer_session_info> &stored_infos, Genode::List<Timer_session_component> &child_infos);
 	void _destroy_stored_timer_session(Stored_timer_session_info &stored_info);
 
-	void _remove_region_map_dataspaces(Genode::List<Ref_badge> &mands_infos, Genode::List<Orig_copy_info> &memory_infos);
-	void _resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_info> &memory_infos);
+	Genode::List<Ref_badge> _create_region_map_dataspaces(
+			Genode::List<Pd_session_component> &pd_sessions, Genode::List<Rm_session_component> *rm_sessions);
+	Genode::List<Orig_copy_ckpt_info> _create_memory_to_checkpoint(Genode::List<Orig_copy_count_info> &copy_dataspaces);
+	void _resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_ckpt_info> &memory_infos);
 	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 
-	void _checkpoint_dataspaces(Genode::List<Orig_copy_info> &memory_infos);
+	void _destroy_memory_to_checkpoint(Genode::List<Orig_copy_ckpt_info> &memory_infos);
+	void _destroy_region_map_dataspaces(Genode::List<Ref_badge> &mands_infos);
+	void _destroy_copy_dataspaces(Genode::List<Orig_copy_count_info> known_infos);
+
+	void _checkpoint_dataspaces(Genode::List<Orig_copy_ckpt_info> &memory_infos);
 	void _checkpoint_dataspace_content(Genode::Dataspace_capability orig_ds_cap, Genode::Ram_dataspace_capability copy_ds_cap,
 			Genode::addr_t copy_addr, Genode::size_t copy_size);
 

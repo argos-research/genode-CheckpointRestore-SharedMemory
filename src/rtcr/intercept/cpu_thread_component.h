@@ -36,10 +36,6 @@ private:
 	 */
 	Genode::Allocator         &_md_alloc;
 	/**
-	 * Name of the thread
-	 */
-	const char *               _name;
-	/**
 	 * Wrapped region map from parent, usually core
 	 */
 	Genode::Cpu_thread_client  _parent_cpu_thread;

@@ -56,7 +56,7 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 		Genode::print(output, ", attached_ds_badge=", attached_ds_badge, " ");
 		Genode::print(output, " [", Hex(rel_addr, Hex::PREFIX, Hex::PAD));
 		Genode::print(output, ", ", Hex(rel_addr + size - offset, Hex::PREFIX, Hex::PAD));
-		Genode::print(output, ") exec=", executable, ", ");
+		Genode::print(output, ") exec=", executable);
 	}
 
 };

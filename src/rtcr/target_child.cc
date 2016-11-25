@@ -259,73 +259,6 @@ void Target_child::print(Genode::Output &output) const
 	print(output, "###    Target_child    ###\n");
 	print(output, "##########################\n");
 
-	// RM sessions
-	{
-		print(output, "RM sessions:\n");
-		if(!_custom_services.rm_root)
-			print(output, " <empty>\n");
-		else
-		{
-			Rm_session_component const *rm_session = _custom_services.rm_root->session_infos().first();
-			if(!rm_session) print(output, " <empty>\n");
-			while(rm_session)
-			{
-				print(output, " ", rm_session->cap(), " ", rm_session->parent_state(), "\n");
-
-				Region_map_component const *region_map = rm_session->parent_state().region_maps.first();
-				if(!region_map) print(output, "  <empty>\n");
-				while(region_map)
-				{
-					print(output, "  ", region_map->cap(), " ", region_map->parent_state(), "\n");
-
-					Attached_region_info const *attached_info = region_map->parent_state().attached_regions.first();
-					if(!attached_info) print(output, "  <empty>\n");
-					while(attached_info)
-					{
-						print(output, "   ", *attached_info, "\n");
-
-						attached_info = attached_info->next();
-					}
-					region_map = region_map->next();
-				}
-				rm_session = rm_session->next();
-			}
-		}
-	}
-	// LOG sessions
-	{
-		print(output, "LOG sessions:\n");
-		if(!_custom_services.log_root)
-			print(output, " <empty>\n");
-		else
-		{
-			Log_session_component const *log_session = _custom_services.log_root->session_infos().first();
-			if(!log_session) print(output, " <empty>\n");
-			while(log_session)
-			{
-				print(output, " ", log_session->cap(), " ", log_session->parent_state(), "\n");
-				log_session = log_session->next();
-			}
-
-		}
-	}
-	// Timer sessions
-	{
-		print(output, "Timer sessions:\n");
-		if(!_custom_services.timer_root)
-			print(output, " <empty>\n");
-		else
-		{
-			Timer_session_component const *timer_session = _custom_services.timer_root->session_infos().first();
-			if(!timer_session) print(output, " <empty>\n");
-			while(timer_session)
-			{
-				print(output, " ", timer_session->cap(), " ", timer_session->parent_state(), "\n");
-				timer_session = timer_session->next();
-			}
-
-		}
-	}
 	// PD session
 	{
 		print(output, "PD sessions:\n");
@@ -448,17 +381,93 @@ void Target_child::print(Genode::Output &output) const
 		{
 			print(output, " ", ram_session->cap(), " ", ram_session->parent_state(), "\n");
 			Ram_dataspace_info const *ramds_info = ram_session->parent_state().ram_dataspaces.first();
-			if(ramds_info->mrm_info)
+			if(!ramds_info) print(output, "  <empty>\n");
+			while(ramds_info)
 			{
-				Designated_dataspace_info const *dd_info = ramds_info->mrm_info->dd_infos.first();
-				if(!dd_info) print(output, "  <empty>\n");
-				while(dd_info)
+				print(output, "  ", *ramds_info, "\n");
+
+				if(ramds_info->mrm_info)
 				{
-					print(output, "  ", *dd_info, "\n");
-					dd_info = dd_info->next();
+					Designated_dataspace_info const *dd_info = ramds_info->mrm_info->dd_infos.first();
+					if(!dd_info) print(output, "   <empty>\n");
+					while(dd_info)
+					{
+						print(output, "   ", *dd_info, "\n");
+						dd_info = dd_info->next();
+					}
 				}
+
+				ramds_info = ramds_info->next();
 			}
+
 			ram_session = ram_session->next();
+		}
+	}
+	// RM sessions
+	{
+		print(output, "RM sessions:\n");
+		if(!_custom_services.rm_root)
+			print(output, " <empty>\n");
+		else
+		{
+			Rm_session_component const *rm_session = _custom_services.rm_root->session_infos().first();
+			if(!rm_session) print(output, " <empty>\n");
+			while(rm_session)
+			{
+				print(output, " ", rm_session->cap(), " ", rm_session->parent_state(), "\n");
+
+				Region_map_component const *region_map = rm_session->parent_state().region_maps.first();
+				if(!region_map) print(output, "  <empty>\n");
+				while(region_map)
+				{
+					print(output, "  ", region_map->cap(), " ", region_map->parent_state(), "\n");
+
+					Attached_region_info const *attached_info = region_map->parent_state().attached_regions.first();
+					if(!attached_info) print(output, "  <empty>\n");
+					while(attached_info)
+					{
+						print(output, "   ", *attached_info, "\n");
+
+						attached_info = attached_info->next();
+					}
+					region_map = region_map->next();
+				}
+				rm_session = rm_session->next();
+			}
+		}
+	}
+	// LOG sessions
+	{
+		print(output, "LOG sessions:\n");
+		if(!_custom_services.log_root)
+			print(output, " <empty>\n");
+		else
+		{
+			Log_session_component const *log_session = _custom_services.log_root->session_infos().first();
+			if(!log_session) print(output, " <empty>\n");
+			while(log_session)
+			{
+				print(output, " ", log_session->cap(), " ", log_session->parent_state(), "\n");
+				log_session = log_session->next();
+			}
+
+		}
+	}
+	// Timer sessions
+	{
+		print(output, "Timer sessions:\n");
+		if(!_custom_services.timer_root)
+			print(output, " <empty>\n");
+		else
+		{
+			Timer_session_component const *timer_session = _custom_services.timer_root->session_infos().first();
+			if(!timer_session) print(output, " <empty>\n");
+			while(timer_session)
+			{
+				print(output, " ", timer_session->cap(), " ", timer_session->parent_state(), "\n");
+				timer_session = timer_session->next();
+			}
+
 		}
 	}
 

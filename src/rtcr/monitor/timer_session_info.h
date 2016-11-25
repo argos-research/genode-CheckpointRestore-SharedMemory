@@ -35,7 +35,7 @@ struct Rtcr::Timer_session_info : Session_rpc_info
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "sigh ", sigh, ", timeout=", timeout, "periodic=", periodic, ", ");
+		Genode::print(output, "sigh ", sigh, ", timeout=", timeout, ", periodic=", periodic, ", ");
 		Session_rpc_info::print(output);
 	}
 };

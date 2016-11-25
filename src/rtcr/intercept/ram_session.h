@@ -28,7 +28,7 @@ namespace Rtcr {
 	class Ram_root;
 
 	constexpr bool fh_verbose_debug = false;
-	constexpr bool ram_verbose_debug = false;
+	constexpr bool ram_verbose_debug = true;
 	constexpr bool ram_root_verbose_debug = false;
 }
 

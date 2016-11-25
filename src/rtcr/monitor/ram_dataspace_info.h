@@ -63,8 +63,8 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 	{
 		using Genode::Hex;
 
-		Normal_obj_info::print(output);
 		Genode::print(output, ds_cap, ", size=", Hex(size), ", cached=", static_cast<unsigned>(cached), ", ");
+		Normal_obj_info::print(output);
 	}
 };
 
