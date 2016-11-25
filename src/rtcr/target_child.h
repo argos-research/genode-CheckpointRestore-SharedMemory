@@ -84,7 +84,6 @@ private:
 	 */
 	struct Custom_services
 	{
-		using Genode::Local_service;
 	private:
 		Genode::Env        &_env;
 		Genode::Allocator  &_md_alloc;
@@ -92,25 +91,25 @@ private:
 		bool &_bootstrap_phase;
 	public:
 		Pd_root *pd_root = nullptr;
-		Local_service *pd_service = nullptr;
+		Genode::Local_service *pd_service = nullptr;
 
 		Cpu_root *cpu_root = nullptr;
-		Local_service *cpu_service = nullptr;
+		Genode::Local_service *cpu_service = nullptr;
 
 		Ram_root *ram_root  = nullptr;
-		Local_service *ram_service = nullptr;
+		Genode::Local_service *ram_service = nullptr;
 
 		Rom_root *rom_root  = nullptr;
-		Local_service *rom_service = nullptr;
+		Genode::Local_service *rom_service = nullptr;
 
 		Rm_root *rm_root  = nullptr;
-		Local_service *rm_service = nullptr;
+		Genode::Local_service *rm_service = nullptr;
 
 		Log_root *log_root  = nullptr;
-		Local_service *log_service = nullptr;
+		Genode::Local_service *log_service = nullptr;
 
 		Timer_root *timer_root  = nullptr;
-		Local_service *timer_service = nullptr;
+		Genode::Local_service *timer_service = nullptr;
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 				Genode::size_t granularity, bool &bootstrap_phase);

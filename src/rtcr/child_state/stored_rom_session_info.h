@@ -50,7 +50,7 @@ struct Rtcr::Stored_rom_session_info : Stored_session_info, Genode::List<Stored_
 
 		Stored_session_info::print(output);
 		Genode::print(output, ", dataspace_badge=", dataspace_badge,
-				", sigh_badge=", sigh_badge, ", copy_ds ", memory_content);
+				", sigh_badge=", sigh_badge);
 	}
 
 };

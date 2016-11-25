@@ -16,13 +16,13 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 	_env(env), _md_alloc(md_alloc), _resource_ep(ep), _bootstrap_phase(bootstrap_phase)
 {
 	pd_root  = new (_md_alloc) Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-	pd_service = new (_md_alloc) Local_service("PD", pd_root);
+	pd_service = new (_md_alloc) Genode::Local_service("PD", pd_root);
 
 	cpu_root = new (_md_alloc) Cpu_root(_env, _md_alloc, _resource_ep, *pd_root, _bootstrap_phase);
-	cpu_service = new (_md_alloc) Local_service("CPU", cpu_root);
+	cpu_service = new (_md_alloc) Genode::Local_service("CPU", cpu_root);
 
 	ram_root = new (_md_alloc) Ram_root(_env, _md_alloc, _resource_ep, granularity, _bootstrap_phase);
-	ram_service = new (_md_alloc) Local_service("RAM", ram_root);
+	ram_service = new (_md_alloc) Genode::Local_service("RAM", ram_root);
 }
 
 Target_child::Custom_services::~Custom_services()
@@ -69,25 +69,25 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 	else if(!Genode::strcmp(service_name, "ROM"))
 	{
 		if(!rom_root)    rom_root = new (_md_alloc) Rom_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-		if(!rom_service) rom_service = new (_md_alloc) Local_service("ROM", rom_root);
+		if(!rom_service) rom_service = new (_md_alloc) Genode::Local_service("ROM", rom_root);
 		service = rom_service;
 	}
 	else if(!Genode::strcmp(service_name, "RM"))
 	{
 		if(!rm_root)    rm_root = new (_md_alloc) Rm_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-		if(!rm_service) rm_service = new (_md_alloc) Local_service("ROM", rm_root);
+		if(!rm_service) rm_service = new (_md_alloc) Genode::Local_service("ROM", rm_root);
 		service = rm_service;
 	}
 	else if(!Genode::strcmp(service_name, "LOG"))
 	{
 		if(!log_root)    log_root = new (_md_alloc) Log_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-		if(!log_service) log_service = new (_md_alloc) Local_service("ROM", log_root);
+		if(!log_service) log_service = new (_md_alloc) Genode::Local_service("ROM", log_root);
 		service = log_service;
 	}
 	else if(!Genode::strcmp(service_name, "Timer"))
 	{
 		if(!timer_root)    timer_root = new (_md_alloc) Timer_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-		if(!timer_service) timer_service = new (_md_alloc) Local_service("ROM", timer_root);
+		if(!timer_service) timer_service = new (_md_alloc) Genode::Local_service("ROM", timer_root);
 		service = timer_service;
 	}
 
@@ -143,7 +143,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 	// Preparing argument string
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
-			"priority=0x%lx, ram_quota=%u, label=\"%s\"",
+			"priority=0x%x, ram_quota=%u, label=\"%s\"",
 			Genode::Cpu_session::DEFAULT_PRIORITY, 128*1024, label);
 
 	// Issuing session method of Cpu_root
@@ -167,7 +167,7 @@ Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_
 	// Preparing argument string
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
-			"ram_quota=%u, phys_start=0x%lx, phys_size=0x%zx, label=\"%s\"",
+			"ram_quota=%u, phys_start=0x%lx, phys_size=0x%lx, label=\"%s\"",
 			4*1024*sizeof(long), 0UL, 0UL, label);
 
 	// Issuing session method of Ram_root
@@ -376,7 +376,7 @@ void Target_child::print(Genode::Output &output) const
 				}
 
 				// Address space
-				Region_map_component const address_space = pd_session->address_space_component();
+				Region_map_component const &address_space = pd_session->address_space_component();
 				print(output, " Address space: ", address_space.cap(), " ", address_space.parent_state(), "\n");
 
 				Attached_region_info const *attached_info = address_space.parent_state().attached_regions.first();
@@ -389,7 +389,7 @@ void Target_child::print(Genode::Output &output) const
 				}
 
 				// Stack area
-				Region_map_component const stack_area = pd_session->stack_area_component();
+				Region_map_component const &stack_area = pd_session->stack_area_component();
 				print(output, " Stack area: ", stack_area.cap(), " ", stack_area.parent_state(), "\n");
 
 				attached_info = stack_area.parent_state().attached_regions.first();
@@ -402,7 +402,7 @@ void Target_child::print(Genode::Output &output) const
 				}
 
 				// Linker area
-				Region_map_component const linker_area = pd_session->linker_area_component();
+				Region_map_component const &linker_area = pd_session->linker_area_component();
 				print(output, " Linker area: ", linker_area.cap(), " ", linker_area.parent_state(), "\n");
 
 				attached_info = linker_area.parent_state().attached_regions.first();

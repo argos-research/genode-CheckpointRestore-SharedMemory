@@ -67,7 +67,7 @@ struct Rtcr::Stored_cpu_thread_info : Stored_normal_info, Genode::List<Stored_cp
 	{
 		using Genode::Hex;
 
-		Stored_normal_info(output);
+		Stored_normal_info::print(output);
 		Genode::print(output, ", name=", name, ", weight=", weight.value, ", utcb=", Hex(utcb));
 		Genode::print(output, ", started=", started, ", paused=", paused, ", single_step=", single_step);
 		Genode::print(output, ", affinity=(", affinity.xpos(), "x", affinity.ypos(),

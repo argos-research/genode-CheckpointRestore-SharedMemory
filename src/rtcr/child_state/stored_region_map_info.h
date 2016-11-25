@@ -34,8 +34,8 @@ struct Rtcr::Stored_region_map_info : Stored_normal_info, Genode::List<Stored_re
 				region_map.cap().local_name(),
 				region_map.parent_state().bootstrapped),
 		size(region_map.parent_state().size),
-		sigh_badge(region_map.parent_state().sigh.local_name()),
 		ds_badge(region_map.parent_state().ds_cap.local_name()),
+		sigh_badge(region_map.parent_state().sigh.local_name()),
 		stored_attached_region_infos()
 	{ }
 

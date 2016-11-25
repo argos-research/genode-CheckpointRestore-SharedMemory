@@ -40,9 +40,8 @@ struct Rtcr::Stored_general_info
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
-		using Genode::print;
 
-		print(output, "<", Hex(kcap), ", ", badge, ">", "bootstrapped=", bootstrapped);
+		Genode::print(output, "<", Hex(kcap), ", ", badge, ">", "bootstrapped=", bootstrapped);
 	}
 };
 
@@ -65,10 +64,9 @@ struct Rtcr::Stored_session_info : Stored_general_info
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
-		using Genode::print;
 
 		Stored_general_info::print(output);
-		print(output, ", cargs='", creation_args, "', uargs='", upgrade_args, "'");
+		Genode::print(output, ", cargs='", creation_args, "', uargs='", upgrade_args, "'");
 	}
 };
 
@@ -88,7 +86,6 @@ struct Rtcr::Stored_normal_info : Stored_general_info
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
-		using Genode::print;
 
 		Stored_general_info::print(output);
 	}

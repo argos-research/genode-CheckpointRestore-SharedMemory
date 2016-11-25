@@ -48,8 +48,8 @@ struct Rtcr::Stored_cpu_session_info : Stored_session_info, Genode::List<Stored_
 	{
 		using Genode::Hex;
 
-		Genode::print(output, " sigh_badge=", sigh_badge);
 		Stored_session_info::print(output);
+		Genode::print(output, ", sigh_badge=", sigh_badge);
 	}
 
 };

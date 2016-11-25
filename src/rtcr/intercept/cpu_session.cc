@@ -17,7 +17,7 @@ Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_c
 
 	// Create custom CPU thread
 	Cpu_thread_component *new_cpu_thread =
-			new (_md_alloc) Cpu_thread_component(_md_alloc, cpu_thread_cap, name, weight, utcb, affinity, _bootstrap_phase);
+			new (_md_alloc) Cpu_thread_component(_md_alloc, cpu_thread_cap, name.string(), weight, utcb, affinity, _bootstrap_phase);
 
 	// Manage custom CPU thread
 	_ep.manage(*new_cpu_thread);
@@ -127,7 +127,7 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 	}
 
 	// Create custom CPU thread
-	Cpu_thread_component new_cpu_thread = _create_thread(pd_session->parent_cap(), name, affinity, weight, utcb);
+	Cpu_thread_component &new_cpu_thread = _create_thread(pd_session->parent_cap(), name, affinity, weight, utcb);
 
 	if(verbose_debug) Genode::log("  Created custom CPU thread ", new_cpu_thread.cap());
 	return new_cpu_thread.cap();

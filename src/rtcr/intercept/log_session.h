@@ -9,6 +9,7 @@
 
 /* Genode includes */
 #include <log_session/connection.h>
+#include <base/allocator.h>
 #include <root/component.h>
 #include <util/list.h>
 

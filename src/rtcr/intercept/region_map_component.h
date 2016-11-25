@@ -10,6 +10,7 @@
 /* Genode includes */
 #include <region_map/client.h>
 #include <dataspace/client.h>
+#include <base/allocator.h>
 
 /* Rtcr includes */
 #include "../monitor/attached_region_info.h"

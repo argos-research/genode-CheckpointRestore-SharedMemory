@@ -54,7 +54,8 @@ struct Rtcr::Cpu_thread_info : Normal_rpc_info
 
 		Genode::print(output, "name=", name, ", weigth=", weight.value, ", utcb=", Hex(utcb), ", ");
 		Genode::print(output, "started=", started, ", paused=", paused, ", single_step=", single_step, ", ");
-		Genode::print(output, "affinity=", affinity, ", sigh ", sigh, ", ");
+		Genode::print(output, "affinity=(", affinity.xpos(), "x", affinity.ypos(), ", ", affinity.width(), "x", affinity.height());
+		Genode::print(output, "), sigh ", sigh, ", ");
 		Normal_rpc_info::print(output);
 
 /*

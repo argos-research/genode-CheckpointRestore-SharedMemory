@@ -8,7 +8,8 @@
 #define _RTCR_PD_SESSION_H_
 
 /* Genode includes */
-#include <base/log.h>
+#include <root/component.h>
+#include <base/allocator.h>
 #include <base/rpc_server.h>
 #include <pd_session/connection.h>
 

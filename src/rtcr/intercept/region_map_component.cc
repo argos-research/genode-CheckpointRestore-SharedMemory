@@ -14,9 +14,9 @@ Region_map_component::Region_map_component(Genode::Allocator &md_alloc, Genode::
 :
 	_md_alloc          (md_alloc),
 	_bootstrap_phase   (bootstrap_phase),
+	_label             (label),
 	_parent_region_map (region_map_cap),
-	_parent_state      (size, _parent_region_map.dataspace(), bootstrap_phase),
-	_label             (label)
+	_parent_state      (size, _parent_region_map.dataspace(), bootstrap_phase)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Rmap", "\033[0m<\033[35m", _label, "\033[0m>(parent ", _parent_region_map, ")");
 }

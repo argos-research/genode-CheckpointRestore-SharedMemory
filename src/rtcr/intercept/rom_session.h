@@ -8,9 +8,12 @@
 #define _RTCR_ROM_SESSION_COMPONENT_H_
 
 /* Genode includes */
+#include <root/component.h>
 #include <rom_session/connection.h>
+#include <dataspace/client.h>
 #include <base/rpc_server.h>
 #include <base/entrypoint.h>
+#include <base/allocator.h>
 
 /* Rtcr includes */
 #include "../monitor/rom_session_info.h"
@@ -83,7 +86,7 @@ private:
 	/**
 	 * Enable log output for debugging
 	 */
-	static constexpr bool verbose_debug = rm_root_verbose_debug;
+	static constexpr bool verbose_debug = rom_root_verbose_debug;
 
 	/**
 	 * Environment of Rtcr; is forwarded to a created session object

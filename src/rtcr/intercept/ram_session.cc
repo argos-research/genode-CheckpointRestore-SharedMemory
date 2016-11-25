@@ -210,7 +210,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		Ram_dataspace_info *new_ramds_info =
 				new (_md_alloc) Ram_dataspace_info(
 						Genode::static_cap_cast<Genode::Ram_dataspace>(new_rm_client.dataspace()),
-						size, cached, new_mrm_info, _bootstrap_phase);
+						size, cached, _bootstrap_phase, new_mrm_info);
 
 		// Set our pagefault handler for the Region_map with the  context of the Managed_region_map_info
 		new_rm_client.fault_handler(_receiver.manage(&new_mrm_info->context));
@@ -291,7 +291,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		auto result_cap = _parent_ram.alloc(size, cached);
 
 		// Create a Ram_dataspace_info to monitor the newly created Ram_dataspace
-		Ram_dataspace_info *new_rds_info = new (_md_alloc) Ram_dataspace_info(result_cap, size, cached, nullptr, _bootstrap_phase);
+		Ram_dataspace_info *new_rds_info = new (_md_alloc) Ram_dataspace_info(result_cap, size, cached, _bootstrap_phase);
 		Genode::Lock::Guard guard(_parent_state.ram_dataspaces_lock);
 		_parent_state.ram_dataspaces.insert(new_rds_info);
 
@@ -310,7 +310,7 @@ void Ram_session_component::free(Genode::Ram_dataspace_capability ds_cap)
 
 	// Find the Ram_dataspace_info which monitors the given Ram_dataspace
 	Ram_dataspace_info *rds_info = _parent_state.ram_dataspaces.first();
-	if(rds_info) rds_info = rds_info->find_by_cap(ds_cap);
+	if(rds_info) rds_info = rds_info->find_by_badge(ds_cap.local_name());
 
 	// Ram_dataspace_info found?
 	if(rds_info)
@@ -405,8 +405,8 @@ Ram_root::Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entryp
 	_env              (env),
 	_md_alloc         (md_alloc),
 	_ep               (session_ep),
-	_granularity      (granularity),
 	_bootstrap_phase  (bootstrap_phase),
+	_granularity      (granularity),
 	_objs_lock        (),
 	_session_rpc_objs ()
 {

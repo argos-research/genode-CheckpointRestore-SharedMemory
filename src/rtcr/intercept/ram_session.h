@@ -8,6 +8,8 @@
 #define _RTCR_RAM_SESSION_H_
 
 /* Genode includes */
+#include <root/component.h>
+#include <base/allocator.h>
 #include <base/rpc_server.h>
 #include <ram_session/connection.h>
 #include <rm_session/connection.h>

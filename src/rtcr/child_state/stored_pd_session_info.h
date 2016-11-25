@@ -32,17 +32,18 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
 	Stored_region_map_info stored_stack_area;
 	Stored_region_map_info stored_linker_area;
 
-	Stored_pd_session_info(Pd_session_component &pd_session, Genode::addr_t targets_kcap)
+	Stored_pd_session_info(Pd_session_component &pd_session, Genode::addr_t targets_pd_kcap,
+			Genode::addr_t targets_add_kcap, Genode::addr_t targets_sta_kcap, Genode::addr_t targets_lin_kcap)
 	:
 		Stored_session_info(pd_session.parent_state().creation_args.string(),
 				pd_session.parent_state().upgrade_args.string(),
-				targets_kcap,
+				targets_pd_kcap,
 				pd_session.cap().local_name(),
 				pd_session.parent_state().bootstrapped),
 		stored_context_infos(), stored_source_infos(), stored_native_cap_infos(),
-		stored_address_space(pd_session.address_space_component()),
-		stored_stack_area(pd_session.stack_area_component()),
-		stored_linker_area(pd_session.linker_area_component())
+		stored_address_space(pd_session.address_space_component(), targets_add_kcap),
+		stored_stack_area(pd_session.stack_area_component(), targets_sta_kcap),
+		stored_linker_area(pd_session.linker_area_component(), targets_lin_kcap)
 	{ }
 
 	Stored_pd_session_info *find_by_badge(Genode::uint16_t badge)

@@ -61,9 +61,9 @@ void Target_state::print(Genode::Output &output) const
 			}
 
 			// Address space
-			Stored_region_map_info const &region_map_info = pd_info->stored_address_space;
-			print(output, "  Address space: ", region_map_info,"\n");
-			Stored_attached_region_info const *attached_info = region_map_info.stored_attached_region_infos.first();
+			Stored_region_map_info const &address_space_info = pd_info->stored_address_space;
+			print(output, "  Address space: ", address_space_info,"\n");
+			Stored_attached_region_info const *attached_info = address_space_info.stored_attached_region_infos.first();
 			if(!attached_info) print(output, "   <empty>\n");
 			while(attached_info)
 			{
@@ -72,9 +72,9 @@ void Target_state::print(Genode::Output &output) const
 			}
 
 			// Stack area
-			region_map_info = pd_info->stored_stack_area;
-			print(output, "  Stack area: ", region_map_info,"\n");
-			attached_info = region_map_info.stored_attached_region_infos.first();
+			Stored_region_map_info const &stack_area_info = pd_info->stored_stack_area;
+			print(output, "  Stack area: ", stack_area_info,"\n");
+			attached_info = stack_area_info.stored_attached_region_infos.first();
 			if(!attached_info) print(output, "   <empty>\n");
 			while(attached_info)
 			{
@@ -83,9 +83,9 @@ void Target_state::print(Genode::Output &output) const
 			}
 
 			// Linker area
-			region_map_info = pd_info->stored_linker_area;
-			print(output, "  Linker area: ", region_map_info,"\n");
-			attached_info = region_map_info.stored_attached_region_infos.first();
+			Stored_region_map_info const &linker_area_info = pd_info->stored_linker_area;
+			print(output, "  Linker area: ", linker_area_info,"\n");
+			attached_info = linker_area_info.stored_attached_region_infos.first();
 			if(!attached_info) print(output, "   <empty>\n");
 			while(attached_info)
 			{

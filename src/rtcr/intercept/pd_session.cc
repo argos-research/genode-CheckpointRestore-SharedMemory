@@ -17,7 +17,7 @@ Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &
 	_ep              (ep),
 	_bootstrap_phase (bootstrap_phase),
 	_parent_pd       (env, label),
-	_parent_state    (creation_args, env),
+	_parent_state    (creation_args, _bootstrap_phase),
 	_address_space   (_md_alloc, _parent_pd.address_space(), 0, "address_space", _bootstrap_phase),
 	_stack_area      (_md_alloc, _parent_pd.stack_area(),    0, "stack_area", _bootstrap_phase),
 	_linker_area     (_md_alloc, _parent_pd.linker_area(),   0, "linker_area", _bootstrap_phase)
@@ -93,7 +93,7 @@ void Pd_session_component::free_signal_source(Genode::Capability<Genode::Signal_
 	// Find list element
 	Genode::Lock::Guard guard(_parent_state.signal_sources_lock);
 	Signal_source_info *ss_info = _parent_state.signal_sources.first();
-	if(ss_info) ss_info = ss_info->find_by_cap(cap);
+	if(ss_info) ss_info = ss_info->find_by_badge(cap.local_name());
 
 	// List element found?
 	if(ss_info)
@@ -137,7 +137,7 @@ void Pd_session_component::free_context(Genode::Signal_context_capability cap)
 	// Find list element
 	Genode::Lock::Guard guard(_parent_state.signal_contexts_lock);
 	Signal_context_info *sc_info = _parent_state.signal_contexts.first();
-	if(sc_info) sc_info = sc_info->find_by_sc_cap(cap);
+	if(sc_info) sc_info = sc_info->find_by_sc_badge(cap.local_name());
 
 	// List element found?
 	if(sc_info)
@@ -188,7 +188,7 @@ void Pd_session_component::free_rpc_cap(Genode::Native_capability cap)
 	// Find list element
 	Genode::Lock::Guard guard(_parent_state.native_caps_lock);
 	Native_capability_info *nc_info = _parent_state.native_caps.first();
-	if(nc_info) nc_info = nc_info->find_by_native_cap(cap);
+	if(nc_info) nc_info = nc_info->find_by_native_badge(cap.local_name());
 
 	// List element found?
 	if(nc_info)

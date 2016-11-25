@@ -7,9 +7,14 @@
 #ifndef _RTCR_CPU_THREAD_COMPONENT_H_
 #define _RTCR_CPU_THREAD_COMPONENT_H_
 
+/* Genode inlcudes */
 #include <cpu_thread/client.h>
+#include <base/allocator.h>
 #include <base/rpc_server.h>
 #include <base/entrypoint.h>
+
+/* Rtcr includes */
+#include "../monitor/cpu_thread_info.h"
 
 namespace Rtcr {
 	class Cpu_thread_component;

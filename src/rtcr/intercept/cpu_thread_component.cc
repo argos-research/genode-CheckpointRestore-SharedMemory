@@ -14,8 +14,8 @@ Cpu_thread_component::Cpu_thread_component(Genode::Allocator &md_alloc, Genode::
 		bool &bootstrap_phase)
 :
 	_md_alloc          (md_alloc),
-	_parent_cpu_thread (cpu_thread_cap),
 	_name              (name),
+	_parent_cpu_thread (cpu_thread_cap),
 	_parent_state      (name, weight, utcb, bootstrap_phase)
 {
 	_parent_state.affinity = affinity;

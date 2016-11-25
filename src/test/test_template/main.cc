@@ -12,14 +12,31 @@
 
 using namespace Genode;
 
+struct Base
+{
+	void print(Genode::Output &output) const
+	{
+		Genode::print(output, "Base");
+	}
+};
+
+struct Derived : Base
+{
+	void print(Genode::Output &output) const
+	{
+		Base::print(output);
+		Genode::print(output, " Derived");
+	}
+};
+
+
 size_t Component::stack_size() { return 64*1024; }
 
 void Component::construct(Genode::Env &env)
 {
-	char buf[160];
-	Genode::snprintf(buf, sizeof(buf), "ram_quota=%x, label=\"%s\"", 20*1024*sizeof(long), "abc");
+	Derived d;
 
-	log((const char*)buf);
+	log(d);
 
 	log("Hello world!");
 }

@@ -11,6 +11,9 @@
 #include <util/list.h>
 #include <base/signal.h>
 
+/* Rtcr includes */
+#include "info_structs.h"
+
 namespace Rtcr {
 	struct Signal_context_info;
 }

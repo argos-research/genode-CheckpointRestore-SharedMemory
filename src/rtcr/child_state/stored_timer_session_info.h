@@ -49,7 +49,7 @@ struct Rtcr::Stored_timer_session_info : Stored_session_info, Genode::List<Store
 	{
 		using Genode::Hex;
 
-		Stored_session_info:print(output);
+		Stored_session_info::print(output);
 		Genode::print(output, ", sigh_badge=", sigh_badge, ", timeout=", timeout, ", periodic=", periodic);
 	}
 

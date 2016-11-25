@@ -10,6 +10,7 @@
 /* Genode includes */
 #include <timer_session/connection.h>
 #include <root/component.h>
+#include <base/allocator.h>
 #include <util/list.h>
 
 /* Rtcr includes */

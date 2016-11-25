@@ -8,13 +8,16 @@
 #define _RTCR_CPU_SESSION_H_
 
 /* Genode includes */
+#include <root/component.h>
+#include <base/allocator.h>
 #include <base/rpc_server.h>
 #include <cpu_session/connection.h>
 #include <cpu_thread/client.h>
 
 /* Rtcr includes */
 #include "cpu_thread_component.h"
-#include "../monitor/cpu_thread_info.h"
+#include "pd_session.h"
+#include "../monitor/cpu_session_info.h"
 
 namespace Rtcr {
 	class Cpu_session_component;

@@ -87,7 +87,7 @@ Genode::Capability<Genode::Region_map> Rm_session_component::create(Genode::size
 	if(verbose_debug) Genode::log("Rm::\033[33m", __func__, "\033[0m(size=", size, ")");
 
 	// Create custom Region map
-	Region_map_component new_region_map = _create(size);
+	Region_map_component &new_region_map = _create(size);
 
 	if(verbose_debug) Genode::log("  result: ", new_region_map.cap());
 	return new_region_map.cap();

@@ -30,10 +30,6 @@ struct Rtcr::Signal_source_info : Normal_obj_info, Genode::List<Signal_source_in
 		cap(cap)
 	{ }
 
-	Signal_source_info *find_by_cap(Genode::Capability<Genode::Signal_source> cap)
-	{
-		return find_by_badge(cap.local_name());
-	}
 	Signal_source_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == cap.local_name())

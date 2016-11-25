@@ -136,7 +136,7 @@ private:
 	void _destroy_stored_timer_session(Stored_timer_session_info &stored_info);
 
 	void _remove_region_map_dataspaces(Genode::List<Ref_badge> &mands_infos, Genode::List<Orig_copy_info> &memory_infos);
-	void _resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_info> &memroy_infos);
+	void _resolve_inc_checkpoint_dataspaces(Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_info> &memory_infos);
 	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 
 	void _checkpoint_dataspaces(Genode::List<Orig_copy_info> &memory_infos);
