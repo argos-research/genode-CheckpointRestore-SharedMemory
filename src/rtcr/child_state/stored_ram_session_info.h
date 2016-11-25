@@ -11,36 +11,27 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/ram_session_component.h"
-#include "../util/ref_badge.h"
+#include "stored_info_structs.h"
+#include "stored_ram_dataspace_info.h"
+#include "../intercept/ram_session.h"
 
 namespace Rtcr {
 	struct Stored_ram_session_info;
 }
 
 
-struct Rtcr::Stored_ram_session_info : Genode::List<Stored_ram_session_info>::Element
+struct Rtcr::Stored_ram_session_info : Stored_session_info, Genode::List<Stored_ram_session_info>::Element
 {
-	/**
-	 * Child's kcap (kernel capability selector)
-	 */
-	Genode::addr_t    kcap;
-	/**
-	 * Genode's system-global capability identifier
-	 */
-	Genode::uint16_t  badge;
-	const char       *args;
-	Genode::List<Ref_badge> ref_badge_infos;
+	Genode::List<Stored_ram_dataspace_info> stored_ramds_infos;
 
-	Stored_ram_session_info()
+	Stored_ram_session_info(Ram_session_component &ram_session, Genode::addr_t targets_kcap)
 	:
-		kcap(0), badge(0), args(""), ref_badge_infos()
-	{ }
-
-	Stored_ram_session_info(Ram_session_component &comp)
-	:
-		kcap(0), badge(comp.cap().local_name()), args(""),
-		ref_badge_infos()
+		Stored_session_info(ram_session.parent_state().creation_args.string(),
+				ram_session.parent_state().upgrade_args.string(),
+				targets_kcap,
+				ram_session.cap().local_name(),
+				ram_session.parent_state().bootstrapped),
+		stored_ramds_infos()
 	{ }
 
 	Stored_ram_session_info *find_by_badge(Genode::uint16_t badge)
@@ -55,7 +46,7 @@ struct Rtcr::Stored_ram_session_info : Genode::List<Stored_ram_session_info>::El
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ", ", badge, "> args=", args);
+		Stored_session_info::print(output);
 	}
 
 };

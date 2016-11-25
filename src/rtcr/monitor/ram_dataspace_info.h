@@ -12,6 +12,9 @@
 #include <ram_session/ram_session.h>
 #include <region_map/client.h>
 
+/* Rtcr includes */
+#include "info_structs.h"
+
 namespace Rtcr {
 	struct Ram_dataspace_info;
 	struct Managed_region_map_info;
@@ -23,14 +26,14 @@ namespace Rtcr {
 /**
  * Monitors allocated Ram dataspaces
  */
-struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
+struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_info>::Element
 {
 	/**
 	 * Allocated Ram dataspace
 	 */
-	Genode::Ram_dataspace_capability ds_cap;
-	Genode::size_t                   size;
-	Genode::Cache_attribute          cached;
+	Genode::Ram_dataspace_capability const ds_cap;
+	Genode::size_t                   const size;
+	Genode::Cache_attribute          const cached;
 	/**
 	 * If the pointer is null, then this is an ordinary Ram dataspace.
 	 * If the pointer is not null, then this Ram dataspace is managed.
@@ -39,27 +42,29 @@ struct Rtcr::Ram_dataspace_info : Genode::List<Ram_dataspace_info>::Element
 	Managed_region_map_info *mrm_info;
 
 	Ram_dataspace_info(Genode::Ram_dataspace_capability ds_cap, Genode::size_t size, Genode::Cache_attribute cached,
-			Managed_region_map_info *mrm_info = nullptr)
+			bool bootstrapped, Managed_region_map_info *mrm_info = nullptr)
 	:
+		Normal_obj_info (bootstrapped),
 		ds_cap   (ds_cap),
 		size     (size),
 		cached   (cached),
 		mrm_info (mrm_info)
 	{ }
 
-	Ram_dataspace_info *find_by_cap(Genode::Dataspace_capability cap)
+	Ram_dataspace_info *find_by_badge(Genode::uint16_t badge)
 	{
-		if(cap == ds_cap)
+		if(badge == ds_cap.local_name())
 			return this;
-		Ram_dataspace_info *rds_info = next();
-		return rds_info ? rds_info->find_by_cap(cap) : 0;
+		Ram_dataspace_info *info = next();
+		return info ? info->find_by_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "ds ", ds_cap, ", size=", Hex(size), ", cached=", static_cast<unsigned>(cached));
+		Genode::print(output, ds_cap, ", size=", Hex(size), ", cached=", static_cast<unsigned>(cached), ", ");
+		Normal_obj_info::print(output);
 	}
 };
 
@@ -72,15 +77,15 @@ struct Rtcr::Managed_region_map_info
 	/**
 	 * Region_map which is monitored
 	 */
-	Genode::Capability<Genode::Region_map>  region_map_cap;
+	Genode::Capability<Genode::Region_map> const region_map_cap;
 	/**
 	 * List of designated Ram dataspaces
 	 */
 	Genode::List<Designated_dataspace_info> dd_infos;
 	/**
-	 * Signal context for receiving pagefaults
+	 * Signal context for receiving page faults
 	 */
-	Genode::Signal_context                  context;
+	Genode::Signal_context context;
 
 	Managed_region_map_info(Genode::Capability<Genode::Region_map> region_map_cap)
 	:
@@ -105,24 +110,24 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	/**
 	 * Reference to the Managed_region_map_info to which this dataspace belongs to
 	 */
-	Managed_region_map_info      &mrm_info;
+	Managed_region_map_info      const &mrm_info;
 	/**
 	 * Dataspace which will be attached to / detached from the Managed_region_map_info's Region_map
 	 */
-	Genode::Dataspace_capability  ds_cap;
+	Genode::Dataspace_capability const  ds_cap;
 	/**
 	 * Starting address of the dataspace; it is a relative address, because it is local
 	 * to the Region_map to which it will be attached
 	 */
-	Genode::addr_t                rel_addr;
+	Genode::addr_t               const rel_addr;
 	/**
 	 * Size of the dataspace
 	 */
-	Genode::size_t                size;
+	Genode::size_t               const size;
 	/**
 	 * Indicates whether this dataspace is attached to its Region_map
 	 */
-	bool                          attached;
+	bool attached;
 
 	/**
 	 * Constructor
@@ -155,22 +160,22 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "ds ", ds_cap, ", rel_addr=", Hex(rel_addr), " size=", Hex(size));
+		Genode::print(output, ds_cap, ", rel_addr=", Hex(rel_addr), " size=", Hex(size));
 	}
 	/**
 	 * Attach dataspace and mark it as attached
 	 */
 	void attach()
 	{
+		if(verbose_debug)
+		{
+			Genode::log("Attaching dataspace ", ds_cap,
+					" to region map ", mrm_info.region_map_cap,
+					" on location ", Genode::Hex(rel_addr));
+		}
+
 		if(!attached)
 		{
-			if(verbose_debug)
-			{
-				Genode::log("Attaching dataspace ", ds_cap,
-						" to region map ", mrm_info.region_map_cap,
-						" on location ", Genode::Hex(rel_addr));
-			}
-
 			// Attaching Dataspace to designated location
 			Genode::addr_t addr =
 					Genode::Region_map_client{mrm_info.region_map_cap}.attach_at(ds_cap, rel_addr);

@@ -43,9 +43,9 @@ struct Rtcr::Main
 		Checkpointer ckpt(heap, child, ts);
 		ckpt.checkpoint();
 
-		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
-		Restorer resto(heap, child_restored, ts);
-		child_restored.start(resto);
+		//Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
+		//Restorer resto(heap, child_restored, ts);
+		//child_restored.start(resto);
 
 		log("The End");
 		Genode::sleep_forever();

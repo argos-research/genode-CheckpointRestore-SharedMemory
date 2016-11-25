@@ -7,9 +7,14 @@
 #ifndef _RTCR_CPU_THREAD_COMPONENT_H_
 #define _RTCR_CPU_THREAD_COMPONENT_H_
 
+/* Genode inlcudes */
 #include <cpu_thread/client.h>
+#include <base/allocator.h>
 #include <base/rpc_server.h>
 #include <base/entrypoint.h>
+
+/* Rtcr includes */
+#include "../monitor/cpu_thread_info.h"
 
 namespace Rtcr {
 	class Cpu_thread_component;
@@ -17,7 +22,8 @@ namespace Rtcr {
 	constexpr bool cpu_thread_verbose_debug = false;
 }
 
-class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>
+class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>,
+                                   public Genode::List<Cpu_thread_component>::Element
 {
 private:
 	/**
@@ -26,37 +32,31 @@ private:
 	static constexpr bool verbose_debug = cpu_thread_verbose_debug;
 
 	/**
-	 * Entrypoint which manages this object
+	 * Allocator for Region map's attachments
 	 */
-	Genode::Entrypoint                 &_ep;
+	Genode::Allocator         &_md_alloc;
 	/**
 	 * Wrapped region map from parent, usually core
 	 */
-	Genode::Cpu_thread_client           _parent_cpu_thread;
+	Genode::Cpu_thread_client  _parent_cpu_thread;
 	/**
-	 * Name of the thread
+	 * State of parent's RPC object
 	 */
-	Genode::Cpu_session::Name           _name;
-	/**
-	 * Parent's session state
-	 */
-	struct State_info
-	{
-		bool                              started        {false};
-		bool                              paused         {false};
-		Genode::Signal_context_capability exception_sigh {};
-		bool                              single_step    {false};
-		Genode::Affinity::Location        affinity       {};
-	} _parent_state;
+	Cpu_thread_info            _parent_state;
 
 public:
 
-	Cpu_thread_component(Genode::Entrypoint &ep, Genode::Capability<Genode::Cpu_thread> cpu_th_cap,
-			Genode::Cpu_session::Name name, Genode::Affinity::Location affinity);
+	Cpu_thread_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Cpu_thread> cpu_thread_cap,
+			const char *name, Genode::Cpu_session::Weight weight, Genode::addr_t utcb, Genode::Affinity::Location affinity,
+			bool &bootstrap_phase);
 	~Cpu_thread_component();
 
-	Genode::Capability<Genode::Cpu_thread> parent_cap()   { return _parent_cpu_thread; }
-	State_info                             parent_state() { return _parent_state; }
+	Genode::Capability<Genode::Cpu_thread> parent_cap() { return _parent_cpu_thread; }
+
+	Cpu_thread_info &parent_state() { return _parent_state; }
+	Cpu_thread_info const &parent_state() const { return _parent_state; }
+
+	Cpu_thread_component *find_by_badge(Genode::uint16_t badge);
 
 	/******************************
 	 ** Cpu thread Rpc interface **

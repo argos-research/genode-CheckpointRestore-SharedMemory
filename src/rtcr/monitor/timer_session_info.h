@@ -1,5 +1,5 @@
 /*
- * \brief  Monitoring timer session creation/destruction
+ * \brief  Stores Timer session state
  * \author Denis Huber
  * \date   2016-10-07
  */
@@ -8,50 +8,35 @@
 #define _RTCR_TIMER_SESSION_INFO_H_
 
 /* Genode includes */
-#include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/timer_session.h"
+#include "info_structs.h"
 
 namespace Rtcr {
 	struct Timer_session_info;
 }
 
-
 /**
- * List element for monitoring session objects.
- * Each new connection from client to server is monitored here.
+ * State information about a Timer session
  */
-struct Rtcr::Timer_session_info : Genode::List<Timer_session_info>::Element
+struct Rtcr::Timer_session_info : Session_rpc_info
 {
-	/**
-	 * Reference to the session object; encapsulates capability and object's state
-	 */
-	Timer_session_component &session;
-	/**
-	 * Arguments provided for creating the session object
-	 */
-	const char *args;
+	Genode::Signal_context_capability sigh;
+	unsigned timeout;
+	bool     periodic;
 
-	Timer_session_info(Timer_session_component &comp, const char* args)
+	Timer_session_info(const char* creation_args, bool bootstrapped)
 	:
-		session(comp),
-		args(args)
+		Session_rpc_info(creation_args, "", bootstrapped),
+		sigh(), timeout(0), periodic(false)
 	{ }
-
-	Timer_session_info *find_by_ptr(Timer_session_component *ptr)
-	{
-		if(ptr == &session)
-			return this;
-		Timer_session_info *info = next();
-		return info ? info->find_by_ptr(ptr) : 0;
-	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "session ", session.cap(), ", args=", args);
+		Genode::print(output, "sigh ", sigh, ", timeout=", timeout, ", periodic=", periodic, ", ");
+		Session_rpc_info::print(output);
 	}
 };
 

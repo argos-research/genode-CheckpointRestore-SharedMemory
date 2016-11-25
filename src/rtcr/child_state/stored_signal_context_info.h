@@ -11,34 +11,24 @@
 #include <util/list.h>
 
 /* Rtcr includes */
+#include "stored_info_structs.h"
 #include "../monitor/signal_context_info.h"
 
 namespace Rtcr {
 	struct Stored_signal_context_info;
 }
 
-
-struct Rtcr::Stored_signal_context_info : Genode::List<Stored_signal_context_info>::Element
+struct Rtcr::Stored_signal_context_info : Stored_normal_info, Genode::List<Stored_signal_context_info>::Element
 {
-	/**
-	 * Child's kcap (kernel capability selector)
-	 */
-	Genode::addr_t   kcap;
-	/**
-	 * Genode's system-global capability identifier
-	 */
-	Genode::uint16_t badge;
-	Genode::uint16_t signal_source_badge;
-	unsigned long    imprint;
+	Genode::uint16_t const signal_source_badge;
+	unsigned long    const imprint;
 
-	Stored_signal_context_info()
+	Stored_signal_context_info(Signal_context_info &info, Genode::addr_t targets_kcap)
 	:
-		kcap(0), badge(0), signal_source_badge(0), imprint(0)
-	{ }
-
-	Stored_signal_context_info(Signal_context_info &info)
-	:
-		kcap(0), badge(info.sc_cap.local_name()), signal_source_badge(info.ss_cap.local_name()),
+		Stored_normal_info(targets_kcap,
+				info.sc_cap.local_name(),
+				info.bootstrapped),
+		signal_source_badge(info.ss_cap.local_name()),
 		imprint(info.imprint)
 	{ }
 
@@ -54,9 +44,8 @@ struct Rtcr::Stored_signal_context_info : Genode::List<Stored_signal_context_inf
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ", ", badge, ">",
-				" signal_source_badge=", signal_source_badge,
-				", imprint=", Hex(imprint));
+		Stored_normal_info::print(output);
+		Genode::print(output, ", signal_source_badge=", signal_source_badge, ", imprint=", Hex(imprint));
 	}
 
 };

@@ -1,64 +1,65 @@
 /*
- * \brief  Monitoring thread information
+ * \brief  Stores CPU thread state
  * \author Denis Huber
  * \date   2016-10-06
  */
 
-#ifndef _RTCR_THREAD_INFO_COMPONENT_H_
-#define _RTCR_THREAD_INFO_COMPONENT_H_
+#ifndef _RTCR_THREAD_INFO_H_
+#define _RTCR_THREAD_INFO_H_
 
 /* Genode includes */
-#include <util/list.h>
-#include <util/string.h>
+#include <cpu_session/cpu_session.h>
 #include <thread/capability.h>
-#include <cpu_thread/client.h>
 
 /* Rtcr includes */
-#include "../intercept/cpu_thread_component.h"
+#include "info_structs.h"
 
 namespace Rtcr {
-	struct Thread_info;
+	struct Cpu_thread_info;
 }
 
 /**
  * Struct which holds a thread capability which belong to the client
  */
-struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
+struct Rtcr::Cpu_thread_info : Normal_rpc_info
 {
-	Cpu_thread_component        &cpu_thread;
-	Genode::Cpu_session::Name    name;
-	Genode::Cpu_session::Weight  weight;
-	Genode::addr_t               utcb;
+	// Creation arguments
+	Genode::Cpu_session::Name   const name;
+	Genode::Cpu_session::Weight const weight;
+	Genode::addr_t              const utcb;
 
-	/**
-	 * Constructor
-	 */
-	Thread_info(Cpu_thread_component &cpu_thread, Genode::Cpu_session::Name name,
-			Genode::Cpu_session::Weight weight, Genode::addr_t utcb)
+	// Variable state
+	bool started;
+	bool paused;
+	bool single_step;
+	Genode::Affinity::Location        affinity;
+	Genode::Signal_context_capability sigh;
+
+	Cpu_thread_info(const char* name, Genode::Cpu_session::Weight weight, Genode::addr_t utcb,
+			bool bootstrapped)
 	:
-		cpu_thread (cpu_thread),
-		name       (name),
-		weight     (weight),
-		utcb       (utcb)
+		Normal_rpc_info (bootstrapped),
+		name        (name),
+		weight      (weight),
+		utcb        (utcb),
+		started     (false),
+		paused      (false),
+		single_step (false),
+		affinity    (),
+		sigh        ()
 	{ }
-
-	Thread_info *find_by_cap(Genode::Thread_capability cap)
-	{
-		if(cap == cpu_thread.cap())
-			return this;
-		Thread_info *thread_info = next();
-		return thread_info ? thread_info->find_by_cap(cap) : 0;
-	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::Cpu_thread_client thread_client (cpu_thread.cap());
-		Genode::Thread_state ts (thread_client.state());
+		Genode::print(output, "name=", name, ", weigth=", weight.value, ", utcb=", Hex(utcb), ", ");
+		Genode::print(output, "started=", started, ", paused=", paused, ", single_step=", single_step, ", ");
+		Genode::print(output, "affinity=(", affinity.xpos(), "x", affinity.ypos(), ", ", affinity.width(), "x", affinity.height());
+		Genode::print(output, "), sigh ", sigh, ", ");
+		Normal_rpc_info::print(output);
 
-		Genode::print(output, "thread ",cpu_thread.cap(), " weight=", weight.value, " utcb=", utcb, "\n");
-		Genode::print(output, "Thread ", name.string(), "\n");
+/*
 		Genode::print(output, "r0-r4: ", Hex(ts.r0, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.r1, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r2, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.r3, Hex::PREFIX, Hex::PAD), " ", Hex(ts.r4, Hex::PREFIX, Hex::PAD), "\n");
@@ -70,6 +71,7 @@ struct Rtcr::Thread_info : Genode::List<Thread_info>::Element
 		Genode::print(output, "sp, lr, ip, cpsr, cpu_e: ", Hex(ts.sp, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.lr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.ip, Hex::PREFIX, Hex::PAD), " ",
 				Hex(ts.cpsr, Hex::PREFIX, Hex::PAD), " ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD));
+*/
 	}
 };
 

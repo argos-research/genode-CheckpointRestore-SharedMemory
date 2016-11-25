@@ -11,34 +11,24 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../monitor/log_session_info.h"
+#include "stored_info_structs.h"
+#include "../intercept/log_session.h"
 
 namespace Rtcr {
 	struct Stored_log_session_info;
 }
 
 
-struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::Element
+struct Rtcr::Stored_log_session_info : Stored_session_info, Genode::List<Stored_log_session_info>::Element
 {
-	/**
-	 * Child's kcap (kernel capability selector)
-	 */
-	Genode::addr_t    kcap;
-	/**
-	 * Genode's system-global capability identifier
-	 */
-	Genode::uint16_t  badge;
-	const char       *args;
-	bool              bootstraped;
 
-	Stored_log_session_info()
+	Stored_log_session_info(Log_session_component &log_session, Genode::addr_t targets_kcap)
 	:
-		kcap(0), badge(0), args(""), bootstraped(false)
-	{ }
-
-	Stored_log_session_info(Log_session_info &info)
-	:
-		kcap(0), badge(info.session.cap().local_name()), args(info.args), bootstraped(info.bootstraped)
+		Stored_session_info(log_session.parent_state().creation_args.string(),
+				log_session.parent_state().upgrade_args.string(),
+				targets_kcap,
+				log_session.cap().local_name(),
+				log_session.parent_state().bootstrapped)
 	{ }
 
 	Stored_log_session_info *find_by_badge(Genode::uint16_t badge)
@@ -53,7 +43,7 @@ struct Rtcr::Stored_log_session_info : Genode::List<Stored_log_session_info>::El
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ", ", badge, "> args=", args, ", bootstraped=", bootstraped);
+		Stored_session_info::print(output);
 	}
 
 };

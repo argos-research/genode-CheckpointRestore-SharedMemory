@@ -1,5 +1,5 @@
 /*
- * \brief  Monitoring rm session creation/destruction
+ * \brief  Stores RM session state
  * \author Denis Huber
  * \date   2016-10-06
  */
@@ -11,46 +11,38 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../intercept/rm_session.h"
-
+#include "info_structs.h"
+#include "../intercept/region_map_component.h"
 
 namespace Rtcr {
 	struct Rm_session_info;
 }
 
 /**
- * List element for managing Rm_session_components
+ * State information about an RM session
  */
-struct Rtcr::Rm_session_info : Genode::List<Rm_session_info>::Element
+struct Rtcr::Rm_session_info : Session_rpc_info
 {
-	/**
-	 * Reference to the session object; encapsulates capability and object's state
-	 */
-	Rm_session_component &session;
-	/**
-	 * Arguments provided for creating the session object
-	 */
-	const char           *args;
+    /**
+     * Lock for infos list
+     */
+	Genode::Lock region_maps_lock;
+    /**
+     * List for monitoring Rpc object
+     */
+	Genode::List<Region_map_component> region_maps;
 
-	Rm_session_info(Rm_session_component &session, const char* args)
+	Rm_session_info(const char* creation_args, bool bootstrapped)
 	:
-		session (session),
-		args    (args)
+		Session_rpc_info(creation_args, "", bootstrapped),
+		region_maps_lock(), region_maps()
 	{ }
-
-	Rm_session_info *find_by_ptr(Rm_session_component *ptr)
-	{
-		if(ptr == &session)
-			return this;
-		Rm_session_info *info = next();
-		return info ? info->find_by_ptr(ptr) : 0;
-	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "session ", session.cap(), " args=", args);
+		Session_rpc_info::print(output);
 	}
 };
 

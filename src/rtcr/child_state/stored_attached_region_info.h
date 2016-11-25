@@ -11,6 +11,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
+#include "stored_info_structs.h"
 #include "../monitor/attached_region_info.h"
 
 
@@ -18,55 +19,44 @@ namespace Rtcr {
 	struct Stored_attached_region_info;
 }
 
-struct Rtcr::Stored_attached_region_info : Genode::List<Stored_attached_region_info>::Element
+struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stored_attached_region_info>::Element
 {
-	/**
-	 * Identifier of the stored dataspace
-	 */
-	Genode::uint16_t ref_badge;
-	Genode::size_t   size;
-	Genode::off_t    offset;
-	Genode::addr_t   rel_addr;
-	bool             executable;
+	Genode::uint16_t                 const attached_ds_badge;
+	Genode::Ram_dataspace_capability const memory_content;
+	Genode::size_t const size;
+	Genode::off_t  const offset;
+	Genode::addr_t const rel_addr;
+	bool           const executable;
 
-	Stored_attached_region_info()
+	Stored_attached_region_info(Attached_region_info &info, Genode::Ram_dataspace_capability copy_ds_cap)
 	:
-		ref_badge(0), size(0), offset(0), rel_addr(0), executable(false)
-	{ }
-
-	Stored_attached_region_info(Attached_region_info &info)
-	:
-		ref_badge      (info.ds_cap.local_name()),
+		Stored_normal_info(0, 0, info.bootstrapped),
+		attached_ds_badge (info.attached_ds_cap.local_name()),
+		memory_content    (copy_ds_cap),
 		size       (info.size),
 		offset     (info.offset),
 		rel_addr   (info.rel_addr),
 		executable (info.executable)
 	{ }
 
-	Stored_attached_region_info *find_by_badge(Genode::uint16_t badge)
+	Stored_attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
-		if(badge == this->ref_badge)
+		if(addr == rel_addr)
 			return this;
 		Stored_attached_region_info *info = next();
-		return info ? info->find_by_badge(badge) : 0;
-	}
-
-	Stored_attached_region_info *find_by_badge_and_addr(Genode::uint16_t badge, Genode::addr_t addr)
-	{
-		if(badge == this->ref_badge && addr == this->rel_addr)
-			return this;
-		Stored_attached_region_info *info = next();
-		return info ? info->find_by_badge_and_addr(badge, addr) : 0;
+		return info ? info->find_by_addr(addr) : 0;
 	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<ref_badge=", ref_badge, ">",
-				" [", Hex(rel_addr, Hex::PREFIX, Hex::PAD),
-				", ", Hex(rel_addr + size, Hex::PREFIX, Hex::PAD), ")",
-				executable?" exec":"");
+		Genode::print(output, "bootstrapped=", bootstrapped);
+
+		Genode::print(output, ", attached_ds_badge=", attached_ds_badge, " ");
+		Genode::print(output, " [", Hex(rel_addr, Hex::PREFIX, Hex::PAD));
+		Genode::print(output, ", ", Hex(rel_addr + size - offset, Hex::PREFIX, Hex::PAD));
+		Genode::print(output, ") exec=", executable);
 	}
 
 };
