@@ -5,3 +5,7 @@
 .project
 .cproject
 .settings
+
+# MA folders
+test_template/
+run/template.run
