@@ -28,7 +28,7 @@ namespace Rtcr {
 	class Ram_root;
 
 	constexpr bool fh_verbose_debug = false;
-	constexpr bool ram_verbose_debug = true;
+	constexpr bool ram_verbose_debug = false;
 	constexpr bool ram_root_verbose_debug = false;
 }
 
@@ -216,6 +216,7 @@ private:
 
 protected:
 	Ram_session_component *_create_session(const char *args);
+	void _upgrade_session(Ram_session_component *session, const char *upgrade_args);
 	void _destroy_session(Ram_session_component *session);
 
 public:

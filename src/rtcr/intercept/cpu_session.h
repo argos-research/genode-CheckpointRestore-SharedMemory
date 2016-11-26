@@ -164,6 +164,7 @@ private:
 
 protected:
 	Cpu_session_component *_create_session(const char *args);
+	void _upgrade_session(Cpu_session_component *session, const char *upgrade_args);
 	void _destroy_session(Cpu_session_component *session);
 
 public:

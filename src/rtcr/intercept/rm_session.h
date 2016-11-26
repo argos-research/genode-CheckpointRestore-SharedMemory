@@ -66,6 +66,8 @@ public:
 			const char *creation_args, bool &bootstrap_phase);
 	~Rm_session_component();
 
+	Genode::Rm_session_capability parent_cap() { return _parent_rm.cap(); }
+
 	Rm_session_info &parent_state() { return _parent_state; }
 	Rm_session_info const &parent_state() const { return _parent_state; }
 
@@ -125,6 +127,7 @@ private:
 
 protected:
 	Rm_session_component *_create_session(const char *args);
+	void _upgrade_session(Rm_session_component *session, const char *upgrade_args);
 	void _destroy_session(Rm_session_component *session);
 
 public:

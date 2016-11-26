@@ -58,6 +58,8 @@ public:
 			const char *label, const char *creation_args, bool bootstrapped = false);
 	~Log_session_component();
 
+	Genode::Log_session_capability parent_cap() { return _parent_log.cap(); }
+
 	Log_session_info &parent_state() { return _parent_state; }
 	Log_session_info const &parent_state() const { return _parent_state; }
 
@@ -107,14 +109,8 @@ private:
 	Genode::List<Log_session_component> _session_rpc_objs;
 
 protected:
-	/**
-	 * Create session object and its monitoring list element
-	 */
 	Log_session_component *_create_session(const char *args);
-
-	/**
-	 * Destroy session object and its monitoring list element
-	 */
+	void _upgrade_session(Log_session_component *session, const char *upgrade_args);
 	void _destroy_session(Log_session_component *session);
 
 public:

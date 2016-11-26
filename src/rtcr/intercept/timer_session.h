@@ -57,6 +57,8 @@ public:
 			const char *creation_args, bool bootstrapped = false);
 	~Timer_session_component();
 
+	Timer::Session_capability parent_cap() { return _parent_timer.cap(); }
+
 	Timer_session_info &parent_state() { return _parent_state; }
 	Timer_session_info const &parent_state() const { return _parent_state; }
 
@@ -112,6 +114,7 @@ private:
 
 protected:
 	Timer_session_component *_create_session(const char *args);
+	void _upgrade_session(Timer_session_component *session, const char *upgrade_args);
 	void _destroy_session(Timer_session_component *session);
 
 public:
