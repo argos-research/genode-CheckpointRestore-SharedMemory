@@ -9,8 +9,84 @@
 using namespace Rtcr;
 
 
+void Restorer::_identify_recreate_pd_sessions(Genode::List<Pd_session_component> &pd_sessions,
+		Genode::List<Stored_pd_session_info> &stored_pd_sessions)
+{
+	// There shall be only PD session by now (only 1 PD session is created during bootstrap)
+	Pd_session_component *bootstrapped_pd_session = pd_sessions.first();
+
+	Pd_session_component *pd_session = nullptr;
+	Stored_pd_session_info *stored_pd_session = nullptr;
+
+	// Error
+	if(!bootstrapped_pd_session)
+	{
+		Genode::error("There is no PD session in the list");
+		throw Genode::Exception();
+	}
+	if(bootstrapped_pd_session->next()) Genode::warning("There are more than 1 PD session in the PD session list");
+
+	stored_pd_session = stored_pd_sessions.first();
+	while(stored_pd_session)
+	{
+		if(_corresponding_pd_sessions(*bootstrapped_pd_session, *stored_pd_session))
+		{
+			// Identified bootstrapped PD session
+			pd_session = bootstrapped_pd_session;
+		}
+		else
+		{
+			// Create PD session
+			Genode::Rpc_in_buffer<160> creation_args(stored_pd_session->creation_args.string());
+			Genode::Session_capability pd_session_cap = _child.custom_services().pd_root->session(creation_args, Genode::Affinity());
+			pd_session = _child.custom_services().pd_root->session_infos().first();
+			if(pd_session) pd_session = pd_session->find_by_badge(pd_session_cap.local_name());
+			if(!pd_session)
+			{
+				Genode::error("Could not find newly created PD session for ", pd_session_cap);
+				throw Genode::Exception();
+			}
+		}
+
+		_ckpt_to_resto_badges.insert(new (_alloc) Ckpt_resto_badge_info(stored_pd_session->badge, pd_session->cap().local_name()));
+
+		//_identify_recreate_signal_sources(pd_session->parent_state().signal_sources, stored_pd_session->stored_source_infos);
+		//_identify_recreate_signal_contexts(pd_session->parent_state().signal_contexts, stored_pd_session->stored_context_infos);
+		// XXX postpone native caps creation, because it needs capabilities from CPU thread
+
+		stored_pd_session = stored_pd_session->next();
+	}
+
+}
+bool Restorer::_corresponding_pd_sessions(Pd_session_component &pd_session, Stored_pd_session_info &stored_pd_session)
+{
+	return pd_session.parent_state().bootstrapped && stored_pd_session.bootstrapped;
+}
+
+
+
+
+
+
+
+void Restorer::_restore_state_pd_sessions(Genode::List<Pd_session_component> &pd_sessions)
+{
+	Pd_session_component *pd_session = pd_sessions.first();
+	while(pd_session)
+	{
+		// Upgrade session
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(pd_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) _state._env.parent().upgrade(pd_session->parent_cap(), pd_session->parent_state().upgrade_args.string());
+
+		// No other state to restore
+
+		pd_session = pd_session->next();
+	}
+}
+
+
 Restorer::Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &state)
-: _alloc(alloc), _child(child), _state(state), _badge_badge_mapping() { }
+: _alloc(alloc), _child(child), _state(state) { }
 
 
 Restorer::~Restorer()
@@ -25,49 +101,15 @@ void Restorer::restore()
 
 	Genode::log("Before: \n", _child);
 
+	// Identify or create RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
+	//   Make a mapping of old badges to new badges
+	// Restore state of all objects using mapping of old badges to new badges
+	//   Also make a mapping of memory to restore
 
-	//Create RPC objects with checkpointed state
-	//_prepare_rm_sessions();
-	//_prepare_log_sessions();
-	//_prepare_timer_sessions();
-
-	//Recreate state of automatically created RPC objects
-	//PD
-	//_restore_pd_session(_child.pd(), _state._stored_pd_session);
-	//CPU
-	//_prepare_cpu_session();
-	//  _prepare_threads();
-	//RAM
-	//_prepare_ram_session();
-	//  _prepare_allocated_dataspaces();
-
-
-	//Adjust capability map/capability array
-	//_prepare_capability_map();
-
-	//Insert capabilities into capability space
-	//_prepare_capability_space();
-
-	//Genode::List<Badge_info> exclude_infos = _create_exclude_infos(address_space, stack_area, linker_area, rm_root);
-
-	//Copy memory content
-	//Genode::List<Badge_dataspace_info> visited_infos;
-	//_update_dataspace_content(ram, visited_infos, exclude_infos);
-	//_update_dataspace_content(address_space, visited_infos, exclude_infos);
-	//_update_dataspace_content(stack_area, visited_infos, exclude_infos);
-	//_update_dataspace_content(linker_area, visited_infos, exclude_infos);
-	//if(rm_root) _update_dataspace_content(rm_root, visisted_infos, exclude_infos);
-
-
-	//Delete exclude_infos
-	//_destroy_exclude_infos(exclude_infos);
-	//Delete visited_infos
-	//while(Badge_dataspace_info *info = visited_infos.first())
-	//{
-	//	visited_infos.remove(info);
-	//	Genode::destroy(_alloc, info);
-	//}
-
+	// Replace old badges with new in capability map
+	//   copy memory content from checkpointed dataspace which contains the cap map
+	//   mark mapping from memory to restore as restored
+	// Insert capabilities of all objects into capability space
 
 	Genode::log("After: \n", _child);
 

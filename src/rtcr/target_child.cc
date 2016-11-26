@@ -221,13 +221,16 @@ void Target_child::start()
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
 
-	_child = new (_md_alloc) Genode::Child(
+	_child = new (_md_alloc) Genode::Child (
 			_resources.rom.dataspace(),
 			Genode::Dataspace_capability(),
 			_resources.pd.cap(),  _resources.pd,
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
-			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
+			_env.rm(), _address_space, _child_ep.rpc_ep(), *this,
+			*_custom_services.pd_service,
+			*_custom_services.ram_service,
+			*_custom_services.cpu_service);
 
 
 }
@@ -239,13 +242,16 @@ void Target_child::start(Restorer &restorer)
 
 	_restorer = &restorer;
 
-	_child = new (_md_alloc) Genode::Child(
+	_child = new (_md_alloc) Genode::Child (
 			_resources.rom.dataspace(),
 			Genode::Dataspace_capability(),
 			_resources.pd.cap(),  _resources.pd,
 			_resources.ram.cap(), _resources.ram,
 			_resources.cpu.cap(), _initial_thread,
-			_env.rm(), _address_space, _child_ep.rpc_ep(), *this);
+			_env.rm(), _address_space, _child_ep.rpc_ep(), *this,
+			*_custom_services.pd_service,
+			*_custom_services.ram_service,
+			*_custom_services.cpu_service);
 
 
 }

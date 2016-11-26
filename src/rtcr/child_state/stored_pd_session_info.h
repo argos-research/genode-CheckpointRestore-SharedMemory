@@ -53,6 +53,13 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
 		Stored_pd_session_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
 	}
+	Stored_pd_session_info *find_by_bootstrapped(bool bootstrapped)
+	{
+		if(bootstrapped == this->bootstrapped)
+			return this;
+		Stored_pd_session_info *info = next();
+		return info ? info->find_by_bootstrapped(bootstrapped) : 0;
+	}
 
 	void print(Genode::Output &output) const
 	{

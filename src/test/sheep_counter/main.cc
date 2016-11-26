@@ -30,10 +30,8 @@ void Component::construct(Genode::Env &env)
 	addr[0] = 1;
 	unsigned int &n = addr[0];
 
-	log("ram_session: ", env.ram_session_cap());
-	log("cpu_session: ", env.cpu_session_cap());
-	log("timer: ", (Native_capability)timer);
-	log("allocated ds: ", ds_cap);
+	env.parent().upgrade(timer, "ram_quota=8K");
+	env.parent().upgrade(env.ram_session_cap(), "ram_quota=24K");
 
 	while(1)
 	{

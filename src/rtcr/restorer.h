@@ -7,8 +7,11 @@
 #ifndef _RTCR_RESTORER_H_
 #define _RTCR_RESTORER_H_
 
+/* Rtcr includes */
 #include "target_state.h"
 #include "target_child.h"
+#include "util/ckpt_resto_badge_info.h"
+#include "util/orig_copy_resto_info.h"
 
 namespace Rtcr {
 	class Restorer;
@@ -19,40 +22,6 @@ namespace Rtcr {
 class Rtcr::Restorer
 {
 private:
-	/**
-	 * List element which translates a badge from the checkpoint process
-	 * to a badge from the restoration process
-	 */
-	struct Badge_badge_info : Genode::List<Badge_badge_info>::Element
-	{
-		Genode::uint16_t ckpt_badge;
-		Genode::uint16_t resto_badge;
-		Badge_badge_info() : ckpt_badge(0), resto_badge(0) { }
-		Badge_badge_info(Genode::uint16_t ckpt_badge, Genode::uint16_t resto_badge)
-		: ckpt_badge(ckpt_badge), resto_badge(resto_badge) { }
-
-		Badge_badge_info *find_by_ckpt_badge(Genode::uint16_t badge)
-		{
-			if(badge == ckpt_badge)
-				return this;
-			Badge_badge_info *info = next();
-			return info ? info->find_by_ckpt_badge(badge) : 0;
-		}
-		Badge_badge_info *find_by_resto_badge(Genode::uint16_t badge)
-		{
-			if(badge == resto_badge)
-				return this;
-			Badge_badge_info *info = next();
-			return info ? info->find_by_resto_badge(badge) : 0;
-		}
-
-		void print(Genode::Output &output) const
-		{
-			using Genode::Hex;
-
-			Genode::print(output, "ckpt=", ckpt_badge, ", resto=", resto_badge);
-		}
-	};
 
 	/**
 	 * Enable log output for debugging
@@ -65,9 +34,16 @@ private:
 	Genode::Allocator &_alloc;
 	Target_child &_child;
 	Target_state &_state;
-	Genode::List<Badge_badge_info> _badge_badge_mapping;
+	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_badges;
+	Genode::List<Orig_copy_resto_info> _memory_to_restore;
 
 
+	void _identify_recreate_pd_sessions(Genode::List<Pd_session_component> &pd_sessions, Genode::List<Stored_pd_session_info> &stored_pd_sessions);
+	bool _corresponding_pd_sessions(Pd_session_component &pd_session, Stored_pd_session_info &stored_pd_session);
+
+
+
+	void _restore_state_pd_sessions(Genode::List<Pd_session_component> &pd_sessions);
 
 
 public:
