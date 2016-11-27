@@ -23,7 +23,7 @@ namespace Rtcr {
  */
 struct Rtcr::Signal_context_info : Normal_obj_info, Genode::List<Signal_context_info>::Element
 {
-	const Genode::Signal_context_capability          sc_cap;
+	const Genode::Signal_context_capability          cap;
 	const Genode::Capability<Genode::Signal_source>  ss_cap;
 	const unsigned long imprint;
 
@@ -31,14 +31,14 @@ struct Rtcr::Signal_context_info : Normal_obj_info, Genode::List<Signal_context_
 			Genode::Capability<Genode::Signal_source> ss_cap, unsigned long imprint, bool bootstrapped)
 	:
 		Normal_obj_info(bootstrapped),
-		sc_cap(sc_cap),
-		ss_cap(ss_cap),
-		imprint(imprint)
+		cap     (sc_cap),
+		ss_cap  (ss_cap),
+		imprint (imprint)
 	{ }
 
 	Signal_context_info *find_by_sc_badge(Genode::uint16_t badge)
 	{
-		if(badge == sc_cap.local_name())
+		if(badge == cap.local_name())
 			return this;
 		Signal_context_info *info = next();
 		return info ? info->find_by_sc_badge(badge) : 0;
@@ -48,7 +48,7 @@ struct Rtcr::Signal_context_info : Normal_obj_info, Genode::List<Signal_context_
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "sc ", sc_cap, ", ss ", ss_cap, ", imprint=", Hex(imprint), ", ");
+		Genode::print(output, "sc ", cap, ", ss ", ss_cap, ", imprint=", Hex(imprint), ", ");
 		Normal_obj_info::print(output);
 	}
 };

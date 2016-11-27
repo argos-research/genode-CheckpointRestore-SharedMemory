@@ -22,20 +22,20 @@ namespace Rtcr {
  */
 struct Rtcr::Native_capability_info : Normal_obj_info, Genode::List<Native_capability_info>::Element
 {
-	Genode::Native_capability native_cap;
+	Genode::Native_capability cap;
 	Genode::Native_capability ep_cap;
 
 	Native_capability_info(Genode::Native_capability native_cap,
 			Genode::Native_capability ep_cap, bool bootstrapped)
 	:
 		Normal_obj_info (bootstrapped),
-		native_cap      (native_cap),
-		ep_cap          (ep_cap)
+		cap    (native_cap),
+		ep_cap (ep_cap)
 	{ }
 
 	Native_capability_info *find_by_native_badge(Genode::uint16_t badge)
 	{
-		if(badge == native_cap.local_name())
+		if(badge == cap.local_name())
 			return this;
 		Native_capability_info *info = next();
 		return info ? info->find_by_native_badge(badge) : 0;
@@ -45,7 +45,7 @@ struct Rtcr::Native_capability_info : Normal_obj_info, Genode::List<Native_capab
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "native ", native_cap, ", ep ", ep_cap, ", ");
+		Genode::print(output, "native ", cap, ", ep ", ep_cap, ", ");
 		Normal_obj_info::print(output);
 	}
 };

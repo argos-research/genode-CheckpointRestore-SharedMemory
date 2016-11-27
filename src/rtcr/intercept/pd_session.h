@@ -21,7 +21,7 @@ namespace Rtcr {
 	class Pd_session_component;
 	class Pd_root;
 
-	constexpr bool pd_verbose_debug = false;
+	constexpr bool pd_verbose_debug = true;
 	constexpr bool pd_root_verbose_debug = false;
 }
 

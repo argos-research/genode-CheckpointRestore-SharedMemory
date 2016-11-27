@@ -31,17 +31,21 @@ struct Rtcr::Stored_general_info
 	 * Indicates whether the RPC object to store was created during component's bootstrap phase
 	 */
 	bool             const bootstrapped;
+	/**
+	 *
+	 */
+	Genode::size_t   const id;
 
-	Stored_general_info(Genode::addr_t kcap, Genode::uint16_t badge, bool bootstrapped)
+	Stored_general_info(Genode::addr_t kcap, Genode::uint16_t badge, bool bootstrapped, Genode::size_t id)
 	:
-		kcap(kcap), badge(badge), bootstrapped(bootstrapped)
+		kcap(kcap), badge(badge), bootstrapped(bootstrapped), id(id)
 	{ }
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "<", Hex(kcap), ", ", badge, ">", " bootstrapped=", bootstrapped);
+		Genode::print(output, "<", Hex(kcap), ", ", badge, ">", " bootstrapped=", bootstrapped, ", id=", id);
 	}
 };
 

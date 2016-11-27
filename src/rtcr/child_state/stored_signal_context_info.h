@@ -26,7 +26,7 @@ struct Rtcr::Stored_signal_context_info : Stored_normal_info, Genode::List<Store
 	Stored_signal_context_info(Signal_context_info &info, Genode::addr_t targets_kcap)
 	:
 		Stored_normal_info(targets_kcap,
-				info.sc_cap.local_name(),
+				info.cap.local_name(),
 				info.bootstrapped),
 		signal_source_badge(info.ss_cap.local_name()),
 		imprint(info.imprint)

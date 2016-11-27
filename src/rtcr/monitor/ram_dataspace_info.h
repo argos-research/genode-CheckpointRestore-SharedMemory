@@ -31,7 +31,7 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 	/**
 	 * Allocated Ram dataspace
 	 */
-	Genode::Ram_dataspace_capability const ds_cap;
+	Genode::Ram_dataspace_capability const cap;
 	Genode::size_t                   const size;
 	Genode::Cache_attribute          const cached;
 	/**
@@ -45,7 +45,7 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 			bool bootstrapped, Managed_region_map_info *mrm_info = nullptr)
 	:
 		Normal_obj_info (bootstrapped),
-		ds_cap   (ds_cap),
+		cap      (ds_cap),
 		size     (size),
 		cached   (cached),
 		mrm_info (mrm_info)
@@ -53,7 +53,7 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 
 	Ram_dataspace_info *find_by_badge(Genode::uint16_t badge)
 	{
-		if(badge == ds_cap.local_name())
+		if(badge == cap.local_name())
 			return this;
 		Ram_dataspace_info *info = next();
 		return info ? info->find_by_badge(badge) : 0;
@@ -63,7 +63,7 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, Genode::List<Ram_dataspace_in
 	{
 		using Genode::Hex;
 
-		Genode::print(output, ds_cap, ", size=", Hex(size), ", cached=", static_cast<unsigned>(cached), ", ");
+		Genode::print(output, cap, ", size=", Hex(size), ", cached=", static_cast<unsigned>(cached), ", ");
 		Normal_obj_info::print(output);
 	}
 };
@@ -114,7 +114,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	/**
 	 * Dataspace which will be attached to / detached from the Managed_region_map_info's Region_map
 	 */
-	Genode::Dataspace_capability const  ds_cap;
+	Genode::Dataspace_capability const  cap;
 	/**
 	 * Starting address of the dataspace; it is a relative address, because it is local
 	 * to the Region_map to which it will be attached
@@ -135,7 +135,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	Designated_dataspace_info(Managed_region_map_info &mrm_info, Genode::Dataspace_capability ds_cap,
 			Genode::addr_t addr, Genode::size_t size)
 	:
-		mrm_info(mrm_info), ds_cap(ds_cap), rel_addr(addr), size(size), attached(false)
+		mrm_info(mrm_info), cap(ds_cap), rel_addr(addr), size(size), attached(false)
 	{
 		// Every new dataspace shall be attached and marked
 		attach();
@@ -160,7 +160,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	{
 		using Genode::Hex;
 
-		Genode::print(output, ds_cap, ", rel_addr=", Hex(rel_addr), " size=", Hex(size));
+		Genode::print(output, cap, ", rel_addr=", Hex(rel_addr), " size=", Hex(size));
 	}
 	/**
 	 * Attach dataspace and mark it as attached
@@ -169,7 +169,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Attaching dataspace ", ds_cap,
+			Genode::log("Attaching dataspace ", cap,
 					" to region map ", mrm_info.region_map_cap,
 					" on location ", Genode::Hex(rel_addr));
 		}
@@ -178,7 +178,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 		{
 			// Attaching Dataspace to designated location
 			Genode::addr_t addr =
-					Genode::Region_map_client{mrm_info.region_map_cap}.attach_at(ds_cap, rel_addr);
+					Genode::Region_map_client{mrm_info.region_map_cap}.attach_at(cap, rel_addr);
 
 			// Dataspace was not attached on the right location
 			if(addr != rel_addr)
@@ -193,7 +193,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 		else
 		{
 			Genode::warning("Designated_dataspace_info::attach Trying to attach an already attached Dataspace:",
-					" DS ", ds_cap,
+					" DS ", cap,
 					" RM ", mrm_info.region_map_cap,
 					" Loc ", Genode::Hex(rel_addr));
 		}
@@ -205,7 +205,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	{
 		if(verbose_debug)
 		{
-			Genode::log("Detaching dataspace ", ds_cap,
+			Genode::log("Detaching dataspace ", cap,
 					" from region map ", mrm_info.region_map_cap,
 					" on location ", Genode::Hex(rel_addr), " (local to Region_map)");
 		}
@@ -221,7 +221,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 		else
 		{
 			Genode::warning("Trying to detach an already detached Dataspace:",
-					" DS ", ds_cap,
+					" DS ", cap,
 					" RM ", mrm_info.region_map_cap,
 					" Loc ", Genode::Hex(rel_addr));
 		}

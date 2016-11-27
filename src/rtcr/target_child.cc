@@ -493,6 +493,7 @@ Genode::Service *Target_child::resolve_session_request(const char *service_name,
 
 	if(!Genode::strcmp(service_name, "LOG") && _in_bootstrap)
 	{
+		if(verbose_debug) Genode::log("  Unsetting bootstrap_phase");
 		_in_bootstrap = false;
 	}
 

@@ -12,11 +12,10 @@ using namespace Rtcr;
 void Restorer::_identify_recreate_pd_sessions(Genode::List<Pd_session_component> &pd_sessions,
 		Genode::List<Stored_pd_session_info> &stored_pd_sessions)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	// There shall be only PD session by now (only 1 PD session is created during bootstrap)
 	Pd_session_component *bootstrapped_pd_session = pd_sessions.first();
-
-	Pd_session_component *pd_session = nullptr;
-	Stored_pd_session_info *stored_pd_session = nullptr;
 
 	// Error
 	if(!bootstrapped_pd_session)
@@ -26,10 +25,11 @@ void Restorer::_identify_recreate_pd_sessions(Genode::List<Pd_session_component>
 	}
 	if(bootstrapped_pd_session->next()) Genode::warning("There are more than 1 PD session in the PD session list");
 
-	stored_pd_session = stored_pd_sessions.first();
+	Stored_pd_session_info *stored_pd_session = stored_pd_sessions.first();
 	while(stored_pd_session)
 	{
-		if(_corresponding_pd_sessions(*bootstrapped_pd_session, *stored_pd_session))
+		Pd_session_component *pd_session = nullptr;
+		if(pd_session->parent_state().bootstrapped && stored_pd_session->bootstrapped)
 		{
 			// Identified bootstrapped PD session
 			pd_session = bootstrapped_pd_session;
@@ -50,7 +50,7 @@ void Restorer::_identify_recreate_pd_sessions(Genode::List<Pd_session_component>
 
 		_ckpt_to_resto_badges.insert(new (_alloc) Ckpt_resto_badge_info(stored_pd_session->badge, pd_session->cap().local_name()));
 
-		//_identify_recreate_signal_sources(pd_session->parent_state().signal_sources, stored_pd_session->stored_source_infos);
+		//_identify_recreate_signal_sources(*pd_session, stored_pd_session->stored_source_infos);
 		//_identify_recreate_signal_contexts(pd_session->parent_state().signal_contexts, stored_pd_session->stored_context_infos);
 		// XXX postpone native caps creation, because it needs capabilities from CPU thread
 
@@ -58,9 +58,20 @@ void Restorer::_identify_recreate_pd_sessions(Genode::List<Pd_session_component>
 	}
 
 }
-bool Restorer::_corresponding_pd_sessions(Pd_session_component &pd_session, Stored_pd_session_info &stored_pd_session)
+
+
+void Restorer::_identify_recreate_signal_sources(Pd_session_component &pd_session,
+		Genode::List<Stored_signal_source_info> &stored_signal_sources)
 {
-	return pd_session.parent_state().bootstrapped && stored_pd_session.bootstrapped;
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
+	Stored_signal_source_info *stored_signal_source_info = stored_signal_sources.first();
+	while(stored_signal_source_info)
+	{
+
+
+		stored_signal_source_info = stored_signal_source_info->next();
+	}
 }
 
 
@@ -68,17 +79,23 @@ bool Restorer::_corresponding_pd_sessions(Pd_session_component &pd_session, Stor
 
 
 
-
-void Restorer::_restore_state_pd_sessions(Genode::List<Pd_session_component> &pd_sessions)
+void Restorer::_restore_state_pd_sessions(Genode::List<Pd_session_component> &pd_sessions,
+		Genode::List<Stored_pd_session_info> &stored_pd_sessions)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
 	Pd_session_component *pd_session = pd_sessions.first();
 	while(pd_session)
 	{
+		// Find corresponding stored PD session
+		Stored_pd_session_info &stored_pd_session = _find_stored_object(*pd_session, stored_pd_sessions);
+
+		// Restore state
+		pd_session->parent_state().upgrade_args = stored_pd_session.upgrade_args;
+
 		// Upgrade session
 		Genode::size_t ram_quota = Genode::Arg_string::find_arg(pd_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
 		if(ram_quota != 0) _state._env.parent().upgrade(pd_session->parent_cap(), pd_session->parent_state().upgrade_args.string());
-
-		// No other state to restore
 
 		pd_session = pd_session->next();
 	}
@@ -103,8 +120,11 @@ void Restorer::restore()
 
 	// Identify or create RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
 	//   Make a mapping of old badges to new badges
+	_identify_recreate_pd_sessions(_child.custom_services().pd_root->session_infos(), _state._stored_pd_sessions);
+
 	// Restore state of all objects using mapping of old badges to new badges
 	//   Also make a mapping of memory to restore
+	_restore_state_pd_sessions(_child.custom_services().pd_root->session_infos(), _state._stored_pd_sessions);
 
 	// Replace old badges with new in capability map
 	//   copy memory content from checkpointed dataspace which contains the cap map

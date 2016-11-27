@@ -151,7 +151,7 @@ Genode::List<Ref_badge> Checkpointer::_mark_attach_designated_dataspaces(Attache
 			{
 				dd_info->attach();
 
-				Ref_badge *new_info = new (_alloc) Ref_badge(dd_info->ds_cap.local_name());
+				Ref_badge *new_info = new (_alloc) Ref_badge(dd_info->cap.local_name());
 				result_infos.insert(new_info);
 			}
 
@@ -173,7 +173,7 @@ void Checkpointer::_detach_unmark_designated_dataspaces(Genode::List<Ref_badge> 
 		Designated_dataspace_info *dd_info = mrm_info->dd_infos.first();
 		while(dd_info)
 		{
-			if(badge_infos.first()->find_by_badge(dd_info->ds_cap.local_name()))
+			if(badge_infos.first()->find_by_badge(dd_info->cap.local_name()))
 			{
 				dd_info->detach();
 			}
@@ -522,7 +522,7 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 	{
 		// Find corresponding state_info
 		stored_info = stored_infos.first();
-		if(stored_info) stored_info = stored_info->find_by_badge(child_info->ds_cap.local_name());
+		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap.local_name());
 
 		// No corresponding stored_info => create it
 		if(!stored_info)
@@ -563,26 +563,26 @@ Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_datasp
 	// Create orignal_copy dataspace mapping (which is used to checkpoint memory content)
 	Genode::Ram_dataspace_capability ramds_cap;
 	Orig_copy_count_info *known_info = _copy_dataspaces.first();
-	if(known_info) known_info = known_info->find_by_badge(child_info.ds_cap.local_name());
+	if(known_info) known_info = known_info->find_by_badge(child_info.cap.local_name());
 	if(known_info)
 	{
-		if(verbose_debug) Genode::log("Dataspace ", child_info.ds_cap, " is already known.");
+		if(verbose_debug) Genode::log("Dataspace ", child_info.cap, " is already known.");
 
 		ramds_cap = known_info->copy_ds_cap;
 		known_info->ref_count++;
 	}
 	else
 	{
-		if(verbose_debug) Genode::log("Dataspace ", child_info.ds_cap, " is not known. "
+		if(verbose_debug) Genode::log("Dataspace ", child_info.cap, " is not known. "
 			"Creating dataspace with size ", Genode::Hex(child_info.size));
 
 		ramds_cap = _state._env.ram().alloc(child_info.size);
-		known_info = new (_alloc) Orig_copy_count_info(child_info.ds_cap, ramds_cap, child_info.size);
+		known_info = new (_alloc) Orig_copy_count_info(child_info.cap, ramds_cap, child_info.size);
 		_copy_dataspaces.insert(known_info);
 	}
 
 	// Find childs_kcap
-	Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info.ds_cap.local_name(), _capability_map_infos);
+	Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info.cap.local_name(), _capability_map_infos);
 
 	return *new (_state._alloc) Stored_ram_dataspace_info(child_info, childs_kcap, ramds_cap);
 }
@@ -850,12 +850,12 @@ void Checkpointer::_prepare_native_caps(Genode::List<Stored_native_capability_in
 	{
 		// Find corresponding state_info
 		stored_info = stored_infos.first();
-		if(stored_info) stored_info = stored_info->find_by_badge(child_info->native_cap.local_name());
+		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap.local_name());
 
 		// No corresponding stored_info => create it
 		if(!stored_info)
 		{
-			Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info->native_cap.local_name(), _capability_map_infos);
+			Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info->cap.local_name(), _capability_map_infos);
 			stored_info = new (_state._alloc) Stored_native_capability_info(*child_info, childs_kcap);
 			stored_infos.insert(stored_info);
 		}
@@ -966,12 +966,12 @@ void Checkpointer::_prepare_signal_contexts(Genode::List<Stored_signal_context_i
 	{
 		// Find corresponding state_info
 		stored_info = stored_infos.first();
-		if(stored_info) stored_info = stored_info->find_by_badge(child_info->sc_cap.local_name());
+		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap.local_name());
 
 		// No corresponding stored_info => create it
 		if(!stored_info)
 		{
-			Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info->sc_cap.local_name(), _capability_map_infos);
+			Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info->cap.local_name(), _capability_map_infos);
 			stored_info = new (_state._alloc) Stored_signal_context_info(*child_info, childs_kcap);
 			stored_infos.insert(stored_info);
 		}
@@ -1212,7 +1212,7 @@ void Checkpointer::_resolve_inc_checkpoint_dataspaces(
 			{
 				// Find corresponding memory_info
 				Orig_copy_ckpt_info *memory_info = memory_infos.first();
-				if(memory_info) memory_info = memory_info->find_by_orig_badge(ramds_info->ds_cap.local_name());
+				if(memory_info) memory_info = memory_info->find_by_orig_badge(ramds_info->cap.local_name());
 				if(memory_info)
 				{
 					// Now we found a memory_info which is actually managed for inc ckpt
@@ -1222,7 +1222,7 @@ void Checkpointer::_resolve_inc_checkpoint_dataspaces(
 					Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();
 					if(dd_info && dd_info->attached)
 					{
-						Orig_copy_ckpt_info *new_oc_info = new (_alloc) Orig_copy_ckpt_info(dd_info->ds_cap,
+						Orig_copy_ckpt_info *new_oc_info = new (_alloc) Orig_copy_ckpt_info(dd_info->cap,
 								memory_info->copy_ds_cap, dd_info->rel_addr, dd_info->size);
 						memory_infos.insert(new_oc_info);
 

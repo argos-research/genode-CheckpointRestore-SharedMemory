@@ -30,7 +30,7 @@ struct Rtcr::Stored_ram_dataspace_info : Stored_normal_info, Genode::List<Stored
 	Stored_ram_dataspace_info(Ram_dataspace_info &info, Genode::addr_t targets_kcap, Genode::Ram_dataspace_capability copy_ds_cap)
 	:
 		Stored_normal_info(targets_kcap,
-				info.ds_cap.local_name(),
+				info.cap.local_name(),
 				info.bootstrapped),
 		memory_content(copy_ds_cap),
 		size(info.size), cached(info.cached), managed(info.mrm_info)

@@ -25,7 +25,7 @@ struct Rtcr::Stored_native_capability_info : Stored_normal_info, Genode::List<St
 
 	Stored_native_capability_info(Native_capability_info &info, Genode::addr_t targets_kcap)
 	:
-		Stored_normal_info(targets_kcap, info.native_cap.local_name(), info.bootstrapped),
+		Stored_normal_info(targets_kcap, info.cap.local_name(), info.bootstrapped),
 		ep_badge(info.ep_cap.local_name())
 	{ }
 

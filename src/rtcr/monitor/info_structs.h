@@ -12,13 +12,35 @@
 #include <util/string.h>
 
 namespace Rtcr {
+	template<typename T> class Simple_counter;
 	struct General_info;
 	struct Session_rpc_info;
 	struct Normal_rpc_info;
 	struct Normal_obj_info;
 }
 
-struct Rtcr::General_info
+
+template<typename T>
+class Rtcr::Simple_counter
+{
+private:
+	Genode::size_t const current_id;
+	static Genode::size_t get_id()
+	{
+		static Genode::size_t count = 0;
+		return count++;
+	}
+
+public:
+	Simple_counter() : current_id(get_id()) { }
+	Simple_counter(const Simple_counter&) : current_id(get_id()) { }
+	~Simple_counter() { }
+
+	Genode::size_t id() const { return current_id; }
+};
+
+
+struct Rtcr::General_info : private Simple_counter<General_info>
 {
 	bool const bootstrapped;
 
@@ -33,7 +55,7 @@ struct Rtcr::General_info
 		using Genode::Hex;
 		using Genode::print;
 
-		print(output, "bootstrapped=", bootstrapped);
+		print(output, "bootstrapped=", bootstrapped, ", id=", Simple_counter<General_info>::id());
 	}
 };
 

@@ -92,7 +92,7 @@ void Ram_session_component::_destroy_ramds_info(Ram_dataspace_info &ramds_info)
 {
 
 	Genode::Ram_dataspace_capability ds_cap =
-			Genode::static_cap_cast<Genode::Ram_dataspace>(ramds_info.ds_cap);
+			Genode::static_cap_cast<Genode::Ram_dataspace>(ramds_info.cap);
 
 	// Remove the Ram_dataspace_info from the list
 	_parent_state.ram_dataspaces.remove(&ramds_info);
@@ -107,7 +107,7 @@ void Ram_session_component::_destroy_ramds_info(Ram_dataspace_info &ramds_info)
 		while(Designated_dataspace_info *dd_info = ramds_info.mrm_info->dd_infos.first())
 		{
 			Genode::Ram_dataspace_capability designated_ds_cap =
-					Genode::static_cap_cast<Genode::Ram_dataspace>(dd_info->ds_cap);
+					Genode::static_cap_cast<Genode::Ram_dataspace>(dd_info->cap);
 
 			// Remove Designated_dataspace_info from the list
 			ramds_info.mrm_info->dd_infos.remove(dd_info);
@@ -277,13 +277,13 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		{
 			Genode::log("  Allocated managed dataspace (",
 					"RM=", new_mrm_info->region_map_cap,
-					" DS=", new_ramds_info->ds_cap, ")",
+					" DS=", new_ramds_info->cap, ")",
 					" containing ", num_dataspaces, "*", ds_size,
 					" + ", (remaining_dataspace_size == 0 ? "" : "1*"), remaining_dataspace_size, " Dataspaces");
 		}
 
 		// Return the stored Ram_dataspace_capability of the Region_map
-		return new_ramds_info->ds_cap;
+		return new_ramds_info->cap;
 	}
 	else
 	{
