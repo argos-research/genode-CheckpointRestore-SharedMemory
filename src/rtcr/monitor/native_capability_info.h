@@ -20,7 +20,8 @@ namespace Rtcr {
  * They are usually created by client's entrypoint and therefore require
  * a Cpu_thread_capability
  */
-struct Rtcr::Native_capability_info : Normal_obj_info, Genode::List<Native_capability_info>::Element
+struct Rtcr::Native_capability_info : Normal_obj_info, private Simple_counter<Native_capability_info>,
+                                      Genode::List<Native_capability_info>::Element
 {
 	Genode::Native_capability cap;
 	Genode::Native_capability ep_cap;
@@ -41,11 +42,17 @@ struct Rtcr::Native_capability_info : Normal_obj_info, Genode::List<Native_capab
 		return info ? info->find_by_native_badge(badge) : 0;
 	}
 
+	Genode::size_t timestamp() const
+	{
+		return Simple_counter<Native_capability_info>::id();
+	}
+
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "native ", cap, ", ep ", ep_cap, ", ");
+		Genode::print(output, "native ", cap, ", ep ", ep_cap,
+				", timestamp=", timestamp(), ", ");
 		Normal_obj_info::print(output);
 	}
 };

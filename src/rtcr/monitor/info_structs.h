@@ -40,7 +40,7 @@ public:
 };
 
 
-struct Rtcr::General_info : private Simple_counter<General_info>
+struct Rtcr::General_info
 {
 	bool const bootstrapped;
 
@@ -55,7 +55,7 @@ struct Rtcr::General_info : private Simple_counter<General_info>
 		using Genode::Hex;
 		using Genode::print;
 
-		print(output, "bootstrapped=", bootstrapped, ", id=", Simple_counter<General_info>::id());
+		print(output, "bootstrapped=", bootstrapped);
 	}
 };
 
