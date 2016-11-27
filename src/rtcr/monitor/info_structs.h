@@ -33,8 +33,8 @@ private:
 
 public:
 	Simple_counter() : current_id(get_id()) { }
-	Simple_counter(const Simple_counter&) : current_id(get_id()) { }
-	~Simple_counter() { }
+	//Simple_counter(const Simple_counter&) : current_id(get_id()) { }
+	//~Simple_counter() { }
 
 	Genode::size_t id() const { return current_id; }
 };

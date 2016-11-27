@@ -36,7 +36,10 @@ struct Rtcr::Stored_ram_dataspace_info : Stored_normal_info, Genode::List<Stored
 		memory_content(copy_ds_cap),
 		size(info.size), cached(info.cached), managed(info.mrm_info),
 		timestamp(info.timestamp())
-	{ }
+	{
+		Genode::log("  Ram_dataspace_info: ", info.timestamp(), " ", info.timestamp(), " ", info.timestamp());
+		Genode::log("  Stored_ram_dataspace_info: ", timestamp);
+	}
 
 	Stored_ram_dataspace_info *find_by_badge(Genode::uint16_t badge)
 	{

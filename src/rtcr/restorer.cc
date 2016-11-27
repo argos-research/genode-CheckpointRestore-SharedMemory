@@ -29,7 +29,7 @@ void Restorer::_identify_recreate_pd_sessions(Genode::List<Pd_session_component>
 	while(stored_pd_session)
 	{
 		Pd_session_component *pd_session = nullptr;
-		if(pd_session->parent_state().bootstrapped && stored_pd_session->bootstrapped)
+		if(stored_pd_session->bootstrapped)
 		{
 			// Identified bootstrapped PD session
 			pd_session = bootstrapped_pd_session;
