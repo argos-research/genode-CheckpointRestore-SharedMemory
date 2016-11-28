@@ -23,6 +23,7 @@ namespace Rtcr {
  */
 struct Rtcr::Signal_source_info : Normal_obj_info, Genode::List<Signal_source_info>::Element
 {
+	// Creation result
 	Genode::Capability<Genode::Signal_source> const cap;
 
 	Signal_source_info(Genode::Capability<Genode::Signal_source> cap, bool bootstrapped)

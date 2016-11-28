@@ -9,15 +9,16 @@
 using namespace Rtcr;
 
 
-Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_capability pd_cap, Name const &name,
-		Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
+Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
+		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
 	// Create real CPU thread from parent
-	auto cpu_thread_cap = _parent_cpu.create_thread(pd_cap, name, affinity, weight, utcb);
+	auto cpu_thread_cap = _parent_cpu.create_thread(parent_pd_cap, name, affinity, weight, utcb);
 
 	// Create custom CPU thread
 	Cpu_thread_component *new_cpu_thread =
-			new (_md_alloc) Cpu_thread_component(_md_alloc, cpu_thread_cap, name.string(), weight, utcb, affinity, _bootstrap_phase);
+			new (_md_alloc) Cpu_thread_component(_md_alloc, cpu_thread_cap, child_pd_cap, name.string(),
+					weight, utcb, affinity, _bootstrap_phase);
 
 	// Manage custom CPU thread
 	_ep.manage(*new_cpu_thread);
@@ -112,22 +113,22 @@ void Cpu_session_component::resume_threads()
 }
 
 
-Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability pd_cap,
+Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability child_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 
 	// Find corresponding parent PD session cap for the given custom PD session cap
 	Pd_session_component *pd_session = _pd_root.session_infos().first();
-	if(pd_session) pd_session = pd_session->find_by_badge(pd_cap.local_name());
+	if(pd_session) pd_session = pd_session->find_by_badge(child_pd_cap.local_name());
 	if(!pd_session)
 	{
-		Genode::error("Thread creation failed: PD session ", pd_cap, " is unknown.");
+		Genode::error("Thread creation failed: PD session ", child_pd_cap, " is unknown.");
 		throw Genode::Exception();
 	}
 
 	// Create custom CPU thread
-	Cpu_thread_component &new_cpu_thread = _create_thread(pd_session->parent_cap(), name, affinity, weight, utcb);
+	Cpu_thread_component &new_cpu_thread = _create_thread(child_pd_cap, pd_session->parent_cap(), name, affinity, weight, utcb);
 
 	if(verbose_debug) Genode::log("  Created custom CPU thread ", new_cpu_thread.cap());
 	return new_cpu_thread.cap();

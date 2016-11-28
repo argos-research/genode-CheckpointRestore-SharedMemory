@@ -370,7 +370,7 @@ void Target_child::print(Genode::Output &output) const
 			if(!cpu_thread) print(output, "  <empty>\n");
 			while(cpu_thread)
 			{
-				print(output, "  ", cpu_thread->parent_state(), "\n");
+				print(output, "  ", cpu_thread->cap(), " ", cpu_thread->parent_state(), "\n");
 
 				cpu_thread = cpu_thread->next();
 			}

@@ -71,8 +71,8 @@ private:
 	 */
 	Cpu_session_info       _parent_state;
 
-	Cpu_thread_component &_create_thread(Genode::Pd_session_capability pd_cap, Name const &name, Genode::Affinity::Location affinity,
-			Weight weight, Genode::addr_t utcb);
+	Cpu_thread_component &_create_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
+			Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb);
 	void _kill_thread(Cpu_thread_component &cpu_thread);
 
 public:

@@ -23,9 +23,10 @@ namespace Rtcr {
  */
 struct Rtcr::Signal_context_info : Normal_obj_info, Genode::List<Signal_context_info>::Element
 {
-	const Genode::Signal_context_capability          cap;
-	const Genode::Capability<Genode::Signal_source>  ss_cap;
-	const unsigned long imprint;
+	// Creation arguments and result
+	Genode::Signal_context_capability         const cap;
+	Genode::Capability<Genode::Signal_source> const ss_cap;
+	unsigned long                             const imprint;
 
 	Signal_context_info(Genode::Signal_context_capability sc_cap,
 			Genode::Capability<Genode::Signal_source> ss_cap, unsigned long imprint, bool bootstrapped)

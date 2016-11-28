@@ -771,6 +771,7 @@ void Checkpointer::_prepare_pd_sessions(Genode::List<Stored_pd_session_info> &st
 		}
 
 		// Wrap Region_maps of child's and checkpointer's PD session in lists for reusing _prepare_region_maps
+		// The linked list pointers of the three regions maps are usually not used gloablly
 		Genode::List<Stored_region_map_info> temp_stored;
 		temp_stored.insert(&stored_info->stored_linker_area);
 		temp_stored.insert(&stored_info->stored_stack_area);

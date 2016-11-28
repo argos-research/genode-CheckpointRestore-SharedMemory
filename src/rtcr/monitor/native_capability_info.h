@@ -23,8 +23,9 @@ namespace Rtcr {
 struct Rtcr::Native_capability_info : Normal_obj_info, private Simple_counter<Native_capability_info>,
                                       Genode::List<Native_capability_info>::Element
 {
-	Genode::Native_capability cap;
-	Genode::Native_capability ep_cap;
+	// Creation arguments and result
+	Genode::Native_capability const cap;
+	Genode::Native_capability const ep_cap;
 
 	Native_capability_info(Genode::Native_capability native_cap,
 			Genode::Native_capability ep_cap, bool bootstrapped)

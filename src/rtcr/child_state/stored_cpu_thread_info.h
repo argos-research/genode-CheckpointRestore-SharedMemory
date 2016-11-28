@@ -21,6 +21,7 @@ namespace Rtcr {
 
 struct Rtcr::Stored_cpu_thread_info : Stored_normal_info, Genode::List<Stored_cpu_thread_info>::Element
 {
+	Genode::uint16_t            const pd_session_badge;
 	Genode::Cpu_session::Name   const name;
 	Genode::Cpu_session::Weight const weight;
 	Genode::addr_t              const utcb;
@@ -36,6 +37,7 @@ struct Rtcr::Stored_cpu_thread_info : Stored_normal_info, Genode::List<Stored_cp
 		Stored_normal_info(targets_kcap,
 				cpu_thread.cap().local_name(),
 				cpu_thread.parent_state().bootstrapped),
+		pd_session_badge(cpu_thread.parent_state().pd_session_cap.local_name()),
 		name        (cpu_thread.parent_state().name),
 		weight      (cpu_thread.parent_state().weight),
 		utcb        (cpu_thread.parent_state().utcb),
@@ -68,7 +70,7 @@ struct Rtcr::Stored_cpu_thread_info : Stored_normal_info, Genode::List<Stored_cp
 		using Genode::Hex;
 
 		Stored_normal_info::print(output);
-		Genode::print(output, ", name=", name, ", weight=", weight.value, ", utcb=", Hex(utcb));
+		Genode::print(output, ", pd_session_badge=", pd_session_badge, ", name=", name, ", weight=", weight.value, ", utcb=", Hex(utcb));
 		Genode::print(output, ", started=", started, ", paused=", paused, ", single_step=", single_step);
 		Genode::print(output, ", affinity=(", affinity.xpos(), "x", affinity.ypos(),
 				", ", affinity.width(), "x", affinity.height(), ")");

@@ -9,6 +9,7 @@
 
 /* Genode includes */
 #include <cpu_session/cpu_session.h>
+#include <pd_session/capability.h>
 #include <thread/capability.h>
 
 /* Rtcr includes */
@@ -24,21 +25,23 @@ namespace Rtcr {
 struct Rtcr::Cpu_thread_info : Normal_rpc_info
 {
 	// Creation arguments
-	Genode::Cpu_session::Name   const name;
-	Genode::Cpu_session::Weight const weight;
-	Genode::addr_t              const utcb;
+	Genode::Pd_session_capability const pd_session_cap;
+	Genode::Cpu_session::Name     const name;
+	Genode::Cpu_session::Weight   const weight;
+	Genode::addr_t                const utcb;
 
-	// Variable state
+	// Modifiable state
 	bool started;
 	bool paused;
 	bool single_step;
 	Genode::Affinity::Location        affinity;
 	Genode::Signal_context_capability sigh;
 
-	Cpu_thread_info(const char* name, Genode::Cpu_session::Weight weight, Genode::addr_t utcb,
-			bool bootstrapped)
+	Cpu_thread_info(Genode::Pd_session_capability pd_session_cap, const char* name, Genode::Cpu_session::Weight weight,
+			Genode::addr_t utcb, bool bootstrapped)
 	:
 		Normal_rpc_info (bootstrapped),
+		pd_session_cap(pd_session_cap),
 		name        (name),
 		weight      (weight),
 		utcb        (utcb),
@@ -53,7 +56,7 @@ struct Rtcr::Cpu_thread_info : Normal_rpc_info
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "name=", name, ", weigth=", weight.value, ", utcb=", Hex(utcb), ", ");
+		Genode::print(output, "pd_session ", pd_session_cap, ", name=", name, ", weigth=", weight.value, ", utcb=", Hex(utcb), ", ");
 		Genode::print(output, "started=", started, ", paused=", paused, ", single_step=", single_step, ", ");
 		Genode::print(output, "affinity=(", affinity.xpos(), "x", affinity.ypos(), ", ", affinity.width(), "x", affinity.height());
 		Genode::print(output, "), sigh ", sigh, ", ");
