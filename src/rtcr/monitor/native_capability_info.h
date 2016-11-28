@@ -51,7 +51,7 @@ struct Rtcr::Native_capability_info : Normal_obj_info, private Simple_counter<Na
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "native ", cap, ", ep ", ep_cap, ", ");
+		Genode::print(output, "native ", cap, ", ep ", ep_cap, ", timestamp=", timestamp(), ", ");
 		Normal_obj_info::print(output);
 	}
 };

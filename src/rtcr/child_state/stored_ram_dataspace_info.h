@@ -49,12 +49,20 @@ struct Rtcr::Stored_ram_dataspace_info : Stored_normal_info, Genode::List<Stored
 		return info ? info->find_by_badge(badge) : 0;
 	}
 
+	Stored_ram_dataspace_info *find_by_timestamp(Genode::size_t timestamp)
+	{
+		if(timestamp == this->timestamp)
+			return this;
+		Stored_ram_dataspace_info *info = next();
+		return info ? info->find_by_timestamp(timestamp) : 0;
+	}
+
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
 		Stored_normal_info::print(output);
-		Genode::print(output, ", size=", size, ", cached=", static_cast<unsigned>(cached),
+		Genode::print(output, ", size=", Hex(size), ", cached=", static_cast<unsigned>(cached),
 				", managed=", managed, ", copy_ds ", memory_content, ", timestamp=", timestamp);
 	}
 };

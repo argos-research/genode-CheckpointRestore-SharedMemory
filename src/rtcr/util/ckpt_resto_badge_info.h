@@ -1,5 +1,5 @@
 /*
- * \brief  Structure for associating a badge to another badge (e.g. checkpointed and restored badges)
+ * \brief  Structure for associating a badge to another capability (e.g. checkpointed badge and restored cap)
  * \author Denis Huber
  * \date   2016-11-26
  */
@@ -25,10 +25,10 @@ namespace Rtcr {
 struct Rtcr::Ckpt_resto_badge_info : Genode::List<Ckpt_resto_badge_info>::Element
 {
 	Genode::uint16_t ckpt_badge;
-	Genode::uint16_t resto_badge;
+	Genode::Native_capability resto_cap;
 
-	Ckpt_resto_badge_info(Genode::uint16_t ckpt_badge, Genode::uint16_t resto_badge)
-	: ckpt_badge(ckpt_badge), resto_badge(resto_badge) { }
+	Ckpt_resto_badge_info(Genode::uint16_t ckpt_badge, Genode::Native_capability resto_cap)
+	: ckpt_badge(ckpt_badge), resto_cap(resto_cap) { }
 
 	Ckpt_resto_badge_info *find_by_ckpt_badge(Genode::uint16_t badge)
 	{
@@ -39,7 +39,7 @@ struct Rtcr::Ckpt_resto_badge_info : Genode::List<Ckpt_resto_badge_info>::Elemen
 	}
 	Ckpt_resto_badge_info *find_by_resto_badge(Genode::uint16_t badge)
 	{
-		if(badge == resto_badge)
+		if(badge == resto_cap.local_name())
 			return this;
 		Ckpt_resto_badge_info *info = next();
 		return info ? info->find_by_resto_badge(badge) : 0;
@@ -49,7 +49,7 @@ struct Rtcr::Ckpt_resto_badge_info : Genode::List<Ckpt_resto_badge_info>::Elemen
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "ckpt=", ckpt_badge, ", resto=", resto_badge);
+		Genode::print(output, "ckpt_badge=", ckpt_badge, ", resto ", resto_cap);
 	}
 };
 

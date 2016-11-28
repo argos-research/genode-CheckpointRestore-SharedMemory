@@ -60,6 +60,14 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, private Simple_counter<Ram_da
 		return info ? info->find_by_badge(badge) : 0;
 	}
 
+	Ram_dataspace_info *find_by_timestamp(Genode::size_t timestamp)
+	{
+		if(timestamp == this->timestamp())
+			return this;
+		Ram_dataspace_info *info = next();
+		return info ? info->find_by_timestamp(timestamp) : 0;
+	}
+
 	Genode::size_t timestamp() const
 	{
 		return Simple_counter<Ram_dataspace_info>::id();

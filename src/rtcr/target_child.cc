@@ -484,17 +484,18 @@ Genode::Service *Target_child::resolve_session_request(const char *service_name,
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", args, ")");
 
-	// Restoration hook
-	if(!Genode::strcmp(service_name, "LOG") && _restorer)
-	{
-		_restorer->restore();
-		_restorer = nullptr;
-	}
 
 	if(!Genode::strcmp(service_name, "LOG") && _in_bootstrap)
 	{
 		if(verbose_debug) Genode::log("  Unsetting bootstrap_phase");
 		_in_bootstrap = false;
+	}
+
+	// Restoration hook
+	if(!Genode::strcmp(service_name, "LOG") && _restorer)
+	{
+		_restorer->restore();
+		_restorer = nullptr;
 	}
 
 	Genode::Service *service = 0;

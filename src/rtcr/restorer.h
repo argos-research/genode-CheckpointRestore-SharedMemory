@@ -34,7 +34,7 @@ private:
 	Genode::Allocator &_alloc;
 	Target_child &_child;
 	Target_state &_state;
-	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_badges;
+	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_infos;
 	Genode::List<Orig_copy_resto_info> _memory_to_restore;
 
 
@@ -42,8 +42,27 @@ private:
 			Genode::List<Pd_session_component> &pd_sessions, Genode::List<Stored_pd_session_info> &stored_pd_sessions);
 	void _identify_recreate_signal_sources(
 			Pd_session_component &pd_session, Genode::List<Stored_signal_source_info> &stored_signal_sources);
-	void _identify_recreate_pd_sessions(
-			Genode::List<Signal_context_info> &signal_contexts, Genode::List<Stored_signal_context_info> &stored_signal_contexts);
+	void _identify_recreate_signal_contexts(
+			Pd_session_component &pd_session, Genode::List<Stored_signal_context_info> &stored_signal_contexts);
+
+	void _identify_recreate_ram_sessions(
+			Genode::List<Ram_session_component> &ram_sessions, Genode::List<Stored_ram_session_info> &stored_ram_sessions);
+	void _identify_recreate_ram_dataspaces(
+			Ram_session_component &ram_session, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces);
+	Genode::List<Ckpt_resto_badge_info> _identify_ram_dataspaces(
+			Genode::List<Ram_dataspace_info> &ram_dataspaces, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces);
+
+	void _identify_recreate_cpu_sessions(
+			Genode::List<Cpu_session_component> &cpu_sessions, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions);
+
+	void _identify_recreate_rm_sessions(
+			Genode::List<Rm_session_component> &rm_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
+
+	void _identify_recreate_log_sessions(
+			Genode::List<Log_session_component> &log_sessions, Genode::List<Stored_log_session_info> &stored_log_sessions);
+
+	void _identify_recreate_timer_sessions(
+			Genode::List<Timer_session_component> &timer_sessions, Genode::List<Stored_timer_session_info> &stored_timer_sessions);
 
 
 
@@ -53,7 +72,7 @@ private:
 	template<typename RESTO, typename CKPT>
 	CKPT &_find_stored_object(RESTO &session_obj, Genode::List<CKPT> &stored_sessions_infos)
 	{
-		Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_badges.first();
+		Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
 		if(cr_info) cr_info = cr_info->find_by_resto_badge(session_obj.cap().local_name());
 		if(!cr_info)
 		{
@@ -74,7 +93,7 @@ private:
 	template<typename RESTO, typename CKPT>
 	CKPT &_find_stored_object_info(RESTO &info_obj, Genode::List<CKPT> &stored_object_infos)
 	{
-		Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_badges.first();
+		Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
 		if(cr_info) cr_info = cr_info->find_by_resto_badge(info_obj.cap.local_name());
 		if(!cr_info)
 		{

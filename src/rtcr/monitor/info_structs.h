@@ -33,6 +33,7 @@ private:
 
 public:
 	Simple_counter() : current_id(get_id()) { }
+	// Do not use copy ctor, because Genode::print(Output&, HEAD const&, TAIL ...) uses pass-by-value
 	//Simple_counter(const Simple_counter&) : current_id(get_id()) { }
 	//~Simple_counter() { }
 

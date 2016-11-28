@@ -30,8 +30,8 @@ void Component::construct(Genode::Env &env)
 	addr[0] = 1;
 	unsigned int &n = addr[0];
 
-	env.parent().upgrade(timer, "ram_quota=8K");
-	env.parent().upgrade(env.ram_session_cap(), "ram_quota=24K");
+	//env.parent().upgrade(timer, "ram_quota=8K");
+	//env.parent().upgrade(env.ram_session_cap(), "ram_quota=24K");
 
 	while(1)
 	{
@@ -40,6 +40,8 @@ void Component::construct(Genode::Env &env)
 		else
 			log(n, " sheeps. zzZ");
 		n++;
+		//unsigned int a = n;
+		//n = a;
 		timer.msleep(1000);
 	}
 
