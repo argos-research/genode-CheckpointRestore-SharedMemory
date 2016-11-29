@@ -7,12 +7,16 @@
 #ifndef _RTCR_RESTORER_H_
 #define _RTCR_RESTORER_H_
 
+/* Genode includes */
+#include <foc_native_pd/client.h>
+
 /* Rtcr includes */
 #include "target_state.h"
 #include "target_child.h"
 #include "util/ckpt_resto_badge_info.h"
 #include "util/orig_copy_resto_info.h"
 #include "util/ref_badge.h"
+#include "util/badge_kcap_info.h"
 
 namespace Rtcr {
 	class Restorer;
@@ -35,6 +39,11 @@ private:
 	Genode::Allocator &_alloc;
 	Target_child &_child;
 	Target_state &_state;
+	/**
+	 * Contains kcap which are needed to be mapped
+	 * They belong to RPC objects which are not bootstrapped and had to be recreated.
+	 */
+	Genode::List<Badge_kcap_info> _capability_map_infos;
 	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_infos;
 	Genode::List<Orig_copy_resto_info> _memory_to_restore;
 	Genode::List<Ref_badge> _region_map_dataspaces_from_stored;
@@ -44,6 +53,8 @@ private:
 
 	Genode::List<Ref_badge> _create_region_map_dataspaces(
 			Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
+
+	Genode::List<Badge_kcap_info> _create_cap_map_infos(Target_state &state);
 
 	/****************************************
 	 *** Identify or recreate RPC objects ***
@@ -134,6 +145,8 @@ private:
 
 	void _resolve_inc_checkpoint_dataspaces(
 			Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_resto_info> &memory_infos);
+
+	void _restore_cap_map(Target_child &child, Target_state &state);
 
 
 public:
