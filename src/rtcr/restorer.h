@@ -12,6 +12,7 @@
 #include "target_child.h"
 #include "util/ckpt_resto_badge_info.h"
 #include "util/orig_copy_resto_info.h"
+#include "util/ref_badge.h"
 
 namespace Rtcr {
 	class Restorer;
@@ -36,9 +37,13 @@ private:
 	Target_state &_state;
 	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_infos;
 	Genode::List<Orig_copy_resto_info> _memory_to_restore;
+	Genode::List<Ref_badge> _region_map_dataspaces_from_stored;
 
 	template<typename T>
 	void _destroy_list(Genode::List<T> &list);
+
+	Genode::List<Ref_badge> _create_region_map_dataspaces(
+			Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
 
 	/****************************************
 	 *** Identify or recreate RPC objects ***
@@ -95,7 +100,13 @@ private:
 			Genode::List<Pd_session_component> &pd_sessions);
 
 	void _restore_state_rm_sessions(
-			Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
+			Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions,
+			Genode::List<Pd_session_component> &pd_sessions);
+	void _restore_state_region_maps(
+			Genode::List<Region_map_component> &region_maps, Genode::List<Stored_region_map_info> &stored_region_maps,
+			Genode::List<Pd_session_component> &pd_sessions);
+	void _restore_state_attached_regions(
+			Region_map_component &region_map, Genode::List<Stored_attached_region_info> &stored_attached_regions);
 
 	void _restore_state_log_sessions(
 			Log_root &log_root, Genode::List<Stored_log_session_info> &stored_log_sessions);

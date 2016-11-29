@@ -1216,8 +1216,9 @@ void Checkpointer::_resolve_inc_checkpoint_dataspaces(
 				if(memory_info) memory_info = memory_info->find_by_orig_badge(ramds_info->cap.local_name());
 				if(memory_info)
 				{
-					// Now we found a memory_info which is actually managed for inc ckpt
+					// Now we found a memory_info which is actually managed by the inc ckpt mechanism
 					// Thus, replace this memory_info with the attached designated dataspaces
+					// and clean up the old memory_info
 					memory_infos.remove(memory_info);
 
 					Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();

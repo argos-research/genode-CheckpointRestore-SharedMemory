@@ -20,6 +20,43 @@ void Restorer::_destroy_list(Genode::List<T> &list)
 }
 template void Restorer::_destroy_list(Genode::List<Ckpt_resto_badge_info> &list);
 template void Restorer::_destroy_list(Genode::List<Orig_copy_resto_info> &list);
+template void Restorer::_destroy_list(Genode::List<Ref_badge> &list);
+
+
+Genode::List<Ref_badge> Restorer::_create_region_map_dataspaces(
+		Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
+{
+	Genode::List<Ref_badge> result;
+
+	// Get ds_badges from PD sessions
+	Stored_pd_session_info *stored_pd_session = stored_pd_sessions.first();
+	while(stored_pd_session)
+	{
+		result.insert(new (_alloc) Ref_badge(stored_pd_session->stored_address_space.ds_badge));
+		result.insert(new (_alloc) Ref_badge(stored_pd_session->stored_stack_area.ds_badge));
+		result.insert(new (_alloc) Ref_badge(stored_pd_session->stored_linker_area.ds_badge));
+
+		stored_pd_session = stored_pd_session->next();
+	}
+
+	// Get ds_badges from RM sessions
+	Stored_rm_session_info *stored_rm_session = stored_rm_sessions.first();
+	while(stored_rm_session)
+	{
+		Stored_region_map_info *stored_region_map = stored_rm_session->stored_region_map_infos.first();
+		while(stored_region_map)
+		{
+			result.insert(new (_alloc) Ref_badge(stored_region_map->ds_badge));
+
+			stored_region_map = stored_region_map->next();
+		}
+
+		stored_rm_session = stored_rm_session->next();
+	}
+
+
+	return result;
+}
 
 
 void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Stored_pd_session_info> &stored_pd_sessions)
@@ -65,6 +102,22 @@ void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Sto
 		_identify_recreate_signal_sources(*pd_session, stored_pd_session->stored_source_infos);
 		_identify_recreate_signal_contexts(*pd_session, stored_pd_session->stored_context_infos);
 		// XXX postpone native caps creation, because it needs capabilities from CPU thread
+
+		// Insert region map cap and region map's dataspace cap into _ckpt_to_resto_infos for all three region maps of a PD session
+		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+				stored_pd_session->stored_address_space.badge, pd_session->address_space_component().cap()));
+		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+				stored_pd_session->stored_address_space.ds_badge, pd_session->address_space_component().parent_state().ds_cap));
+
+		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+				stored_pd_session->stored_stack_area.badge, pd_session->stack_area_component().cap()));
+		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+				stored_pd_session->stored_stack_area.ds_badge, pd_session->stack_area_component().parent_state().ds_cap));
+
+		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+				stored_pd_session->stored_linker_area.badge, pd_session->linker_area_component().cap()));
+		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+				stored_pd_session->stored_linker_area.ds_badge, pd_session->linker_area_component().parent_state().ds_cap));
 
 		stored_pd_session = stored_pd_session->next();
 	}
@@ -495,8 +548,11 @@ void Restorer::_identify_recreate_region_maps(
 			throw Genode::Exception();
 		}
 
-
+		// Insert region map badge/cap
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_region_map->badge, region_map->cap()));
+		// Insert region map's dataspace badge/cap for _restore_state_attached_regions
+		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_region_map->ds_badge, region_map->parent_state().ds_cap));
+
 
 		stored_region_map = stored_region_map->next();
 	}
@@ -594,7 +650,7 @@ void Restorer::_restore_state_pd_sessions(Pd_root &pd_root, Genode::List<Stored_
 		temp_child.insert(&pd_session->linker_area_component());
 		temp_child.insert(&pd_session->stack_area_component());
 		temp_child.insert(&pd_session->address_space_component());
-		//_restore_state_region_maps({address_space, stack_area, linker_area});
+		_restore_state_region_maps(temp_child, temp_stored, pd_root.session_infos());
 
 		stored_pd_session = stored_pd_session->next();
 	}
@@ -648,7 +704,6 @@ void Restorer::_restore_state_ram_dataspaces(
 		Orig_copy_resto_info *info = new (_alloc) Orig_copy_resto_info(
 				ram_dataspace->cap, stored_ram_dataspace->memory_content, 0, stored_ram_dataspace->size);
 		_memory_to_restore.insert(info);
-
 
 		stored_ram_dataspace = stored_ram_dataspace->next();
 	}
@@ -758,7 +813,8 @@ void Restorer::_restore_state_cpu_threads(Cpu_session_component &cpu_session, Ge
 		{
 			cpu_thread->single_step(true);
 		}
-
+		// Thread state
+		cpu_thread->state(stored_cpu_thread->ts);
 
 
 		stored_cpu_thread = stored_cpu_thread->next();
@@ -766,7 +822,8 @@ void Restorer::_restore_state_cpu_threads(Cpu_session_component &cpu_session, Ge
 }
 
 
-void Restorer::_restore_state_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
+void Restorer::_restore_state_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions,
+		Genode::List<Pd_session_component> &pd_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
@@ -785,9 +842,132 @@ void Restorer::_restore_state_rm_sessions(Rm_root &rm_root, Genode::List<Stored_
 		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_rm_session->upgrade_args.string(), "ram_quota").ulong_value(0);
 		if(ram_quota != 0) rm_root.upgrade(rm_session->cap(), stored_rm_session->upgrade_args.string());
 
-		//_restore_state_region_maps();
+		_restore_state_region_maps(rm_session->parent_state().region_maps, stored_rm_session->stored_region_map_infos, pd_sessions);
 
 		stored_rm_session = stored_rm_session->next();
+	}
+}
+
+
+void Restorer::_restore_state_region_maps(Genode::List<Region_map_component> &region_maps, Genode::List<Stored_region_map_info> &stored_region_maps,
+		Genode::List<Pd_session_component> &pd_sessions)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Stored_region_map_info *stored_region_map = stored_region_maps.first();
+	while(stored_region_map)
+	{
+		// Find corresponding child region map
+		Region_map_component *region_map = _find_child_object(stored_region_map->badge, region_maps);
+		if(!region_map)
+		{
+			Genode::error("Could not find child region map for ckpt badge ", stored_region_map->badge);
+			throw Genode::Exception();
+		}
+
+		// Restore state
+		// sigh
+		if(stored_region_map->sigh_badge != 0)
+		{
+			// Restore sigh
+			// Find sigh's resto cap
+			Signal_context_info *context = nullptr;
+			Pd_session_component *pd_session = pd_sessions.first();
+			while(pd_session)
+			{
+				context = _find_child_object(stored_region_map->sigh_badge, pd_session->parent_state().signal_contexts);
+				if(context) break;
+
+				pd_session = pd_session->next();
+			}
+			if(!context)
+			{
+				Genode::error("Could not find child signal context for ckpt badge ", stored_region_map->sigh_badge);
+				throw Genode::Exception();
+			}
+			region_map->fault_handler(context->cap);
+		}
+		// Attached regions
+		_restore_state_attached_regions(*region_map, stored_region_map->stored_attached_region_infos);
+
+		stored_region_map = stored_region_map->next();
+	}
+}
+
+
+void Restorer::_restore_state_attached_regions(Region_map_component &region_map,
+		Genode::List<Stored_attached_region_info> &stored_attached_regions)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Stored_attached_region_info *stored_attached_region = stored_attached_regions.first();
+	while(stored_attached_region)
+	{
+		Attached_region_info *attached_region = nullptr;
+
+		// Find corresponding attached region by the position in the region map or recreate it
+		if(stored_attached_region->bootstrapped)
+		{
+			// Identify
+			attached_region = region_map.parent_state().attached_regions.first();
+			if(attached_region) attached_region = attached_region->find_by_addr(stored_attached_region->rel_addr);
+			if(!attached_region)
+			{
+				Genode::error("Could not find bootstrapped attached region for attached region ",
+						stored_attached_region->badge, " at address ", stored_attached_region->rel_addr);
+				throw Genode::Exception();
+			}
+		}
+		else
+		{
+			// Restore the mapping
+			// Find dataspace: _ckpt_to_resto_infos shall have all dataspaces from known services
+			// (e.g. dataspaces from RAM sessions, region map's dataspaces),
+			// still there could be attached dataspaces whose origin is unknown and, thus, shall be allocated here
+			Genode::Dataspace_capability ds_cap;
+			Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
+			if(cr_info) cr_info = cr_info->find_by_ckpt_badge(stored_attached_region->attached_ds_badge);
+			if(cr_info)
+			{
+				ds_cap = Genode::reinterpret_cap_cast<Genode::Dataspace>(cr_info->resto_cap);
+			}
+			else
+			{
+				ds_cap = _child._env.ram().alloc(stored_attached_region->size);
+			}
+
+			region_map.attach(ds_cap, stored_attached_region->size, stored_attached_region->offset,
+					true, stored_attached_region->rel_addr, stored_attached_region->executable);
+
+			attached_region = region_map.parent_state().attached_regions.first();
+			if(attached_region) attached_region = attached_region->find_by_addr(stored_attached_region->rel_addr);
+			if(!attached_region)
+			{
+				Genode::error("Could not find recreated attached region for attached region ",
+						stored_attached_region->badge, " at address ", stored_attached_region->rel_addr);
+				throw Genode::Exception();
+			}
+		}
+
+		// Find out whether the attached region's memory needs to be restored
+		// Find out whether the attached region is a known region map (do not remember region maps)
+		Ref_badge *badge = _region_map_dataspaces_from_stored.first();
+		if(badge) badge = badge->find_by_badge(stored_attached_region->attached_ds_badge);
+		if(!badge)
+		{
+			// Find out whether the cap is already in memory to restore (only add new dataspaces)
+			Orig_copy_resto_info *info = _memory_to_restore.first();
+			if(info) info = info->find_by_copy_badge(stored_attached_region->memory_content.local_name());
+			if(!info)
+			{
+				// If not in list, then insert it
+				info = new (_alloc) Orig_copy_resto_info(
+						attached_region->attached_ds_cap, stored_attached_region->memory_content, 0, stored_attached_region->size);
+				_memory_to_restore.insert(info);
+			}
+		}
+
+		stored_attached_region = stored_attached_region->next();
 	}
 }
 
@@ -879,6 +1059,19 @@ void Restorer::restore()
 
 	Genode::log("Before: \n", _child);
 
+	_region_map_dataspaces_from_stored = _create_region_map_dataspaces(_state._stored_pd_sessions, _state._stored_rm_sessions);
+
+	if(verbose_debug)
+	{
+		Genode::log("Region map dataspaces (from ckpt):");
+		Ref_badge *info = _region_map_dataspaces_from_stored.first();
+		while(info)
+		{
+			Genode::log(" ", *info);
+			info = info->next();
+		}
+	}
+
 	// Identify or create RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
 	//   Make a mapping of old badges to new badges
 	_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
@@ -921,7 +1114,8 @@ void Restorer::restore()
 			_child.custom_services().pd_root->session_infos());
 	if(_child.custom_services().rm_root)
 	{
-		_restore_state_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions);
+		_restore_state_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions,
+				_child.custom_services().pd_root->session_infos());
 	}
 	if(_child.custom_services().log_root)
 	{
@@ -932,6 +1126,9 @@ void Restorer::restore()
 		_restore_state_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions,
 				_child.custom_services().pd_root->session_infos());
 	}
+
+	// Resolve inc checkpoint dataspaces in memory to restore
+
 
 	if(verbose_debug)
 	{
@@ -949,11 +1146,11 @@ void Restorer::restore()
 	//   mark mapping from memory to restore as restored
 	// Insert capabilities of all objects into capability space
 
-	// Resolve inc checkpoint dataspaces in memory to restore
 
 	// Clean up
 	_destroy_list(_ckpt_to_resto_infos);
 	_destroy_list(_memory_to_restore);
+	_destroy_list(_region_map_dataspaces_from_stored);
 
 	Genode::log("After: \n", _child);
 
