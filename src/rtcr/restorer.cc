@@ -1041,6 +1041,54 @@ void Restorer::_restore_state_timer_sessions(Timer_root &timer_root, Genode::Lis
 }
 
 
+void Restorer::_resolve_inc_checkpoint_dataspaces(
+		Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_resto_info> &memory_infos)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Ram_session_component *ram_session = ram_sessions.first();
+	while(ram_session)
+	{
+		Ram_dataspace_info *ramds_info = ram_session->parent_state().ram_dataspaces.first();
+		while(ramds_info)
+		{
+			// RAM dataspace is managed for inc ckpt
+			if(ramds_info->mrm_info)
+			{
+				// Find corresponding memory_info
+				Orig_copy_resto_info *memory_info = memory_infos.first();
+				if(memory_info) memory_info = memory_info->find_by_orig_badge(ramds_info->cap.local_name());
+				if(memory_info)
+				{
+					// Now we found a memory_info which is actually managed by the inc ckpt mechanism
+					// Thus, replace this memory_info with the attached designated dataspaces
+					// and clean up the old memory_info
+					memory_infos.remove(memory_info);
+
+					Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();
+					if(dd_info && dd_info->attached)
+					{
+						Orig_copy_resto_info *new_oc_info = new (_alloc) Orig_copy_resto_info(dd_info->cap,
+								memory_info->copy_ds_cap, dd_info->rel_addr, dd_info->size);
+						memory_infos.insert(new_oc_info);
+
+						dd_info = dd_info->next();
+					}
+
+					Genode::destroy(_alloc, memory_info);
+				}
+
+			}
+
+			ramds_info = ramds_info->next();
+		}
+
+		ram_session = ram_session->next();
+	}
+
+}
+
+
 
 Restorer::Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &state)
 : _alloc(alloc), _child(child), _state(state) { }
@@ -1128,6 +1176,7 @@ void Restorer::restore()
 	}
 
 	// Resolve inc checkpoint dataspaces in memory to restore
+	_resolve_inc_checkpoint_dataspaces(_child.custom_services().ram_root->session_infos(), _memory_to_restore);
 
 
 	if(verbose_debug)
@@ -1144,6 +1193,7 @@ void Restorer::restore()
 	// Replace old badges with new in capability map
 	//   copy memory content from checkpointed dataspace which contains the cap map
 	//   mark mapping from memory to restore as restored
+
 	// Insert capabilities of all objects into capability space
 
 

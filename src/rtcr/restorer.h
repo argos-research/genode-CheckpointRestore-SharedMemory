@@ -115,7 +115,6 @@ private:
 			Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions,
 			Genode::List<Pd_session_component> &pd_sessions);
 
-
 	template<typename RESTO>
 	RESTO *_find_child_object(Genode::uint16_t badge, Genode::List<RESTO> &child_objects)
 	{
@@ -131,6 +130,10 @@ private:
 
 		return child_object;
 	}
+
+
+	void _resolve_inc_checkpoint_dataspaces(
+			Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_resto_info> &memory_infos);
 
 
 public:
