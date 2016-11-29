@@ -28,9 +28,11 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 	Genode::addr_t const rel_addr;
 	bool           const executable;
 
-	Stored_attached_region_info(Attached_region_info &info, Genode::Ram_dataspace_capability copy_ds_cap)
+	Stored_attached_region_info(Attached_region_info &info, Genode::addr_t kcap, Genode::Ram_dataspace_capability copy_ds_cap)
 	:
-		Stored_normal_info(0, 0, info.bootstrapped),
+		Stored_normal_info(kcap,
+				info.attached_ds_cap.local_name(),
+				info.bootstrapped),
 		attached_ds_badge (info.attached_ds_cap.local_name()),
 		memory_content    (copy_ds_cap),
 		size       (info.size),
@@ -41,7 +43,7 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 
 	Stored_attached_region_info *find_by_addr(Genode::addr_t addr)
 	{
-		if(addr == rel_addr)
+		if((addr >= rel_addr) && (addr <= rel_addr + size))
 			return this;
 		Stored_attached_region_info *info = next();
 		return info ? info->find_by_addr(addr) : 0;
@@ -51,8 +53,7 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "bootstrapped=", bootstrapped);
-
+		Stored_normal_info::print(output);
 		Genode::print(output, ", attached_ds_badge=", attached_ds_badge, " ");
 		Genode::print(output, " [", Hex(rel_addr, Hex::PREFIX, Hex::PAD));
 		Genode::print(output, ", ", Hex(rel_addr + size - offset, Hex::PREFIX, Hex::PAD));

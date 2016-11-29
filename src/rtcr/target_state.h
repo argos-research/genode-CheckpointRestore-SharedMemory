@@ -46,6 +46,8 @@ private:
 	Genode::List<Stored_log_session_info>   _stored_log_sessions;
 	Genode::List<Stored_timer_session_info> _stored_timer_sessions;
 
+	Genode::addr_t _cap_idx_alloc_addr;
+
 public:
 	Target_state(Genode::Env &env, Genode::Allocator &alloc);
 	~Target_state();

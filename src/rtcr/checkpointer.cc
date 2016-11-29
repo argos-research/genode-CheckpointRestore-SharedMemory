@@ -25,8 +25,8 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 	Genode::List<Badge_kcap_info> result;
 
 	// Retrieve cap_idx_alloc_addr
-	Genode::addr_t cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
-	//log("from ckpt: ", Genode::Hex(cap_idx_alloc_addr));
+	addr_t cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
+	_state._cap_idx_alloc_addr = cap_idx_alloc_addr;
 
 	// Find child's dataspace corresponding to cap_idx_alloc_addr
 	Attached_region_info *ar_info = _child.pd().address_space_component().parent_state().attached_regions.first();
@@ -43,23 +43,23 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 			_mark_attach_designated_dataspaces(*ar_info);
 
 	// Create new badge_kcap list
-	//const Genode::size_t struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
-	const size_t array_ele_size = sizeof(Genode::Cap_index);
-	const size_t array_size     = array_ele_size*4096;
+	//size_t const struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
+	size_t const array_ele_size = sizeof(Genode::Cap_index);
+	size_t const array_size     = array_ele_size*4096;
 
-	const addr_t child_ds_start     = ar_info->rel_addr;
-	//const addr_t child_ds_end       = child_ds_start + ar_info->size;
-	//const addr_t child_struct_start = cap_idx_alloc_addr;
-	//const addr_t child_struct_end   = child_struct_start + struct_size;
-	//const addr_t child_array_start  = child_struct_start + 8;
-	//const addr_t child_array_end    = child_array_start + array_size;
+	addr_t const child_ds_start     = ar_info->rel_addr;
+	//addr_t const child_ds_end       = child_ds_start + ar_info->size;
+	//addr_t const child_struct_start = cap_idx_alloc_addr;
+	//addr_t const child_struct_end   = child_struct_start + struct_size;
+	//addr_t const child_array_start  = child_struct_start + 8;
+	//addr_t const child_array_end    = child_array_start + array_size;
 
-	const addr_t local_ds_start     = _state._env.rm().attach(ar_info->attached_ds_cap, ar_info->size, ar_info->offset);
-	//const addr_t local_ds_end       = local_ds_start + ar_info->size;
-	const addr_t local_struct_start = cap_idx_alloc_addr - child_ds_start + local_ds_start;
-	//const addr_t local_struct_end   = local_struct_start + struct_size;
-	const addr_t local_array_start  = local_struct_start + 8;
-	const addr_t local_array_end    = local_array_start + array_size;
+	addr_t const local_ds_start     = _state._env.rm().attach(ar_info->attached_ds_cap, ar_info->size, ar_info->offset);
+	//addr_t const local_ds_end       = local_ds_start + ar_info->size;
+	addr_t const local_struct_start = local_ds_start + (cap_idx_alloc_addr - child_ds_start);
+	//addr_t const local_struct_end   = local_struct_start + struct_size;
+	addr_t const local_array_start  = local_struct_start + 8;
+	addr_t const local_array_end    = local_array_start + array_size;
 
 	/*
 	log("child_ds_start:     ", Hex(child_ds_start));
@@ -92,15 +92,15 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 				Hex(*(Genode::uint8_t*)(curr+6), Hex::OMIT_PREFIX, Hex::PAD),
 				Hex(*(Genode::uint8_t*)(curr+7), Hex::OMIT_PREFIX, Hex::PAD));
 */
-		const size_t badge_offset = 6;
+		size_t const badge_offset = 6;
 
 		// Convert address to pointer and dereference it
-		const uint16_t badge = *(uint16_t*)(curr + badge_offset);
+		uint16_t const badge = *(uint16_t*)(curr + badge_offset);
 		// Current capability map slot = Compute distance from start to current address of array and
 		// divide it by the element size;
 		// kcap = current capability map slot shifted by 12 bits to the left (last 12 bits are used
 		// by Fiasco.OC for parameters for IPC calls)
-		const addr_t kcap  = ((curr - local_array_start) / array_ele_size) << 12;
+		addr_t const kcap  = ((curr - local_array_start) / array_ele_size) << 12;
 
 		if(badge != 0 && badge != 0xffff)
 		{
@@ -115,6 +115,8 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 
 
 	}
+
+	_state._env.rm().detach(local_ds_start);
 
 	// Detach the previously attached Designated_dataspace_infos and delete the list containing marked Designated_dataspace_infos
 	_detach_unmark_designated_dataspaces(marked_badge_infos, *ar_info);
@@ -386,7 +388,7 @@ Stored_attached_region_info &Checkpointer::_create_stored_attached_region(Attach
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
-	// Find attached ds cap
+	// Find attached ds cap in known _copy_dataspaces to reuse it
 	Genode::Ram_dataspace_capability ramds_cap;
 	Orig_copy_count_info *known_info = _copy_dataspaces.first();
 	if(known_info) known_info = known_info->find_by_badge(child_info.attached_ds_cap.local_name());
@@ -416,7 +418,8 @@ Stored_attached_region_info &Checkpointer::_create_stored_attached_region(Attach
 		}
 	}
 
-	return *new (_state._alloc) Stored_attached_region_info(child_info, ramds_cap);
+	Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info.attached_ds_cap.local_name(), _capability_map_infos);
+	return *new (_state._alloc) Stored_attached_region_info(child_info, childs_kcap, ramds_cap);
 }
 void Checkpointer::_destroy_stored_attached_region(Stored_attached_region_info &stored_info)
 {
@@ -1405,9 +1408,9 @@ void Checkpointer::checkpoint()
 
 	// Prepare state lists
 	// implicitly _copy_dataspaces modified with the child's currently known dataspaces and copy dataspaces
+	_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
 	_prepare_pd_sessions(_state._stored_pd_sessions, _child.custom_services().pd_root->session_infos());
 	_prepare_cpu_sessions(_state._stored_cpu_sessions, _child.custom_services().cpu_root->session_infos());
-	_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
 	if(_child.custom_services().rm_root)
 		_prepare_rm_sessions(_state._stored_rm_sessions, _child.custom_services().rm_root->session_infos());
 	if(_child.custom_services().log_root)
