@@ -139,7 +139,7 @@ void Restorer::_identify_recreate_signal_contexts(Pd_session_component &pd_sessi
 
 		Genode::Capability<Genode::Signal_context> cap = pd_session.alloc_context(ss_cap, stored_signal_context->imprint);
 		signal_context = pd_session.parent_state().signal_contexts.first();
-		if(signal_context) signal_context = signal_context->find_by_sc_badge(cap.local_name());
+		if(signal_context) signal_context = signal_context->find_by_badge(cap.local_name());
 		if(!signal_context)
 		{
 			Genode::error("Could not find newly created signal context for ", cap);
@@ -565,169 +565,298 @@ void Restorer::_identify_recreate_timer_sessions(Timer_root &timer_root, Genode:
 }
 
 
-void Restorer::_restore_state_pd_sessions(Genode::List<Pd_session_component> &pd_sessions,
-		Genode::List<Stored_pd_session_info> &stored_pd_sessions)
+void Restorer::_restore_state_pd_sessions(Pd_root &pd_root, Genode::List<Stored_pd_session_info> &stored_pd_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Pd_session_component *pd_session = pd_sessions.first();
-	while(pd_session)
+	Stored_pd_session_info *stored_pd_session = stored_pd_sessions.first();
+	while(stored_pd_session)
 	{
 		// Find corresponding stored PD session
-		Stored_pd_session_info &stored_pd_session = _find_stored_object(*pd_session, stored_pd_sessions);
+		Pd_session_component *pd_session = _find_child_object(stored_pd_session->badge, pd_root.session_infos());
+		if(!pd_session)
+		{
+			Genode::error("Could not find child RAM session for ckpt badge ", stored_pd_session->badge);
+			throw Genode::Exception();
+		}
 
 		// Restore state
-		pd_session->parent_state().upgrade_args = stored_pd_session.upgrade_args;
-
-		// Upgrade session
-		Genode::size_t ram_quota = Genode::Arg_string::find_arg(pd_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
-		if(ram_quota != 0) _state._env.parent().upgrade(pd_session->parent_cap(), pd_session->parent_state().upgrade_args.string());
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_pd_session->upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) pd_root.upgrade(pd_session->cap(), stored_pd_session->upgrade_args.string());
 
 		// Wrap Region_maps of child's and checkpointer's PD session in lists for reusing _restore_state_region_maps
 		// The linked list pointers of the three regions maps are usually not used gloablly
 		Genode::List<Stored_region_map_info> temp_stored;
-		temp_stored.insert(&stored_pd_session.stored_linker_area);
-		temp_stored.insert(&stored_pd_session.stored_stack_area);
-		temp_stored.insert(&stored_pd_session.stored_address_space);
+		temp_stored.insert(&stored_pd_session->stored_linker_area);
+		temp_stored.insert(&stored_pd_session->stored_stack_area);
+		temp_stored.insert(&stored_pd_session->stored_address_space);
 		Genode::List<Region_map_component> temp_child;
 		temp_child.insert(&pd_session->linker_area_component());
 		temp_child.insert(&pd_session->stack_area_component());
 		temp_child.insert(&pd_session->address_space_component());
 		//_restore_state_region_maps({address_space, stack_area, linker_area});
 
-		pd_session = pd_session->next();
+		stored_pd_session = stored_pd_session->next();
 	}
 }
 
-//TODO use root's upgrade method!
-void Restorer::_restore_state_ram_sessions(Genode::List<Ram_session_component> &ram_sessions,
-		Genode::List<Stored_ram_session_info> &stored_ram_sessions)
+
+void Restorer::_restore_state_ram_sessions(Ram_root &ram_root, Genode::List<Stored_ram_session_info> &stored_ram_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Ram_session_component *ram_session = ram_sessions.first();
-	while(ram_session)
+	Stored_ram_session_info *stored_ram_session = stored_ram_sessions.first();
+	while(stored_ram_session)
 	{
-		// Find corresponding stored RAM session
-		Stored_ram_session_info &stored_ram_session = _find_stored_object(*ram_session, stored_ram_sessions);
+		// Find corresponding child RAM session
+		Ram_session_component *ram_session = _find_child_object(stored_ram_session->badge, ram_root.session_infos());
+		if(!ram_session)
+		{
+			Genode::error("Could not find child RAM session for ckpt badge ", stored_ram_session->badge);
+			throw Genode::Exception();
+		}
 
 		// Restore state
-		ram_session->parent_state().upgrade_args = stored_ram_session.upgrade_args;
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_ram_session->upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) ram_root.upgrade(ram_session->cap(), stored_ram_session->upgrade_args.string());
 
-		// Upgrade session
-		Genode::size_t ram_quota = Genode::Arg_string::find_arg(ram_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
-		if(ram_quota != 0) _state._env.parent().upgrade(ram_session->parent_cap(), ram_session->parent_state().upgrade_args.string());
+		_restore_state_ram_dataspaces(*ram_session, stored_ram_session->stored_ramds_infos);
 
-		//_restore_state_ram_dataspaces();
-
-		ram_session = ram_session->next();
+		stored_ram_session = stored_ram_session->next();
 	}
 }
 
-//TODO pass RAM session for allocating dataspaces
+
 void Restorer::_restore_state_ram_dataspaces(
-		Genode::List<Ram_dataspace_info> &ram_dataspaces, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces)
-{
-	//TODO
-}
-
-
-void Restorer::_restore_state_cpu_sessions(Genode::List<Cpu_session_component> &cpu_sessions,
-		Genode::List<Stored_cpu_session_info> &stored_cpu_sessions)
+		Ram_session_component &ram_session, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Cpu_session_component *cpu_session = cpu_sessions.first();
-	while(cpu_session)
+	Stored_ram_dataspace_info *stored_ram_dataspace = stored_ram_dataspaces.first();
+	while(stored_ram_dataspace)
 	{
-		// Find corresponding stored RAM session
-		Stored_cpu_session_info &stored_cpu_session = _find_stored_object(*cpu_session, stored_cpu_sessions);
+		// Find corresponding child RAM dataspace
+		Ram_dataspace_info *ram_dataspace = _find_child_object(stored_ram_dataspace->badge, ram_session.parent_state().ram_dataspaces);
+		if(!ram_dataspace)
+		{
+			Genode::error("Could not find child RAM dataspace for ckpt badge ", stored_ram_dataspace->badge);
+			throw Genode::Exception();
+		}
 
 		// Restore state
-		cpu_session->parent_state().upgrade_args = stored_cpu_session.upgrade_args;
+		// Postpone memory copy to a latter time
+		Orig_copy_resto_info *info = new (_alloc) Orig_copy_resto_info(
+				ram_dataspace->cap, stored_ram_dataspace->memory_content, 0, stored_ram_dataspace->size);
+		_memory_to_restore.insert(info);
 
-		// Upgrade session
-		Genode::size_t ram_quota = Genode::Arg_string::find_arg(cpu_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
-		if(ram_quota != 0) _state._env.parent().upgrade(cpu_session->parent_cap(), cpu_session->parent_state().upgrade_args.string());
 
-		//_restore_state_cpu_threads();
+		stored_ram_dataspace = stored_ram_dataspace->next();
+	}
 
-		cpu_session = cpu_session->next();
+}
+
+
+void Restorer::_restore_state_cpu_sessions(Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions,
+		Genode::List<Pd_session_component> &pd_sessions)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Stored_cpu_session_info *stored_cpu_session = stored_cpu_sessions.first();
+	while(stored_cpu_session)
+	{
+		// Find corresponding child CPU session
+		Cpu_session_component *cpu_session = _find_child_object(stored_cpu_session->badge, cpu_root.session_infos());
+		if(!cpu_session)
+		{
+			Genode::error("Could not find child RAM session for ckpt badge ", stored_cpu_session->badge);
+			throw Genode::Exception();
+		}
+
+		// Restore state
+		// sigh
+		if(stored_cpu_session->sigh_badge != 0)
+		{
+			// Restore sigh
+			// Find sigh's resto cap
+			Signal_context_info *context = nullptr;
+			Pd_session_component *pd_session = pd_sessions.first();
+			while(pd_session)
+			{
+				context = _find_child_object(stored_cpu_session->sigh_badge, pd_session->parent_state().signal_contexts);
+				if(context) break;
+
+				pd_session = pd_session->next();
+			}
+			if(!context)
+			{
+				Genode::error("Could not find child signal context for ckpt badge ", stored_cpu_session->sigh_badge);
+				throw Genode::Exception();
+			}
+			cpu_session->exception_sigh(context->cap);
+		}
+		// Upgrade session if necessary
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_cpu_session->upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) cpu_root.upgrade(cpu_session->cap(), stored_cpu_session->upgrade_args.string());
+
+		_restore_state_cpu_threads(*cpu_session, stored_cpu_session->stored_cpu_thread_infos, pd_sessions);
+
+		stored_cpu_session = stored_cpu_session->next();
 	}
 }
 
 
-void Restorer::_restore_state_rm_sessions(Genode::List<Rm_session_component> &rm_sessions,
-		Genode::List<Stored_rm_session_info> &stored_rm_sessions)
+void Restorer::_restore_state_cpu_threads(Cpu_session_component &cpu_session, Genode::List<Stored_cpu_thread_info> &stored_cpu_threads,
+		Genode::List<Pd_session_component> &pd_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Rm_session_component *rm_session = rm_sessions.first();
-	while(rm_session)
+	Stored_cpu_thread_info *stored_cpu_thread = stored_cpu_threads.first();
+	while(stored_cpu_thread)
 	{
-		// Find corresponding stored RAM session
-		Stored_rm_session_info &stored_rm_session = _find_stored_object(*rm_session, stored_rm_sessions);
+		// Find corresponding child CPU thread
+		Cpu_thread_component *cpu_thread = _find_child_object(stored_cpu_thread->badge, cpu_session.parent_state().cpu_threads);
+		if(!cpu_thread)
+		{
+			Genode::error("Could not find child CPU thread for ckpt badge ", stored_cpu_thread->badge);
+			throw Genode::Exception();
+		}
 
 		// Restore state
-		rm_session->parent_state().upgrade_args = stored_rm_session.upgrade_args;
+		// sigh
+		if(stored_cpu_thread->sigh_badge != 0)
+		{
+			// Restore sigh
+			// Find sigh's resto cap
+			Signal_context_info *context = nullptr;
+			Pd_session_component *pd_session = pd_sessions.first();
+			while(pd_session)
+			{
+				context = _find_child_object(stored_cpu_thread->sigh_badge, pd_session->parent_state().signal_contexts);
+				if(context) break;
 
-		// Upgrade session
-		Genode::size_t ram_quota = Genode::Arg_string::find_arg(rm_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
-		if(ram_quota != 0) _state._env.parent().upgrade(rm_session->parent_cap(), rm_session->parent_state().upgrade_args.string());
+				pd_session = pd_session->next();
+			}
+			if(!context)
+			{
+				Genode::error("Could not find child signal context for ckpt badge ", stored_cpu_thread->sigh_badge);
+				throw Genode::Exception();
+			}
+			cpu_thread->exception_sigh(context->cap);
+		}
+		// started
+		if(stored_cpu_thread->started && !cpu_thread->parent_state().started)
+		{
+			//cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);
+		}
+		// paused
+		if(stored_cpu_thread->paused && !cpu_thread->parent_state().paused)
+		{
+			//cpu_thread->pause();
+		}
+		// single_step
+		if(stored_cpu_thread->single_step && !cpu_thread->parent_state().single_step)
+		{
+			cpu_thread->single_step(true);
+		}
+
+
+
+		stored_cpu_thread = stored_cpu_thread->next();
+	}
+}
+
+
+void Restorer::_restore_state_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Stored_rm_session_info *stored_rm_session = stored_rm_sessions.first();
+	while(stored_rm_session)
+	{
+		// Find corresponding child RM session
+		Rm_session_component *rm_session = _find_child_object(stored_rm_session->badge, rm_root.session_infos());
+		if(!rm_session)
+		{
+			Genode::error("Could not find child RM session for ckpt badge ", stored_rm_session->badge);
+			throw Genode::Exception();
+		}
+
+		// Restore state
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_rm_session->upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) rm_root.upgrade(rm_session->cap(), stored_rm_session->upgrade_args.string());
 
 		//_restore_state_region_maps();
 
-		rm_session = rm_session->next();
+		stored_rm_session = stored_rm_session->next();
 	}
 }
 
 
-void Restorer::_restore_state_log_sessions(Genode::List<Log_session_component> &log_sessions,
-		Genode::List<Stored_log_session_info> &stored_log_sessions)
+void Restorer::_restore_state_log_sessions(Log_root &log_root, Genode::List<Stored_log_session_info> &stored_log_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Log_session_component *log_session = log_sessions.first();
-	while(log_session)
+	Stored_log_session_info *stored_log_session = stored_log_sessions.first();
+	while(stored_log_session)
 	{
-		// Find corresponding stored RAM session
-		Stored_log_session_info &stored_log_session = _find_stored_object(*log_session, stored_log_sessions);
+		// Find corresponding child LOG session
+		Log_session_component *log_session = _find_child_object(stored_log_session->badge, log_root.session_infos());
 
 		// Restore state
-		log_session->parent_state().upgrade_args = stored_log_session.upgrade_args;
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_log_session->upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) log_root.upgrade(log_session->cap(), stored_log_session->upgrade_args.string());
 
-		// Upgrade session
-		Genode::size_t ram_quota = Genode::Arg_string::find_arg(log_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
-		if(ram_quota != 0) _state._env.parent().upgrade(log_session->parent_cap(), log_session->parent_state().upgrade_args.string());
-
-		//_restore_state_ram_dataspaces();
-
-		log_session = log_session->next();
+		stored_log_session = stored_log_session->next();
 	}
 }
 
 
-void Restorer::_restore_state_timer_sessions(Genode::List<Timer_session_component> &timer_sessions,
-		Genode::List<Stored_timer_session_info> &stored_timer_sessions)
+void Restorer::_restore_state_timer_sessions(Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions,
+		Genode::List<Pd_session_component> &pd_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Timer_session_component *timer_session = timer_sessions.first();
-	while(timer_session)
+	Stored_timer_session_info *stored_timer_session = stored_timer_sessions.first();
+	while(stored_timer_session)
 	{
-		// Find corresponding stored RAM session
-		Stored_timer_session_info &stored_timer_session = _find_stored_object(*timer_session, stored_timer_sessions);
+		// Find corresponding child Timer session
+		Timer_session_component *timer_session = _find_child_object(stored_timer_session->badge, timer_root.session_infos());
 
 		// Restore state
-		timer_session->parent_state().upgrade_args = stored_timer_session.upgrade_args;
+		// sigh
+		if(stored_timer_session->sigh_badge != 0)
+		{
+			// Find Signal context info
+			Signal_context_info *context = nullptr;
+			Pd_session_component *pd_session = pd_sessions.first();
+			while(pd_session)
+			{
+				context = _find_child_object(stored_timer_session->sigh_badge, pd_session->parent_state().signal_contexts);
+				if(context) break;
 
-		// Upgrade session
-		Genode::size_t ram_quota = Genode::Arg_string::find_arg(timer_session->parent_state().upgrade_args.string(), "ram_quota").ulong_value(0);
-		if(ram_quota != 0) _state._env.parent().upgrade(timer_session->parent_cap(), timer_session->parent_state().upgrade_args.string());
+				pd_session = pd_session->next();
+			}
+			if(!context)
+			{
+				Genode::error("Could not find child signal context for ckpt badge ", stored_timer_session->sigh_badge);
+				throw Genode::Exception();
+			}
+			timer_session->sigh(context->cap);
+		}
+		// timeout and periodic
+		if(stored_timer_session->timeout != 0 && stored_timer_session->periodic)
+		{
+			timer_session->trigger_periodic(stored_timer_session->timeout);
+		}
+		else if(stored_timer_session->timeout != 0 && !stored_timer_session->periodic)
+		{
+			timer_session->trigger_once(stored_timer_session->timeout);
+		}
+		// Upgrade session if necessary
+		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_timer_session->upgrade_args.string(), "ram_quota").ulong_value(0);
+		if(ram_quota != 0) timer_root.upgrade(timer_session->cap(), stored_timer_session->upgrade_args.string());
 
-		//_restore_state_ram_dataspaces();
-
-		timer_session = timer_session->next();
+		stored_timer_session = stored_timer_session->next();
 	}
 }
 
@@ -786,20 +915,33 @@ void Restorer::restore()
 
 	// Restore state of all objects using mapping of old badges to new badges (caution: RAM <- Region map (incl. PD session) ( "<-" means requires))
 	//   Also make a mapping of memory to restore
-	_restore_state_ram_sessions(_child.custom_services().ram_root->session_infos(), _state._stored_ram_sessions);
-	_restore_state_pd_sessions(_child.custom_services().pd_root->session_infos(), _state._stored_pd_sessions);
-	_restore_state_cpu_sessions(_child.custom_services().cpu_root->session_infos(), _state._stored_cpu_sessions);
+	_restore_state_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
+	_restore_state_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
+	_restore_state_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
+			_child.custom_services().pd_root->session_infos());
 	if(_child.custom_services().rm_root)
 	{
-		_restore_state_rm_sessions(_child.custom_services().rm_root->session_infos(), _state._stored_rm_sessions);
+		_restore_state_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions);
 	}
 	if(_child.custom_services().log_root)
 	{
-		_restore_state_log_sessions(_child.custom_services().log_root->session_infos(), _state._stored_log_sessions);
+		_restore_state_log_sessions(*_child.custom_services().log_root, _state._stored_log_sessions);
 	}
 	if(_child.custom_services().timer_root)
 	{
-		_restore_state_timer_sessions(_child.custom_services().timer_root->session_infos(), _state._stored_timer_sessions);
+		_restore_state_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions,
+				_child.custom_services().pd_root->session_infos());
+	}
+
+	if(verbose_debug)
+	{
+		Genode::log("Memory to restore:");
+		Orig_copy_resto_info *info = _memory_to_restore.first();
+		while(info)
+		{
+			Genode::log(" ", *info);
+			info = info->next();
+		}
 	}
 
 	// Replace old badges with new in capability map

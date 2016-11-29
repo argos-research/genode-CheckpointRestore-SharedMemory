@@ -137,7 +137,7 @@ void Pd_session_component::free_context(Genode::Signal_context_capability cap)
 	// Find list element
 	Genode::Lock::Guard guard(_parent_state.signal_contexts_lock);
 	Signal_context_info *sc_info = _parent_state.signal_contexts.first();
-	if(sc_info) sc_info = sc_info->find_by_sc_badge(cap.local_name());
+	if(sc_info) sc_info = sc_info->find_by_badge(cap.local_name());
 
 	// List element found?
 	if(sc_info)

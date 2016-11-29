@@ -80,66 +80,45 @@ private:
 	 *** Restore state of RPC objects ***
 	 ************************************/
 	void _restore_state_pd_sessions(
-			Genode::List<Pd_session_component> &pd_sessions, Genode::List<Stored_pd_session_info> &stored_pd_sessions);
+			Pd_root &pd_root, Genode::List<Stored_pd_session_info> &stored_pd_sessions);
 
 	void _restore_state_ram_sessions(
-			Genode::List<Ram_session_component> &ram_sessions, Genode::List<Stored_ram_session_info> &stored_ram_sessions);
+			Ram_root &ram_root, Genode::List<Stored_ram_session_info> &stored_ram_sessions);
 	void _restore_state_ram_dataspaces(
-			Genode::List<Ram_dataspace_info> &ram_dataspaces, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces);
+			Ram_session_component &ram_session, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces);
 
 	void _restore_state_cpu_sessions(
-			Genode::List<Cpu_session_component> &cpu_sessions, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions);
+			Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions,
+			Genode::List<Pd_session_component> &pd_sessions);
+	void _restore_state_cpu_threads(
+			Cpu_session_component &cpu_session, Genode::List<Stored_cpu_thread_info> &stored_cpu_threads,
+			Genode::List<Pd_session_component> &pd_sessions);
 
 	void _restore_state_rm_sessions(
-			Genode::List<Rm_session_component> &rm_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
+			Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
 
 	void _restore_state_log_sessions(
-			Genode::List<Log_session_component> &log_sessions, Genode::List<Stored_log_session_info> &stored_log_sessions);
+			Log_root &log_root, Genode::List<Stored_log_session_info> &stored_log_sessions);
 
 	void _restore_state_timer_sessions(
-			Genode::List<Timer_session_component> &timer_sessions, Genode::List<Stored_timer_session_info> &stored_timer_sessions);
+			Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions,
+			Genode::List<Pd_session_component> &pd_sessions);
 
 
-	template<typename RESTO, typename CKPT>
-	CKPT &_find_stored_object(RESTO &session_obj, Genode::List<CKPT> &stored_sessions_infos)
+	template<typename RESTO>
+	RESTO *_find_child_object(Genode::uint16_t badge, Genode::List<RESTO> &child_objects)
 	{
 		Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
-		if(cr_info) cr_info = cr_info->find_by_resto_badge(session_obj.cap().local_name());
+		if(cr_info) cr_info = cr_info->find_by_ckpt_badge(badge);
 		if(!cr_info)
 		{
-			Genode::error("Could not find translation for ckpt badge from resto badge ", session_obj.cap().local_name());
+			Genode::error("Could not translate stored badge ", badge);
 			throw Genode::Exception();
 		}
-		CKPT *stored_session_info = stored_sessions_infos.first();
-		if(stored_session_info) stored_session_info = stored_session_info->find_by_badge(cr_info->ckpt_badge);
-		if(!stored_session_info)
-		{
-			Genode::error("Could not find corresponding stored object for ckpt badge ", cr_info->ckpt_badge);
-			throw Genode::Exception();
-		}
+		RESTO *child_object = child_objects.first();
+		if(child_object) child_object = child_object->find_by_badge(cr_info->resto_cap.local_name());
 
-		return *stored_session_info;
-	}
-
-	template<typename RESTO, typename CKPT>
-	CKPT &_find_stored_object_info(RESTO &info_obj, Genode::List<CKPT> &stored_object_infos)
-	{
-		Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
-		if(cr_info) cr_info = cr_info->find_by_resto_badge(info_obj.cap.local_name());
-		if(!cr_info)
-		{
-			Genode::error("Could not find translation for ckpt badge from resto badge ", info_obj.cap.local_name());
-			throw Genode::Exception();
-		}
-		CKPT *stored_session_info = stored_object_infos.first();
-		if(stored_session_info) stored_session_info = stored_session_info->find_by_badge(cr_info->ckpt_badge);
-		if(!stored_session_info)
-		{
-			Genode::error("Could not find corresponding stored object for ckpt badge ", cr_info->ckpt_badge);
-			throw Genode::Exception();
-		}
-
-		return *stored_session_info;
+		return child_object;
 	}
 
 

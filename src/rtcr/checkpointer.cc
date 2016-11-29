@@ -990,7 +990,7 @@ void Checkpointer::_prepare_signal_contexts(Genode::List<Stored_signal_context_i
 
 		// Find corresponding child_info
 		child_info = child_infos.first();
-		if(child_info) child_info = child_info->find_by_sc_badge(stored_info->badge);
+		if(child_info) child_info = child_info->find_by_badge(stored_info->badge);
 
 		// No corresponding child_info => delete it
 		if(!child_info)

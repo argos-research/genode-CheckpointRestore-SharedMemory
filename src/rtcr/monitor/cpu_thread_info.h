@@ -34,7 +34,7 @@ struct Rtcr::Cpu_thread_info : Normal_rpc_info
 	bool started;
 	bool paused;
 	bool single_step;
-	Genode::Affinity::Location        affinity;
+	Genode::Affinity::Location        affinity; // Is also used for creation
 	Genode::Signal_context_capability sigh;
 
 	Cpu_thread_info(Genode::Pd_session_capability pd_session_cap, const char* name, Genode::Cpu_session::Weight weight,

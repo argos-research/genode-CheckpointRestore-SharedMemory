@@ -55,7 +55,7 @@ struct Rtcr::Orig_copy_resto_info : Genode::List<Orig_copy_resto_info>::Element
 		using Genode::Hex;
 
 		Genode::print(output, "orig ", orig_ds_cap, ", copy ", copy_ds_cap,
-				", copy_addr=", copy_rel_addr, ", copy_size=", copy_size, ", restored=", restored);
+				", copy_addr=", Hex(copy_rel_addr), ", copy_size=", Hex(copy_size), ", restored=", restored);
 	}
 };
 
