@@ -16,7 +16,7 @@
 #include "util/ckpt_resto_badge_info.h"
 #include "util/orig_copy_resto_info.h"
 #include "util/ref_badge.h"
-#include "util/badge_kcap_info.h"
+#include "util/cap_kcap_info.h"
 
 namespace Rtcr {
 	class Restorer;
@@ -43,7 +43,7 @@ private:
 	 * Contains kcap which are needed to be mapped
 	 * They belong to RPC objects which are not bootstrapped and had to be recreated.
 	 */
-	Genode::List<Badge_kcap_info> _capability_map_infos;
+	Genode::List<Cap_kcap_info> _capability_map_infos;
 	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_infos;
 	Genode::List<Orig_copy_resto_info> _memory_to_restore;
 	Genode::List<Ref_badge> _region_map_dataspaces_from_stored;
@@ -53,8 +53,6 @@ private:
 
 	Genode::List<Ref_badge> _create_region_map_dataspaces(
 			Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
-
-	Genode::List<Badge_kcap_info> _create_cap_map_infos(Target_state &state);
 
 	/****************************************
 	 *** Identify or recreate RPC objects ***
@@ -147,6 +145,11 @@ private:
 			Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_resto_info> &memory_infos);
 
 	void _restore_cap_map(Target_child &child, Target_state &state);
+	void _restore_cap_space(Target_child &child);
+
+	void _restore_dataspaces(Genode::List<Orig_copy_resto_info> &memory_infos);
+	void _restore_dataspace_content(Genode::Dataspace_capability orig_ds_cap,
+			Genode::Ram_dataspace_capability copy_ds_cap, Genode::addr_t copy_rel_addr, Genode::size_t copy_size);
 
 
 public:

@@ -6,6 +6,7 @@
 
 #include "restorer.h"
 #include "util/sort.h"
+#include "util/debug.h"
 #include <base/internal/cap_map.h>
 #include <base/internal/cap_alloc.h>
 
@@ -23,6 +24,7 @@ void Restorer::_destroy_list(Genode::List<T> &list)
 template void Restorer::_destroy_list(Genode::List<Ckpt_resto_badge_info> &list);
 template void Restorer::_destroy_list(Genode::List<Orig_copy_resto_info> &list);
 template void Restorer::_destroy_list(Genode::List<Ref_badge> &list);
+template void Restorer::_destroy_list(Genode::List<Cap_kcap_info> &list);
 
 
 Genode::List<Ref_badge> Restorer::_create_region_map_dataspaces(
@@ -100,7 +102,7 @@ void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Sto
 				throw Genode::Exception();
 			}
 			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_pd_session->kcap, pd_session->cap().local_name()));
+			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_pd_session->kcap, pd_session->cap()));
 		}
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_pd_session->badge, pd_session->cap()));
@@ -166,7 +168,7 @@ void Restorer::_identify_recreate_signal_sources(Pd_session_component &pd_sessio
 				throw Genode::Exception();
 			}
 			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_signal_source->kcap, signal_source->cap.local_name()));
+			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_signal_source->kcap, signal_source->cap));
 		}
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_signal_source->badge, signal_source->cap));
@@ -207,7 +209,7 @@ void Restorer::_identify_recreate_signal_contexts(Pd_session_component &pd_sessi
 			throw Genode::Exception();
 		}
 		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_signal_context->kcap, signal_context->cap.local_name()));
+		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_signal_context->kcap, signal_context->cap));
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_signal_context->badge, signal_context->cap));
 
@@ -253,7 +255,7 @@ void Restorer::_identify_recreate_ram_sessions(Ram_root &ram_root, Genode::List<
 				throw Genode::Exception();
 			}
 			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_ram_session->kcap, ram_session->cap().local_name()));
+			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_ram_session->kcap, ram_session->cap()));
 		}
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_ram_session->badge, ram_session->cap()));
@@ -308,7 +310,7 @@ void Restorer::_identify_recreate_ram_dataspaces(Ram_session_component &ram_sess
 				throw Genode::Exception();
 			}
 			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_ramds->kcap, ramds->cap.local_name()));
+			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_ramds->kcap, ramds->cap));
 		}
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_ramds->badge, ramds->cap));
@@ -433,7 +435,7 @@ void Restorer::_identify_recreate_cpu_sessions(Cpu_root &cpu_root, Genode::List<
 				throw Genode::Exception();
 			}
 			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_cpu_session->kcap, cpu_session->cap().local_name()));
+			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_cpu_session->kcap, cpu_session->cap()));
 		}
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_cpu_session->badge, cpu_session->cap()));
@@ -499,7 +501,7 @@ void Restorer::_identify_recreate_cpu_threads(Cpu_session_component &cpu_session
 				throw Genode::Exception();
 			}
 			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_cpu_thread->kcap, cpu_thread->cap().local_name()));
+			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_cpu_thread->kcap, cpu_thread->cap()));
 		}
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_cpu_thread->badge, cpu_thread->cap()));
@@ -533,7 +535,7 @@ void Restorer::_identify_recreate_rm_sessions(Rm_root &rm_root, Genode::List<Sto
 			throw Genode::Exception();
 		}
 		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_rm_session->kcap, rm_session->cap().local_name()));
+		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_rm_session->kcap, rm_session->cap()));
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_rm_session->badge, rm_session->cap()));
 
@@ -568,7 +570,7 @@ void Restorer::_identify_recreate_region_maps(
 			throw Genode::Exception();
 		}
 		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_region_map->kcap, region_map->cap().local_name()));
+		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_region_map->kcap, region_map->cap()));
 
 		// Insert region map badge/cap
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_region_map->badge, region_map->cap()));
@@ -605,7 +607,7 @@ void Restorer::_identify_recreate_log_sessions(Log_root &log_root, Genode::List<
 			throw Genode::Exception();
 		}
 		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_log_session->kcap, log_session->cap().local_name()));
+		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_log_session->kcap, log_session->cap()));
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_log_session->badge, log_session->cap()));
 
@@ -638,7 +640,7 @@ void Restorer::_identify_recreate_timer_sessions(Timer_root &timer_root, Genode:
 			throw Genode::Exception();
 		}
 		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Badge_kcap_info(stored_timer_session->kcap, timer_session->cap().local_name()));
+		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_timer_session->kcap, timer_session->cap()));
 
 		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_timer_session->badge, timer_session->cap()));
 
@@ -827,7 +829,7 @@ void Restorer::_restore_state_cpu_threads(Cpu_session_component &cpu_session, Ge
 		// started
 		if(stored_cpu_thread->started && !cpu_thread->parent_state().started)
 		{
-			//cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);
+			cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);
 		}
 		// paused
 		if(stored_cpu_thread->paused && !cpu_thread->parent_state().paused)
@@ -962,8 +964,8 @@ void Restorer::_restore_state_attached_regions(Region_map_component &region_map,
 				ds_cap = _child._env.ram().alloc(stored_attached_region->size);
 
 				// Store kcap for the badge of the newly created RPC object
-				_capability_map_infos.insert(new (_alloc) Badge_kcap_info(
-						stored_attached_region->kcap, attached_region->attached_ds_cap.local_name()));
+				_capability_map_infos.insert(new (_alloc) Cap_kcap_info(
+						stored_attached_region->kcap, attached_region->attached_ds_cap));
 			}
 
 			region_map.attach(ds_cap, stored_attached_region->size, stored_attached_region->offset,
@@ -1166,39 +1168,205 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 	size_t const array_ele_size = sizeof(Genode::Cap_index);
 	size_t const array_size     = array_ele_size*4096;
 
+	/**
+	 * Array element layout as a list element (Changed from Avl tree)
+	 *
+	 *             32 bit                8 bit   8 bit       16 bit
+	 * +-------------------------------+-------+-------+---------------+
+	 * |        list pointer           | r_cnt |  res  |     badge     |
+	 * +-------------------------------+-------+-------+---------------+
+	 *
+	 * list pointer has a pointers valid in the address space of the child
+	 * r_cnt        is a number counting the references of the Cap_index
+	 * res          is padding
+	 * badge        is the system global identifier for Cap_indices
+	 */
+
+	addr_t const remote_child_ds_start = attached_region->rel_addr;
+	addr_t const remote_child_ds_end   = remote_child_ds_start + attached_region->size;
+	addr_t const remote_child_struct_start = child_cap_idx_alloc_addr;
+	addr_t const remote_child_struct_end   = remote_child_struct_start + struct_size;
+	addr_t const remote_child_array_start = remote_child_struct_start + 8;
+	addr_t const remote_child_array_end   = remote_child_array_start + array_size;
+
 	addr_t const local_child_ds_start = state._env.rm().attach(attached_region->attached_ds_cap);
 	addr_t const local_child_ds_end   = local_child_ds_start + attached_region->size;
-	addr_t const local_child_struct_start = local_child_ds_start + (child_cap_idx_alloc_addr - attached_region->rel_addr);
+	addr_t const local_child_struct_start = local_child_ds_start + (remote_child_struct_start - remote_child_ds_start);
 	addr_t const local_child_struct_end   = local_child_struct_start + struct_size;
 	addr_t const local_child_array_start = local_child_struct_start + 8;
 	addr_t const local_child_array_end   = local_child_array_start + array_size;
 
 	addr_t const local_state_ds_start = state._env.rm().attach(stored_attached_region->memory_content);
 	addr_t const local_state_ds_end   = local_state_ds_start + stored_attached_region->size;
-	addr_t const local_state_struct_start = local_state_ds_start + (state_cap_idx_alloc_addr - attached_region->rel_addr);
+	addr_t const local_state_struct_start = local_state_ds_start + (state_cap_idx_alloc_addr - remote_child_ds_start);
 	addr_t const local_state_struct_end   = local_state_struct_start + struct_size;
 	addr_t const local_state_array_start = local_state_struct_start + 8;
 	addr_t const local_state_array_end   = local_state_array_start + array_size;
 
-/*
-	log("local_child_ds_start:     ", Hex(local_child_ds_start));
-	log("local_child_struct_start: ", Hex(local_child_struct_start));
-	log("local_child_array_start:  ", Hex(local_child_array_start));
-	log("local_child_array_end:    ", Hex(local_child_array_end));
-	log("local_child_struct_end:   ", Hex(local_child_struct_end));
-	log("local_child_ds_end:       ", Hex(local_child_ds_end));
+	if(verbose_debug)
+	{
+		log("remote_child_ds_start:     ", Hex(remote_child_ds_start));
+		log("remote_child_struct_start: ", Hex(remote_child_struct_start));
+		log("remote_child_array_start:  ", Hex(remote_child_array_start));
+		log("remote_child_array_end:    ", Hex(remote_child_array_end));
+		log("remote_child_struct_end:   ", Hex(remote_child_struct_end));
+		log("remote_child_ds_end:       ", Hex(remote_child_ds_end));
 
-	log("local_state_ds_start:     ", Hex(local_state_ds_start));
-	log("local_state_struct_start: ", Hex(local_state_struct_start));
-	log("local_state_array_start:  ", Hex(local_state_array_start));
-	log("local_state_array_end:    ", Hex(local_state_array_end));
-	log("local_state_struct_end:   ", Hex(local_state_struct_end));
-	log("local_state_ds_end:       ", Hex(local_state_ds_end));
-*/
+		log("local_child_ds_start:     ", Hex(local_child_ds_start));
+		log("local_child_struct_start: ", Hex(local_child_struct_start));
+		log("local_child_array_start:  ", Hex(local_child_array_start));
+		log("local_child_array_end:    ", Hex(local_child_array_end));
+		log("local_child_struct_end:   ", Hex(local_child_struct_end));
+		log("local_child_ds_end:       ", Hex(local_child_ds_end));
+
+		log("local_state_ds_start:     ", Hex(local_state_ds_start));
+		log("local_state_struct_start: ", Hex(local_state_struct_start));
+		log("local_state_array_start:  ", Hex(local_state_array_start));
+		log("local_state_array_end:    ", Hex(local_state_array_end));
+		log("local_state_struct_end:   ", Hex(local_state_struct_end));
+		log("local_state_ds_end:       ", Hex(local_state_ds_end));
+	}
+
+	// copy array from child to state
+	{
+		Genode::memcpy((void*)local_state_array_start, (void*)local_child_array_start, array_size);
+		//dump_mem((void*)(local_state_array_start + 0x200*array_ele_size), 0x100);
+	}
+
+	// Replace badges and list pointers in state
+	{
+		// Find Cap_index with valid list pointer where the new Cap_indices will be attached to
+		addr_t previous_cap_index = 0;
+		for(unsigned cap_index = 0x200; cap_index < 0x280; ++cap_index)
+		{
+			addr_t const current_pos = local_state_array_start + cap_index*array_ele_size;
+			//log("offset=", Hex(offset), ": ", Hex(*(Genode::uint32_t*) current_pos));
+			if(*(Genode::uint32_t*) current_pos)
+			{
+				previous_cap_index = cap_index;
+				break;
+			}
+		}
+		//log("previous: ", Hex(previous_cap_index));
+
+		Cap_kcap_info *cap_info = _capability_map_infos.first();
+		while(cap_info)
+		{
+			if(cap_info->kcap == 0)
+			{
+				Genode::warning("kcap = 0 for cap ", cap_info->cap);
+			}
+			else
+			{
+				addr_t const previous_pos = local_state_array_start + previous_cap_index*array_ele_size;
+				addr_t const current_cap_index = cap_info->kcap >> 12;
+				addr_t const current_pos = local_state_array_start + current_cap_index*array_ele_size;
+
+				if(!(current_pos >= local_state_array_start && current_pos < local_state_array_end) ||
+						!(previous_pos >= local_state_array_start && previous_pos < local_state_array_end))
+				{
+					Genode::error("Cap_index positions are invalid! Allowed region: [",
+							Hex(local_state_array_start), ", ", Hex(local_state_array_end), ") ",
+							"current_pos=", Hex(current_pos), ", previous_pos=", Hex(previous_pos));
+					throw Genode::Exception();
+				}
+
+				//log("previous cap index = ", Hex(previous_cap_index), ", current cap index = ", Hex(current_cap_index));
+
+				// Current state: previous -> next
+				//log("Before:");
+				//dump_mem((void*)current_pos, 8);
+				//dump_mem((void*)previous_pos, 8);
+
+				if(*(Genode::uint16_t*) (current_pos+6))
+				{
+					Genode::warning("Overriding existing badge at cap_index=", Hex(current_cap_index));
+				}
+
+				// Insert List pointer, thus, current points to next
+				*(Genode::uint32_t*) current_pos = *(Genode::uint32_t*)previous_pos;
+				// Insert ref_count
+				*(Genode::uint8_t*) (current_pos+4) = 2;
+				// Insert badge
+				*(Genode::uint16_t*) (current_pos+6) = cap_info->cap.local_name();
+
+				// Insert List pointer, thus, previous points to current
+				*(Genode::uint32_t*) previous_pos = remote_child_array_start + current_cap_index*array_ele_size;
+
+				// State now: previous -> current -> next
+				//log("\nAfter:");
+				//dump_mem((void*)current_pos, 8);
+				//dump_mem((void*)previous_pos, 8);
+				//log("\n\n");
+
+				previous_cap_index = current_cap_index;
+			}
+
+			cap_info = cap_info->next();
+		}
+	}
 
 	state._env.rm().detach(local_state_ds_start);
 	state._env.rm().detach(local_child_ds_start);
 
+}
+
+
+void Restorer::_restore_cap_space(Target_child &child)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Cap_kcap_info *ck_info = _capability_map_infos.first();
+	while(ck_info)
+	{
+		if(ck_info->kcap == 0)
+		{
+			Genode::warning("kcap = 0 for cap ", ck_info->cap);
+		}
+		else
+		{
+			// Install capabilities to the child's cap space
+			Genode::Foc_native_pd_client(child.pd().native_pd()).install(ck_info->cap, ck_info->kcap);
+		}
+
+		ck_info = ck_info->next();
+	}
+}
+
+
+void Restorer::_restore_dataspaces(Genode::List<Orig_copy_resto_info> &memory_infos)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Orig_copy_resto_info *memory_info = memory_infos.first();
+	while(memory_info)
+	{
+		if(!memory_info->restored)
+		{
+			_restore_dataspace_content(memory_info->orig_ds_cap, memory_info->copy_ds_cap,
+					memory_info->copy_rel_addr, memory_info->copy_size);
+			memory_info->restored = true;
+		}
+
+		memory_info = memory_info->next();
+	}
+}
+
+
+void Restorer::_restore_dataspace_content(Genode::Dataspace_capability orig_ds_cap,
+		Genode::Ram_dataspace_capability copy_ds_cap, Genode::addr_t copy_rel_addr, Genode::size_t copy_size)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(orig ", orig_ds_cap,
+			", copy ", copy_ds_cap, ", copy_rel_addr=", Genode::Hex(copy_rel_addr),
+			", copy_size=", Genode::Hex(copy_size), ")");
+
+	char *orig = _state._env.rm().attach(orig_ds_cap);
+	char *copy = _state._env.rm().attach(copy_ds_cap);
+
+	Genode::memcpy(copy + copy_rel_addr, orig, copy_size);
+
+	_state._env.rm().detach(copy);
+	_state._env.rm().detach(orig);
 }
 
 
@@ -1208,8 +1376,10 @@ Restorer::Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &
 
 Restorer::~Restorer()
 {
+	_destroy_list(_capability_map_infos);
 	_destroy_list(_ckpt_to_resto_infos);
 	_destroy_list(_memory_to_restore);
+	_destroy_list(_region_map_dataspaces_from_stored);
 }
 
 
@@ -1293,7 +1463,7 @@ void Restorer::restore()
 	if(verbose_debug)
 	{
 		Genode::log("Capability map infos:");
-		Badge_kcap_info const *info = _capability_map_infos.first();
+		Cap_kcap_info const *info = _capability_map_infos.first();
 		if(!info) Genode::log(" <empty>\n");
 		while(info)
 		{
@@ -1308,7 +1478,6 @@ void Restorer::restore()
 
 	// Replace old badges with new in capability map
 	//   copy memory content from checkpointed dataspace which contains the cap map
-	//   mark mapping from memory to restore as restored
 	_restore_cap_map(_child, _state);
 
 	if(verbose_debug)
@@ -1324,9 +1493,13 @@ void Restorer::restore()
 	}
 
 	// Insert capabilities of all objects into capability space
+	_restore_cap_space(_child);
 
+	// Copy stored content to child content
+	_restore_dataspaces(_memory_to_restore);
 
 	// Clean up
+	_destroy_list(_capability_map_infos);
 	_destroy_list(_ckpt_to_resto_infos);
 	_destroy_list(_memory_to_restore);
 	_destroy_list(_region_map_dataspaces_from_stored);
