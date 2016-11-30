@@ -43,39 +43,40 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 			_mark_attach_designated_dataspaces(*ar_info);
 
 	// Create new badge_kcap list
-	//size_t const struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
+	size_t const struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
 	size_t const array_ele_size = sizeof(Genode::Cap_index);
 	size_t const array_size     = array_ele_size*4096;
 
 	addr_t const child_ds_start     = ar_info->rel_addr;
-	//addr_t const child_ds_end       = child_ds_start + ar_info->size;
-	//addr_t const child_struct_start = cap_idx_alloc_addr;
-	//addr_t const child_struct_end   = child_struct_start + struct_size;
-	//addr_t const child_array_start  = child_struct_start + 8;
-	//addr_t const child_array_end    = child_array_start + array_size;
+	addr_t const child_ds_end       = child_ds_start + ar_info->size;
+	addr_t const child_struct_start = cap_idx_alloc_addr;
+	addr_t const child_struct_end   = child_struct_start + struct_size;
+	addr_t const child_array_start  = child_struct_start + 8;
+	addr_t const child_array_end    = child_array_start + array_size;
 
 	addr_t const local_ds_start     = _state._env.rm().attach(ar_info->attached_ds_cap, ar_info->size, ar_info->offset);
-	//addr_t const local_ds_end       = local_ds_start + ar_info->size;
+	addr_t const local_ds_end       = local_ds_start + ar_info->size;
 	addr_t const local_struct_start = local_ds_start + (cap_idx_alloc_addr - child_ds_start);
-	//addr_t const local_struct_end   = local_struct_start + struct_size;
+	addr_t const local_struct_end   = local_struct_start + struct_size;
 	addr_t const local_array_start  = local_struct_start + 8;
 	addr_t const local_array_end    = local_array_start + array_size;
 
-	/*
-	log("child_ds_start:     ", Hex(child_ds_start));
-	log("child_struct_start: ", Hex(child_struct_start));
-	log("child_array_start:  ", Hex(child_array_start));
-	log("child_array_end:    ", Hex(child_array_end));
-	log("child_struct_end:   ", Hex(child_struct_end));
-	log("child_ds_end:       ", Hex(child_ds_end));
+	if(verbose_debug)
+	{
+		log("child_ds_start:     ", Hex(child_ds_start));
+		log("child_struct_start: ", Hex(child_struct_start));
+		log("child_array_start:  ", Hex(child_array_start));
+		log("child_array_end:    ", Hex(child_array_end));
+		log("child_struct_end:   ", Hex(child_struct_end));
+		log("child_ds_end:       ", Hex(child_ds_end));
 
-	log("local_ds_start:     ", Hex(local_ds_start));
-	log("local_struct_start: ", Hex(local_struct_start));
-	log("local_array_start:  ", Hex(local_array_start));
-	log("local_array_end:    ", Hex(local_array_end));
-	log("local_struct_end:   ", Hex(local_struct_end));
-	log("local_ds_end:       ", Hex(local_ds_end));
-	*/
+		log("local_ds_start:     ", Hex(local_ds_start));
+		log("local_struct_start: ", Hex(local_struct_start));
+		log("local_array_start:  ", Hex(local_array_start));
+		log("local_array_end:    ", Hex(local_array_end));
+		log("local_struct_end:   ", Hex(local_struct_end));
+		log("local_ds_end:       ", Hex(local_ds_end));
+	}
 
 	//dump_mem((void*)local_array_start, 0x1200);
 
