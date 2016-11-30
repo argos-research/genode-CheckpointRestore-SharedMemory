@@ -16,6 +16,7 @@
 
 namespace Fiasco {
 #include <l4/sys/task.h>
+#include <l4/sys/ipc_gate.h>
 }
 
 using namespace Genode;
@@ -26,51 +27,6 @@ Native_capability Native_pd_component::task_cap()
 	return Native_capability(_pd_session._pd.native_task());
 }
 
-
-/*Native_capability Native_pd_component::request(addr_t kcap)
-{
-	using namespace Fiasco;
-
-	log("Hello from ", __func__);
-
-	Capability<Native_pd> to_pd;
-	addr_t to_sel;
-
-	// Read capability from this pd to remote pd directly
-	l4_msgtag_t tag = l4_task_map(to_pd.data()->kcap(), _pd_session.native_pd().data()->kcap(),
-			l4_obj_fpage((l4_cap_idx_t)from_sel, 0, L4_FPAGE_RWX),
-			((l4_cap_idx_t)to_sel | L4_ITEM_MAP));
-
-	if (l4_msgtag_has_error(tag))
-		error("mapping cap failed");
-
-
-	// 1. Create temporary Cap_index
-	Cap_index *idx = cap_map()->insert(platform_specific()->cap_id_alloc()->alloc());
-	printf("Cap_index: %d %x\n", idx->id(), idx->kcap());
-
-	// 2. Map target's Cap_index to temporary Cap_index
-	l4_msgtag_t tag = l4_task_map(L4_BASE_TASK_CAP, _pd_session.native_pd().data()->kcap(),
-			l4_obj_fpage((l4_cap_idx_t)kcap, 0, L4_FPAGE_RWX),
-			idx->kcap() | L4_ITEM_MAP);
-
-	if (l4_msgtag_has_error(tag))
-		error("mapping cap failed");
-
-	printf("Cap_index: %d %x\n", idx->id(), idx->kcap());
-
-	// 3. Find temporary Cap_index in Capability_map
-	//cap_map()->find();
-
-
-	// 4. Delete temporary Cap_index
-	//cap_idx_alloc()->free(idx, 1);
-
-	// 5. Return found capability
-	Native_capability cap = Native_capability(*idx);
-	printf("Data: %d %x, Cap.local_name: %d\n", cap.data()->id(), cap.data()->kcap(), cap.local_name());
-	return cap;
-}*/
 
 addr_t Native_pd_component::cap_map_info()
 {
@@ -85,7 +41,26 @@ void Native_pd_component::cap_map_info(addr_t addr)
 
 void Native_pd_component::install(Native_capability cap, addr_t kcap)
 {
-	log("Implement me: ", __func__);
+	using namespace Fiasco;
+
+	//log("Native_pd::\033[33m", __func__, "\033[0m(", cap, ", kcap=", Hex(kcap), ")");
+
+	// Testing whether remote task has a valid cap at the target cap selector
+	{
+		l4_msgtag_t tag = l4_task_cap_valid(task_cap().data()->kcap(), (l4_cap_idx_t) kcap);
+		if(l4_msgtag_label(tag))
+			warning("Overriding valid capability at kcap=", Hex(kcap));
+	}
+
+	// Mapping cap from core's cap space to the task associated with this native PD session
+	{
+		l4_msgtag_t tag = l4_task_map(task_cap().data()->kcap(), L4_BASE_TASK_CAP,
+					l4_obj_fpage((l4_cap_idx_t)cap.data()->kcap(), 0, L4_FPAGE_RWX),
+					((l4_cap_idx_t)kcap | L4_ITEM_MAP));
+
+		if (l4_msgtag_has_error(tag))
+			error("mapping cap failed");
+	}
 }
 
 
