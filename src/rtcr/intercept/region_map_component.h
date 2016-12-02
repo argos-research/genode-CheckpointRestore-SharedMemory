@@ -12,10 +12,10 @@
 #include <dataspace/client.h>
 #include <base/allocator.h>
 
-#include "../online_storage/attached_region_info.h"
-#include "../online_storage/region_map_info.h"
 /* Rtcr includes */
 #include "ram_session.h"
+#include "../online_storage/attached_region_info.h"
+#include "../online_storage/region_map_info.h"
 
 namespace Rtcr {
 	class Region_map_component;

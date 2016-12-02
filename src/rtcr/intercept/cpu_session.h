@@ -14,8 +14,8 @@
 #include <cpu_session/connection.h>
 #include <cpu_thread/client.h>
 
-#include "../online_storage/cpu_session_info.h"
 /* Rtcr includes */
+#include "../online_storage/cpu_session_info.h"
 #include "cpu_thread_component.h"
 #include "pd_session.h"
 

@@ -43,10 +43,10 @@ private:
 	 * Contains kcap which are needed to be mapped
 	 * They belong to RPC objects which are not bootstrapped and had to be recreated.
 	 */
-	Genode::List<Cap_kcap_info> _capability_map_infos;
+	Genode::List<Cap_kcap_info>         _capability_map_infos;
 	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_infos;
-	Genode::List<Orig_copy_resto_info> _memory_to_restore;
-	Genode::List<Ref_badge> _region_map_dataspaces_from_stored;
+	Genode::List<Orig_copy_resto_info>  _memory_to_restore;
+	Genode::List<Ref_badge>             _region_map_dataspaces_from_stored;
 
 	template<typename T>
 	void _destroy_list(Genode::List<T> &list);

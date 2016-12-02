@@ -53,10 +53,7 @@ struct Rtcr::General_info
 
 	void print(Genode::Output &output) const
 	{
-		using Genode::Hex;
-		using Genode::print;
-
-		print(output, "bootstrapped=", bootstrapped);
+		Genode::print(output, "bootstrapped=", bootstrapped);
 	}
 };
 
@@ -81,17 +78,14 @@ struct Rtcr::Session_rpc_info : General_info
 
 	void print(Genode::Output &output) const
 	{
-		using Genode::Hex;
-		using Genode::print;
-
-		print(output, "cargs='", creation_args, "', uargs='", upgrade_args, "', ");
+		Genode::print(output, "cargs='", creation_args, "', uargs='", upgrade_args, "', ");
 		General_info::print(output);
 	}
 };
 
 
 /**
- * Struct to monitor normal RPC object (this is, no session or root RPC objects)
+ * Struct to monitor normal RPC object (e.g. Region map, CPU thread)
  */
 struct Rtcr::Normal_rpc_info : General_info
 {
@@ -105,13 +99,6 @@ struct Rtcr::Normal_rpc_info : General_info
 		General_info(bootstrapped)
 	{ }
 
-	void print(Genode::Output &output) const
-	{
-		using Genode::Hex;
-		using Genode::print;
-
-		General_info::print(output);
-	}
 };
 
 

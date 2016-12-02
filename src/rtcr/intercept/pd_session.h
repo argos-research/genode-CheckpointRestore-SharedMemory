@@ -13,8 +13,8 @@
 #include <base/rpc_server.h>
 #include <pd_session/connection.h>
 
-#include "../online_storage/pd_session_info.h"
 /* Rtcr includes */
+#include "../online_storage/pd_session_info.h"
 #include "region_map_component.h"
 
 namespace Rtcr {

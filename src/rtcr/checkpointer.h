@@ -51,7 +51,7 @@ private:
 	/**
 	 * Capability map of Target_child in a condensed form
 	 */
-	Genode::List<Badge_kcap_info> _capability_map_infos;
+	Genode::List<Badge_kcap_info>      _capability_map_infos;
 	/**
 	 * Mapping to find a copy dataspace for a given original dataspace badge
 	 */
@@ -59,12 +59,12 @@ private:
 	/**
 	 * Memory regions to checkpoint
 	 */
-	Genode::List<Orig_copy_ckpt_info> _memory_to_checkpoint;
+	Genode::List<Orig_copy_ckpt_info>  _memory_to_checkpoint;
 	/**
 	 * List of dataspace badges which are (known) managed dataspaces
 	 * These dataspaces are not needed to be copied
 	 */
-	Genode::List<Ref_badge> _region_map_dataspaces;
+	Genode::List<Ref_badge>            _region_map_dataspaces;
 
 
 	/**

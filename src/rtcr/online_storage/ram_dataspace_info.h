@@ -202,7 +202,7 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 				Genode::warning("  designated", Genode::Hex(rel_addr), " != attached=", Genode::Hex(addr));
 			}
 
-			// Mark as attached and dirty
+			// Mark as attached
 			attached = true;
 		}
 		else
