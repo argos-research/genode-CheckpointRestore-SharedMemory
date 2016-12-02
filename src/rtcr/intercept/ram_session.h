@@ -19,8 +19,8 @@
 #include <util/misc_math.h>
 
 /* Rtcr includes */
-#include "../monitor/ram_session_info.h"
-#include "../monitor/ram_dataspace_info.h"
+#include "../online_storage/ram_dataspace_info.h"
+#include "../online_storage/ram_session_info.h"
 
 namespace Rtcr {
 	class Fault_handler;

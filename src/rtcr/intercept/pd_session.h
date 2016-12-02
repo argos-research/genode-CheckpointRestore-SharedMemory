@@ -13,9 +13,9 @@
 #include <base/rpc_server.h>
 #include <pd_session/connection.h>
 
+#include "../online_storage/pd_session_info.h"
 /* Rtcr includes */
 #include "region_map_component.h"
-#include "../monitor/pd_session_info.h"
 
 namespace Rtcr {
 	class Pd_session_component;

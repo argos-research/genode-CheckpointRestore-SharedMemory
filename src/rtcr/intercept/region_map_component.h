@@ -12,9 +12,9 @@
 #include <dataspace/client.h>
 #include <base/allocator.h>
 
+#include "../online_storage/attached_region_info.h"
+#include "../online_storage/region_map_info.h"
 /* Rtcr includes */
-#include "../monitor/attached_region_info.h"
-#include "../monitor/region_map_info.h"
 #include "ram_session.h"
 
 namespace Rtcr {

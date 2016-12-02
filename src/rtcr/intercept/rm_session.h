@@ -14,7 +14,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../monitor/rm_session_info.h"
+#include "../online_storage/rm_session_info.h"
 
 namespace Rtcr {
 	class Rm_session_component;

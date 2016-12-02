@@ -14,7 +14,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "../monitor/timer_session_info.h"
+#include "../online_storage/timer_session_info.h"
 
 namespace Rtcr {
 	class Timer_session_component;

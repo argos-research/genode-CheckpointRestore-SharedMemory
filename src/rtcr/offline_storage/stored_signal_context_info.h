@@ -11,8 +11,8 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "stored_info_structs.h"
-#include "../monitor/signal_context_info.h"
+#include "../online_storage/signal_context_info.h"
+#include "../offline_storage/stored_info_structs.h"
 
 namespace Rtcr {
 	struct Stored_signal_context_info;

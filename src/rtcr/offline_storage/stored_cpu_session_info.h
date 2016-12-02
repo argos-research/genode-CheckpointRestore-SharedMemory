@@ -11,9 +11,9 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "stored_info_structs.h"
-#include "stored_cpu_thread_info.h"
 #include "../intercept/cpu_session.h"
+#include "../offline_storage/stored_cpu_thread_info.h"
+#include "../offline_storage/stored_info_structs.h"
 
 namespace Rtcr {
 	struct Stored_cpu_session_info;

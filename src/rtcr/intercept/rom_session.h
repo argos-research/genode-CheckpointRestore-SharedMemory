@@ -16,7 +16,7 @@
 #include <base/allocator.h>
 
 /* Rtcr includes */
-#include "../monitor/rom_session_info.h"
+#include "../online_storage/rom_session_info.h"
 
 namespace Rtcr {
 	class Rom_session_component;

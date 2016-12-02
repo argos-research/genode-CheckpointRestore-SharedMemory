@@ -11,9 +11,9 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "stored_info_structs.h"
-#include "stored_region_map_info.h"
 #include "../intercept/rm_session.h"
+#include "../offline_storage/stored_info_structs.h"
+#include "../offline_storage/stored_region_map_info.h"
 
 namespace Rtcr {
 	struct Stored_rm_session_info;

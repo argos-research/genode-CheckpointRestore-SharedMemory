@@ -11,12 +11,12 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "stored_info_structs.h"
-#include "stored_signal_context_info.h"
-#include "stored_signal_source_info.h"
-#include "stored_native_capability_info.h"
-#include "stored_region_map_info.h"
 #include "../intercept/pd_session.h"
+#include "../offline_storage/stored_info_structs.h"
+#include "../offline_storage/stored_native_capability_info.h"
+#include "../offline_storage/stored_region_map_info.h"
+#include "../offline_storage/stored_signal_context_info.h"
+#include "../offline_storage/stored_signal_source_info.h"
 
 namespace Rtcr {
 	struct Stored_pd_session_info;

@@ -14,7 +14,7 @@
 #include <base/entrypoint.h>
 
 /* Rtcr includes */
-#include "../monitor/cpu_thread_info.h"
+#include "../online_storage/cpu_thread_info.h"
 
 namespace Rtcr {
 	class Cpu_thread_component;

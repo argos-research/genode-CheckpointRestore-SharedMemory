@@ -11,10 +11,10 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "info_structs.h"
-#include "signal_source_info.h"
-#include "signal_context_info.h"
-#include "native_capability_info.h"
+#include "../online_storage/info_structs.h"
+#include "../online_storage/native_capability_info.h"
+#include "../online_storage/signal_context_info.h"
+#include "../online_storage/signal_source_info.h"
 
 namespace Rtcr {
 	struct Pd_session_info;

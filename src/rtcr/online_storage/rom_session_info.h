@@ -11,7 +11,7 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "info_structs.h"
+#include "../online_storage/info_structs.h"
 
 namespace Rtcr {
 	struct Rom_session_info;

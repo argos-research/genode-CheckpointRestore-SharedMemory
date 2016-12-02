@@ -11,8 +11,9 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "info_structs.h"
-#include "cpu_thread_info.h"
+#include "../intercept/cpu_thread_component.h"
+#include "../online_storage/cpu_thread_info.h"
+#include "../online_storage/info_structs.h"
 
 namespace Rtcr {
 	struct Cpu_session_info;

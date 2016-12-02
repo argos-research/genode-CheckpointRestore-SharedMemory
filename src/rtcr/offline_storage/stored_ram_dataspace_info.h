@@ -11,8 +11,8 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "stored_info_structs.h"
-#include "../monitor/ram_dataspace_info.h"
+#include "../online_storage/ram_dataspace_info.h"
+#include "../offline_storage/stored_info_structs.h"
 
 
 namespace Rtcr {

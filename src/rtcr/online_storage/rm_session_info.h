@@ -11,8 +11,8 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "info_structs.h"
 #include "../intercept/region_map_component.h"
+#include "../online_storage/info_structs.h"
 
 namespace Rtcr {
 	struct Rm_session_info;

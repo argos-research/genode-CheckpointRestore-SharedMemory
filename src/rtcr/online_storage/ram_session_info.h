@@ -11,8 +11,8 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "info_structs.h"
-#include "ram_dataspace_info.h"
+#include "../online_storage/info_structs.h"
+#include "../online_storage/ram_dataspace_info.h"
 
 namespace Rtcr {
 	struct Ram_session_info;

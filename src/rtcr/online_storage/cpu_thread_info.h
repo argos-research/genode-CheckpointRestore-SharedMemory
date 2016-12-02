@@ -13,7 +13,7 @@
 #include <thread/capability.h>
 
 /* Rtcr includes */
-#include "info_structs.h"
+#include "../online_storage/info_structs.h"
 
 namespace Rtcr {
 	struct Cpu_thread_info;

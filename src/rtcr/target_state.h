@@ -12,13 +12,13 @@
 #include <base/heap.h>
 
 /* Rtcr includes */
-#include "child_state/stored_pd_session_info.h"
-#include "child_state/stored_cpu_session_info.h"
-#include "child_state/stored_ram_session_info.h"
-#include "child_state/stored_rom_session_info.h"
-#include "child_state/stored_rm_session_info.h"
-#include "child_state/stored_log_session_info.h"
-#include "child_state/stored_timer_session_info.h"
+#include "offline_storage/stored_cpu_session_info.h"
+#include "offline_storage/stored_log_session_info.h"
+#include "offline_storage/stored_pd_session_info.h"
+#include "offline_storage/stored_ram_session_info.h"
+#include "offline_storage/stored_rm_session_info.h"
+#include "offline_storage/stored_rom_session_info.h"
+#include "offline_storage/stored_timer_session_info.h"
 
 
 namespace Rtcr {

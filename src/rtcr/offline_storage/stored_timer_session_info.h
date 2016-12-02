@@ -11,8 +11,8 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "stored_info_structs.h"
 #include "../intercept/timer_session.h"
+#include "../offline_storage/stored_info_structs.h"
 
 namespace Rtcr {
 	struct Stored_timer_session_info;

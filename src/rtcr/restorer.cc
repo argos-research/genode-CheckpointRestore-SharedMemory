@@ -829,7 +829,7 @@ void Restorer::_restore_state_cpu_threads(Cpu_session_component &cpu_session, Ge
 		// started
 		if(stored_cpu_thread->started && !cpu_thread->parent_state().started)
 		{
-			cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);
+			//cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);
 		}
 		// paused
 		if(stored_cpu_thread->paused && !cpu_thread->parent_state().paused)
@@ -1389,6 +1389,9 @@ void Restorer::restore()
 
 	Genode::log("Before: \n", _child);
 
+	// Create a list of known region map's dataspace capabilities
+	// It is used to identify region maps which are attached to region maps
+	// when bookmarking dataspace content for restoration
 	_region_map_dataspaces_from_stored = _create_region_map_dataspaces(_state._stored_pd_sessions, _state._stored_rm_sessions);
 
 	if(verbose_debug)
@@ -1404,7 +1407,9 @@ void Restorer::restore()
 	}
 
 	// Identify or create RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
-	//   Make a mapping of old badges to new badges
+	//   Make a translation of old badges to new badges
+	//   In the restore state phase it is used when iterating through the stored states of RPC objects
+	//   and finding the corresponding child object
 	_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
 	_identify_recreate_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
 	_identify_recreate_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
@@ -1438,7 +1443,8 @@ void Restorer::restore()
 		}
 	}
 
-	// Restore state of all objects using mapping of old badges to new badges (caution: RAM <- Region map (incl. PD session) ( "<-" means requires))
+	// Restore state of all objects using the translation of old badges to new badges
+	// (caution: RAM <- Region map (incl. PD session) ( "<-" means requires))
 	//   Also make a mapping of memory to restore
 	_restore_state_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
 	_restore_state_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
@@ -1477,7 +1483,6 @@ void Restorer::restore()
 	_resolve_inc_checkpoint_dataspaces(_child.custom_services().ram_root->session_infos(), _memory_to_restore);
 
 	// Replace old badges with new in capability map
-	//   copy memory content from checkpointed dataspace which contains the cap map
 	_restore_cap_map(_child, _state);
 
 	if(verbose_debug)

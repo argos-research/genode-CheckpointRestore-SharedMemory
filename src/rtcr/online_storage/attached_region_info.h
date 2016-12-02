@@ -13,7 +13,7 @@
 
 /* Rtcr includes */
 //#include "info_structs.h"
-#include "ram_dataspace_info.h"
+#include "../online_storage/ram_dataspace_info.h"
 
 namespace Rtcr {
 	struct Attached_region_info;

@@ -11,9 +11,9 @@
 #include <util/list.h>
 
 /* Rtcr includes */
-#include "stored_info_structs.h"
-#include "stored_attached_region_info.h"
 #include "../intercept/region_map_component.h"
+#include "../offline_storage/stored_attached_region_info.h"
+#include "../offline_storage/stored_info_structs.h"
 
 namespace Rtcr {
 	struct Stored_region_map_info;
