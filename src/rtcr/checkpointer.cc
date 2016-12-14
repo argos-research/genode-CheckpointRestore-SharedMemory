@@ -25,7 +25,7 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 	Genode::List<Badge_kcap_info> result;
 
 	// Retrieve cap_idx_alloc_addr
-	addr_t cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
+	addr_t const cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
 	_state._cap_idx_alloc_addr = cap_idx_alloc_addr;
 
 	// Find child's dataspace corresponding to cap_idx_alloc_addr
@@ -80,6 +80,7 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 
 	//dump_mem((void*)local_array_start, 0x1200);
 
+	enum { UNUSED = 0, INVALID_ID = 0xffff };
 	for(addr_t curr = local_array_start; curr < local_array_end; curr += array_ele_size)
 	{
 /*
@@ -103,7 +104,7 @@ Genode::List<Badge_kcap_info> Checkpointer::_create_cap_map_infos()
 		// by Fiasco.OC for parameters for IPC calls)
 		addr_t const kcap  = ((curr - local_array_start) / array_ele_size) << 12;
 
-		if(badge != 0 && badge != 0xffff)
+		if(badge != UNUSED && badge != INVALID_ID)
 		{
 			Badge_kcap_info *state_info = new (_alloc) Badge_kcap_info(kcap, badge);
 			result.insert(state_info);
@@ -298,7 +299,7 @@ void Checkpointer::_prepare_region_maps(Genode::List<Stored_region_map_info> &st
 		stored_info->sigh_badge = child_info->parent_state().sigh.local_name();
 		_prepare_attached_regions(stored_info->stored_attached_region_infos, child_info->parent_state().attached_regions);
 
-		// Remeber region map's dataspace badge to remove the dataspace from memory to checkpoint later
+		// Remeber region map's dataspace badge to remove the dataspace from _memory_to_checkpoint later
 		Ref_badge *ref_badge = new (_alloc) Ref_badge(child_info->parent_state().ds_cap.local_name());
 		_region_map_dataspaces.insert(ref_badge);
 
@@ -402,7 +403,7 @@ Stored_attached_region_info &Checkpointer::_create_stored_attached_region(Attach
 	}
 	else
 	{
-		// Exclude dataspaces which are known region maps (except inc ckpt dataspaces)
+		// Exclude dataspaces which are known region maps (except managed dataspaces from the incremental checkpoint mechanism)
 		Ref_badge *region_map_dataspace = _region_map_dataspaces.first();
 		if(region_map_dataspace) region_map_dataspace = region_map_dataspace->find_by_badge(child_info.attached_ds_cap.local_name());
 		if(!region_map_dataspace)
@@ -765,7 +766,7 @@ void Checkpointer::_prepare_pd_sessions(Genode::List<Stored_pd_session_info> &st
 		// No corresponding stored_info => create it
 		if(!stored_info)
 		{
-			Genode::addr_t childs_pd_kcap = _find_kcap_by_badge(child_info->cap().local_name(), _capability_map_infos);
+			Genode::addr_t childs_pd_kcap  = _find_kcap_by_badge(child_info->cap().local_name(), _capability_map_infos);
 			Genode::addr_t childs_add_kcap = _find_kcap_by_badge(child_info->address_space_component().cap().local_name(), _capability_map_infos);
 			Genode::addr_t childs_sta_kcap = _find_kcap_by_badge(child_info->stack_area_component().cap().local_name(), _capability_map_infos);
 			Genode::addr_t childs_lin_kcap = _find_kcap_by_badge(child_info->linker_area_component().cap().local_name(), _capability_map_infos);

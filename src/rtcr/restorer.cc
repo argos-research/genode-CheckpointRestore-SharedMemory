@@ -1145,7 +1145,7 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 			throw Genode::Exception();
 		}
 	}
-	//Find stored attached region containing state's cap_idx_alloc struct
+	//Find stored attached region containing stored cap_idx_alloc struct
 	Stored_attached_region_info *stored_attached_region = nullptr;
 	{
 		Stored_pd_session_info *stored_pd_session = state._stored_pd_sessions.first();
@@ -1169,7 +1169,7 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 	size_t const array_size     = array_ele_size*4096;
 
 	/**
-	 * Array element layout as a list element (Changed from Avl tree)
+	 * Array element layout as a list element (Changed from AVL node)
 	 *
 	 *             32 bit                8 bit   8 bit       16 bit
 	 * +-------------------------------+-------+-------+---------------+
@@ -1262,6 +1262,7 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 				addr_t const current_cap_index = cap_info->kcap >> 12;
 				addr_t const current_pos = local_state_array_start + current_cap_index*array_ele_size;
 
+				// Sanity check: Check whether the addresses point to the local array
 				if(!(current_pos >= local_state_array_start && current_pos < local_state_array_end) ||
 						!(previous_pos >= local_state_array_start && previous_pos < local_state_array_end))
 				{
@@ -1406,7 +1407,7 @@ void Restorer::restore()
 		}
 	}
 
-	// Identify or create RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
+	// Identify or recreate RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
 	//   Make a translation of old badges to new badges
 	//   In the restore state phase it is used when iterating through the stored states of RPC objects
 	//   and finding the corresponding child object

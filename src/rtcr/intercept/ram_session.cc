@@ -25,6 +25,7 @@ Managed_region_map_info *Fault_handler::_find_faulting_mrm_info()
 		if(rm_client.state().type != Genode::Region_map::State::READY)
 		{
 			result_info = ramds_info->mrm_info;
+			break;
 		}
 
 		ramds_info = ramds_info->next();
