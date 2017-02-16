@@ -1,58 +1,63 @@
 # Genode real-time capable checkpoint/restore mechanism
 
-Workflow
-
+General workflow in migration
 1. Checkpoint component A
-
 2. Serialize data
-
 3. Transfer to new node
-
 4. Deserialize data
-
 5. Restore state of component A and restart it
 
 
-Approach
+Accessing target component's resources
+* Parent/child approach
+* Target component = child component
+* Parent provides custom services which are used by the child (i.e. parent intercepts services used by the child)
+ * Child creation: PD, CPU, and RAM sessions
+ * Child runtime: All other sessions like RM, LOG, Timer sessions
+* Custom services use the real services in the background
+* Parent stores information about the state of each session
+ * Creation arguments
+ * Update arguments
+ * Method invokations
+ * Parent restores the inner state of used sessions through these information
+
+
+Checkpoint/Restore
+* Component's name: Rtcr (Real-time checkpointer/restorer)
 * Checkpoint in userland
- * Checkpoint as an RPC to checkpointer
- * Parent is checkpointer
- * Child is the target
+ * Service method: checkpoint() => it uses Checkpointer::checkpoint
  * Pause target during checkpoint
- * Intercept PD session for Region_map
- * Intercept CPU session for thread information
- * Implement an API to manipulate the capability space of components: Request and Install
- * Intercept Core services to keep track of created Capabilities and their states
- * Store data in RAM of checkpointer by using own RAM quota or in a filesystem (needs driver)
+ * Read information about the capability space and map
+ * Store intercepted session information (not dataspace content) to parent's address space
+ * Store dataspace content to parent's address space
  * Resume target after checkpoint
 * Restore in userland
- * Restore as an RPC to checkpointer
- * Recreate the child using stored data from checkpoint
- * Recreate PD, CPU, RAM, ROM session
- * Recreate created/obtained capabilities
- * Load data of the target component into checkpointer to allow incremental checkpoints
+ * Service method: restore() => it uses Restorer::restore
+ * Recreate empty child without sessions
+ * Recreate sessions and their RPC objects
+ * Restore state of sessions and their RPC objects
+ * Restore capability space and map with new capabilities
 * Incremental checkpointing as optimization
- * At checkpoint time store only the changes to the last checkpoint
- * Marking of "dirty pages" through the use of a custom RAM service with managed dataspaces
- * Intercept RAM session to create managed dataspaces instead of normal dataspaces
- * Managed dataspaces: 
-
-1. Custom RAM session object creates RAM dataspaces from parent's RAM service (usually core's service)
-
-2. It also creates a dataspace from a Region map from an RM session (called a managed dataspace)
-
-3. It does not attach the RAM dataspaces to the Region map yet
-
-4. The Region map gets a fault handler which can mark the accessed data
-
-
- * detach -> page fault -> mark & attach mechanism:
-
-
-1. On the first access on a managed dataspace a page fault is triggered, because no RAM dataspace is attached in the corresponding Region map
-
-2. A fault handler catches the page fault and marks the dataspace as "used" and attaches a RAM dataspace (supposed for this location) to this location
-
-3. After a checkpoint is performed the RAM dataspaces are unmarked (set to "not used") and detached from the Region map, thus a new page fault can be caught
-
- * The RAM dataspace size shall be a multiple of 1 PAGESIZE; a benchmark can be made to find out the optimal dataspace size for a given component
+ * Approach
+  * At checkpoint time store only the changes to the last checkpoint
+  * Marking/tracing "dirty pages" by using page faults exceptions
+  * Parent provides a custom RAM session to the child which allocates managed dataspaces (=region maps) instead of usual dataspaces
+  * The managed dataspace is filled with usual dataspaces (called designated dataspaces)
+  * Designated dataspaces occupy an exclusive area in the managed dataspace, thus, the whole space of the managed dataspace is filled
+  * To mark an accessed dataspace, all dataspaces from the managed dataspace are detached
+  * When a region in the managed dataspace is accessed a page fault is triggered
+  * The page fault is resolved by a thread which attaches the corresponding designated dataspace to the faulting region
+  * Now the target component can use (read, write, execute) the region in the managed dataspace without disruption
+  * When a checkpoint is performed this designated dataspace is stored to parent's address space and detached from the managed dataspace
+  * Now the managed dataspace is ready to mark/trace accessed regions again
+ * Tweaks
+  * The granularity of the marking mechanism can be modified by changing the size of designated dataspaces
+  * Increasing the designated dataspace size
+   * Decreasing the chance a page fault occurs which lowers the overhead while the target component is running (runtime overhead)
+   * Increasing the duration of the checkpoint, because the dataspace is larger and needs more time for copying (checkpoint overhead)
+  * Decreasing the designated dataspace size
+   * Increasing the chance a page fault occurs which increases the runtime overhead
+   * Decreasing the duration of the checkpoint, because the dataspace is smaller
+  * A balance between runtime and checkpoint overhead has to be found out in regard to the locality of target's memory usage
+   * Accessing adjacent memory regions profits from large designated dataspaces
+   * Accessing spread memory regions profits from small designated dataspaces
