@@ -1,10 +1,15 @@
 # Genode real-time capable checkpoint/restore mechanism
 
 General workflow in migration
+
 1. Checkpoint component A
+
 2. Serialize data
+
 3. Transfer to new node
+
 4. Deserialize data
+
 5. Restore state of component A and restart it
 
 
