@@ -189,6 +189,7 @@ Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 		Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
 :
+	_in_bootstrap    (true),
 	_name            (name),
 	_env             (env),
 	_md_alloc        (md_alloc),
@@ -196,7 +197,6 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_restorer        (nullptr),
-	_in_bootstrap    (true),
 	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap),
 	_resources       (_env, _name.string(), _custom_services),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
@@ -205,6 +205,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child           (nullptr)
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
+	_in_bootstrap = false;
 }
 
 
@@ -481,13 +482,6 @@ void Target_child::print(Genode::Output &output) const
 Genode::Service *Target_child::resolve_session_request(const char *service_name, const char *args)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", args, ")");
-
-
-	if(!Genode::strcmp(service_name, "LOG") && _in_bootstrap)
-	{
-		if(verbose_debug) Genode::log("  Unsetting bootstrap_phase");
-		_in_bootstrap = false;
-	}
 
 	Genode::Service *service = 0;
 

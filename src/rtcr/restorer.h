@@ -13,10 +13,10 @@
 /* Rtcr includes */
 #include "target_state.h"
 #include "target_child.h"
-#include "util/ckpt_resto_badge_info.h"
-#include "util/orig_copy_resto_info.h"
-#include "util/ref_badge.h"
-#include "util/cap_kcap_info.h"
+#include "util/kcap_cap_info.h"
+#include "util/badge_translation_info.h"
+#include "util/dataspace_translation_info.h"
+#include "util/ref_badge_info.h"
 
 namespace Rtcr {
 	class Restorer;
@@ -37,16 +37,38 @@ private:
 	 * are created with the allocator of Target_state
 	 */
 	Genode::Allocator &_alloc;
-	Target_child &_child;
-	Target_state &_state;
+	Target_child      &_child;
+	Target_state      &_state;
 	/**
-	 * Contains kcap which are needed to be mapped
-	 * They belong to RPC objects which are not bootstrapped and had to be recreated.
+	 * \brief Contains kcap addresses and badges/capabilities which shall be mapped to these addresses
+	 *
+	 * Contains kcap addresses and badges/capabilities which shall be mapped to these addresses
+	 * Usage
+	 * * Restoration of the capability map: Store the badge to the corresponding kcap address
+	 * * Restoration of the cap space: Map the capability to the corresponding kcap address
 	 */
-	Genode::List<Cap_kcap_info>         _capability_map_infos;
-	Genode::List<Ckpt_resto_badge_info> _ckpt_to_resto_infos;
-	Genode::List<Orig_copy_resto_info>  _memory_to_restore;
-	Genode::List<Ref_badge>             _region_map_dataspaces_from_stored;
+	Genode::List<Kcap_cap_info> _kcap_mappings;
+	/**
+	 * \brief Contains mappings of stored RPC objects to newly recreated RPC objects via badge association
+	 *
+	 * Each stored RPC object has an associated restored RPC object. This list contains a mapping of a badge
+	 * of the stored RPC object and the corresponding capability of the newly created RPC object
+	 */
+	Genode::List<Badge_translation_info> _rpcobject_translations;
+	/**
+	 * \brief Contains mappings of stored dataspaces to newly recreated dataspaces via capability association
+	 *
+	 * Each stored dataspace has a corresponding restored dataspace. The content of the stored dataspace has to be
+	 * copied to the corresponding dataspace. Both dataspaces are associated via capabilities.
+	 */
+	Genode::List<Dataspace_translation_info> _dataspace_translations;
+	/**
+	 * \brief Contains badges of region maps
+	 *
+	 * This list contains badges of dataspace capabilities of region maps. They are used to identify region maps
+	 * which are attached to other region maps in order to not confuse them with real dataspaces.
+	 */
+	Genode::List<Ref_badge_info> _region_maps;
 
 	template<typename T>
 	void _destroy_list(Genode::List<T> &list);
@@ -59,17 +81,15 @@ private:
 	 ****************************************/
 	void _identify_recreate_pd_sessions(
 			Pd_root &pd_root, Genode::List<Stored_pd_session_info> &stored_pd_sessions);
-	void _identify_recreate_signal_sources(
+	void _recreate_signal_sources(
 			Pd_session_component &pd_session, Genode::List<Stored_signal_source_info> &stored_signal_sources);
-	void _identify_recreate_signal_contexts(
+	void _recreate_signal_contexts(
 			Pd_session_component &pd_session, Genode::List<Stored_signal_context_info> &stored_signal_contexts);
 
 	void _identify_recreate_ram_sessions(
 			Ram_root &ram_root, Genode::List<Stored_ram_session_info> &stored_ram_sessions);
-	void _identify_recreate_ram_dataspaces(
+	void _recreate_ram_dataspaces(
 			Ram_session_component &ram_session, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces);
-	Genode::List<Ckpt_resto_badge_info> _identify_ram_dataspaces(
-			Genode::List<Ram_dataspace_info> &ram_dataspaces, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces);
 
 	void _identify_recreate_cpu_sessions(
 			Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions,
@@ -78,15 +98,15 @@ private:
 			Cpu_session_component &cpu_session, Genode::List<Stored_cpu_thread_info> &stored_cpu_threads,
 			Genode::List<Pd_session_component> &pd_sessions);
 
-	void _identify_recreate_rm_sessions(
+	void _recreate_rm_sessions(
 			Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
-	void _identify_recreate_region_maps(
+	void _recreate_region_maps(
 			Rm_session_component &rm_session, Genode::List<Stored_region_map_info> &stored_region_maps);
 
-	void _identify_recreate_log_sessions(
+	void _recreate_log_sessions(
 			Log_root &log_root, Genode::List<Stored_log_session_info> &stored_log_sessions);
 
-	void _identify_recreate_timer_sessions(
+	void _recreate_timer_sessions(
 			Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions);
 
 
@@ -127,27 +147,27 @@ private:
 	template<typename RESTO>
 	RESTO *_find_child_object(Genode::uint16_t badge, Genode::List<RESTO> &child_objects)
 	{
-		Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
-		if(cr_info) cr_info = cr_info->find_by_ckpt_badge(badge);
-		if(!cr_info)
+		Badge_translation_info *trans_info = _rpcobject_translations.first();
+		if(trans_info) trans_info = trans_info->find_by_ckpt_badge(badge);
+		if(!trans_info)
 		{
 			Genode::error("Could not translate stored badge ", badge);
 			throw Genode::Exception();
 		}
 		RESTO *child_object = child_objects.first();
-		if(child_object) child_object = child_object->find_by_badge(cr_info->resto_cap.local_name());
+		if(child_object) child_object = child_object->find_by_badge(trans_info->resto_cap.local_name());
 
 		return child_object;
 	}
 
 
 	void _resolve_inc_checkpoint_dataspaces(
-			Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_resto_info> &memory_infos);
+			Genode::List<Ram_session_component> &ram_sessions);
 
 	void _restore_cap_map(Target_child &child, Target_state &state);
 	void _restore_cap_space(Target_child &child);
 
-	void _restore_dataspaces(Genode::List<Orig_copy_resto_info> &memory_infos);
+	void _restore_dataspaces();
 	void _restore_dataspace_content(Genode::Dataspace_capability orig_ds_cap,
 			Genode::Ram_dataspace_capability copy_ds_cap, Genode::addr_t copy_rel_addr, Genode::size_t copy_size);
 

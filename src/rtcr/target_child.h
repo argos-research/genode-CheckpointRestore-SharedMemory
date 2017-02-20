@@ -47,6 +47,10 @@ private:
 	static constexpr bool verbose_debug = child_verbose_debug;
 
 	/**
+	 * Indicator whether child was bootstraped or not
+	 */
+	bool                _in_bootstrap;
+	/**
 	 * Child's unique name and filename of child's rom module
 	 */
 	Genode::String<32>  _name;
@@ -75,10 +79,6 @@ private:
 	 * Restorer needed for restoring a child
 	 */
 	Restorer           *_restorer;
-	/**
-	 * Indicator whether child was bootstraped or not
-	 */
-	bool                _in_bootstrap;
 	/**
 	 * Struct for custom / intercepted services
 	 */

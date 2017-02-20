@@ -21,10 +21,10 @@ void Restorer::_destroy_list(Genode::List<T> &list)
 		Genode::destroy(_alloc, elem);
 	}
 }
-template void Restorer::_destroy_list(Genode::List<Ckpt_resto_badge_info> &list);
-template void Restorer::_destroy_list(Genode::List<Orig_copy_resto_info> &list);
-template void Restorer::_destroy_list(Genode::List<Ref_badge> &list);
-template void Restorer::_destroy_list(Genode::List<Cap_kcap_info> &list);
+template void Restorer::_destroy_list(Genode::List<Kcap_cap_info> &list);
+template void Restorer::_destroy_list(Genode::List<Badge_translation_info> &list);
+template void Restorer::_destroy_list(Genode::List<Dataspace_translation_info> &list);
+template void Restorer::_destroy_list(Genode::List<Ref_badge_info> &list);
 
 
 Genode::List<Ref_badge> Restorer::_create_region_map_dataspaces(
@@ -32,27 +32,27 @@ Genode::List<Ref_badge> Restorer::_create_region_map_dataspaces(
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Genode::List<Ref_badge> result;
+	Genode::List<Ref_badge_info> result;
 
-	// Get ds_badges from PD sessions
+	// Get region maps from PD sessions
 	Stored_pd_session_info *stored_pd_session = stored_pd_sessions.first();
 	while(stored_pd_session)
 	{
-		result.insert(new (_alloc) Ref_badge(stored_pd_session->stored_address_space.ds_badge));
-		result.insert(new (_alloc) Ref_badge(stored_pd_session->stored_stack_area.ds_badge));
-		result.insert(new (_alloc) Ref_badge(stored_pd_session->stored_linker_area.ds_badge));
+		result.insert(new (_alloc) Ref_badge_info(stored_pd_session->stored_address_space.ds_badge));
+		result.insert(new (_alloc) Ref_badge_info(stored_pd_session->stored_stack_area.ds_badge));
+		result.insert(new (_alloc) Ref_badge_info(stored_pd_session->stored_linker_area.ds_badge));
 
 		stored_pd_session = stored_pd_session->next();
 	}
 
-	// Get ds_badges from RM sessions
+	// Get region maps from RM sessions
 	Stored_rm_session_info *stored_rm_session = stored_rm_sessions.first();
 	while(stored_rm_session)
 	{
 		Stored_region_map_info *stored_region_map = stored_rm_session->stored_region_map_infos.first();
 		while(stored_region_map)
 		{
-			result.insert(new (_alloc) Ref_badge(stored_region_map->ds_badge));
+			result.insert(new (_alloc) Ref_badge_info(stored_region_map->ds_badge));
 
 			stored_region_map = stored_region_map->next();
 		}
@@ -69,15 +69,16 @@ void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Sto
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only one PD session by now (created by bootstrap)
+	// There shall be only one PD session by now (created during bootstrap)
 	Pd_session_component *bootstrapped_pd_session = pd_root.session_infos().first();
 
-	// Error
+	// Error: No PD session found
 	if(!bootstrapped_pd_session)
 	{
 		Genode::error("There is no bootstrapped PD session");
 		throw Genode::Exception();
 	}
+	// Warning: More than one PD session found
 	if(bootstrapped_pd_session->next()) Genode::warning("There are more than 1 bootstrapped PD sessions");
 
 	Stored_pd_session_info *stored_pd_session = stored_pd_sessions.first();
@@ -101,31 +102,34 @@ void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Sto
 				Genode::error("Could not find newly created PD session for ", pd_session_cap);
 				throw Genode::Exception();
 			}
-			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_pd_session->kcap, pd_session->cap()));
+			// Associate the stored kcap address to this new RPC object
+			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_pd_session->kcap, pd_session->cap()));
 		}
 
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_pd_session->badge, pd_session->cap()));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_pd_session->badge, pd_session->cap()));
 
-		_identify_recreate_signal_sources(*pd_session, stored_pd_session->stored_source_infos);
-		_identify_recreate_signal_contexts(*pd_session, stored_pd_session->stored_context_infos);
-		// XXX postpone native caps creation, because it needs capabilities from CPU thread
-
-		// Insert region map cap and region map's dataspace cap into _ckpt_to_resto_infos for all three region maps of a PD session
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+		// Remember the associations of the stored region maps and their dataspaces of the PD session to
+		// their corresponding new ones
+		// Address space
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 				stored_pd_session->stored_address_space.badge, pd_session->address_space_component().cap()));
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 				stored_pd_session->stored_address_space.ds_badge, pd_session->address_space_component().parent_state().ds_cap));
-
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+		// Stack area
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 				stored_pd_session->stored_stack_area.badge, pd_session->stack_area_component().cap()));
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 				stored_pd_session->stored_stack_area.ds_badge, pd_session->stack_area_component().parent_state().ds_cap));
-
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+		// Linker area
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 				stored_pd_session->stored_linker_area.badge, pd_session->linker_area_component().cap()));
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 				stored_pd_session->stored_linker_area.ds_badge, pd_session->linker_area_component().parent_state().ds_cap));
+
+		_recreate_signal_sources(*pd_session, stored_pd_session->stored_source_infos);
+		_recreate_signal_contexts(*pd_session, stored_pd_session->stored_context_infos);
+		// XXX postpone native caps creation, because it needs capabilities from CPU thread
 
 		stored_pd_session = stored_pd_session->next();
 	}
@@ -133,69 +137,56 @@ void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Sto
 }
 
 
-void Restorer::_identify_recreate_signal_sources(Pd_session_component &pd_session,
+void Restorer::_recreate_signal_sources(Pd_session_component &pd_session,
 		Genode::List<Stored_signal_source_info> &stored_signal_sources)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only one signal source by now (created by bootstrap)
-	Signal_source_info *bootstrapped_info = pd_session.parent_state().signal_sources.first();
-	if(!bootstrapped_info)
-	{
-		Genode::error("There is no bootstrapped Signal source info");
-		throw Genode::Exception();
-	}
-	if(bootstrapped_info->next()) Genode::warning("There are more than 1 bootstrapped PD sessions");
+	// Warning: There are already signal sources in the PD session
+	if(pd_session.parent_state().signal_sources.first())
+		Genode::warning("There are already signal sources in the PD session ", pd_session.cap());
 
 	Signal_source_info *signal_source = nullptr;
 	Stored_signal_source_info *stored_signal_source = stored_signal_sources.first();
 	while(stored_signal_source)
 	{
-		if(stored_signal_source->bootstrapped)
+		// Create signal source
+		Genode::Capability<Genode::Signal_source> cap = pd_session.alloc_signal_source();
+		signal_source = pd_session.parent_state().signal_sources.first();
+		if(signal_source) signal_source = signal_source->find_by_badge(cap.local_name());
+		if(!signal_source)
 		{
-			// Identify bootstrapped signal source
-			signal_source = bootstrapped_info;
+			Genode::error("Could not find newly created signal source for ", cap);
+			throw Genode::Exception();
 		}
-		else
-		{
-			// Create signal source
-			Genode::Capability<Genode::Signal_source> cap = pd_session.alloc_signal_source();
-			signal_source = pd_session.parent_state().signal_sources.first();
-			if(signal_source) signal_source = signal_source->find_by_badge(cap.local_name());
-			if(!signal_source)
-			{
-				Genode::error("Could not find newly created signal source for ", cap);
-				throw Genode::Exception();
-			}
-			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_signal_source->kcap, signal_source->cap));
-		}
-
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_signal_source->badge, signal_source->cap));
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_signal_source->kcap, signal_source->cap));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_signal_source->badge, signal_source->cap));
 
 		stored_signal_source = stored_signal_source->next();
 	}
 }
 
 
-void Restorer::_identify_recreate_signal_contexts(Pd_session_component &pd_session,
+void Restorer::_recreate_signal_contexts(Pd_session_component &pd_session,
 		Genode::List<Stored_signal_context_info> &stored_signal_contexts)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	if(pd_session.parent_state().signal_contexts.first()) Genode::warning("There are bootstrapped signal contexts, expected 0");
+	// Warning: There are already signal sources in the PD session
+	if(pd_session.parent_state().signal_sources.first())
+		Genode::warning("There are already signal contexts in the PD session ", pd_session.cap());
 
 	Signal_context_info *signal_context = nullptr;
 	Stored_signal_context_info *stored_signal_context = stored_signal_contexts.first();
 	while(stored_signal_context)
 	{
-		// Nothing to identify
-
 		// Create signal context
 		Genode::Capability<Genode::Signal_source> ss_cap;
 		if(stored_signal_context->signal_source_badge != 0)
 		{
-			Ckpt_resto_badge_info *info = _ckpt_to_resto_infos.first();
+			Badge_translation_info *info = _rpcobject_translations.first();
 			if(info) info = info->find_by_ckpt_badge(stored_signal_context->signal_source_badge);
 			ss_cap = Genode::reinterpret_cap_cast<Genode::Signal_source>(info->resto_cap);
 		}
@@ -208,10 +199,11 @@ void Restorer::_identify_recreate_signal_contexts(Pd_session_component &pd_sessi
 			Genode::error("Could not find newly created signal context for ", cap);
 			throw Genode::Exception();
 		}
-		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_signal_context->kcap, signal_context->cap));
 
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_signal_context->badge, signal_context->cap));
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_signal_context->kcap, signal_context->cap));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_signal_context->badge, signal_context->cap));
 
 		stored_signal_context = stored_signal_context->next();
 	}
@@ -222,15 +214,16 @@ void Restorer::_identify_recreate_ram_sessions(Ram_root &ram_root, Genode::List<
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only one RAM session by now (created by bootstrap)
+	// There shall be only one RAM session by now (created during bootstrap)
 	Ram_session_component *bootstrapped_ram_session = ram_root.session_infos().first();
 
-	// Error
+	// Error: No RAM session found
 	if(!bootstrapped_ram_session)
 	{
 		Genode::error("There is no bootstrapped RAM session");
 		throw Genode::Exception();
 	}
+	// Warning: More than one RAM session found
 	if(bootstrapped_ram_session->next()) Genode::warning("There are more than 1 bootstrapped RAM sessions");
 
 	Stored_ram_session_info *stored_ram_session = stored_ram_sessions.first();
@@ -255,161 +248,67 @@ void Restorer::_identify_recreate_ram_sessions(Ram_root &ram_root, Genode::List<
 				throw Genode::Exception();
 			}
 			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_ram_session->kcap, ram_session->cap()));
+			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_ram_session->kcap, ram_session->cap()));
 		}
 
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_ram_session->badge, ram_session->cap()));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_ram_session->badge, ram_session->cap()));
 
-		_identify_recreate_ram_dataspaces(*ram_session, stored_ram_session->stored_ramds_infos);
+		_recreate_ram_dataspaces(*ram_session, stored_ram_session->stored_ramds_infos);
 
 		stored_ram_session = stored_ram_session->next();
 	}
 }
 
 
-void Restorer::_identify_recreate_ram_dataspaces(Ram_session_component &ram_session,
+void Restorer::_recreate_ram_dataspaces(Ram_session_component &ram_session,
 		Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be at least 1 RAM dataspace by now (created by bootstrap)
-	Genode::List<Ckpt_resto_badge_info> bootstrapped_ram_dataspaces =
-			_identify_ram_dataspaces(ram_session.parent_state().ram_dataspaces, stored_ram_dataspaces);
-	if(!bootstrapped_ram_dataspaces.first())
-	{
-		Genode::error("There is no bootstrapped RAM dataspace");
-		throw Genode::Exception();
-	}
+	// Warning: There are already signal sources in the PD session
+	if(ram_session.parent_state().ram_dataspaces.first())
+		Genode::warning("There are already RAM dataspaces in the RAM session ", ram_session.cap());
 
 	Ram_dataspace_info *ramds = nullptr;
 	Stored_ram_dataspace_info *stored_ramds = stored_ram_dataspaces.first();
 	while(stored_ramds)
 	{
-		if(stored_ramds->bootstrapped)
+		// Recreate
+		Genode::Ram_dataspace_capability cap = ram_session.alloc(stored_ramds->size, stored_ramds->cached);
+		ramds = ram_session.parent_state().ram_dataspaces.first();
+		if(ramds) ramds = ramds->find_by_badge(cap.local_name());
+		if(!ramds)
 		{
-			// Identify
-			Ckpt_resto_badge_info *cr_info = bootstrapped_ram_dataspaces.first();
-			cr_info = cr_info->find_by_ckpt_badge(stored_ramds->badge);
-			ramds = ram_session.parent_state().ram_dataspaces.first();
-			if(ramds) ramds = ramds->find_by_badge(cr_info->resto_cap.local_name());
-			if(!ramds)
-			{
-				Genode::error("Could not find bootstrapped RAM dataspace for badge ", stored_ramds->badge);
-				throw Genode::Exception();
-			}
-		}
-		else
-		{
-			// Recreate
-			Genode::Ram_dataspace_capability cap = ram_session.alloc(stored_ramds->size, stored_ramds->cached);
-			ramds = ram_session.parent_state().ram_dataspaces.first();
-			if(ramds) ramds = ramds->find_by_badge(cap.local_name());
-			if(!ramds)
-			{
-				Genode::error("Could not find newly created RAM dataspace for ", cap);
-				throw Genode::Exception();
-			}
-			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_ramds->kcap, ramds->cap));
+			Genode::error("Could not find newly created RAM dataspace for ", cap);
+			throw Genode::Exception();
 		}
 
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_ramds->badge, ramds->cap));
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_ramds->kcap, ramds->cap));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_ramds->badge, ramds->cap));
 
+		// TODO: Need to associate stored dataspace to recreated dataspace?
 		stored_ramds = stored_ramds->next();
-	}
-
-	// Clean up
-	while(Ckpt_resto_badge_info *info = bootstrapped_ram_dataspaces.first())
-	{
-		bootstrapped_ram_dataspaces.remove(info);
-		Genode::destroy(_alloc, info);
 	}
 }
-
-Genode::List<Ckpt_resto_badge_info> Restorer::_identify_ram_dataspaces(
-		Genode::List<Ram_dataspace_info> &ram_dataspaces, Genode::List<Stored_ram_dataspace_info> &stored_ram_dataspaces)
-{
-	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
-
-	Stored_ram_dataspace_info *stored_ramds = nullptr;
-	Ram_dataspace_info *ramds = nullptr;
-	Genode::size_t size_stored_array = 0;
-	Genode::size_t size_array = 0;
-
-	// Find out array sizes
-	stored_ramds = stored_ram_dataspaces.first();
-	while(stored_ramds)
-	{
-		if(stored_ramds->bootstrapped) size_stored_array++;
-		stored_ramds = stored_ramds->next();
-	}
-	ramds = ram_dataspaces.first();
-	while(ramds)
-	{
-		if(ramds->bootstrapped) size_array++;
-		ramds = ramds->next();
-	}
-
-	if(size_stored_array != size_array)
-	{
-		Genode::warning("Size of bootstrapped stored-ram_dataspaces (", size_stored_array,
-				") is not equal to bootstrapped ram_dataspaces (", size_array, ")");
-	}
-
-	// Create arrays
-	Genode::size_t stored_array[size_stored_array];
-	Genode::size_t array[size_array];
-
-	// Fill arrays
-	stored_ramds = stored_ram_dataspaces.first();
-	unsigned i = 0;
-	while(stored_ramds)
-	{
-		if(stored_ramds->bootstrapped) stored_array[i] = stored_ramds->timestamp;
-		stored_ramds = stored_ramds->next();
-		++i;
-	}
-	ramds = ram_dataspaces.first();
-	i = 0;
-	while(ramds)
-	{
-		if(ramds->bootstrapped) array[i] = ramds->timestamp();
-		ramds = ramds->next();
-		++i;
-	}
-
-	// Sort arrays
-	merge_sort(stored_array, size_stored_array);
-	merge_sort(array, size_array);
-
-	// Fill result
-	Genode::List<Ckpt_resto_badge_info> result;
-	for(unsigned i = 0; i < size_stored_array; ++i)
-	{
-		stored_ramds = stored_ram_dataspaces.first()->find_by_timestamp(stored_array[i]);
-		ramds = ram_dataspaces.first()->find_by_timestamp(array[i]);
-
-		result.insert(new (_alloc) Ckpt_resto_badge_info(stored_ramds->badge, ramds->cap));
-	}
-
-	return result;
-}
-
 
 void Restorer::_identify_recreate_cpu_sessions(Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions,
 		Genode::List<Pd_session_component> &pd_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only one CPU session by now (created by bootstrap)
+	// There shall be only one CPU session by now (created during bootstrap)
 	Cpu_session_component *bootstrapped_cpu_session = cpu_root.session_infos().first();
 
-	// Error
+	// Error: No CPU session found
 	if(!bootstrapped_cpu_session)
 	{
 		Genode::error("There is no bootstrapped CPU session");
 		throw Genode::Exception();
 	}
+	// Warning: More than one CPU session found
 	if(bootstrapped_cpu_session->next()) Genode::warning("There are more than 1 bootstrapped CPU sessions");
 
 	Cpu_session_component *cpu_session = nullptr;
@@ -420,7 +319,6 @@ void Restorer::_identify_recreate_cpu_sessions(Cpu_root &cpu_root, Genode::List<
 		{
 			// Identify
 			cpu_session = bootstrapped_cpu_session;
-
 		}
 		else
 		{
@@ -434,11 +332,12 @@ void Restorer::_identify_recreate_cpu_sessions(Cpu_root &cpu_root, Genode::List<
 				Genode::error("Could not find newly created RAM session for ", cpu_session_cap);
 				throw Genode::Exception();
 			}
-			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_cpu_session->kcap, cpu_session->cap()));
+			// Associate the stored kcap address to this new RPC object
+			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_cpu_session->kcap, cpu_session->cap()));
 		}
 
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_cpu_session->badge, cpu_session->cap()));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_cpu_session->badge, cpu_session->cap()));
 
 		_identify_recreate_cpu_threads(*cpu_session, stored_cpu_session->stored_cpu_thread_infos, pd_sessions);
 
@@ -453,7 +352,17 @@ void Restorer::_identify_recreate_cpu_threads(Cpu_session_component &cpu_session
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only 3 CPU threads by now (created by bootstrap)
+	// There shall be only one CPU session by now (created during bootstrap)
+	Cpu_thread_component *bootstrapped_cpu_thread = cpu_session.parent_state().cpu_threads.first();
+
+	// Error: No CPU thread found
+	if(!bootstrapped_cpu_thread)
+	{
+		Genode::error("There is no bootstrapped CPU thread");
+		throw Genode::Exception();
+	}
+	// Warning: More than one CPU thread found
+	if(bootstrapped_cpu_thread->next()) Genode::warning("There are more than 1 bootstrapped CPU threads");
 
 	Cpu_thread_component *cpu_thread = nullptr;
 	Stored_cpu_thread_info *stored_cpu_thread = stored_cpu_threads.first();
@@ -462,68 +371,61 @@ void Restorer::_identify_recreate_cpu_threads(Cpu_session_component &cpu_session
 		if(stored_cpu_thread->bootstrapped)
 		{
 			// Identify
-			cpu_thread = cpu_session.parent_state().cpu_threads.first();
-			if(cpu_thread) cpu_thread = cpu_thread->find_by_name(stored_cpu_thread->name.string());
-			if(!cpu_thread)
-			{
-				Genode::error("Could not find bootstrapped CPU thread for name=", stored_cpu_thread->name);
-				throw Genode::Exception();
-			}
+			cpu_thread = bootstrapped_cpu_thread;
 		}
 		else
 		{
 			// Recreate
 			// First, find translation of PD session badge used for creating the CPU thread
-			Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
-			if(cr_info) cr_info = cr_info->find_by_ckpt_badge(stored_cpu_thread->pd_session_badge);
-			if(!cr_info)
+			Badge_translation_info *trans_info = _rpcobject_translations.first();
+			if(trans_info) trans_info = trans_info->find_by_ckpt_badge(stored_cpu_thread->pd_session_badge);
+			if(!trans_info)
 			{
 				Genode::error("Could not find translation for stored PD session badge=", stored_cpu_thread->pd_session_badge);
 				throw Genode::Exception();
 			}
 			// Find PD session corresponding to the found PD session badge
 			Pd_session_component *pd_session = pd_sessions.first();
-			if(pd_session) pd_session = pd_session->find_by_badge(cr_info->resto_cap.local_name());
+			if(pd_session) pd_session = pd_session->find_by_badge(trans_info->resto_cap.local_name());
 			if(!pd_session)
 			{
-				Genode::error("Could not find PD session for ", cr_info->resto_cap);
+				Genode::error("Could not find PD session for ", trans_info->resto_cap);
 				throw Genode::Exception();
 			}
 			// Create CPU thread
-			Genode::Cpu_thread_capability cap =
+			Genode::Cpu_thread_capability cpu_thread_cap =
 					cpu_session.create_thread(pd_session->cap(), stored_cpu_thread->name, stored_cpu_thread->affinity,
 							stored_cpu_thread->weight, stored_cpu_thread->utcb);
 			cpu_thread = cpu_session.parent_state().cpu_threads.first();
-			if(cpu_thread) cpu_thread = cpu_thread->find_by_badge(cap.local_name());
+			if(cpu_thread) cpu_thread = cpu_thread->find_by_badge(cpu_thread_cap.local_name());
 			if(!cpu_thread)
 			{
-				Genode::error("Could not find newly created CPU thread for ", cap);
+				Genode::error("Could not find newly created CPU thread for ", cpu_thread_cap);
 				throw Genode::Exception();
 			}
-			// Store kcap for the badge of the newly created RPC object
-			_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_cpu_thread->kcap, cpu_thread->cap()));
+			// Associate the stored kcap address to this new RPC object
+			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_cpu_thread->kcap, cpu_thread->cap()));
 		}
 
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_cpu_thread->badge, cpu_thread->cap()));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_cpu_thread->badge, cpu_thread->cap()));
 
 		stored_cpu_thread = stored_cpu_thread->next();
 	}
 }
 
-
-void Restorer::_identify_recreate_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
+// XXX: Continue here
+void Restorer::_recreate_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only no RM session created by now (created by bootstrap)
+	// There shall be no RM session created by now (created by bootstrap)
 	if(rm_root.session_infos().first()) Genode::warning("There are already created RM sessions");
 
 	Rm_session_component *rm_session = nullptr;
 	Stored_rm_session_info *stored_rm_session = stored_rm_sessions.first();
 	while(stored_rm_session)
 	{
-		// Nothing to identify
-
 		// Recreate
 		Genode::Rpc_in_buffer<160> creation_args(stored_rm_session->creation_args.string());
 		Genode::Session_capability rm_session_cap = rm_root.session(creation_args, Genode::Affinity());
@@ -1390,15 +1292,13 @@ void Restorer::restore()
 
 	Genode::log("Before: \n", _child);
 
-	// Create a list of known region map's dataspace capabilities
-	// It is used to identify region maps which are attached to region maps
-	// when bookmarking dataspace content for restoration
-	_region_map_dataspaces_from_stored = _create_region_map_dataspaces(_state._stored_pd_sessions, _state._stored_rm_sessions);
+	// Create list of region maps
+	_region_maps = _create_region_map_dataspaces(_state._stored_pd_sessions, _state._stored_rm_sessions);
 
 	if(verbose_debug)
 	{
 		Genode::log("Region map dataspaces (from ckpt):");
-		Ref_badge *info = _region_map_dataspaces_from_stored.first();
+		Ref_badge *info = _region_maps.first();
 		if(!info) Genode::log(" <empty>\n");
 		while(info)
 		{
@@ -1408,9 +1308,7 @@ void Restorer::restore()
 	}
 
 	// Identify or recreate RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
-	//   Make a translation of old badges to new badges
-	//   In the restore state phase it is used when iterating through the stored states of RPC objects
-	//   and finding the corresponding child object
+	// During the iterations _kcap_mappings and _rpcobject_translations are filled for the next steps
 	_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
 	_identify_recreate_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
 	_identify_recreate_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
@@ -1418,24 +1316,24 @@ void Restorer::restore()
 	if(_state._stored_rm_sessions.first())
 	{
 		_child.custom_services().find("RM"); // Implicitly creates root object
-		_identify_recreate_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions);
+		_recreate_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions);
 	}
 	if(_state._stored_log_sessions.first())
 	{
 		_child.custom_services().find("LOG"); // Implicitly creates root object
-		_identify_recreate_log_sessions(*_child.custom_services().log_root, _state._stored_log_sessions);
+		_recreate_log_sessions(*_child.custom_services().log_root, _state._stored_log_sessions);
 	}
 	if(_state._stored_timer_sessions.first())
 	{
 		_child.custom_services().find("Timer"); // Implicitly creates root object
-		_identify_recreate_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions);
+		_recreate_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions);
 	}
 
 
 	if(verbose_debug)
 	{
-		Genode::log("Ckpt to resto infos:");
-		Ckpt_resto_badge_info *info = _ckpt_to_resto_infos.first();
+		Genode::log("RPC object translations:");
+		Badge_translation_info *info = _rpcobject_translations.first();
 		if(!info) Genode::log(" <empty>\n");
 		while(info)
 		{
@@ -1469,8 +1367,8 @@ void Restorer::restore()
 
 	if(verbose_debug)
 	{
-		Genode::log("Capability map infos:");
-		Cap_kcap_info const *info = _capability_map_infos.first();
+		Genode::log("Reserved kcap addresses:");
+		Kcap_cap_info const *info = _kcap_mappings.first();
 		if(!info) Genode::log(" <empty>\n");
 		while(info)
 		{
