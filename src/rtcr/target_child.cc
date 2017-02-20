@@ -240,10 +240,8 @@ void Target_child::start(Restorer &restorer)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_restorer=", &restorer,")");
 
-	_restorer = &restorer;
-
 	_child = new (_md_alloc) Genode::Child (
-			_resources.rom.dataspace(),
+			Genode::Dataspace_capability(),
 			Genode::Dataspace_capability(),
 			_resources.pd.cap(),  _resources.pd,
 			_resources.ram.cap(), _resources.ram,
@@ -253,7 +251,7 @@ void Target_child::start(Restorer &restorer)
 			*_custom_services.ram_service,
 			*_custom_services.cpu_service);
 
-
+	restorer.restore();
 }
 
 
@@ -489,13 +487,6 @@ Genode::Service *Target_child::resolve_session_request(const char *service_name,
 	{
 		if(verbose_debug) Genode::log("  Unsetting bootstrap_phase");
 		_in_bootstrap = false;
-	}
-
-	// Restoration hook
-	if(!Genode::strcmp(service_name, "LOG") && _restorer)
-	{
-		_restorer->restore();
-		_restorer = nullptr;
 	}
 
 	Genode::Service *service = 0;
