@@ -567,8 +567,9 @@ void Restorer::_restore_state_pd_sessions(Pd_root &pd_root, Genode::List<Stored_
 		Genode::size_t ram_quota = Genode::Arg_string::find_arg(stored_pd_session->upgrade_args.string(), "ram_quota").ulong_value(0);
 		if(ram_quota != 0) pd_root.upgrade(pd_session->cap(), stored_pd_session->upgrade_args.string());
 
-		// Wrap Region_maps of child's and checkpointer's PD session in lists for reusing _restore_state_region_maps
-		// The linked list pointers of the three regions maps are usually not used gloablly
+		// Wrap Region_maps of child's and checkpointer's PD session in lists for using _restore_state_region_maps
+		// The linked list pointers of the three regions maps are usually not used gloablly, thus they can be put into a new list
+		// (hint: putting an object in Genode's lists overrides the next-pointer, if the object was in another list)
 		Genode::List<Stored_region_map_info> temp_stored;
 		temp_stored.insert(&stored_pd_session->stored_linker_area);
 		temp_stored.insert(&stored_pd_session->stored_stack_area);
@@ -628,9 +629,9 @@ void Restorer::_restore_state_ram_dataspaces(
 
 		// Restore state
 		// Postpone memory copy to a latter time
-		Orig_copy_resto_info *info = new (_alloc) Orig_copy_resto_info(
-				ram_dataspace->cap, stored_ram_dataspace->memory_content, 0, stored_ram_dataspace->size);
-		_memory_to_restore.insert(info);
+		Dataspace_translation_info *trans_info = new (_alloc) Dataspace_translation_info(
+				stored_ram_dataspace->memory_content, ram_dataspace->cap, stored_ram_dataspace->size);
+		_dataspace_translations.insert(trans_info);
 
 		stored_ram_dataspace = stored_ram_dataspace->next();
 	}
@@ -832,69 +833,57 @@ void Restorer::_restore_state_attached_regions(Region_map_component &region_map,
 	{
 		Attached_region_info *attached_region = nullptr;
 
-		// Find corresponding attached region by the position in the region map or recreate it
-		if(stored_attached_region->bootstrapped)
+		// Restore the mapping
+		// Find dataspace: _ckpt_to_resto_infos shall have all dataspaces from known services
+		// (e.g. dataspaces from RAM sessions, region map's dataspaces),
+		// still there could be attached dataspaces whose origin is unknown and, thus, shall be allocated here
+		Genode::Dataspace_capability ds_cap;
+		Badge_translation_info  *trans_info = _rpcobject_translations.first();
+		if(trans_info) trans_info = trans_info->find_by_ckpt_badge(stored_attached_region->attached_ds_badge);
+		if(trans_info)
 		{
-			// Identify
-			attached_region = region_map.parent_state().attached_regions.first();
-			if(attached_region) attached_region = attached_region->find_by_addr(stored_attached_region->rel_addr);
-			if(!attached_region)
-			{
-				Genode::error("Could not find bootstrapped attached region for attached region ",
-						stored_attached_region->badge, " at address ", stored_attached_region->rel_addr);
-				throw Genode::Exception();
-			}
+			ds_cap = Genode::reinterpret_cap_cast<Genode::Dataspace>(trans_info->resto_cap);
 		}
 		else
 		{
-			// Restore the mapping
-			// Find dataspace: _ckpt_to_resto_infos shall have all dataspaces from known services
-			// (e.g. dataspaces from RAM sessions, region map's dataspaces),
-			// still there could be attached dataspaces whose origin is unknown and, thus, shall be allocated here
-			Genode::Dataspace_capability ds_cap;
-			Ckpt_resto_badge_info *cr_info = _ckpt_to_resto_infos.first();
-			if(cr_info) cr_info = cr_info->find_by_ckpt_badge(stored_attached_region->attached_ds_badge);
-			if(cr_info)
-			{
-				ds_cap = Genode::reinterpret_cap_cast<Genode::Dataspace>(cr_info->resto_cap);
-			}
-			else
-			{
-				ds_cap = _child._env.ram().alloc(stored_attached_region->size);
+			ds_cap = _child._env.ram().alloc(stored_attached_region->size);
 
-				// Store kcap for the badge of the newly created RPC object
-				_capability_map_infos.insert(new (_alloc) Cap_kcap_info(
-						stored_attached_region->kcap, attached_region->attached_ds_cap));
-			}
-
-			region_map.attach(ds_cap, stored_attached_region->size, stored_attached_region->offset,
-					true, stored_attached_region->rel_addr, stored_attached_region->executable);
-
-			attached_region = region_map.parent_state().attached_regions.first();
-			if(attached_region) attached_region = attached_region->find_by_addr(stored_attached_region->rel_addr);
-			if(!attached_region)
-			{
-				Genode::error("Could not find recreated attached region for attached region ",
-						stored_attached_region->badge, " at address ", stored_attached_region->rel_addr);
-				throw Genode::Exception();
-			}
+			// Associate the stored kcap address to this new RPC object
+			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(
+					stored_attached_region->kcap, attached_region->attached_ds_cap));
+			// Remember the association of the stored RPC object to the new RPC object
+			_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
+					stored_attached_region->attached_ds_badge, ds_cap));
 		}
+
+		region_map.attach(ds_cap, stored_attached_region->size, stored_attached_region->offset,
+				true, stored_attached_region->rel_addr, stored_attached_region->executable);
+
+		attached_region = region_map.parent_state().attached_regions.first();
+		if(attached_region) attached_region = attached_region->find_by_addr(stored_attached_region->rel_addr);
+		if(!attached_region)
+		{
+			Genode::error("Could not find recreated attached region for attached region ",
+					stored_attached_region->badge, " at address ", stored_attached_region->rel_addr);
+			throw Genode::Exception();
+		}
+
 
 		// Find out whether the attached region's memory needs to be restored
 		// Find out whether the attached region is a known region map (do not remember region maps)
-		Ref_badge *badge = _region_map_dataspaces_from_stored.first();
-		if(badge) badge = badge->find_by_badge(stored_attached_region->attached_ds_badge);
-		if(!badge)
+		Ref_badge_info *badge_info = _region_maps.first();
+		if(badge_info) badge_info = badge_info->find_by_badge(stored_attached_region->attached_ds_badge);
+		if(!badge_info)
 		{
 			// Find out whether the cap is already in memory to restore (only add new dataspaces)
-			Orig_copy_resto_info *info = _memory_to_restore.first();
-			if(info) info = info->find_by_copy_badge(stored_attached_region->memory_content.local_name());
-			if(!info)
+			Dataspace_translation_info *trans_info = _dataspace_translations.first();
+			if(trans_info) trans_info = trans_info->find_by_ckpt_badge(stored_attached_region->memory_content.local_name());
+			if(!trans_info)
 			{
 				// If not in list, then insert it
-				info = new (_alloc) Orig_copy_resto_info(
-						attached_region->attached_ds_cap, stored_attached_region->memory_content, 0, stored_attached_region->size);
-				_memory_to_restore.insert(info);
+				trans_info = new (_alloc) Dataspace_translation_info(
+						stored_attached_region->memory_content, attached_region->attached_ds_cap, stored_attached_region->size);
+				_dataspace_translations.insert(trans_info);
 			}
 		}
 
@@ -1304,6 +1293,10 @@ void Restorer::restore()
 		}
 	}
 
+	/***********************************
+	 ** Phase 1: Recreate RPC objects **
+	 ***********************************/
+
 	// Identify or recreate RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
 	// During the iterations _kcap_mappings and _rpcobject_translations are filled for the next steps
 	_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
@@ -1326,7 +1319,6 @@ void Restorer::restore()
 		_recreate_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions);
 	}
 
-
 	if(verbose_debug)
 	{
 		Genode::log("RPC object translations:");
@@ -1338,6 +1330,10 @@ void Restorer::restore()
 			info = info->next();
 		}
 	}
+
+	/*******************************************
+	 ** Phase 2: Restore state of RPC objects **
+	 *******************************************/
 
 	// Restore state of all objects using the translation of old badges to new badges
 	// (caution: RAM <- Region map (incl. PD session) ( "<-" means requires))
@@ -1360,7 +1356,6 @@ void Restorer::restore()
 		_restore_state_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions,
 				_child.custom_services().pd_root->session_infos());
 	}
-
 
 	if(verbose_debug)
 	{
