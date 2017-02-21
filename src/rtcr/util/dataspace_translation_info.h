@@ -1,5 +1,5 @@
 /*
- * \brief  List element to encapsulate an original dataspace and its copy dataspace
+ * \brief  List element to encapsulate a source dataspace and the destination dataspace
  * \author Denis Huber
  * \date   2017-02-20
  */
@@ -17,30 +17,39 @@ namespace Rtcr {
 }
 
 /**
- * Structure to encapsulate an original dataspace and its copy dataspace
+ * Structure to encapsulate a source dataspace, which is used to copy from,
+ * and the destination dataspace, which is used to copy to
  */
 struct Rtcr::Dataspace_translation_info : Genode::List<Dataspace_translation_info>::Element
 {
-	Genode::Dataspace_capability     orig_ds_cap;
-	Genode::Ram_dataspace_capability copy_ds_cap;
+	Genode::Ram_dataspace_capability ckpt_ds_cap;
+	Genode::Dataspace_capability     resto_ds_cap;
 	Genode::size_t                   size;
 
-	Dataspace_translation_info(Genode::Dataspace_capability orig_ds_cap, Genode::Ram_dataspace_capability copy_ds_cap, Genode::size_t size)
-	: orig_ds_cap(orig_ds_cap), copy_ds_cap(copy_ds_cap), size(size) { }
+	Dataspace_translation_info(Genode::Ram_dataspace_capability ckpt_ds_cap, Genode::Dataspace_capability resto_ds_cap, Genode::size_t size)
+	: ckpt_ds_cap(ckpt_ds_cap), resto_ds_cap(resto_ds_cap), size(size) { }
 
-	Dataspace_translation_info *find_by_badge(Genode::uint16_t badge)
+	Dataspace_translation_info *find_by_resto_badge(Genode::uint16_t badge)
 	{
-		if(badge == this->orig_ds_cap.local_name())
+		if(badge == this->resto_ds_cap.local_name())
 			return this;
 		Dataspace_translation_info *info = next();
-		return info ? info->find_by_badge(badge) : 0;
+		return info ? info->find_by_resto_badge(badge) : 0;
+	}
+
+	Dataspace_translation_info *find_by_ckpt_badge(Genode::uint16_t badge)
+	{
+		if(badge == this->ckpt_ds_cap.local_name())
+			return this;
+		Dataspace_translation_info *info = next();
+		return info ? info->find_by_ckpt_badge(badge) : 0;
 	}
 
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "orig ds ", orig_ds_cap, ", copy ds ", copy_ds_cap,
+		Genode::print(output, "resto ds ", resto_ds_cap, ", dest ds ", ckpt_ds_cap,
 				", size=", Hex(size));
 	}
 };
