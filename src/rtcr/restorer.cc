@@ -266,7 +266,7 @@ void Restorer::_recreate_ram_dataspaces(Ram_session_component &ram_session,
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// Warning: There are already signal sources in the PD session
+	// Warning: There are already RAM dataspaces in the RAM session
 	if(ram_session.parent_state().ram_dataspaces.first())
 		Genode::warning("There are already RAM dataspaces in the RAM session ", ram_session.cap());
 
@@ -414,13 +414,14 @@ void Restorer::_identify_recreate_cpu_threads(Cpu_session_component &cpu_session
 	}
 }
 
-// XXX: Continue here
+
 void Restorer::_recreate_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be no RM session created by now (created by bootstrap)
-	if(rm_root.session_infos().first()) Genode::warning("There are already created RM sessions");
+	// Warning: There are already RM sessions
+	if(rm_root.session_infos().first())
+		Genode::warning("There are already RM sessions created");
 
 	Rm_session_component *rm_session = nullptr;
 	Stored_rm_session_info *stored_rm_session = stored_rm_sessions.first();
@@ -436,32 +437,31 @@ void Restorer::_recreate_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_se
 			Genode::error("Could not find newly created RM session for ", rm_session_cap);
 			throw Genode::Exception();
 		}
-		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_rm_session->kcap, rm_session->cap()));
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_rm_session->kcap, rm_session->cap()));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_rm_session->badge, rm_session->cap()));
 
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_rm_session->badge, rm_session->cap()));
-
-		_identify_recreate_region_maps(*rm_session, stored_rm_session->stored_region_map_infos);
+		_recreate_region_maps(*rm_session, stored_rm_session->stored_region_map_infos);
 
 		stored_rm_session = stored_rm_session->next();
 	}
 }
 
 
-void Restorer::_identify_recreate_region_maps(
+void Restorer::_recreate_region_maps(
 		Rm_session_component &rm_session, Genode::List<Stored_region_map_info> &stored_region_maps)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be no region maps created
-	if(rm_session.parent_state().region_maps.first()) Genode::warning("There are already region maps created, expected none");
+	// Warning: There are already region maps in the RM session
+	if(rm_session.parent_state().region_maps.first())
+		Genode::warning("There are already region maps in RM session ", rm_session.cap());
 
 	Region_map_component *region_map = nullptr;
 	Stored_region_map_info *stored_region_map = stored_region_maps.first();
 	while(stored_region_map)
 	{
-		// Nothing to identify
-
 		// Recreate
 		Genode::Capability<Genode::Region_map> cap = rm_session.create(stored_region_map->size);
 		region_map = rm_session.parent_state().region_maps.first();
@@ -471,33 +471,31 @@ void Restorer::_identify_recreate_region_maps(
 			Genode::error("Could not find newly created region map for ", cap);
 			throw Genode::Exception();
 		}
-		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_region_map->kcap, region_map->cap()));
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_region_map->kcap, region_map->cap()));
 
-		// Insert region map badge/cap
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_region_map->badge, region_map->cap()));
-		// Insert region map's dataspace badge/cap for _restore_state_attached_regions
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_region_map->ds_badge, region_map->parent_state().ds_cap));
-
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_region_map->badge, region_map->cap()));
+		// Remember the association of the region map's dataspace to the new region map's dataspace
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_region_map->ds_badge, region_map->parent_state().ds_cap));
 
 		stored_region_map = stored_region_map->next();
 	}
 }
 
 
-void Restorer::_identify_recreate_log_sessions(Log_root &log_root, Genode::List<Stored_log_session_info> &stored_log_sessions)
+void Restorer::_recreate_log_sessions(Log_root &log_root, Genode::List<Stored_log_session_info> &stored_log_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only no LOG session created by now (created by bootstrap)
-	if(log_root.session_infos().first()) Genode::warning("There are already created LOG sessions");
+	// Warning: There are already LOG sessions
+	if(log_root.session_infos().first())
+		Genode::warning("There are already LOG sessions created");
 
 	Log_session_component *log_session = nullptr;
 	Stored_log_session_info *stored_log_session = stored_log_sessions.first();
 	while(stored_log_session)
 	{
-		// Nothing to identify
-
 		// Recreate
 		Genode::Rpc_in_buffer<160> creation_args(stored_log_session->creation_args.string());
 		Genode::Session_capability log_session_cap = log_root.session(creation_args, Genode::Affinity());
@@ -508,29 +506,28 @@ void Restorer::_identify_recreate_log_sessions(Log_root &log_root, Genode::List<
 			Genode::error("Could not find newly created LOG session for ", log_session_cap);
 			throw Genode::Exception();
 		}
-		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_log_session->kcap, log_session->cap()));
-
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_log_session->badge, log_session->cap()));
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_log_session->kcap, log_session->cap()));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_log_session->badge, log_session->cap()));
 
 		stored_log_session = stored_log_session->next();
 	}
 }
 
 
-void Restorer::_identify_recreate_timer_sessions(Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions)
+void Restorer::_recreate_timer_sessions(Timer_root &timer_root, Genode::List<Stored_timer_session_info> &stored_timer_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	// There shall be only no RM session created by now (created by bootstrap)
-	if(timer_root.session_infos().first()) Genode::warning("There are already created Timer sessions");
+	// Warning: There are already Timer sessions
+	if(timer_root.session_infos().first())
+		Genode::warning("There are already Timer sessions created");
 
 	Timer_session_component *timer_session = nullptr;
 	Stored_timer_session_info *stored_timer_session = stored_timer_sessions.first();
 	while(stored_timer_session)
 	{
-		// Nothing to identify
-
 		// Recreate
 		Genode::Rpc_in_buffer<160> creation_args(stored_timer_session->creation_args.string());
 		Genode::Session_capability timer_session_cap = timer_root.session(creation_args, Genode::Affinity());
@@ -541,10 +538,10 @@ void Restorer::_identify_recreate_timer_sessions(Timer_root &timer_root, Genode:
 			Genode::error("Could not find newly created Timer session for ", timer_session_cap);
 			throw Genode::Exception();
 		}
-		// Store kcap for the badge of the newly created RPC object
-		_capability_map_infos.insert(new (_alloc) Cap_kcap_info(stored_timer_session->kcap, timer_session->cap()));
-
-		_ckpt_to_resto_infos.insert(new (_alloc) Ckpt_resto_badge_info(stored_timer_session->badge, timer_session->cap()));
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_timer_session->kcap, timer_session->cap()));
+		// Remember the association of the stored RPC object to the new RPC object
+		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_timer_session->badge, timer_session->cap()));
 
 		stored_timer_session = stored_timer_session->next();
 	}
