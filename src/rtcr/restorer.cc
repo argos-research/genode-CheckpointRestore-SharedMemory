@@ -26,8 +26,25 @@ template void Restorer::_destroy_list(Genode::List<Badge_translation_info> &list
 template void Restorer::_destroy_list(Genode::List<Dataspace_translation_info> &list);
 template void Restorer::_destroy_list(Genode::List<Ref_badge_info> &list);
 
+void Restorer::_destroy_list(Genode::List<Simplified_managed_dataspace_info> &list)
+{
+	while(Simplified_managed_dataspace_info *smd_info = list.first())
+	{
+		list.remove(smd_info);
 
-Genode::List<Ref_badge> Restorer::_create_region_map_dataspaces(
+		while(Simplified_managed_dataspace_info::Simplified_designated_ds_info *sdd_info =
+				smd_info->designated_dataspaces.first())
+		{
+			smd_info->designated_dataspaces.remove(sdd_info);
+			Genode::destroy(_alloc, sdd_info);
+		}
+
+		Genode::destroy(_alloc, smd_info);
+	}
+}
+
+
+Genode::List<Ref_badge_info> Restorer::_create_region_map_dataspaces(
 		Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
@@ -176,7 +193,16 @@ void Restorer::_recreate_signal_contexts(Pd_session_component &pd_session,
 
 	// Warning: There are already signal sources in the PD session
 	if(pd_session.parent_state().signal_sources.first())
+	{
 		Genode::warning("There are already signal contexts in the PD session ", pd_session.cap());
+		Signal_source_info *info = pd_session.parent_state().signal_sources.first();
+		while(info)
+		{
+			Genode::log(" ", *info);
+
+			info = info->next();
+		}
+	}
 
 	Signal_context_info *signal_context = nullptr;
 	Stored_signal_context_info *stored_signal_context = stored_signal_contexts.first();
@@ -289,7 +315,6 @@ void Restorer::_recreate_ram_dataspaces(Ram_session_component &ram_session,
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_ramds->badge, ramds->cap));
 
-		// TODO: Need to associate stored dataspace to recreated dataspace?
 		stored_ramds = stored_ramds->next();
 	}
 }
@@ -833,10 +858,9 @@ void Restorer::_restore_state_attached_regions(Region_map_component &region_map,
 	{
 		Attached_region_info *attached_region = nullptr;
 
-		// Restore the mapping
-		// Find dataspace: _ckpt_to_resto_infos shall have all dataspaces from known services
-		// (e.g. dataspaces from RAM sessions, region map's dataspaces),
-		// still there could be attached dataspaces whose origin is unknown and, thus, shall be allocated here
+		// Find out, whether the attached dataspace was recreated in the previous phase
+		// and, thus, has a translation in the RPC object translation list. If not, it is recreated here.
+		// This new RPC object has to be mapped into the capability space/map and stored to the RPC object translation list.
 		Genode::Dataspace_capability ds_cap;
 		Badge_translation_info  *trans_info = _rpcobject_translations.first();
 		if(trans_info) trans_info = trans_info->find_by_ckpt_badge(stored_attached_region->attached_ds_badge);
@@ -846,19 +870,27 @@ void Restorer::_restore_state_attached_regions(Region_map_component &region_map,
 		}
 		else
 		{
+			// XXX Optimization: Let the native RAM session recreate the dataspace, thus, it can be integrated
+			// into incremental checkpointing
 			ds_cap = _child._env.ram().alloc(stored_attached_region->size);
 
 			// Associate the stored kcap address to this new RPC object
 			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(
-					stored_attached_region->kcap, attached_region->attached_ds_cap));
+					stored_attached_region->kcap, ds_cap));
 			// Remember the association of the stored RPC object to the new RPC object
 			_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 					stored_attached_region->attached_ds_badge, ds_cap));
 		}
 
-		region_map.attach(ds_cap, stored_attached_region->size, stored_attached_region->offset,
+		// Attach the dataspace to the region map
+		//using Genode::Hex;
+		//Genode::Dataspace_client ds_client(ds_cap);
+		//Genode::log(Hex(ds_client.size()), " ", Hex(ds_client.phys_addr()), " ", ds_client.writable());
+
+		region_map.attach(ds_cap, stored_attached_region->size, 0,
 				true, stored_attached_region->rel_addr, stored_attached_region->executable);
 
+		// Find the attached dataspace in the region map
 		attached_region = region_map.parent_state().attached_regions.first();
 		if(attached_region) attached_region = attached_region->find_by_addr(stored_attached_region->rel_addr);
 		if(!attached_region)
@@ -868,19 +900,17 @@ void Restorer::_restore_state_attached_regions(Region_map_component &region_map,
 			throw Genode::Exception();
 		}
 
-
-		// Find out whether the attached region's memory needs to be restored
-		// Find out whether the attached region is a known region map (do not remember region maps)
+		// Find out, whether the attached dataspace is a known region map. If it is not a region map, and if it is not already
+		// stored in the dataspace translation list (meaning it has to be copied), then store the dataspace and its corresponding
+		// checkpointed dataspace in the dataspace translation list
 		Ref_badge_info *badge_info = _region_maps.first();
 		if(badge_info) badge_info = badge_info->find_by_badge(stored_attached_region->attached_ds_badge);
 		if(!badge_info)
 		{
-			// Find out whether the cap is already in memory to restore (only add new dataspaces)
 			Dataspace_translation_info *trans_info = _dataspace_translations.first();
 			if(trans_info) trans_info = trans_info->find_by_ckpt_badge(stored_attached_region->memory_content.local_name());
 			if(!trans_info)
 			{
-				// If not in list, then insert it
 				trans_info = new (_alloc) Dataspace_translation_info(
 						stored_attached_region->memory_content, attached_region->attached_ds_cap, stored_attached_region->size);
 				_dataspace_translations.insert(trans_info);
@@ -961,10 +991,11 @@ void Restorer::_restore_state_timer_sessions(Timer_root &timer_root, Genode::Lis
 }
 
 
-void Restorer::_resolve_inc_checkpoint_dataspaces(
-		Genode::List<Ram_session_component> &ram_sessions, Genode::List<Orig_copy_resto_info> &memory_infos)
+void Restorer::_create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	typedef Simplified_managed_dataspace_info::Simplified_designated_ds_info Sim_dd_info;
 
 	Ram_session_component *ram_session = ram_sessions.first();
 	while(ram_session)
@@ -972,32 +1003,22 @@ void Restorer::_resolve_inc_checkpoint_dataspaces(
 		Ram_dataspace_info *ramds_info = ram_session->parent_state().ram_dataspaces.first();
 		while(ramds_info)
 		{
-			// RAM dataspace is managed for inc ckpt
+			// RAM dataspace is managed
 			if(ramds_info->mrm_info)
 			{
-				// Find corresponding memory_info
-				Orig_copy_resto_info *memory_info = memory_infos.first();
-				if(memory_info) memory_info = memory_info->find_by_orig_badge(ramds_info->cap.local_name());
-				if(memory_info)
+				Genode::List<Sim_dd_info> sim_dd_infos;
+				Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();
+				while(dd_info)
 				{
-					// Now we found a memory_info which is actually managed by the inc ckpt mechanism
-					// Thus, replace this memory_info with the attached designated dataspaces
-					// and clean up the old memory_info
-					memory_infos.remove(memory_info);
+					Genode::Ram_dataspace_capability dd_info_cap =
+							Genode::reinterpret_cap_cast<Genode::Ram_dataspace>(dd_info->cap);
 
-					Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();
-					if(dd_info && dd_info->attached)
-					{
-						Orig_copy_resto_info *new_oc_info = new (_alloc) Orig_copy_resto_info(dd_info->cap,
-								memory_info->copy_ds_cap, dd_info->rel_addr, dd_info->size);
-						memory_infos.insert(new_oc_info);
+					sim_dd_infos.insert(new (_alloc) Sim_dd_info(dd_info_cap, dd_info->rel_addr, dd_info->size));
 
-						dd_info = dd_info->next();
-					}
-
-					Genode::destroy(_alloc, memory_info);
+					dd_info = dd_info->next();
 				}
 
+				_managed_dataspaces.insert(new (_alloc) Simplified_managed_dataspace_info(ramds_info->cap, sim_dd_infos));
 			}
 
 			ramds_info = ramds_info->next();
@@ -1005,11 +1026,10 @@ void Restorer::_resolve_inc_checkpoint_dataspaces(
 
 		ram_session = ram_session->next();
 	}
-
 }
 
 
-void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
+void Restorer::_restore_cap_map()
 {
 	using Genode::size_t;
 	using Genode::addr_t;
@@ -1018,25 +1038,25 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	addr_t child_cap_idx_alloc_addr = Genode::Foc_native_pd_client(child.pd().native_pd()).cap_map_info();
-	addr_t state_cap_idx_alloc_addr = state._cap_idx_alloc_addr;
+	//addr_t child_cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
+	addr_t cap_idx_alloc_addr = _state._cap_idx_alloc_addr;
 	//log("Cap_idx_alloc: child addr=", Hex(child_cap_idx_alloc_addr), ", state addr=", Hex(state_cap_idx_alloc_addr));
 
-	// Find attached region containing child's cap_idx_alloc struct
+	// Find attached region containing child's cap_idx_alloc struct (it contains the cap map of the child)
 	Attached_region_info *attached_region = nullptr;
 	{
-		attached_region = child.pd().address_space_component().parent_state().attached_regions.first();
-		if(attached_region) attached_region = attached_region->find_by_addr(child_cap_idx_alloc_addr);
+		attached_region = _child.pd().address_space_component().parent_state().attached_regions.first();
+		if(attached_region) attached_region = attached_region->find_by_addr(cap_idx_alloc_addr);
 		if(!attached_region)
 		{
-			Genode::error("Could not find child's dataspace containing the cap_idx_alloc struct with the address ", Hex(child_cap_idx_alloc_addr));
+			Genode::error("Could not find child's dataspace containing the cap_idx_alloc struct with the address ", Hex(cap_idx_alloc_addr));
 			throw Genode::Exception();
 		}
 	}
-	//Find stored attached region containing stored cap_idx_alloc struct
+	//Find stored attached region containing stored cap_idx_alloc struct (it contains the cap map of the checkpointed child)
 	Stored_attached_region_info *stored_attached_region = nullptr;
 	{
-		Stored_pd_session_info *stored_pd_session = state._stored_pd_sessions.first();
+		Stored_pd_session_info *stored_pd_session = _state._stored_pd_sessions.first();
 		if(stored_pd_session) stored_pd_session = stored_pd_session->find_by_bootstrapped(true);
 		if(!stored_pd_session)
 		{
@@ -1044,10 +1064,10 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 			throw Genode::Exception();
 		}
 		stored_attached_region = stored_pd_session->stored_address_space.stored_attached_region_infos.first();
-		if(stored_attached_region) stored_attached_region = stored_attached_region->find_by_addr(state_cap_idx_alloc_addr);
+		if(stored_attached_region) stored_attached_region = stored_attached_region->find_by_addr(cap_idx_alloc_addr);
 		if(!stored_attached_region)
 		{
-			Genode::error("Could not find stored dataspace containing the cap_idx_alloc struct with the address ", Hex(state_cap_idx_alloc_addr));
+			Genode::error("Could not find stored dataspace containing the cap_idx_alloc struct with the address ", Hex(cap_idx_alloc_addr));
 			throw Genode::Exception();
 		}
 	}
@@ -1064,29 +1084,34 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 	 * |        list pointer           | r_cnt |  res  |     badge     |
 	 * +-------------------------------+-------+-------+---------------+
 	 *
-	 * list pointer has a pointers valid in the address space of the child
+	 * list pointer is a pointer valid in the address space of the checkpointed child
 	 * r_cnt        is a number counting the references of the Cap_index
 	 * res          is padding
 	 * badge        is the system global identifier for Cap_indices
 	 */
 
+	// remote child = addresses of the checkpointed cap map dataspace which was attached
+	// to the checkpointed child's address space
 	addr_t const remote_child_ds_start = attached_region->rel_addr;
 	addr_t const remote_child_ds_end   = remote_child_ds_start + attached_region->size;
-	addr_t const remote_child_struct_start = child_cap_idx_alloc_addr;
+	addr_t const remote_child_struct_start = cap_idx_alloc_addr;
 	addr_t const remote_child_struct_end   = remote_child_struct_start + struct_size;
 	addr_t const remote_child_array_start = remote_child_struct_start + 8;
 	addr_t const remote_child_array_end   = remote_child_array_start + array_size;
 
-	addr_t const local_child_ds_start = state._env.rm().attach(attached_region->attached_ds_cap);
+	// local child = addresses of the cap map dataspace of the newly created child attached
+	// to Rtcr's address space
+	addr_t const local_child_ds_start = _state._env.rm().attach(attached_region->attached_ds_cap);
 	addr_t const local_child_ds_end   = local_child_ds_start + attached_region->size;
 	addr_t const local_child_struct_start = local_child_ds_start + (remote_child_struct_start - remote_child_ds_start);
 	addr_t const local_child_struct_end   = local_child_struct_start + struct_size;
 	addr_t const local_child_array_start = local_child_struct_start + 8;
 	addr_t const local_child_array_end   = local_child_array_start + array_size;
 
-	addr_t const local_state_ds_start = state._env.rm().attach(stored_attached_region->memory_content);
+	// local state = addresses of the checkpointed cap map dataspace attached to Rtcr's address space
+	addr_t const local_state_ds_start = _state._env.rm().attach(stored_attached_region->memory_content);
 	addr_t const local_state_ds_end   = local_state_ds_start + stored_attached_region->size;
-	addr_t const local_state_struct_start = local_state_ds_start + (state_cap_idx_alloc_addr - remote_child_ds_start);
+	addr_t const local_state_struct_start = local_state_ds_start + (cap_idx_alloc_addr - remote_child_ds_start);
 	addr_t const local_state_struct_end   = local_state_struct_start + struct_size;
 	addr_t const local_state_array_start = local_state_struct_start + 8;
 	addr_t const local_state_array_end   = local_state_array_start + array_size;
@@ -1115,39 +1140,37 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 		log("local_state_ds_end:       ", Hex(local_state_ds_end));
 	}
 
-	// copy array from child to state
+	// Replace badges and list pointers in local state (i.e. reconstruct cap map)
 	{
-		Genode::memcpy((void*)local_state_array_start, (void*)local_child_array_start, array_size);
-		//dump_mem((void*)(local_state_array_start + 0x200*array_ele_size), 0x100);
-	}
-
-	// Replace badges and list pointers in state
-	{
-		// Find Cap_index with valid list pointer where the new Cap_indices will be attached to
-		addr_t previous_cap_index = 0;
+		// Find starting Cap_index with valid list pointer. New Cap_indices will be attached to
+		// this Cap_index and point to the Cap_index which was pointed to by this Cap_index
+		addr_t starting_cap_index = 0;
 		for(unsigned cap_index = 0x200; cap_index < 0x280; ++cap_index)
 		{
 			addr_t const current_pos = local_state_array_start + cap_index*array_ele_size;
 			//log("offset=", Hex(offset), ": ", Hex(*(Genode::uint32_t*) current_pos));
 			if(*(Genode::uint32_t*) current_pos)
 			{
-				previous_cap_index = cap_index;
+				starting_cap_index = cap_index;
 				break;
 			}
 		}
-		//log("previous: ", Hex(previous_cap_index));
+		//log("previous: ", Hex(starting_cap_index));
 
-		Cap_kcap_info *cap_info = _capability_map_infos.first();
-		while(cap_info)
+		// Use starting Cap_index to attach new Cap_indices to it
+		// previous Cap_index is the Cap_index to which the new Cap_index will point to
+		addr_t previous_cap_index = starting_cap_index;
+		Kcap_cap_info *kcap_info = _kcap_mappings.first();
+		while(kcap_info)
 		{
-			if(cap_info->kcap == 0)
+			if(kcap_info->kcap == 0)
 			{
-				Genode::warning("kcap = 0 for cap ", cap_info->cap);
+				Genode::warning("kcap = 0 for cap ", kcap_info->cap);
 			}
 			else
 			{
 				addr_t const previous_pos = local_state_array_start + previous_cap_index*array_ele_size;
-				addr_t const current_cap_index = cap_info->kcap >> 12;
+				addr_t const current_cap_index = kcap_info->kcap >> 12;
 				addr_t const current_pos = local_state_array_start + current_cap_index*array_ele_size;
 
 				// Sanity check: Check whether the addresses point to the local array
@@ -1172,69 +1195,92 @@ void Restorer::_restore_cap_map(Target_child &child, Target_state &state)
 					Genode::warning("Overriding existing badge at cap_index=", Hex(current_cap_index));
 				}
 
-				// Insert List pointer, thus, current points to next
-				*(Genode::uint32_t*) current_pos = *(Genode::uint32_t*)previous_pos;
-				// Insert ref_count
-				*(Genode::uint8_t*) (current_pos+4) = 2;
-				// Insert badge
-				*(Genode::uint16_t*) (current_pos+6) = cap_info->cap.local_name();
+				// (Low-level) creation of the new Cap_index
+				{
+					// Insert List pointer, thus, current points to next
+					*(Genode::uint32_t*) current_pos = *(Genode::uint32_t*)previous_pos;
+					// Insert ref_count
+					*(Genode::uint8_t*) (current_pos+4) = 2;
+					// Insert badge
+					*(Genode::uint16_t*) (current_pos+6) = kcap_info->cap.local_name();
 
-				// Insert List pointer, thus, previous points to current
-				*(Genode::uint32_t*) previous_pos = remote_child_array_start + current_cap_index*array_ele_size;
-
+					// Insert List pointer, thus, previous points to current
+					*(Genode::uint32_t*) previous_pos = remote_child_array_start + current_cap_index*array_ele_size;
+				}
 				// State now: previous -> current -> next
 				//log("\nAfter:");
 				//dump_mem((void*)current_pos, 8);
 				//dump_mem((void*)previous_pos, 8);
 				//log("\n\n");
 
+				// previous Cap_index is changed to the newly created Cap_index
 				previous_cap_index = current_cap_index;
 			}
 
-			cap_info = cap_info->next();
+			kcap_info = kcap_info->next();
 		}
 	}
 
-	state._env.rm().detach(local_state_ds_start);
-	state._env.rm().detach(local_child_ds_start);
+	_state._env.rm().detach(local_state_ds_start);
+	_state._env.rm().detach(local_child_ds_start);
 
 }
 
 
-void Restorer::_restore_cap_space(Target_child &child)
+void Restorer::_restore_cap_space()
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Cap_kcap_info *ck_info = _capability_map_infos.first();
-	while(ck_info)
+	Kcap_cap_info *kcap_info = _kcap_mappings.first();
+	while(kcap_info)
 	{
-		if(ck_info->kcap == 0)
+		if(kcap_info->kcap == 0)
 		{
-			Genode::warning("kcap = 0 for cap ", ck_info->cap);
+			Genode::warning("kcap = 0 for cap ", kcap_info->cap);
 		}
 		else
 		{
 			// Install capabilities to the child's cap space
-			Genode::Foc_native_pd_client(child.pd().native_pd()).install(ck_info->cap, ck_info->kcap);
+			Genode::Foc_native_pd_client(_child.pd().native_pd()).install(kcap_info->cap, kcap_info->kcap);
 		}
 
-		ck_info = ck_info->next();
+		kcap_info = kcap_info->next();
 	}
 }
 
 
-void Restorer::_restore_dataspaces(Genode::List<Orig_copy_resto_info> &memory_infos)
+void Restorer::_restore_dataspaces()
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
-	Orig_copy_resto_info *memory_info = memory_infos.first();
+	Dataspace_translation_info *memory_info = _dataspace_translations.first();
 	while(memory_info)
 	{
-		if(!memory_info->restored)
+		if(!memory_info->processed)
 		{
-			_restore_dataspace_content(memory_info->orig_ds_cap, memory_info->copy_ds_cap,
-					memory_info->copy_rel_addr, memory_info->copy_size);
-			memory_info->restored = true;
+			// Resolve managed dataspace of the incremental checkpointing mechanism
+			Simplified_managed_dataspace_info *smd_info = _managed_dataspaces.first();
+			if(smd_info) smd_info = smd_info->find_by_badge(memory_info->resto_ds_cap.local_name());
+			// Dataspace is managed
+			if(smd_info)
+			{
+				Simplified_managed_dataspace_info::Simplified_designated_ds_info *sdd_info =
+						smd_info->designated_dataspaces.first();
+				while(sdd_info)
+				{
+					_restore_dataspace_content(sdd_info->dataspace_cap, memory_info->ckpt_ds_cap, sdd_info->addr, sdd_info->size);
+
+					sdd_info = sdd_info->next();
+				}
+
+			}
+			// Dataspace is not managed
+			else
+			{
+				_restore_dataspace_content(memory_info->resto_ds_cap, memory_info->ckpt_ds_cap, 0, memory_info->size);
+			}
+
+			memory_info->processed = true;
 		}
 
 		memory_info = memory_info->next();
@@ -1242,20 +1288,20 @@ void Restorer::_restore_dataspaces(Genode::List<Orig_copy_resto_info> &memory_in
 }
 
 
-void Restorer::_restore_dataspace_content(Genode::Dataspace_capability orig_ds_cap,
-		Genode::Ram_dataspace_capability copy_ds_cap, Genode::addr_t copy_rel_addr, Genode::size_t copy_size)
+void Restorer::_restore_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
+		Genode::Dataspace_capability src_ds_cap, Genode::addr_t src_offset, Genode::size_t size)
 {
-	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(orig ", orig_ds_cap,
-			", copy ", copy_ds_cap, ", copy_rel_addr=", Genode::Hex(copy_rel_addr),
-			", copy_size=", Genode::Hex(copy_size), ")");
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(dst ", dst_ds_cap,
+			", src ", src_ds_cap, ", src offset=", Genode::Hex(src_offset),
+			", size=", Genode::Hex(size), ")");
 
-	char *orig = _state._env.rm().attach(orig_ds_cap);
-	char *copy = _state._env.rm().attach(copy_ds_cap);
+	char *dst_start_addr = _state._env.rm().attach(dst_ds_cap);
+	char *src_start_addr = _state._env.rm().attach(src_ds_cap);
 
-	Genode::memcpy(copy + copy_rel_addr, orig, copy_size);
+	Genode::memcpy(dst_start_addr, src_start_addr + src_offset, size);
 
-	_state._env.rm().detach(copy);
-	_state._env.rm().detach(orig);
+	_state._env.rm().detach(src_start_addr);
+	_state._env.rm().detach(dst_start_addr);
 }
 
 
@@ -1265,10 +1311,11 @@ Restorer::Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &
 
 Restorer::~Restorer()
 {
-	_destroy_list(_capability_map_infos);
-	_destroy_list(_ckpt_to_resto_infos);
-	_destroy_list(_memory_to_restore);
-	_destroy_list(_region_map_dataspaces_from_stored);
+	_destroy_list(_kcap_mappings);
+	_destroy_list(_rpcobject_translations);
+	_destroy_list(_dataspace_translations);
+	_destroy_list(_region_maps);
+	_destroy_list(_managed_dataspaces);
 }
 
 
@@ -1284,7 +1331,7 @@ void Restorer::restore()
 	if(verbose_debug)
 	{
 		Genode::log("Region map dataspaces (from ckpt):");
-		Ref_badge *info = _region_maps.first();
+		Ref_badge_info *info = _region_maps.first();
 		if(!info) Genode::log(" <empty>\n");
 		while(info)
 		{
@@ -1369,17 +1416,13 @@ void Restorer::restore()
 		}
 	}
 
-
-	// Resolve inc checkpoint dataspaces in memory to restore
-	_resolve_inc_checkpoint_dataspaces(_child.custom_services().ram_root->session_infos(), _memory_to_restore);
-
-	// Replace old badges with new in capability map
-	_restore_cap_map(_child, _state);
+	// Create a list of managed dataspaces
+	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
 
 	if(verbose_debug)
 	{
 		Genode::log("Memory to restore:");
-		Orig_copy_resto_info *info = _memory_to_restore.first();
+		Dataspace_translation_info *info = _dataspace_translations.first();
 		if(!info) Genode::log(" <empty>\n");
 		while(info)
 		{
@@ -1388,18 +1431,53 @@ void Restorer::restore()
 		}
 	}
 
+	if(verbose_debug)
+	{
+		Genode::log("Managed dataspaces:");
+		Simplified_managed_dataspace_info const *smd_info = _managed_dataspaces.first();
+		if(!smd_info) Genode::log(" <empty>\n");
+		while(smd_info)
+		{
+			Genode::log(" ", *smd_info);
+
+			Simplified_managed_dataspace_info::Simplified_designated_ds_info const *sdd_info =
+					smd_info->designated_dataspaces.first();
+			if(!sdd_info) Genode::log("  <empty>\n");
+			while(sdd_info)
+			{
+				Genode::log("  ", *sdd_info);
+
+				sdd_info = sdd_info->next();
+			}
+
+			smd_info = smd_info->next();
+		}
+	}
+
+	// Replace old badges with new in capability map
+	_restore_cap_map();
+
 	// Insert capabilities of all objects into capability space
-	_restore_cap_space(_child);
+	_restore_cap_space();
 
 	// Copy stored content to child content
-	_restore_dataspaces(_memory_to_restore);
+	_restore_dataspaces();
 
 	// Clean up
-	_destroy_list(_capability_map_infos);
-	_destroy_list(_ckpt_to_resto_infos);
-	_destroy_list(_memory_to_restore);
-	_destroy_list(_region_map_dataspaces_from_stored);
+	_destroy_list(_kcap_mappings);
+	_destroy_list(_rpcobject_translations);
+	_destroy_list(_dataspace_translations);
+	_destroy_list(_region_maps);
+	_destroy_list(_managed_dataspaces);
 
 	Genode::log("After: \n", _child);
 
+	Cpu_thread_component *cpu_thread = _child.cpu().parent_state().cpu_threads.first();
+	while(cpu_thread)
+	{
+		//TODO start threads
+		//cpu_thread->start();
+
+		cpu_thread = cpu_thread->next();
+	}
 }

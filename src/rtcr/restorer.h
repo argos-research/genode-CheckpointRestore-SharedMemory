@@ -17,6 +17,7 @@
 #include "util/badge_translation_info.h"
 #include "util/dataspace_translation_info.h"
 #include "util/ref_badge_info.h"
+#include "util/simplified_managed_dataspace_info.h"
 
 namespace Rtcr {
 	class Restorer;
@@ -40,7 +41,7 @@ private:
 	Target_child      &_child;
 	Target_state      &_state;
 	/**
-	 * \brief Contains kcap addresses and badges/capabilities which shall be mapped to these addresses
+	 * \brief Contains kcap addresses and badges/capabilities which shall be mapped to the kcap addresses
 	 *
 	 * Contains kcap addresses and badges/capabilities which shall be mapped to these addresses
 	 * Usage
@@ -69,11 +70,20 @@ private:
 	 * which are attached to other region maps in order to not confuse them with real dataspaces.
 	 */
 	Genode::List<Ref_badge_info> _region_maps;
+	/**
+	 * \brief Contains the managed dataspaces of the incremental checkpointing and their designated dataspaces
+	 *
+	 * This list contains the managed dataspaces used by the incremental checkpointing mechanism. It is used for
+	 * restoring the state of the dataspaces (i.e. copying memory content) to use directly the designated dataspaces
+	 * instead of triggering page faults by using the managed dataspace directly
+	 */
+	Genode::List<Simplified_managed_dataspace_info> _managed_dataspaces;
 
 	template<typename T>
 	void _destroy_list(Genode::List<T> &list);
+	void _destroy_list(Genode::List<Simplified_managed_dataspace_info> &list);
 
-	Genode::List<Ref_badge> _create_region_map_dataspaces(
+	Genode::List<Ref_badge_info> _create_region_map_dataspaces(
 			Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
 
 	/****************************************
@@ -160,16 +170,14 @@ private:
 		return child_object;
 	}
 
+	void _create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions);
 
-	void _resolve_inc_checkpoint_dataspaces(
-			Genode::List<Ram_session_component> &ram_sessions);
-
-	void _restore_cap_map(Target_child &child, Target_state &state);
-	void _restore_cap_space(Target_child &child);
+	void _restore_cap_map();
+	void _restore_cap_space();
 
 	void _restore_dataspaces();
-	void _restore_dataspace_content(Genode::Dataspace_capability orig_ds_cap,
-			Genode::Ram_dataspace_capability copy_ds_cap, Genode::addr_t copy_rel_addr, Genode::size_t copy_size);
+	void _restore_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
+			Genode::Dataspace_capability src_ds_cap, Genode::addr_t src_offset, Genode::size_t size);
 
 
 public:
