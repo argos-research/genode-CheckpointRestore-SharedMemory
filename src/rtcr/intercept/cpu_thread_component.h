@@ -19,7 +19,7 @@
 namespace Rtcr {
 	class Cpu_thread_component;
 
-	constexpr bool cpu_thread_verbose_debug = false;
+	constexpr bool cpu_thread_verbose_debug = true;
 }
 
 class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>,
