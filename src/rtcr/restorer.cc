@@ -1304,6 +1304,55 @@ void Restorer::_restore_dataspace_content(Genode::Dataspace_capability dst_ds_ca
 	_state._env.rm().detach(dst_start_addr);
 }
 
+#include "util/debug.h"
+
+void Restorer::_start_threads(Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	// Iterate through all stored CPU sessions
+	Stored_cpu_session_info *stored_cpu_session = stored_cpu_sessions.first();
+	while(stored_cpu_session)
+	{
+		// Find corresponding recreated CPU session
+		Cpu_session_component *cpu_session = _find_child_object(stored_cpu_session->badge, cpu_root.session_infos());
+		if(!cpu_session)
+		{
+			Genode::error("Could not find child CPU session for ckpt badge ", stored_cpu_session->badge);
+			throw Genode::Exception();
+		}
+
+		// Iterate through all stored CPU threads of the stored CPU session
+		Stored_cpu_thread_info *stored_cpu_thread = stored_cpu_session->stored_cpu_thread_infos.first();
+		while(stored_cpu_thread)
+		{
+			// Find corresponding recreated CPU thread
+			Cpu_thread_component *cpu_thread = _find_child_object(stored_cpu_thread->badge, cpu_session->parent_state().cpu_threads);
+			if(!cpu_thread)
+			{
+				Genode::error("Could not find child CPU thread for ckpt badge ", stored_cpu_thread->badge);
+				throw Genode::Exception();
+			}
+
+			if(stored_cpu_thread->started)
+			{
+				if(true or !Genode::strcmp(cpu_thread->parent_state().name.string(), "signal handler"))
+				{
+					Genode::Thread_state ts = cpu_thread->state();
+					print_thread_state(ts, true);
+
+					cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);
+				}
+			}
+
+			stored_cpu_thread = stored_cpu_thread->next();
+		}
+
+		stored_cpu_session = stored_cpu_session->next();
+	}
+
+}
+
 
 Restorer::Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &state)
 : _alloc(alloc), _child(child), _state(state) { }
@@ -1463,6 +1512,11 @@ void Restorer::restore()
 	// Copy stored content to child content
 	_restore_dataspaces();
 
+	Genode::log("After: \n", _child);
+
+	// Start threads
+	_start_threads(*_child.custom_services().cpu_root, _state._stored_cpu_sessions);
+
 	// Clean up
 	_destroy_list(_kcap_mappings);
 	_destroy_list(_rpcobject_translations);
@@ -1470,14 +1524,5 @@ void Restorer::restore()
 	_destroy_list(_region_maps);
 	_destroy_list(_managed_dataspaces);
 
-	Genode::log("After: \n", _child);
 
-	Cpu_thread_component *cpu_thread = _child.cpu().parent_state().cpu_threads.first();
-	while(cpu_thread)
-	{
-		//TODO start threads
-		//cpu_thread->start();
-
-		cpu_thread = cpu_thread->next();
-	}
 }

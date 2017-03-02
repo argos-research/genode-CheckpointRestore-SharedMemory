@@ -179,6 +179,9 @@ private:
 	void _restore_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
 			Genode::Dataspace_capability src_ds_cap, Genode::addr_t src_offset, Genode::size_t size);
 
+	void _start_threads(
+			Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions);
+
 
 public:
 	Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
