@@ -204,13 +204,13 @@ public:
 	 */
 	void start(Restorer &restorer);
 	/**
-	 * Pause child
+	 * Pause all child's threads
 	 */
-	void pause()  { _resources.cpu.pause_threads();  }
+	void pause();
 	/**
-	 * Resume child
+	 * Resume all child's threads
 	 */
-	void resume() { _resources.cpu.resume_threads(); }
+	void resume();
 	/**
 	 * Print method to use it with Genode::log()
 	 */

@@ -256,6 +256,58 @@ void Target_child::start(Restorer &restorer)
 }
 
 
+void Target_child::pause()
+{
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
+
+	// Pause all threads of all sessions
+
+	// Iterate through every session
+	Cpu_session_component *cpu_session = _custom_services.cpu_root->session_infos().first();
+	while(cpu_session)
+	{
+		// Iterate through every CPU thread
+		Cpu_thread_component *cpu_thread = cpu_session->parent_state().cpu_threads.first();
+		while(cpu_thread)
+		{
+			// Pause the CPU thread
+			Genode::Cpu_thread_client client{cpu_thread->parent_cap()};
+			client.pause();
+
+			cpu_thread = cpu_thread->next();
+		}
+
+		cpu_session = cpu_session->next();
+	}
+}
+
+
+void Target_child::resume()
+{
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
+
+	// Pause all threads of all sessions
+
+	// Iterate through every session
+	Cpu_session_component *cpu_session = _custom_services.cpu_root->session_infos().first();
+	while(cpu_session)
+	{
+		// Iterate through every CPU thread
+		Cpu_thread_component *cpu_thread = cpu_session->parent_state().cpu_threads.first();
+		while(cpu_thread)
+		{
+			// Pause the CPU thread
+			Genode::Cpu_thread_client client{cpu_thread->parent_cap()};
+			client.resume();
+
+			cpu_thread = cpu_thread->next();
+		}
+
+		cpu_session = cpu_session->next();
+	}
+}
+
+
 void Target_child::print(Genode::Output &output) const
 {
 	using Genode::print;
@@ -358,7 +410,7 @@ void Target_child::print(Genode::Output &output) const
 	}
 	// CPU session
 	{
-		print(output, "CPU session:\n");
+		print(output, "CPU sessions:\n");
 		Cpu_session_component const *cpu_session = _custom_services.cpu_root->session_infos().first();
 		if(!cpu_session) print(output, " <empty>\n");
 		while(cpu_session)
