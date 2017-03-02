@@ -87,16 +87,6 @@ public:
 
 	Cpu_session_component *find_by_badge(Genode::uint16_t badge);
 
-	/**
-	 * Pause all threads
-	 */
-	void pause_threads();
-
-	/**
-	 * Resume all threads
-	 */
-	void resume_threads();
-
 	/***************************
 	 ** Cpu_session interface **
 	 ***************************/

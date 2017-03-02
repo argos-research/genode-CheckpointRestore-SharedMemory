@@ -86,33 +86,6 @@ Cpu_session_component *Cpu_session_component::find_by_badge(Genode::uint16_t bad
 }
 
 
-
-void Cpu_session_component::pause_threads()
-{
-	Cpu_thread_component *cpu_thread = _parent_state.cpu_threads.first();
-
-	while(cpu_thread)
-	{
-		Genode::Cpu_thread_client(cpu_thread->cap()).pause();
-
-		cpu_thread = cpu_thread->next();
-	}
-}
-
-
-void Cpu_session_component::resume_threads()
-{
-	Cpu_thread_component *cpu_thread = _parent_state.cpu_threads.first();
-
-	while(cpu_thread)
-	{
-		Genode::Cpu_thread_client(cpu_thread->cap()).resume();
-
-		cpu_thread = cpu_thread->next();
-	}
-}
-
-
 Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability child_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
