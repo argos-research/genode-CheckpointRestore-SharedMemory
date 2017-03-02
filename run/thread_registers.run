@@ -31,4 +31,4 @@ build_boot_image { core init thread_registers }
 
 append qemu_args " -nographic "
 
-run_genode_until "thread_registers ended.*\n" 15
+run_genode_until forever

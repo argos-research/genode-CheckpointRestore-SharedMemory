@@ -117,6 +117,12 @@ void Component::construct(Genode::Env &env)
 	client.pause();
 	log("main_thread: Taking second sample");
 	Thread_state ts1 { client.state() };
+	/*ts1.r0 = 0;
+	ts1.r1 = 0;
+	ts1.r2 = 0;
+	ts1.r3 = 0;
+	ts1.r4 = 0;
+	client.state(ts1);*/
 	client.resume();
 	phase++;
 
