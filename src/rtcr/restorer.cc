@@ -44,7 +44,7 @@ void Restorer::_destroy_list(Genode::List<Simplified_managed_dataspace_info> &li
 }
 
 
-Genode::List<Ref_badge_info> Restorer::_create_region_map_dataspaces(
+Genode::List<Ref_badge_info> Restorer::_create_region_map_dataspaces_list(
 		Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
@@ -1375,7 +1375,7 @@ void Restorer::restore()
 	Genode::log("Before: \n", _child);
 
 	// Create list of region maps
-	_region_maps = _create_region_map_dataspaces(_state._stored_pd_sessions, _state._stored_rm_sessions);
+	_region_maps = _create_region_map_dataspaces_list(_state._stored_pd_sessions, _state._stored_rm_sessions);
 
 	if(verbose_debug)
 	{
@@ -1509,7 +1509,7 @@ void Restorer::restore()
 	// Insert capabilities of all objects into capability space
 	_restore_cap_space();
 
-	// Copy stored content to child content
+	// Copy stored dataspaces' content to child dataspaces' content
 	_restore_dataspaces();
 
 	Genode::log("After: \n", _child);

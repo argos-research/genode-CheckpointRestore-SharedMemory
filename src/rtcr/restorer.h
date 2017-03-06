@@ -83,7 +83,7 @@ private:
 	void _destroy_list(Genode::List<T> &list);
 	void _destroy_list(Genode::List<Simplified_managed_dataspace_info> &list);
 
-	Genode::List<Ref_badge_info> _create_region_map_dataspaces(
+	Genode::List<Ref_badge_info> _create_region_map_dataspaces_list(
 			Genode::List<Stored_pd_session_info> &stored_pd_sessions, Genode::List<Stored_rm_session_info> &stored_rm_sessions);
 
 	/****************************************
