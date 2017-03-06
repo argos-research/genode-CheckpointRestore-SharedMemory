@@ -49,6 +49,14 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 		return info ? info->find_by_addr(addr) : 0;
 	}
 
+	Stored_attached_region_info *find_by_badge(Genode::uint16_t badge)
+	{
+		if(attached_ds_badge == badge)
+			return this;
+		Stored_attached_region_info *info = next();
+		return info ? info->find_by_badge(badge) : 0;
+	}
+
 	void print(Genode::Output &output) const
 	{
 		using Genode::Hex;

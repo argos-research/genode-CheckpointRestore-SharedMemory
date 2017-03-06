@@ -1,5 +1,5 @@
 /*
- * \brief  List element to encapsulate a source dataspace and the destination dataspace
+ * \brief  List element to encapsulate a state dataspace and the child dataspace
  * \author Denis Huber
  * \date   2017-02-20
  */
