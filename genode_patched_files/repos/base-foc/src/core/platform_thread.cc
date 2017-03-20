@@ -99,22 +99,6 @@ void Platform_thread::pause()
 	 * The thread state ("ready") is encoded in the lowest bit of the flags.
 	 */
 	bool in_syscall = (flags & 1) == 0;
-	/*unsigned counter = 1;
-	while(in_syscall)
-	{
-		_pager_obj->state.ip  = ~0UL;
-		_pager_obj->state.sp  = ~0UL;
-		l4_umword_t flags = L4_THREAD_EX_REGS_TRIGGER_EXCEPTION;
-		l4_thread_ex_regs_ret(_thread.local.data()->kcap(), &_pager_obj->state.ip,
-		                      &_pager_obj->state.sp, &flags);
-		in_syscall = (flags & 1) == 0;
-
-		if(in_syscall && (counter % 1000000) == 0)
-			log("thread in syscall (", counter, ")");
-
-		counter++;
-
-	}*/
 	_pager_obj->state.lock.unlock();
 
 	/**
