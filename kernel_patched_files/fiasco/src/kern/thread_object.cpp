@@ -590,7 +590,10 @@ Thread_object::ex_regs(Utcb *utcb)
   if (!ex_regs(ip, sp, &ip, &sp, &flags, ops))
     return commit_result(-L4_err::EInval);
 
-
+  // Dumping registers
+  printf("USP: %08lx ULR: %08lx KLR: %08lx  PC: %08lx PSR: %08lx\n",
+           regs()->usp, regs()->ulr, regs()->km_lr, regs()->pc, regs()->psr);
+  regs()->dump();
 
   utcb->values[0] = flags;
   utcb->values[1] = ip;
@@ -629,17 +632,16 @@ Thread_object::sys_ex_regs(L4_msg_tag const &tag, Utcb *utcb)
 // -------------------------------------------------------------------
 // START Thread::ex_all_regs class system calls
 
-PUBLIC
-bool
-Thread_object::ex_all_regs(Mword *r, Mword *o_flags = 0, Mword ops = 0)
+PUBLIC inline
+L4_msg_tag
+Thread_object::ex_all_regs(Utcb *utcb)
 {
-  if (state(false) == Thread_invalid || !space())
-    return false;
+  Mword *r = utcb->values + 1;
+  Mword ops = utcb->values[0];
 
-  if (current() == this)
-    spill_user_state();
-
-  if (o_flags) *o_flags = user_flags();
+  LOG_TRACE("Ex-regs", "exr", current(), Log_thread_exregs,
+      l->id = dbg_id();
+      l->ip = (Address) r[15]; l->sp = (Address) r[13]; l->op = ops;);
 
   // Exchange general-purpose regs (r0 - r12)
   for(unsigned int i = 0; i < 13; i++)
@@ -661,54 +663,6 @@ Thread_object::ex_all_regs(Mword *r, Mword *o_flags = 0, Mword ops = 0)
     user_sp(r[13]);
   else
     r[13] = user_sp();
-
-  (ops & Exr_single_step) ? user_single_step(true) : user_single_step(false);
-
-  // Changing the run state is only possible when the thread is not in
-  // an exception.
-  if (!(ops & Exr_cancel) && (state() & Thread_in_exception))
-    // XXX Maybe we should return false here.  Previously, we actually
-    // did so, but we also actually didn't do any state modification.
-    // If you change this value, make sure the logic in
-    // sys_thread_ex_regs still works (in particular,
-    // ex_regs_cap_handler and friends should still be called).
-    return true;
-
-  if (state() & Thread_dead)	// resurrect thread
-    state_change_dirty(~Thread_dead, Thread_ready);
-
-  else if (ops & Exr_cancel)
-    // cancel ongoing IPC or other activity
-    state_add_dirty(Thread_cancel | Thread_ready);
-
-  if (ops & Exr_trigger_exception)
-    {
-      extern char leave_by_trigger_exception[];
-      do_trigger_exception(regs(), leave_by_trigger_exception);
-    }
-
-  if (current() == this)
-    fill_user_state();
-
-  return true;
-}
-
-PUBLIC inline
-L4_msg_tag
-Thread_object::ex_all_regs(Utcb *utcb)
-{
-  Mword *r = utcb->values + 1;
-  Mword flags;
-  Mword ops = utcb->values[0];
-
-  LOG_TRACE("Ex-regs", "exr", current(), Log_thread_exregs,
-      l->id = dbg_id();
-      l->ip = (Address) r[15]; l->sp = (Address) r[13]; l->op = ops;);
-
-  if (!ex_all_regs(r, &flags, ops))
-    return commit_result(-L4_err::EInval);
-
-  utcb->values[0] = flags;
 
   return commit_result(0, 17);
 }
