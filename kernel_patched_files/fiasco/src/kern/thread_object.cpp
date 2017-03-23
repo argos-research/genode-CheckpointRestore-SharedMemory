@@ -583,17 +583,17 @@ Thread_object::ex_regs(Utcb *utcb)
       l->ip = ip; l->sp = sp; l->op = ops;);
 
   // Dumping registers
-  printf("USP: %08lx ULR: %08lx KLR: %08lx  PC: %08lx PSR: %08lx\n",
-           regs()->usp, regs()->ulr, regs()->km_lr, regs()->pc, regs()->psr);
-  regs()->dump();
+  //printf("USP: %08lx ULR: %08lx KLR: %08lx  PC: %08lx PSR: %08lx\n",
+  //         regs()->usp, regs()->ulr, regs()->km_lr, regs()->pc, regs()->psr);
+  //regs()->dump();
 
   if (!ex_regs(ip, sp, &ip, &sp, &flags, ops))
     return commit_result(-L4_err::EInval);
 
   // Dumping registers
-  printf("USP: %08lx ULR: %08lx KLR: %08lx  PC: %08lx PSR: %08lx\n",
-           regs()->usp, regs()->ulr, regs()->km_lr, regs()->pc, regs()->psr);
-  regs()->dump();
+  //printf("USP: %08lx ULR: %08lx KLR: %08lx  PC: %08lx PSR: %08lx\n",
+  //         regs()->usp, regs()->ulr, regs()->km_lr, regs()->pc, regs()->psr);
+  //regs()->dump();
 
   utcb->values[0] = flags;
   utcb->values[1] = ip;
@@ -652,19 +652,31 @@ Thread_object::ex_all_regs(Utcb *utcb)
       r[i] = regs()->r[i];
   }
 
-  // Exchange PC
-  if (r[15] != ~0UL)
-    user_ip(r[15]);
-  else
-    r[15] = user_ip();
-
   // Exchange SP
   if (r[13] != ~0UL)
     user_sp(r[13]);
   else
     r[13] = user_sp();
 
-  return commit_result(0, 17);
+  // Exchange LR
+  if(r[14] != ~0UL)
+    regs()->ulr = r[14];
+  else
+    r[14] = regs()->ulr;
+
+  // Exchange PC
+  if (r[15] != ~0UL)
+    user_ip(r[15]);
+  else
+    r[15] = user_ip();
+
+  // Exchange CSPR
+  if(r[16] != ~0UL)
+    regs()->psr = r[16];
+  else
+    r[16] = regs()->psr;
+
+  return commit_result(0, 18);
 }
 
 PRIVATE static
@@ -680,7 +692,7 @@ PRIVATE inline NOEXPORT
 L4_msg_tag
 Thread_object::sys_ex_all_regs(L4_msg_tag const &tag, Utcb *utcb)
 {
-  if (tag.words() != 17)
+  if (tag.words() != 18)
     return commit_result(-L4_err::EInval);
 
   if (current() == this)

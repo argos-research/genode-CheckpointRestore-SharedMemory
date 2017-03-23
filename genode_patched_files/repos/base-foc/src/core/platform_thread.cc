@@ -201,6 +201,32 @@ Thread_state Platform_thread::state()
 	return s;
 }
 
+void Platform_thread::all_regs(Thread_state const &s)
+{
+	addr_t regs[17];
+
+	_pack_regs(s, regs);
+
+	l4_thread_ex_all_regs_ret(_thread.local.data()->kcap(), regs);
+}
+
+Thread_state Platform_thread::all_regs()
+{
+	Thread_state s;
+	addr_t regs[17];
+
+	_set_regs(regs, ~0UL);
+
+	l4_thread_ex_all_regs_ret(_thread.local.data()->kcap(), regs);
+
+	_unpack_regs(s, regs);
+	s.kcap = _gate.remote;
+	s.id   = _gate.local.local_name();
+	s.utcb = _utcb;
+
+	return s;
+}
+
 
 void Platform_thread::cancel_blocking()
 {
@@ -275,6 +301,56 @@ void Platform_thread::_finalize_construction(const char *name)
 Weak_ptr<Address_space> Platform_thread::address_space()
 {
 	return _platform_pd->Address_space::weak_ptr();
+}
+
+void Platform_thread::_pack_regs(Thread_state const &regs, addr_t* array)
+{
+	array[0]  = regs.r0;
+	array[1]  = regs.r1;
+	array[2]  = regs.r2;
+	array[3]  = regs.r3;
+	array[4]  = regs.r4;
+	array[5]  = regs.r5;
+	array[6]  = regs.r6;
+	array[7]  = regs.r7;
+	array[8]  = regs.r8;
+	array[9]  = regs.r9;
+	array[10] = regs.r10;
+	array[11] = regs.r11;
+	array[12] = regs.r12;
+	array[13] = regs.sp;
+	array[14] = regs.lr;
+	array[15] = regs.ip;
+	array[16] = regs.cpsr;
+}
+
+void Platform_thread::_unpack_regs(Thread_state& regs, addr_t* array)
+{
+	regs.r0   = array[0];
+	regs.r1   = array[1];
+	regs.r2   = array[2];
+	regs.r3   = array[3];
+	regs.r4   = array[4];
+	regs.r5   = array[5];
+	regs.r6   = array[6];
+	regs.r7   = array[7];
+	regs.r8   = array[8];
+	regs.r9   = array[9];
+	regs.r10  = array[10];
+	regs.r11  = array[11];
+	regs.r12  = array[12];
+	regs.sp   = array[13];
+	regs.lr   = array[14];
+	regs.ip   = array[15];
+	regs.cpsr = array[16];
+}
+
+void Platform_thread::_set_regs(addr_t* array, addr_t value)
+{
+	for(unsigned int i = 0; i < 17; ++i)
+	{
+		array[i] = value;
+	}
 }
 
 

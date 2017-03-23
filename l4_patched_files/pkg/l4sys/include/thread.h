@@ -720,11 +720,10 @@ l4_thread_ex_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *ip, l4_addr_t *sp,
 }
 
 L4_INLINE l4_msgtag_t
-l4_thread_ex_all_regs_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_umword_t flags,
-                        l4_utcb_t *utcb) L4_NOTHROW
+l4_thread_ex_all_regs_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_utcb_t *utcb) L4_NOTHROW
 {
   l4_msg_regs_t *v = l4_utcb_mr_u(utcb);
-  v->mr[0]  = L4_THREAD_EX_ALL_REGS_OP | flags;
+  v->mr[0]  = L4_THREAD_EX_ALL_REGS_OP;
   v->mr[1]  = regs[0];
   v->mr[2]  = regs[1];
   v->mr[3]  = regs[2];
@@ -741,19 +740,18 @@ l4_thread_ex_all_regs_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_umword_t flags,
   v->mr[14] = regs[13]; // SP
   v->mr[15] = regs[14]; // LR
   v->mr[16] = regs[15]; // PC
-  return l4_ipc_call(thread, utcb, l4_msgtag(L4_PROTO_THREAD, 17, 0, 0), L4_IPC_NEVER);
+  v->mr[17] = regs[16]; // CSPR
+  return l4_ipc_call(thread, utcb, l4_msgtag(L4_PROTO_THREAD, 18, 0, 0), L4_IPC_NEVER);
 }
 
 L4_INLINE l4_msgtag_t
-l4_thread_ex_all_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_umword_t *flags,
-                            l4_utcb_t *utcb) L4_NOTHROW
+l4_thread_ex_all_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_utcb_t *utcb) L4_NOTHROW
 {
   l4_msg_regs_t *v = l4_utcb_mr_u(utcb);
-  l4_msgtag_t ret = l4_thread_ex_all_regs_u(thread, regs, *flags, utcb);
+  l4_msgtag_t ret = l4_thread_ex_all_regs_u(thread, regs, utcb);
   if (l4_error_u(ret, utcb))
     return ret;
 
-  *flags   = v->mr[0];
   regs[0]  = v->mr[1];
   regs[1]  = v->mr[2];
   regs[2]  = v->mr[3];
@@ -770,6 +768,7 @@ l4_thread_ex_all_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_umword_t *f
   regs[13] = v->mr[14]; // SP
   regs[14] = v->mr[15]; // LR
   regs[15] = v->mr[16]; // PC
+  regs[16] = v->mr[17]; // PC
   return ret;
 }
 
@@ -889,16 +888,15 @@ l4_thread_ex_regs_ret(l4_cap_idx_t thread, l4_addr_t *ip, l4_addr_t *sp,
 }
 
 L4_INLINE l4_msgtag_t
-l4_thread_ex_all_regs(l4_cap_idx_t thread, l4_addr_t *regs,
-                      l4_umword_t flags) L4_NOTHROW
+l4_thread_ex_all_regs(l4_cap_idx_t thread, l4_addr_t *regs) L4_NOTHROW
 {
-  return l4_thread_ex_all_regs_u(thread, regs, flags, l4_utcb());
+  return l4_thread_ex_all_regs_u(thread, regs, l4_utcb());
 }
 
 L4_INLINE l4_msgtag_t
-l4_thread_ex_all_regs_ret(l4_cap_idx_t thread, l4_addr_t *regs, l4_umword_t *flags) L4_NOTHROW
+l4_thread_ex_all_regs_ret(l4_cap_idx_t thread, l4_addr_t *regs) L4_NOTHROW
 {
-  return l4_thread_ex_all_regs_ret_u(thread, regs, flags, l4_utcb());
+  return l4_thread_ex_all_regs_ret_u(thread, regs, l4_utcb());
 }
 
 L4_INLINE void
