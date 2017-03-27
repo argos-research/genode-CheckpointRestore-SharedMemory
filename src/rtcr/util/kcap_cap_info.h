@@ -23,9 +23,10 @@ struct Rtcr::Kcap_cap_info : Genode::List<Kcap_cap_info>::Element
 {
 	Genode::addr_t            kcap;
 	Genode::Native_capability cap;
+	Genode::String<32>        const label;
 
-	Kcap_cap_info(Genode::addr_t kcap, Genode::Native_capability cap)
-	: kcap(kcap), cap(cap) { }
+	Kcap_cap_info(Genode::addr_t kcap, Genode::Native_capability cap, const char* label)
+	: kcap(kcap), cap(cap), label(label) { }
 
 	Kcap_cap_info *find_by_kcap(Genode::addr_t kcap)
 	{
@@ -47,7 +48,7 @@ struct Rtcr::Kcap_cap_info : Genode::List<Kcap_cap_info>::Element
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "kcap=", Hex(kcap), ", cap=", cap);
+		Genode::print(output, "kcap=", Hex(kcap), ", ", cap, ", ", label.string());
 	}
 };
 
