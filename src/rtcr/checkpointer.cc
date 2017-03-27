@@ -49,16 +49,21 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	using Genode::addr_t;
 	using Genode::size_t;
 	using Genode::uint16_t;
+	const bool verbose_kcap_mappings_debug = false;
 
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 
 	Genode::List<Kcap_badge_info> result;
 
 	// Retrieve cap_idx_alloc_addr
-	addr_t const cap_idx_alloc_addr = Genode::Foc_native_pd_client(_child.pd().native_pd()).cap_map_info();
+	Genode::Pd_session_client pd_client(_child.pd().parent_cap());
+	addr_t const cap_idx_alloc_addr = Genode::Foc_native_pd_client(pd_client.native_pd()).cap_map_info();
 	_state._cap_idx_alloc_addr = cap_idx_alloc_addr;
 
-	// Find child's dataspace corresponding to cap_idx_alloc_addr
+	if(verbose_kcap_mappings_debug) Genode::log("Address of cap_idx_alloc = ", Hex(cap_idx_alloc_addr));
+
+	// Find child's dataspace containing the capability map
+	// It is found via cap_idx_alloc_addr
 	Attached_region_info *ar_info = _child.pd().address_space_component().parent_state().attached_regions.first();
 	if(ar_info) ar_info = ar_info->find_by_addr(cap_idx_alloc_addr);
 	if(!ar_info)
@@ -91,7 +96,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	addr_t const local_array_start  = local_struct_start + 8;
 	addr_t const local_array_end    = local_array_start + array_size;
 
-	if(verbose_debug)
+	if(verbose_kcap_mappings_debug)
 	{
 		log("child_ds_start:     ", Hex(child_ds_start));
 		log("child_struct_start: ", Hex(child_struct_start));
@@ -113,17 +118,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	enum { UNUSED = 0, INVALID_ID = 0xffff };
 	for(addr_t curr = local_array_start; curr < local_array_end; curr += array_ele_size)
 	{
-/*
-		log("  ",
-				Hex(*(Genode::uint8_t*)(curr+0), Hex::OMIT_PREFIX, Hex::PAD),
-				Hex(*(Genode::uint8_t*)(curr+1), Hex::OMIT_PREFIX, Hex::PAD),
-				Hex(*(Genode::uint8_t*)(curr+2), Hex::OMIT_PREFIX, Hex::PAD),
-				Hex(*(Genode::uint8_t*)(curr+3), Hex::OMIT_PREFIX, Hex::PAD), "  ",
-				Hex(*(Genode::uint8_t*)(curr+4), Hex::OMIT_PREFIX, Hex::PAD),
-				Hex(*(Genode::uint8_t*)(curr+5), Hex::OMIT_PREFIX, Hex::PAD),
-				Hex(*(Genode::uint8_t*)(curr+6), Hex::OMIT_PREFIX, Hex::PAD),
-				Hex(*(Genode::uint8_t*)(curr+7), Hex::OMIT_PREFIX, Hex::PAD));
-*/
+
 		size_t const badge_offset = 6;
 
 		// Convert address to pointer and dereference it
@@ -138,11 +133,8 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 		{
 			Kcap_badge_info *state_info = new (_alloc) Kcap_badge_info(kcap, badge);
 			result.insert(state_info);
-			//log("+ ", Hex(kcap), ": ", badge, " (", Hex(badge), ")");
-		}
-		else
-		{
-			//log("  ", Hex(kcap), ": ", badge);
+
+			if(verbose_kcap_mappings_debug) log("+ ", Hex(kcap), ": ", badge, " (", Hex(badge), ")");
 		}
 	}
 

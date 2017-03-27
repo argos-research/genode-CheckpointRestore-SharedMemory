@@ -119,9 +119,16 @@ void Restorer::_identify_recreate_pd_sessions(Pd_root &pd_root, Genode::List<Sto
 				Genode::error("Could not find newly created PD session for ", pd_session_cap);
 				throw Genode::Exception();
 			}
-			// Associate the stored kcap address to this new RPC object
-			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_pd_session->kcap, pd_session->cap()));
 		}
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_pd_session->kcap, pd_session->cap(), "PD session"));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(
+				stored_pd_session->stored_address_space.kcap, pd_session->address_space_component().cap(), "Address Space"));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(
+				stored_pd_session->stored_stack_area.kcap, pd_session->stack_area_component().cap(), "Stack Area"));
+		if(stored_pd_session->stored_linker_area.kcap != 0)
+			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(
+					stored_pd_session->stored_linker_area.kcap, pd_session->linker_area_component().cap(), "Linker Area"));
 
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_pd_session->badge, pd_session->cap()));
@@ -177,7 +184,7 @@ void Restorer::_recreate_signal_sources(Pd_session_component &pd_session,
 			throw Genode::Exception();
 		}
 		// Associate the stored kcap address to this new RPC object
-		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_signal_source->kcap, signal_source->cap));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_signal_source->kcap, signal_source->cap, "Signal source"));
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_signal_source->badge, signal_source->cap));
 
@@ -227,7 +234,7 @@ void Restorer::_recreate_signal_contexts(Pd_session_component &pd_session,
 		}
 
 		// Associate the stored kcap address to this new RPC object
-		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_signal_context->kcap, signal_context->cap));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_signal_context->kcap, signal_context->cap, "Signal context"));
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_signal_context->badge, signal_context->cap));
 
@@ -273,9 +280,9 @@ void Restorer::_identify_recreate_ram_sessions(Ram_root &ram_root, Genode::List<
 				Genode::error("Could not find newly created RAM session for ", ram_session_cap);
 				throw Genode::Exception();
 			}
-			// Store kcap for the badge of the newly created RPC object
-			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_ram_session->kcap, ram_session->cap()));
 		}
+		// Store kcap for the badge of the newly created RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_ram_session->kcap, ram_session->cap(), "RAM session"));
 
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_ram_session->badge, ram_session->cap()));
@@ -311,7 +318,7 @@ void Restorer::_recreate_ram_dataspaces(Ram_session_component &ram_session,
 		}
 
 		// Associate the stored kcap address to this new RPC object
-		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_ramds->kcap, ramds->cap));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_ramds->kcap, ramds->cap, "RAM dataspace"));
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_ramds->badge, ramds->cap));
 
@@ -357,9 +364,9 @@ void Restorer::_identify_recreate_cpu_sessions(Cpu_root &cpu_root, Genode::List<
 				Genode::error("Could not find newly created RAM session for ", cpu_session_cap);
 				throw Genode::Exception();
 			}
-			// Associate the stored kcap address to this new RPC object
-			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_cpu_session->kcap, cpu_session->cap()));
 		}
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_cpu_session->kcap, cpu_session->cap(), "CPU session"));
 
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_cpu_session->badge, cpu_session->cap()));
@@ -428,9 +435,9 @@ void Restorer::_identify_recreate_cpu_threads(Cpu_session_component &cpu_session
 				Genode::error("Could not find newly created CPU thread for ", cpu_thread_cap);
 				throw Genode::Exception();
 			}
-			// Associate the stored kcap address to this new RPC object
-			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_cpu_thread->kcap, cpu_thread->cap()));
 		}
+		// Associate the stored kcap address to this new RPC object
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_cpu_thread->kcap, cpu_thread->cap(), "CPU thread"));
 
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_cpu_thread->badge, cpu_thread->cap()));
@@ -463,7 +470,7 @@ void Restorer::_recreate_rm_sessions(Rm_root &rm_root, Genode::List<Stored_rm_se
 			throw Genode::Exception();
 		}
 		// Associate the stored kcap address to this new RPC object
-		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_rm_session->kcap, rm_session->cap()));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_rm_session->kcap, rm_session->cap(), "RM session"));
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_rm_session->badge, rm_session->cap()));
 
@@ -497,7 +504,7 @@ void Restorer::_recreate_region_maps(
 			throw Genode::Exception();
 		}
 		// Associate the stored kcap address to this new RPC object
-		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_region_map->kcap, region_map->cap()));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_region_map->kcap, region_map->cap(), "Region map"));
 
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_region_map->badge, region_map->cap()));
@@ -532,7 +539,7 @@ void Restorer::_recreate_log_sessions(Log_root &log_root, Genode::List<Stored_lo
 			throw Genode::Exception();
 		}
 		// Associate the stored kcap address to this new RPC object
-		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_log_session->kcap, log_session->cap()));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_log_session->kcap, log_session->cap(), "LOG session"));
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_log_session->badge, log_session->cap()));
 
@@ -564,7 +571,7 @@ void Restorer::_recreate_timer_sessions(Timer_root &timer_root, Genode::List<Sto
 			throw Genode::Exception();
 		}
 		// Associate the stored kcap address to this new RPC object
-		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_timer_session->kcap, timer_session->cap()));
+		_kcap_mappings.insert(new (_alloc) Kcap_cap_info(stored_timer_session->kcap, timer_session->cap(), "Timer session"));
 		// Remember the association of the stored RPC object to the new RPC object
 		_rpcobject_translations.insert(new (_alloc) Badge_translation_info(stored_timer_session->badge, timer_session->cap()));
 
@@ -876,7 +883,7 @@ void Restorer::_restore_state_attached_regions(Region_map_component &region_map,
 
 			// Associate the stored kcap address to this new RPC object
 			_kcap_mappings.insert(new (_alloc) Kcap_cap_info(
-					stored_attached_region->kcap, ds_cap));
+					stored_attached_region->kcap, ds_cap, "Attached region"));
 			// Remember the association of the stored RPC object to the new RPC object
 			_rpcobject_translations.insert(new (_alloc) Badge_translation_info(
 					stored_attached_region->attached_ds_badge, ds_cap));
@@ -1035,6 +1042,7 @@ void Restorer::_restore_cap_map()
 	using Genode::addr_t;
 	using Genode::log;
 	using Genode::Hex;
+	const bool verbose_cap_map_debug = true;
 
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
@@ -1086,7 +1094,7 @@ void Restorer::_restore_cap_map()
 	 *
 	 * list pointer is a pointer valid in the address space of the checkpointed child
 	 * r_cnt        is a number counting the references of the Cap_index
-	 * res          is padding
+	 * res          is reserved
 	 * badge        is the system global identifier for Cap_indices
 	 */
 
@@ -1116,7 +1124,7 @@ void Restorer::_restore_cap_map()
 	addr_t const local_state_array_start = local_state_struct_start + 8;
 	addr_t const local_state_array_end   = local_state_array_start + array_size;
 
-	if(verbose_debug)
+	if(verbose_cap_map_debug)
 	{
 		log("remote_child_ds_start:     ", Hex(remote_child_ds_start));
 		log("remote_child_struct_start: ", Hex(remote_child_struct_start));
@@ -1165,7 +1173,8 @@ void Restorer::_restore_cap_map()
 		{
 			if(kcap_info->kcap == 0)
 			{
-				Genode::warning("kcap = 0 for cap ", kcap_info->cap);
+				if(verbose_cap_map_debug)
+					Genode::warning("kcap = 0 for ", kcap_info->cap);
 			}
 			else
 			{
@@ -1192,7 +1201,12 @@ void Restorer::_restore_cap_map()
 
 				if(*(Genode::uint16_t*) (current_pos+6))
 				{
-					Genode::warning("Overriding existing badge at cap_index=", Hex(current_cap_index));
+					if(verbose_cap_map_debug)
+					{
+						Genode::warning("At cap_index=", Hex(current_cap_index),
+								": Overriding badge=", *(Genode::uint16_t*) (current_pos+6),
+								" with new badge=", kcap_info->cap.local_name());
+					}
 				}
 
 				// (Low-level) creation of the new Cap_index
@@ -1236,12 +1250,13 @@ void Restorer::_restore_cap_space()
 	{
 		if(kcap_info->kcap == 0)
 		{
-			Genode::warning("kcap = 0 for cap ", kcap_info->cap);
+			Genode::warning("kcap = 0 for ", kcap_info->cap);
 		}
 		else
 		{
 			// Install capabilities to the child's cap space
-			Genode::Foc_native_pd_client(_child.pd().native_pd()).install(kcap_info->cap, kcap_info->kcap);
+			Genode::Pd_session_client pd_client(_child.pd().parent_cap());
+			Genode::Foc_native_pd_client(pd_client.native_pd()).install(kcap_info->cap, kcap_info->kcap);
 		}
 
 		kcap_info = kcap_info->next();
