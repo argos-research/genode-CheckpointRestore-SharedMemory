@@ -7,6 +7,10 @@
 #include "target_child.h"
 #include "restorer.h"
 
+namespace Fiasco {
+#include <l4/sys/kdebug.h>
+}
+
 using namespace Rtcr;
 
 
@@ -251,6 +255,8 @@ void Target_child::start(Restorer &restorer)
 			*_custom_services.pd_service,
 			*_custom_services.ram_service,
 			*_custom_services.cpu_service);
+
+	//enter_kdebug("before restore");
 
 	restorer.restore();
 }
