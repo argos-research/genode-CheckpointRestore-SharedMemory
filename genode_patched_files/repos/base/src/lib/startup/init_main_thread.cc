@@ -31,6 +31,7 @@ extern void init_exception_handling();
 namespace Genode { extern Region_map * env_stack_area_region_map; }
 
 void prepare_init_main_thread();
+// Modification for Checkpoint/Restore (rtcr)
 void init_pd();
 
 enum { MAIN_THREAD_STACK_SIZE = 16UL * 1024 * sizeof(Genode::addr_t) };
@@ -93,10 +94,12 @@ extern "C" void init_main_thread()
 	 * destructor won't be registered for the atexit routine.
 	 */
 	(void*)env();
+	// START Modification for Checkpoint/Restore (rtcr)
 	/*
 	 * Initialise variables in native PD before log session
 	 */
 	init_pd();
+	// END Modification for Checkpoint/Restore (rtcr)
 	init_log();
 
 	/* initialize exception handling */

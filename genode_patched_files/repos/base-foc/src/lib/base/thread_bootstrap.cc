@@ -48,6 +48,7 @@ void prepare_reinit_main_thread()
 }
 
 
+// START Modification for Checkpoint/Restore (rtcr)
 /**
  * Sets cap_map_info in Foc_native_pd
  */
@@ -65,6 +66,7 @@ void init_pd()
 	}
 
 }
+// END Modification for Checkpoint/Restore (rtcr)
 
 
 /************

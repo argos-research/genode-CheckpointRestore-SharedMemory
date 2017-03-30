@@ -151,6 +151,7 @@ namespace {
 
 			Genode::call_global_static_constructors();
 
+			// Modification for Checkpoint/Restore (rtcr): Force creation of LOG session (which is created lazily)
 			Genode::log("Initializing LOG session");
 
 			Genode::call_component_construct(env);

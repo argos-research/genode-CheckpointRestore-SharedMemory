@@ -109,6 +109,7 @@ class Genode::Core_pd_session_component : public Rpc_object<Pd_session>
 
 		Capability<Region_map> linker_area() { ASSERT_NEVER_CALLED; }
 
+		// Modification for Checkpoint/Restore (rtcr)
 		Capability<Native_pd> native_pd() override { return Capability<Native_pd>(); /* ASSERT_NEVER_CALLED; */ }
 };
 

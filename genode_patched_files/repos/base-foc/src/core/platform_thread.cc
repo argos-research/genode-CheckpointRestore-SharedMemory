@@ -201,6 +201,8 @@ Thread_state Platform_thread::state()
 	return s;
 }
 
+
+// START Modification for Checkpoint/Restore (rtcr)
 void Platform_thread::all_regs(Thread_state const &s)
 {
 	addr_t regs[17];
@@ -226,6 +228,7 @@ Thread_state Platform_thread::all_regs()
 
 	return s;
 }
+// END Modification for Checkpoint/Restore (rtcr)
 
 
 void Platform_thread::cancel_blocking()
@@ -303,6 +306,8 @@ Weak_ptr<Address_space> Platform_thread::address_space()
 	return _platform_pd->Address_space::weak_ptr();
 }
 
+
+// START Modification for Checkpoint/Restore (rtcr)
 void Platform_thread::_pack_regs(Thread_state const &regs, addr_t* array)
 {
 	array[0]  = regs.r0;
@@ -352,6 +357,7 @@ void Platform_thread::_set_regs(addr_t* array, addr_t value)
 		array[i] = value;
 	}
 }
+// END Modification for Checkpoint/Restore (rtcr)
 
 
 Platform_thread::Platform_thread(size_t, const char *name, unsigned prio,

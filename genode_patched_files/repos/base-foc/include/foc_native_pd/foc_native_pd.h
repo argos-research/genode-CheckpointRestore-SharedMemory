@@ -25,15 +25,19 @@ namespace Genode { struct Foc_native_pd; }
 struct Genode::Foc_native_pd : Pd_session::Native_pd
 {
 	virtual Native_capability task_cap() = 0;
+	// START Modification for Checkpoint/Restore (rtcr)
 	virtual void install(Native_capability, addr_t) = 0;
 	virtual addr_t cap_map_info() = 0;
 	virtual void cap_map_info(addr_t) = 0;
+	// END Modification for Checkpoint/Restore (rtcr)
 
 	GENODE_RPC(Rpc_task_cap, Native_capability, task_cap);
+	// START Modification for Checkpoint/Restore (rtcr)
 	GENODE_RPC(Rpc_install, void, install, Native_capability, addr_t);
 	GENODE_RPC(Rpc_get_cap_map_info, addr_t, cap_map_info);
 	GENODE_RPC(Rpc_set_cap_map_info, void, cap_map_info, addr_t);
 	GENODE_RPC_INTERFACE(Rpc_task_cap, Rpc_install, Rpc_get_cap_map_info, Rpc_set_cap_map_info);
+	// END Modification for Checkpoint/Restore (rtcr)
 };
 
 #endif /* _INCLUDE__FOC_NATIVE_PD__FOC_NATIVE_PD_H_ */

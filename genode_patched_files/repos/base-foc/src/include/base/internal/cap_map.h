@@ -169,6 +169,7 @@ namespace Genode {
 	{
 		private:
 
+			// Modification for Checkpoint/Restore (rtcr): Changed AVL to List
 			List<Cap_index> _tree;
 			Spin_lock       _lock;
 

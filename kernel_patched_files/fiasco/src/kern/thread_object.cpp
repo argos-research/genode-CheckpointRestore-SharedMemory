@@ -158,9 +158,11 @@ Thread_object::invoke(L4_obj_ref /*self*/, L4_fpage::Rights rights, Syscall_fram
     case Op_vcpu_control:
       f->tag(sys_vcpu_control(rights, f->tag(), utcb));
       return;
+  	// START Modification for Checkpoint/Restore (rtcr)
     case Op_ex_all_regs:
       f->tag(sys_ex_all_regs(f->tag(), utcb));
       return;
+  	// END Modification for Checkpoint/Restore (rtcr)
     default:
       f->tag(invoke_arch(f->tag(), utcb));
       return;
@@ -629,6 +631,7 @@ Thread_object::sys_ex_regs(L4_msg_tag const &tag, Utcb *utcb)
 }
 
 
+// START Modification for Checkpoint/Restore (rtcr)
 // -------------------------------------------------------------------
 // START Thread::ex_all_regs class system calls
 
@@ -707,6 +710,7 @@ Thread_object::sys_ex_all_regs(L4_msg_tag const &tag, Utcb *utcb)
 
 // END Thread::ex_all_regs class system calls
 // -------------------------------------------------------------------
+// END Modification for Checkpoint/Restore (rtcr)
 
 PRIVATE inline NOEXPORT NEEDS["timer.h"]
 L4_msg_tag

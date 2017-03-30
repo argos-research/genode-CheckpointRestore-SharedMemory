@@ -32,14 +32,17 @@ class Genode::Native_pd_component : public Rpc_object<Foc_native_pd>
 	private:
 
 		Pd_session_component &_pd_session;
+		// Modification for Checkpoint/Restore (rtcr)
 		addr_t                _cap_map_info;
 
 	public:
 
 		Native_capability task_cap() override;
+		// START Modification for Checkpoint/Restore (rtcr)
 		addr_t cap_map_info() override;
 		void cap_map_info(addr_t addr) override;
 		void install(Native_capability cap, addr_t kcap) override;
+		// END Modification for Checkpoint/Restore (rtcr)
 
 		Native_pd_component(Pd_session_component &pd, char const *args);
 

@@ -28,6 +28,7 @@ Native_capability Native_pd_component::task_cap()
 }
 
 
+// START Modification for Checkpoint/Restore (rtcr)
 addr_t Native_pd_component::cap_map_info()
 {
 	return _cap_map_info;
@@ -62,6 +63,7 @@ void Native_pd_component::install(Native_capability cap, addr_t kcap)
 			error("mapping cap failed");
 	}
 }
+// END Modification for Checkpoint/Restore (rtcr)
 
 
 Native_pd_component::Native_pd_component(Pd_session_component &pd_session,

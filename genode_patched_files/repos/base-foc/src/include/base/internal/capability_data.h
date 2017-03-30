@@ -27,6 +27,7 @@
  * (platform-specific) capability space of the component. Therefore it
  * shouldn't be copied around, but only referenced by e.g. Native_capability.
  */
+// Modification for Checkpoint/Restore (rtcr)
 class Genode::Native_capability::Data : public List<Data>::Element, Noncopyable
 {
 	private:

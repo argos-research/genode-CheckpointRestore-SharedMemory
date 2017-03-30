@@ -134,17 +134,11 @@ l4_thread_ex_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *ip, l4_addr_t *sp,
                         l4_umword_t *flags, l4_utcb_t *utcb) L4_NOTHROW;
 
 
-
-
-
+// START Modification for Checkpoint/Restore (rtcr)
 L4_INLINE l4_msgtag_t
 l4_thread_ex_all_regs(l4_cap_idx_t thread, l4_addr_t *regs,
                       l4_umword_t flags) L4_NOTHROW;
 
-/**
- * \internal
- * \ingroup l4_thread_api
- */
 L4_INLINE l4_msgtag_t
 l4_thread_ex_all_regs_u(l4_cap_idx_t thread, l4_addr_t *regs,
                         l4_umword_t flags, l4_utcb_t *utcb) L4_NOTHROW;
@@ -153,13 +147,10 @@ L4_INLINE l4_msgtag_t
 l4_thread_ex_all_regs_ret(l4_cap_idx_t thread, l4_addr_t *regs,
                           l4_umword_t *flags) L4_NOTHROW;
 
-/**
- * \internal
- * \ingroup l4_thread_api
- */
 L4_INLINE l4_msgtag_t
 l4_thread_ex_all_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *regs,
                             l4_umword_t *flags, l4_utcb_t *utcb) L4_NOTHROW;
+// END Modification for Checkpoint/Restore (rtcr)
 
 
 
@@ -626,6 +617,7 @@ enum L4_thread_ops
   L4_THREAD_REGISTER_DELETE_IRQ_OP = 5UL,    /**< Register an IPC-gate deletion IRQ */
   L4_THREAD_MODIFY_SENDER_OP       = 6UL,    /**< Modify all senders IDs that match the given pattern */
   L4_THREAD_VCPU_CONTROL_OP        = 7UL,    /**< Enable / disable VCPU feature */
+  // Modification for Checkpoint/Restore (rtcr)
   L4_THREAD_EX_ALL_REGS_OP         = 8UL,    /**< Exchange all registers operation */
   L4_THREAD_VCPU_CONTROL_EXT_OP    = L4_THREAD_VCPU_CONTROL_OP | 0x10000,
   L4_THREAD_GDT_X86_OP             = 0x10UL, /**< Gdt */
@@ -719,6 +711,7 @@ l4_thread_ex_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *ip, l4_addr_t *sp,
   return ret;
 }
 
+// START Modification for Checkpoint/Restore (rtcr)
 L4_INLINE l4_msgtag_t
 l4_thread_ex_all_regs_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_utcb_t *utcb) L4_NOTHROW
 {
@@ -768,9 +761,10 @@ l4_thread_ex_all_regs_ret_u(l4_cap_idx_t thread, l4_addr_t *regs, l4_utcb_t *utc
   regs[13] = v->mr[14]; // SP
   regs[14] = v->mr[15]; // LR
   regs[15] = v->mr[16]; // PC
-  regs[16] = v->mr[17]; // PC
+  regs[16] = v->mr[17]; // CSPR
   return ret;
 }
+// END Modification for Checkpoint/Restore (rtcr)
 
 L4_INLINE void
 l4_thread_control_start_u(l4_utcb_t *utcb) L4_NOTHROW
@@ -887,6 +881,7 @@ l4_thread_ex_regs_ret(l4_cap_idx_t thread, l4_addr_t *ip, l4_addr_t *sp,
   return l4_thread_ex_regs_ret_u(thread, ip, sp, flags, l4_utcb());
 }
 
+// START Modification for Checkpoint/Restore (rtcr)
 L4_INLINE l4_msgtag_t
 l4_thread_ex_all_regs(l4_cap_idx_t thread, l4_addr_t *regs) L4_NOTHROW
 {
@@ -898,6 +893,7 @@ l4_thread_ex_all_regs_ret(l4_cap_idx_t thread, l4_addr_t *regs) L4_NOTHROW
 {
   return l4_thread_ex_all_regs_ret_u(thread, regs, l4_utcb());
 }
+// END Modification for Checkpoint/Restore (rtcr)
 
 L4_INLINE void
 l4_thread_control_start(void) L4_NOTHROW
