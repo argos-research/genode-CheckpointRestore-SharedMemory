@@ -1,0 +1,5 @@
+#!/bin/sh
+cp -avr ~/mastersthesis/coding/rtcr/genode_patched_files/repos ~/development/1608_genode
+cp -avr ~/mastersthesis/coding/rtcr/l4_patched_files/pkg ~/development/1608_genode/contrib/foc-521140ea75494478740770721061509c6e7c6812/src/kernel/foc/l4
+cp -avr ~/mastersthesis/coding/rtcr/kernel_patched_files/fiasco ~/development/1608_genode/contrib/foc-521140ea75494478740770721061509c6e7c6812/src/kernel/foc/kernel
+make $*
