@@ -1,0 +1,11 @@
+#!/bin/sh
+OWN_SRC=~/mastersthesis/coding/rtcr
+GENODE=~/development/1608_genode
+BUILD=$GENODE/build_foc_pbxa9
+FOC_HASH=foc-521140ea75494478740770721061509c6e7c6812
+FOC=$FOC_HASH/src/kernel/foc
+
+cp -avr $OWN_SRC/genode_patched_files/repos $GENODE
+cp -avr $OWN_SRC/l4_patched_files/pkg $GENODE/contrib/$FOC/l4
+cp -avr $OWN_SRC/kernel_patched_files/fiasco $GENODE/contrib/$FOC/kernel
+make -C $BUILD $*
