@@ -1,6 +1,6 @@
 #!/bin/sh
-OWN_SRC=~/mastersthesis/coding/rtcr
-GENODE=~/development/1608_genode
+OWN_SRC=~/bachelorthesis/code/rtcr
+GENODE=~/development/genode
 BUILD=$GENODE/build_foc_pbxa9
 FOC_HASH=foc-521140ea75494478740770721061509c6e7c6812
 FOC=$FOC_HASH/src/kernel/foc

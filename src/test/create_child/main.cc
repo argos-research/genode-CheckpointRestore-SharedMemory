@@ -110,7 +110,7 @@ void Component::construct(Genode::Env &env)
 
 	Genode::Entrypoint ep(env, 16*1024, "child_ep");
 
-    My_child child0(ep, "sheep_counter");
+    My_child child0(ep, "sheep_counter_s");
 
     Genode::sleep_forever();
 }

@@ -1,4 +1,6 @@
 TARGET = target_restorer-tester
+#TARGET = rtcr_restore_child
+
 
 SRC_CC += main.cc \
           pd_session.cc \

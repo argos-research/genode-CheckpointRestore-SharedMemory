@@ -13,9 +13,9 @@
 
 /* Rtcr includes */
 #include "../../rtcr/target_child.h"
-#include "../../rtcr/target_state.h"
-#include "../../rtcr/checkpointer.h"
-#include "../../rtcr/restorer.h"
+//#include "../../rtcr/target_state.h"
+//#include "../../rtcr/checkpointer.h"
+//#include "../../rtcr/restorer.h"
 
 namespace Rtcr {
 	struct Main;
@@ -34,18 +34,18 @@ struct Rtcr::Main
 
 		Timer::Connection timer { env };
 
-		Target_child child { env, heap, parent_services, "sheep_counter", 0 };
+		Target_child child { env, heap, parent_services, "mc_sheep_counter", 0 };
 		child.start();
 
-		timer.msleep(3000);
+//		timer.msleep(3000);
+//
+//		Target_state ts(env, heap);
+//		Checkpointer ckpt(heap, child, ts);
+//		ckpt.checkpoint();
 
-		Target_state ts(env, heap);
-		Checkpointer ckpt(heap, child, ts);
-		ckpt.checkpoint();
-
-		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
-		Restorer resto(heap, child_restored, ts);
-		child_restored.start(resto);
+//		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
+//		Restorer resto(heap, child_restored, ts);
+//		child_restored.start(resto);
 
 		//log("The End");
 		Genode::sleep_forever();
