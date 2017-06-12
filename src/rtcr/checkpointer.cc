@@ -5,9 +5,14 @@
  */
 
 #include "checkpointer.h"
-//#include "util/debug.h"
+#include "util/debug.h"
 #include <base/internal/cap_map.h>
 #include <base/internal/cap_alloc.h>
+
+namespace Fiasco {
+#include <l4/sys/kdebug.h>
+}
+
 
 using namespace Rtcr;
 
@@ -57,7 +62,11 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 
 	// Retrieve cap_idx_alloc_addr
 	Genode::Pd_session_client pd_client(_child.pd().parent_cap());
+
+	// for testing addr = 0
 	addr_t const cap_idx_alloc_addr = Genode::Foc_native_pd_client(pd_client.native_pd()).cap_map_info();
+//	addr_t const cap_idx_alloc_addr = 0;
+
 	_state._cap_idx_alloc_addr = cap_idx_alloc_addr;
 
 	if(verbose_kcap_mappings_debug) Genode::log("Address of cap_idx_alloc = ", Hex(cap_idx_alloc_addr));
@@ -799,6 +808,11 @@ void Checkpointer::_destroy_stored_cpu_session(Stored_cpu_session_info &stored_i
 }
 
 
+/*
+ *
+ * 	IMPORTANT
+ *
+ */
 void Checkpointer::_prepare_cpu_threads(Genode::List<Stored_cpu_thread_info> &stored_infos,
 		Genode::List<Cpu_thread_component> &child_infos)
 {
@@ -833,8 +847,18 @@ void Checkpointer::_prepare_cpu_threads(Genode::List<Stored_cpu_thread_info> &st
 		// XXX does not guarantee to return the current thread registers
 		stored_info->ts = Genode::Cpu_thread_client(child_info->parent_cap()).state();
 
+		/*
+		 * Dump the state of the threads
+		 */
+
+		if (verbose_debug){
+			print_thread_state(child_info->state(), false);
+		}
+
 		child_info = child_info->next();
 	}
+
+
 
 	// Delete old stored_infos, if the child misses corresponding infos in its list
 	stored_info = stored_infos.first();
@@ -1368,7 +1392,7 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 
 void Checkpointer::_checkpoint_dataspaces()
 {
-	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+	if(verbose_debug) Genode::log("Ckpt::\033[32m", __func__, "\033[0m(...)");
 
 
 	Dataspace_translation_info *memory_info = _dataspace_translations.first();
@@ -1409,12 +1433,20 @@ void Checkpointer::_checkpoint_dataspaces()
 void Checkpointer::_checkpoint_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
 		Genode::Dataspace_capability src_ds_cap, Genode::addr_t dst_offset, Genode::size_t size)
 {
-	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(dst ", dst_ds_cap,
+	if(verbose_debug) Genode::log("Ckpt::\033[32m", __func__, "\033[0m(dst ", dst_ds_cap,
 			", src ", src_ds_cap, ", dst_offset=", Genode::Hex(dst_offset),
 			", copy_size=", Genode::Hex(size), ")");
 
 	char *dst_addr_start = _state._env.rm().attach(dst_ds_cap);
 	char *src_addr_start = _state._env.rm().attach(src_ds_cap);
+
+
+
+	/*
+	 *  Debug function to dump the memory of the dataspace
+	 */
+
+//	Rtcr::dump_mem(dst_addr_start, size);
 
 	Genode::memcpy(dst_addr_start + dst_offset, src_addr_start, size);
 
@@ -1450,6 +1482,14 @@ void Checkpointer::checkpoint()
 	_child.pause();
 
 	// Create mapping of badge to kcap
+
+	// create_kcap_mappings buggy
+
+
+/*
+ *  COMMENTED OUT FOR TESTING PURPOSES
+ */
+//
 	_kcap_mappings = _create_kcap_mappings();
 
 	if(verbose_debug)
@@ -1463,6 +1503,9 @@ void Checkpointer::checkpoint()
 			info = info->next();
 		}
 	}
+
+
+
 
 	// Create a list of region map dataspaces which are known to child
 	// These dataspaces are ignored when creating copy dataspaces
@@ -1485,15 +1528,24 @@ void Checkpointer::checkpoint()
 
 	// Prepare state lists
 	// implicitly _copy_dataspaces modified with the child's currently known dataspaces and copy dataspaces
+/*
+ * COMMENTED OUT FOR TESTING PURPOSES
+ */
 	_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
 	_prepare_pd_sessions(_state._stored_pd_sessions, _child.custom_services().pd_root->session_infos());
 	_prepare_cpu_sessions(_state._stored_cpu_sessions, _child.custom_services().cpu_root->session_infos());
-	if(_child.custom_services().rm_root)
-		_prepare_rm_sessions(_state._stored_rm_sessions, _child.custom_services().rm_root->session_infos());
-	if(_child.custom_services().log_root)
-		_prepare_log_sessions(_state._stored_log_sessions, _child.custom_services().log_root->session_infos());
-	if(_child.custom_services().timer_root)
-		_prepare_timer_sessions(_state._stored_timer_sessions, _child.custom_services().timer_root->session_infos());
+//	if(_child.custom_services().rm_root)
+//		_prepare_rm_sessions(_state._stored_rm_sessions, _child.custom_services().rm_root->session_infos());
+//	if(_child.custom_services().log_root)
+//		_prepare_log_sessions(_state._stored_log_sessions, _child.custom_services().log_root->session_infos());
+//	if(_child.custom_services().timer_root)
+//		_prepare_timer_sessions(_state._stored_timer_sessions, _child.custom_services().timer_root->session_infos());
+
+
+
+/*
+ * CHANGES
+ */
 
 	if(verbose_debug)
 	{
@@ -1501,7 +1553,7 @@ void Checkpointer::checkpoint()
 		Dataspace_translation_info *info = _dataspace_translations.first();
 		while(info)
 		{
-			Genode::log(" ", *info);
+			Genode::log("\033[32mDataspace info:\033[0m ", *info);
 			info = info->next();
 		}
 	}
@@ -1541,6 +1593,7 @@ void Checkpointer::checkpoint()
 	if(verbose_debug) Genode::log(_child);
 	if(verbose_debug) Genode::log(_state);
 
+//	enter_kdebug("End of Checkpoint");
 	// Clean up
 	_destroy_list(_kcap_mappings);
 	_destroy_list(_dataspace_translations);
@@ -1548,5 +1601,5 @@ void Checkpointer::checkpoint()
 	_destroy_list(_managed_dataspaces);
 
 	// Resume child
-	//_child.resume();
+//	_child.resume();
 }

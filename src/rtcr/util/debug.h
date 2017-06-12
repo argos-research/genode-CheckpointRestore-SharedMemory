@@ -11,6 +11,8 @@
 #include <base/thread_state.h>
 #include <util/list.h>
 
+
+
 namespace Rtcr
 {
 
@@ -37,39 +39,42 @@ namespace Rtcr
 	}
 
 
-	void print_thread_state(Genode::Thread_state &ts, bool brief)
+	void print_thread_state(Genode::Thread_state ts, bool brief)
 	{
 		using namespace Genode;
 
+		const char *pre = "\033[31m";
+		const char *pos = "\033[0m";
+
 		if(!brief)
 		{
-			log("  r0:   ", Hex(ts.r0,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r0                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r1:   ", Hex(ts.r1,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r1                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r2:   ", Hex(ts.r2,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r2                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r3:   ", Hex(ts.r3,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r3                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r4:   ", Hex(ts.r4,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r4                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r5:   ", Hex(ts.r5,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r5                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r6:   ", Hex(ts.r6,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r6                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r7:   ", Hex(ts.r7,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r7                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r8:   ", Hex(ts.r8,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r8                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r9:   ", Hex(ts.r9,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r9                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r10:  ", Hex(ts.r10,           Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r10                   - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r11:  ", Hex(ts.r11,           Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r11                   - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  r12:  ", Hex(ts.r12,           Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r12                   - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  sp:   ", Hex(ts.sp,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.sp                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  lr:   ", Hex(ts.lr,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.lr                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  ip:   ", Hex(ts.ip,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.ip                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  cpsr: ", Hex(ts.cpsr,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.cpsr                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  c_e:  ", Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.cpu_exception         - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  upf:  ", ts.unresolved_page_fault?"true ":"false", "     ", "  pos: ", Hex((addr_t)&ts.unresolved_page_fault - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  exc:  ", ts.exception?"true ":"false",             "     ", "  pos: ", Hex((addr_t)&ts.exception             - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  kcap: ", Hex(ts.kcap,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.kcap                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  id:   ", Hex(ts.id,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.id                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  utcb: ", Hex(ts.utcb,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.utcb                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  excs: ", Hex(ts.exceptions,    Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.exceptions            - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  psd:  ", ts.paused?"true ":"false",                "     ", "  pos: ", Hex((addr_t)&ts.paused                - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  iexc: ", ts.in_exception?"true ":"false",          "     ", "  pos: ", Hex((addr_t)&ts.in_exception          - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
-			log("  lock: ", "/",                                  "         ", "  pos: ", Hex((addr_t)&ts.lock                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r0:   ",pos, Hex(ts.r0,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r0                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r1:   ",pos, Hex(ts.r1,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r1                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r2:   ",pos, Hex(ts.r2,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r2                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r3:   ",pos, Hex(ts.r3,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r3                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r4:   ",pos, Hex(ts.r4,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r4                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r5:   ",pos, Hex(ts.r5,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r5                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r6:   ",pos, Hex(ts.r6,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r6                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r7:   ",pos, Hex(ts.r7,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r7                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r8:   ",pos, Hex(ts.r8,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r8                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r9:   ",pos, Hex(ts.r9,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r9                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r10:  ",pos, Hex(ts.r10,           Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r10                   - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r11:  ",pos, Hex(ts.r11,           Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r11                   - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  r12:  ",pos, Hex(ts.r12,           Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.r12                   - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  sp:   ",pos, Hex(ts.sp,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.sp                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  lr:   ",pos, Hex(ts.lr,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.lr                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  ip:   ",pos, Hex(ts.ip,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.ip                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  cpsr: ",pos, Hex(ts.cpsr,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.cpsr                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  c_e:  ",pos, Hex(ts.cpu_exception, Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.cpu_exception         - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  upf:  ",pos, ts.unresolved_page_fault?"true ":"false", "     ", "  pos: ", Hex((addr_t)&ts.unresolved_page_fault - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  exc:  ",pos, ts.exception?"true ":"false",             "     ", "  pos: ", Hex((addr_t)&ts.exception             - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  kcap: ",pos, Hex(ts.kcap,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.kcap                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  id:   ",pos, Hex(ts.id,            Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.id                    - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  utcb: ",pos, Hex(ts.utcb,          Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.utcb                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  excs: ",pos, Hex(ts.exceptions,    Hex::PREFIX, Hex::PAD),      "  pos: ", Hex((addr_t)&ts.exceptions            - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  psd:  ",pos, ts.paused?"true ":"false",                "     ", "  pos: ", Hex((addr_t)&ts.paused                - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  iexc: ",pos, ts.in_exception?"true ":"false",          "     ", "  pos: ", Hex((addr_t)&ts.in_exception          - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
+			log(pre,"  lock: ",pos, "/",                                  "         ", "  pos: ", Hex((addr_t)&ts.lock                  - (addr_t)&ts, Hex::PREFIX, Hex::PAD));
 		}
 		else
 		{
@@ -81,6 +86,28 @@ namespace Rtcr
 		}
 
 	}
+
+//	char *logre(char *log)
+//	{
+//		return "\033[31m",log,"\033[0m";
+//	}
+//
+//	char *logbr(char *log)
+//	{
+//		return "\033[33m"+log+"\033[0m";
+//	}
+//
+//	char *loggr(char *log)
+//	{
+//		return "\033[33m",log,"\033[0m";
+//	}
+//
+//	char *logbl(char *log)
+//	{
+//		return "\033[34m",log,"\033[0m";
+//	}
+
+
 }
 
 namespace Genode

@@ -29,7 +29,7 @@ struct Rtcr::Main
 	{
 		using namespace Genode;
 
-		Target_child child { env, md_heap, parent_services, "sheep_counter", 0 };
+		Target_child child { env, md_heap, parent_services, "sheep_counter_s", 0 };
 		child.start();
 
 		Genode::sleep_forever();

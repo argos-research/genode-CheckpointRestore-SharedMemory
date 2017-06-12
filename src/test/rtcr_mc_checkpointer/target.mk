@@ -1,4 +1,6 @@
-TARGET = rtcr_create_child
+TARGET = rtcr_mc_checkpointer
+#TARGET = rtcr_restore_child
+
 
 SRC_CC += main.cc \
           pd_session.cc \
@@ -16,6 +18,8 @@ SRC_CC += main.cc \
           restorer.cc
 
 LIBS   += base
+
+INC_DIR += $(BASE_DIR)/../base-foc/src/include
 
 vpath pd_session.cc            $(REP_DIR)/src/rtcr/intercept
 vpath cpu_session.cc           $(REP_DIR)/src/rtcr/intercept

@@ -227,6 +227,9 @@ Cpu_session_component *Cpu_root::_create_session(const char *args)
 	Genode::snprintf(ram_quota_buf, sizeof(ram_quota_buf), "%zu", readjusted_ram_quota);
 	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);
 
+	/*
+	 * Affinity here ?
+	 */
 	// Create custom Rm_session
 	Cpu_session_component *new_session =
 			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, _pd_root, label_buf, readjusted_args, _bootstrap_phase);
@@ -281,7 +284,7 @@ Cpu_root::Cpu_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entryp
 	_objs_lock        (),
 	_session_rpc_objs ()
 {
-	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	if(verbose_debug) Genode::log("\033[33m MARKER", __func__, "\033[0m");
 }
 
 Cpu_root::~Cpu_root()

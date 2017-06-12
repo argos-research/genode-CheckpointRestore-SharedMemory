@@ -142,6 +142,9 @@ Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_roo
 }
 
 
+/*
+ *  Here goes the affinity !!
+ */
 Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_root &cpu_root)
 {
 	// Preparing argument string

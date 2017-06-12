@@ -2,7 +2,7 @@
 # Build
 #
 
-build { core init test/create_child test/sheep_counter drivers/timer}
+build { core init test/create_child test/sheep_counter_s drivers/timer}
 
 create_boot_directory
 
@@ -39,7 +39,7 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init create_child sheep_counter timer }
+build_boot_image { core init create_child sheep_counter_s timer }
 
 append qemu_args " -nographic "
 

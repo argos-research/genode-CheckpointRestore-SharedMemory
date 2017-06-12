@@ -6,7 +6,7 @@
 
 #include "restorer.h"
 #include "util/sort.h"
-#include "util/debug.h"
+//#include "util/debug.h"
 #include <base/internal/cap_map.h>
 #include <base/internal/cap_alloc.h>
 
@@ -1319,8 +1319,6 @@ void Restorer::_restore_dataspace_content(Genode::Dataspace_capability dst_ds_ca
 	_state._env.rm().detach(dst_start_addr);
 }
 
-#include "util/debug.h"
-
 void Restorer::_start_threads(Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
@@ -1354,7 +1352,7 @@ void Restorer::_start_threads(Cpu_root &cpu_root, Genode::List<Stored_cpu_sessio
 				if(true or !Genode::strcmp(cpu_thread->parent_state().name.string(), "signal handler"))
 				{
 					Genode::Thread_state ts = cpu_thread->state();
-					print_thread_state(ts, true);
+//					print_thread_state(ts, true);
 
 					cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);
 				}
@@ -1410,37 +1408,37 @@ void Restorer::restore()
 
 	// Identify or recreate RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
 	// During the iterations _kcap_mappings and _rpcobject_translations are filled for the next steps
-	_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
-	_identify_recreate_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
-	_identify_recreate_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
-			_child.custom_services().pd_root->session_infos());
-	if(_state._stored_rm_sessions.first())
-	{
-		_child.custom_services().find("RM"); // Implicitly creates root object
-		_recreate_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions);
-	}
-	if(_state._stored_log_sessions.first())
-	{
-		_child.custom_services().find("LOG"); // Implicitly creates root object
-		_recreate_log_sessions(*_child.custom_services().log_root, _state._stored_log_sessions);
-	}
-	if(_state._stored_timer_sessions.first())
-	{
-		_child.custom_services().find("Timer"); // Implicitly creates root object
-		_recreate_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions);
-	}
-
-	if(verbose_debug)
-	{
-		Genode::log("RPC object translations:");
-		Badge_translation_info *info = _rpcobject_translations.first();
-		if(!info) Genode::log(" <empty>\n");
-		while(info)
-		{
-			Genode::log(" ", *info);
-			info = info->next();
-		}
-	}
+//	_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
+//	_identify_recreate_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
+//	_identify_recreate_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
+//			_child.custom_services().pd_root->session_infos());
+//	if(_state._stored_rm_sessions.first())
+//	{
+//		_child.custom_services().find("RM"); // Implicitly creates root object
+//		_recreate_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions);
+//	}
+//	if(_state._stored_log_sessions.first())
+//	{
+//		_child.custom_services().find("LOG"); // Implicitly creates root object
+//		_recreate_log_sessions(*_child.custom_services().log_root, _state._stored_log_sessions);
+//	}
+//	if(_state._stored_timer_sessions.first())
+//	{
+//		_child.custom_services().find("Timer"); // Implicitly creates root object
+//		_recreate_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions);
+//	}
+//
+//	if(verbose_debug)
+//	{
+//		Genode::log("RPC object translations:");
+//		Badge_translation_info *info = _rpcobject_translations.first();
+//		if(!info) Genode::log(" <empty>\n");
+//		while(info)
+//		{
+//			Genode::log(" ", *info);
+//			info = info->next();
+//		}
+//	}
 
 	/*******************************************
 	 ** Phase 2: Restore state of RPC objects **
@@ -1449,80 +1447,80 @@ void Restorer::restore()
 	// Restore state of all objects using the translation of old badges to new badges
 	// (caution: RAM <- Region map (incl. PD session) ( "<-" means requires))
 	//   Also make a mapping of memory to restore
-	_restore_state_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
-	_restore_state_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
-	_restore_state_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
-			_child.custom_services().pd_root->session_infos());
-	if(_child.custom_services().rm_root)
-	{
-		_restore_state_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions,
-				_child.custom_services().pd_root->session_infos());
-	}
-	if(_child.custom_services().log_root)
-	{
-		_restore_state_log_sessions(*_child.custom_services().log_root, _state._stored_log_sessions);
-	}
-	if(_child.custom_services().timer_root)
-	{
-		_restore_state_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions,
-				_child.custom_services().pd_root->session_infos());
-	}
-
-	if(verbose_debug)
-	{
-		Genode::log("Reserved kcap addresses:");
-		Kcap_cap_info const *info = _kcap_mappings.first();
-		if(!info) Genode::log(" <empty>\n");
-		while(info)
-		{
-			Genode::log(" ", *info);
-			info = info->next();
-		}
-	}
-
-	// Create a list of managed dataspaces
-	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
-
-	if(verbose_debug)
-	{
-		Genode::log("Memory to restore:");
-		Dataspace_translation_info *info = _dataspace_translations.first();
-		if(!info) Genode::log(" <empty>\n");
-		while(info)
-		{
-			Genode::log(" ", *info);
-			info = info->next();
-		}
-	}
-
-	if(verbose_debug)
-	{
-		Genode::log("Managed dataspaces:");
-		Simplified_managed_dataspace_info const *smd_info = _managed_dataspaces.first();
-		if(!smd_info) Genode::log(" <empty>\n");
-		while(smd_info)
-		{
-			Genode::log(" ", *smd_info);
-
-			Simplified_managed_dataspace_info::Simplified_designated_ds_info const *sdd_info =
-					smd_info->designated_dataspaces.first();
-			if(!sdd_info) Genode::log("  <empty>\n");
-			while(sdd_info)
-			{
-				Genode::log("  ", *sdd_info);
-
-				sdd_info = sdd_info->next();
-			}
-
-			smd_info = smd_info->next();
-		}
-	}
-
-	// Replace old badges with new in capability map
-	_restore_cap_map();
-
-	// Insert capabilities of all objects into capability space
-	_restore_cap_space();
+//	_restore_state_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
+//	_restore_state_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
+//	_restore_state_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
+//			_child.custom_services().pd_root->session_infos());
+//	if(_child.custom_services().rm_root)
+//	{
+//		_restore_state_rm_sessions(*_child.custom_services().rm_root, _state._stored_rm_sessions,
+//				_child.custom_services().pd_root->session_infos());
+//	}
+//	if(_child.custom_services().log_root)
+//	{
+//		_restore_state_log_sessions(*_child.custom_services().log_root, _state._stored_log_sessions);
+//	}
+//	if(_child.custom_services().timer_root)
+//	{
+//		_restore_state_timer_sessions(*_child.custom_services().timer_root, _state._stored_timer_sessions,
+//				_child.custom_services().pd_root->session_infos());
+//	}
+//
+//	if(verbose_debug)
+//	{
+//		Genode::log("Reserved kcap addresses:");
+//		Kcap_cap_info const *info = _kcap_mappings.first();
+//		if(!info) Genode::log(" <empty>\n");
+//		while(info)
+//		{
+//			Genode::log(" ", *info);
+//			info = info->next();
+//		}
+//	}
+//
+//	// Create a list of managed dataspaces
+//	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
+//
+//	if(verbose_debug)
+//	{
+//		Genode::log("Memory to restore:");
+//		Dataspace_translation_info *info = _dataspace_translations.first();
+//		if(!info) Genode::log(" <empty>\n");
+//		while(info)
+//		{
+//			Genode::log(" ", *info);
+//			info = info->next();
+//		}
+//	}
+//
+//	if(verbose_debug)
+//	{
+//		Genode::log("Managed dataspaces:");
+//		Simplified_managed_dataspace_info const *smd_info = _managed_dataspaces.first();
+//		if(!smd_info) Genode::log(" <empty>\n");
+//		while(smd_info)
+//		{
+//			Genode::log(" ", *smd_info);
+//
+//			Simplified_managed_dataspace_info::Simplified_designated_ds_info const *sdd_info =
+//					smd_info->designated_dataspaces.first();
+//			if(!sdd_info) Genode::log("  <empty>\n");
+//			while(sdd_info)
+//			{
+//				Genode::log("  ", *sdd_info);
+//
+//				sdd_info = sdd_info->next();
+//			}
+//
+//			smd_info = smd_info->next();
+//		}
+//	}
+//
+//	// Replace old badges with new in capability map
+//	_restore_cap_map();
+//
+//	// Insert capabilities of all objects into capability space
+//	_restore_cap_space();
 
 	// Copy stored dataspaces' content to child dataspaces' content
 	_restore_dataspaces();
@@ -1530,7 +1528,7 @@ void Restorer::restore()
 	Genode::log("After: \n", _child);
 
 	// Start threads
-	_start_threads(*_child.custom_services().cpu_root, _state._stored_cpu_sessions);
+//	_start_threads(*_child.custom_services().cpu_root, _state._stored_cpu_sessions);
 
 	// Clean up
 	_destroy_list(_kcap_mappings);
