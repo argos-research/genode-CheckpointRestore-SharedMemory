@@ -1490,19 +1490,19 @@ void Checkpointer::checkpoint()
  *  COMMENTED OUT FOR TESTING PURPOSES
  */
 //
-	_kcap_mappings = _create_kcap_mappings();
-
-	if(verbose_debug)
-	{
-		Genode::log("Capability map:");
-		Kcap_badge_info const *info = _kcap_mappings.first();
-		if(!info) Genode::log(" <empty>\n");
-		while(info)
-		{
-			Genode::log(" ", *info);
-			info = info->next();
-		}
-	}
+//	_kcap_mappings = _create_kcap_mappings();
+//
+//	if(verbose_debug)
+//	{
+//		Genode::log("Capability map:");
+//		Kcap_badge_info const *info = _kcap_mappings.first();
+//		if(!info) Genode::log(" <empty>\n");
+//		while(info)
+//		{
+//			Genode::log(" ", *info);
+//			info = info->next();
+//		}
+//	}
 
 
 
@@ -1511,20 +1511,20 @@ void Checkpointer::checkpoint()
 	// These dataspaces are ignored when creating copy dataspaces
 	// For new intercepted sessions which trade managed dataspaces between child and themselves,
 	// the region map dataspace capability has to be inserted into this list
-	Genode::List<Rm_session_component> *rm_sessions = nullptr;
-	if(_child.custom_services().rm_root) rm_sessions = &_child.custom_services().rm_root->session_infos();
-	_region_maps = _create_region_map_dataspaces_list(_child.custom_services().pd_root->session_infos(), rm_sessions);
-
-	if(verbose_debug)
-	{
-		Genode::log("Region map dataspaces:");
-		Ref_badge_info const *info = _region_maps.first();
-		while(info)
-		{
-			Genode::log(" ", *info);
-			info = info->next();
-		}
-	}
+//	Genode::List<Rm_session_component> *rm_sessions = nullptr;
+//	if(_child.custom_services().rm_root) rm_sessions = &_child.custom_services().rm_root->session_infos();
+//	_region_maps = _create_region_map_dataspaces_list(_child.custom_services().pd_root->session_infos(), rm_sessions);
+//
+//	if(verbose_debug)
+//	{
+//		Genode::log("Region map dataspaces:");
+//		Ref_badge_info const *info = _region_maps.first();
+//		while(info)
+//		{
+//			Genode::log(" ", *info);
+//			info = info->next();
+//		}
+//	}
 
 	// Prepare state lists
 	// implicitly _copy_dataspaces modified with the child's currently known dataspaces and copy dataspaces
@@ -1559,7 +1559,7 @@ void Checkpointer::checkpoint()
 	}
 
 	// Create a list of managed dataspaces
-	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
+//	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
 
 	if(verbose_debug)
 	{

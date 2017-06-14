@@ -27,6 +27,9 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 
 	ram_root = new (_md_alloc) Ram_root(_env, _md_alloc, _resource_ep, granularity, _bootstrap_phase);
 	ram_service = new (_md_alloc) Genode::Local_service("RAM", ram_root);
+
+	validator_root = new (_md_alloc) Validator_root(_env, _md_alloc, _resource_ep);
+	validator_service = new (_md_alloc) Genode::Local_service("Validator", validator_root);
 }
 
 Target_child::Custom_services::~Custom_services()
@@ -105,7 +108,8 @@ Target_child::Resources::Resources(Genode::Env &env, const char *label, Custom_s
 	pd  (init_pd(label, *custom_services.pd_root)),
 	cpu (init_cpu(label, *custom_services.cpu_root)),
 	ram (init_ram(label, *custom_services.ram_root)),
-	rom (env, label)
+	rom (env, label),
+	validator (init_validator(label, *custom_services.validator_root))
 {
 	// Donate ram quota to child
 	// TODO Replace static quota donation with the amount of quota, the child needs
@@ -190,6 +194,28 @@ Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_
 	}
 
 	return *ram_session;
+}
+
+
+Validator_session_component &Target_child::Resources::init_validator(const char *label, Validator_root &validator_root)
+{
+	// Preparing argument string
+	char args_buf[160];
+	Genode::snprintf(args_buf, sizeof(args_buf),
+			"ram_quota=%u, phys_start=0x%lx, phys_size=0x%lx, label=\"%s\"",
+			4*1024*sizeof(long), 0UL, 0UL, label);
+
+
+	Genode::Session_capability validator_cap = validator_root.session(args_buf, Genode::Affinity());
+
+	Validator_session_component* validator_session = validator_root.session_infos().first();
+	if(!validator_session)
+	{
+		Genode::error("Creating custom validator session failed: Could not find validator session in validator root");
+		throw Genode::Exception();
+	}
+
+	return *validator_session;
 }
 
 

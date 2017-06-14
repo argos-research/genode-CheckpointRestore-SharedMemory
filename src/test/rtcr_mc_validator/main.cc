@@ -13,8 +13,9 @@
 #include <base/component.h>
 #include <timer_session/connection.h>
 #include <base/log.h>
-#include <rm_session/connection.h>
-#include <region_map/client.h>
+
+#include "../../rtcr/multicore/validator_session/connection.h"
+
 
 namespace Fiasco {
 #include <l4/sys/kdebug.h>
@@ -29,25 +30,20 @@ void Component::construct(Genode::Env &env)
 	log("Creating Timer session.");
 	Timer::Connection timer(env);
 
+	log("Creating Validator session.");
+	Rtcr::Validator_connection validator(env);
+
 	log("Allocating and attaching memory and its dataspace.");
 	Dataspace_capability ds_cap = env.ram().alloc(4096);
-	unsigned int *addr = env.rm().attach(ds_cap);
-	addr[0] = 1;
-	unsigned int &n = addr[0];
+	char *addr = env.rm().attach(ds_cap);
 
-	//env.parent().upgrade(timer, "ram_quota=8K");
-	//env.parent().upgrade(env.ram_session_cap(), "ram_quota=24K");
-
-	while(1)
+	if(addr[0] == 'H' && addr[1] == 'A' && addr[2] == 'L' && addr[3] == 'L' && addr[1] == 'O' )
 	{
-		if(n == 1)
-			log("1 sheep. zzZ");
-		else
-			log(n, " sheeps. zzZ");
-		n++;
-		//unsigned int a = n;
-		//n = a;
-		timer.msleep(1000);
+		log("Memory successfully checkpointed");
+	}
+	else
+	{
+		log("Memory checkpoint failed");
 	}
 
 
