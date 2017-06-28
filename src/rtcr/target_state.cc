@@ -22,6 +22,10 @@ Target_state::~Target_state()
 // TODO delete all list elements
 }
 
+Genode::List<Stored_ram_session_info> Target_state::get_ram_sessions()
+{
+	return _stored_ram_sessions;
+}
 
 void Target_state::print(Genode::Output &output) const
 {

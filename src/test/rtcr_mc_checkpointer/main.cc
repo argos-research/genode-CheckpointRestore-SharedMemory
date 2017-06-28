@@ -16,6 +16,9 @@
 #include "../../rtcr/target_state.h"
 #include "../../rtcr/checkpointer.h"
 #include "../../rtcr/restorer.h"
+#include "../../rtcr/multicore/validator_session.h"
+#include "../../rtcr/multicore/validator_session/validator_session.h"
+#include "../../rtcr/util/sizes.h"
 
 namespace Rtcr {
 	struct Main;
@@ -27,7 +30,8 @@ namespace Fiasco {
 
 struct Rtcr::Main
 {
-	enum { ROOT_STACK_SIZE = 16*1024 };
+
+
 	Genode::Env              &env;
 	Genode::Heap              heap            { env.ram(), env.rm() };
 	Genode::Service_registry  parent_services { };
@@ -36,19 +40,36 @@ struct Rtcr::Main
 	{
 		using namespace Genode;
 
+		Entrypoint ep(env, EP_STACK_SIZE, "rtcr_ep");
+
 		Timer::Connection timer { env };
 
-		Target_child child { env, heap, parent_services, "rtcr_mc_counter", 0 };
-//		enter_kdebug("break 1");
-		child.start();
+		Target_state state(env, heap);
 
-		timer.msleep(6000);
+		Validator_root val_root(env, heap, ep, state, DS_ALLOC_SIZE);
+		Genode::Local_service val_service(Validator_session::service_name(), &val_root);
+		parent_services.insert(&val_service);
 
-//		Target_state ts(env, heap);
-//		Checkpointer ckpt(heap, child, ts);
-//		ckpt.checkpoint();
 
-		Target_child child_restored { env, heap, parent_services, "rtcr_mc_validator", 0 };
+		Target_child child_counter { env, heap, parent_services, "rtcr_mc_counter", 0 };
+		log("\033[32mChild_counter object created\033[0m");
+		child_counter.start();
+		log("\033[32mChild_counter started\033[0m");
+
+		timer.msleep(3000);
+
+		// \033[32m \033[0m
+
+		Checkpointer ckpt(heap, child_counter, state);
+		ckpt.checkpoint();
+
+		timer.msleep(3000);
+
+		Target_child child_validator { env, heap, parent_services, "rtcr_mc_validator", 0 };
+		log("\033[32mChild_validator object created\033[0m");
+		child_validator.start();
+		log("\033[32mChild_validator started\033[0m");
+
 //		Restorer resto(heap, child_restored, ts);
 //		child_restored.start(resto);
 

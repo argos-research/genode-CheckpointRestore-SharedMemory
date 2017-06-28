@@ -18,8 +18,8 @@
 #include <util/retry.h>
 #include <util/misc_math.h>
 
-#include "validator_session/validator_session.h"
-
+#include "validator_session/connection.h"
+#include "../target_state.h"
 
 namespace Rtcr{
 	class Validator_session_component;
@@ -47,8 +47,22 @@ private:
 	 */
 	const char* _creation_args;
 
+	/*
+	 * Target state of checkpoint
+	 */
+	Target_state _ts;
+
+	/*
+	 * Size of allocated dataspace
+	 */
+	Genode::size_t _ds_size;
+
+
+	Stored_ram_dataspace_info* _ds;
+
+
 public:
-	Validator_session_component(Genode::Env &env, Genode::Allocator &md_alloc, const char *creation_args);
+	Validator_session_component(Genode::Env &env, Genode::Allocator &md_alloc, const char *creation_args, Target_state ts, Genode::size_t ds_size);
 	~Validator_session_component();
 
 	bool dataspace_available();
@@ -80,7 +94,20 @@ private:
 	/*
 	 * Session entrypoint
 	 */
-	Genode::Entrypoint &_session_ep;
+	Genode::Entrypoint &_ep;
+
+
+	/*
+	 * Rtcr Target_state
+	 */
+	Target_state &_ts;
+
+
+	/*
+	 * Dataspace size
+	 */
+	Genode::size_t _ds_size;
+
 
 	/**
 	 * Lock for infos list
@@ -98,7 +125,7 @@ protected:
 	void _destroy_session(Validator_session_component *session);
 
 public:
-	Validator_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep);
+	Validator_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, Target_state &ts, Genode::size_t ds_size);
     ~Validator_root();
 
     Genode::List<Validator_session_component> &session_infos() { return _session_rpc_objs; }

@@ -21,6 +21,7 @@ namespace Fiasco {
 #include <l4/sys/kdebug.h>
 }
 
+
 Genode::size_t Component::stack_size() { return 16*1024; }
 
 void Component::construct(Genode::Env &env)
@@ -33,18 +34,32 @@ void Component::construct(Genode::Env &env)
 	log("Creating Validator session.");
 	Rtcr::Validator_connection validator(env);
 
-	log("Allocating and attaching memory and its dataspace.");
-	Dataspace_capability ds_cap = env.ram().alloc(4096);
-	char *addr = env.rm().attach(ds_cap);
+	while(validator.dataspace_available())
+	{
+		log("--------------------------------------------------------------------------");
+		log("Attaching memory and its dataspace.");
+		Dataspace_capability ds_cap = validator.get_dataspace();
+		log("Dataspace capability: ",ds_cap);
+		char *addr = env.rm().attach(ds_cap);
 
-	if(addr[0] == 'H' && addr[1] == 'A' && addr[2] == 'L' && addr[3] == 'L' && addr[1] == 'O' )
-	{
-		log("Memory successfully checkpointed");
+		if(addr[0] == 'H' && addr[1] == 'A' && addr[2] == 'L' && addr[3] == 'L' && addr[4] == 'O' )
+		{
+			log("Memory successfully checkpointed");
+		}
+		else
+		{
+			log("First Char: ",addr[0]);
+			log("Second Char: ",addr[1]);
+			log("Third Char: ",addr[2]);
+			log("Fourth Char: ",addr[3]);
+			log("Fifth Char: ",addr[4]);
+		}
+
+		env.rm().detach(addr);
 	}
-	else
-	{
-		log("Memory checkpoint failed");
-	}
+
+	log("--------------------------------------------------------------------------");
+	log("All dataspaces have been processed!");
 
 
 }

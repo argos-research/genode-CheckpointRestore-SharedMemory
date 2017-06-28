@@ -15,7 +15,7 @@
 namespace Rtcr { struct Validator_connection; }
 
 
-struct Validator_connection : Genode::Connection<Rtcr::Validator_session>, Rtcr::Validator_session_client
+struct Rtcr::Validator_connection : Genode::Connection<Rtcr::Validator_session>, Rtcr::Validator_session_client
 {
 
 	/**
@@ -23,9 +23,9 @@ struct Validator_connection : Genode::Connection<Rtcr::Validator_session>, Rtcr:
 	 *
 	 * \noapi
 	 */
-	Capability<Validator_session> _session(Genode::Parent &parent, char const *label)
+	Capability<Rtcr::Validator_session> _session(Genode::Parent &parent, char const *args)
 	{
-		return session(parent, label);
+		return session(parent, args);
 	}
 
 	/**
@@ -33,9 +33,9 @@ struct Validator_connection : Genode::Connection<Rtcr::Validator_session>, Rtcr:
 	 *
 	 * \param label     initial session label
 	 */
-	Validator_connection(Genode::Env &env, const char *label = "")
+	Validator_connection(Genode::Env &env, const char *args = "ram_quota=8K")
 	:
-		Connection<Validator_session>(env, _session(env.parent(), label)),
+		Genode::Connection<Rtcr::Validator_session>(env, _session(env.parent(), args)),
 		Validator_session_client(cap())
 	{ }
 

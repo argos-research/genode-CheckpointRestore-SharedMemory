@@ -52,6 +52,8 @@ public:
 	Target_state(Genode::Env &env, Genode::Allocator &alloc);
 	~Target_state();
 
+	Genode::List<Stored_ram_session_info> get_ram_sessions();
+
 	void print(Genode::Output &output) const;
 };
 

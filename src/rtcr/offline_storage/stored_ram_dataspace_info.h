@@ -36,7 +36,9 @@ struct Rtcr::Stored_ram_dataspace_info : Stored_normal_info, Genode::List<Stored
 		memory_content(copy_ds_cap),
 		size(info.size), cached(info.cached), managed(info.mrm_info),
 		timestamp(info.timestamp())
-	{ }
+	{
+
+	}
 
 	Stored_ram_dataspace_info *find_by_badge(Genode::uint16_t badge)
 	{
@@ -52,6 +54,14 @@ struct Rtcr::Stored_ram_dataspace_info : Stored_normal_info, Genode::List<Stored
 			return this;
 		Stored_ram_dataspace_info *info = next();
 		return info ? info->find_by_timestamp(timestamp) : 0;
+	}
+
+	Stored_ram_dataspace_info *find_by_size(Genode::size_t size)
+	{
+		if(size == this->size)
+			return this;
+		Stored_ram_dataspace_info *info = next();
+		return info ? info->find_by_size(size) : 0;
 	}
 
 	void print(Genode::Output &output) const

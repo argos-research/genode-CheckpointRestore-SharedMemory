@@ -1351,7 +1351,7 @@ void Restorer::_start_threads(Cpu_root &cpu_root, Genode::List<Stored_cpu_sessio
 			{
 				if(true or !Genode::strcmp(cpu_thread->parent_state().name.string(), "signal handler"))
 				{
-					Genode::Thread_state ts = cpu_thread->state();
+//					Genode::Thread_state ts = cpu_thread->state();
 //					print_thread_state(ts, true);
 
 					cpu_thread->start(stored_cpu_thread->ts.ip, stored_cpu_thread->ts.sp);

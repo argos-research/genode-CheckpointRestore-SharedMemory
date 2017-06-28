@@ -112,8 +112,8 @@ private:
 		Timer_root *timer_root  = nullptr;
 		Genode::Local_service *timer_service = nullptr;
 
-		Validator_root *validator_root = nullptr;
-		Genode::Local_service *validator_service = nullptr;
+//		Validator_root *validator_root = nullptr;
+//		Genode::Local_service *validator_service = nullptr;
 
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
@@ -146,7 +146,7 @@ private:
 		/*
 		 *  Multicore validator session component
 		 */
-		Validator_session_component validator;
+//		Validator_session_component &validator;
 
 		Resources(Genode::Env &env, const char *label, Custom_services &custom_services);
 		~Resources();
@@ -154,7 +154,7 @@ private:
 		Pd_session_component &init_pd(const char *label, Pd_root &pd_root);
 		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root);
 		Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
-		Validator_session_component &init_validator(const char *label, Validator_root &validator_root);
+//		Validator_session_component &init_validator(const char *label, Validator_root &validator_root);
 	} _resources;
 
 	/**

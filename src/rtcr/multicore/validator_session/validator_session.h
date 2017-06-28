@@ -19,7 +19,7 @@ namespace Rtcr { struct Validator_session; }
 struct Rtcr::Validator_session : Genode::Session
 {
 
-	static const char *service_name() { return "VALIDATOR"; }
+	static const char *service_name() { return "validator"; }
 
 
 	virtual ~Validator_session() { }
