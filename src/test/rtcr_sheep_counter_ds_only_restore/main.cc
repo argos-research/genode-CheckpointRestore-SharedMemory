@@ -12,16 +12,17 @@
 #include "../../rtcr/restorer.h"
 
 namespace Rtcr {
-	struct Main;
+	class Main;
 }
 
-struct Rtcr::Main
+class Rtcr::Main
 {
 	enum { ROOT_STACK_SIZE = 16*1024 };
 	Genode::Env              &env;
 	Genode::Heap              heap            { env.ram(), env.rm() };
 	Genode::Service_registry  parent_services { };
 
+public:
 	Main(Genode::Env &env_) : env(env_)
 	{
 		using namespace Genode;
@@ -31,28 +32,38 @@ struct Rtcr::Main
 		Target_child target_child_checkpointed { env, heap, parent_services, "sheep_counter", 0 };
 		target_child_checkpointed.start();
 
-		printRamInterceptionInfo(target_child_checkpointed.custom_services().ram_root);
 		timer.msleep(5000);
-		printRamInterceptionInfo(target_child_checkpointed.custom_services().ram_root);
 
-		target_child_checkpointed.pause();
 		log("Checkpoint! --------------------------------------------------");
-		const size_t dataspace_size = 4096;
-		const Ram_dataspace_capability *cp_child_ram_dataspace_capability =
-				get_Ram_dataspace_capability_with_size(dataspace_size,
-					 																		 target_child_checkpointed.custom_services().ram_root);
 
-		if(!cp_child_ram_dataspace_capability) {
-			log("Error: couldn't find dataspace to checkpoint!");
+		Target_state target_state(env, heap);
+		Checkpointer ckpt(heap, target_child_checkpointed, target_state);
+		ckpt.checkpoint();
+
+		log("Checkpoint complete! --------------------------------------------------");
+
+		log("Stored data of the RAM service in target_state:");
+		Stored_ram_session_info *stored_ram_session_info = target_state._stored_ram_sessions.first();
+		Stored_ram_dataspace_info *counter_stored_ram_dataspace_info = nullptr;
+		const size_t counter_dataspace_size = 4096;
+
+		do {
+			log("Stored_ram_session_info at ", stored_ram_session_info, *stored_ram_session_info);
+			Stored_ram_dataspace_info *stored_ram_dataspace_info =
+					stored_ram_session_info->stored_ramds_infos.first();
+
+			do {
+				log("Stored_ram_dataspace_info at ", stored_ram_dataspace_info, *stored_ram_dataspace_info);
+				if(stored_ram_dataspace_info->size == counter_dataspace_size)
+					counter_stored_ram_dataspace_info = stored_ram_dataspace_info;
+			} while((stored_ram_dataspace_info = stored_ram_dataspace_info->next()) != nullptr);
+		} while((stored_ram_session_info = stored_ram_session_info->next()) != nullptr);
+
+		if(!counter_stored_ram_dataspace_info) {
+			log("Error: couldn't find dataspace with a size of ", counter_dataspace_size, "!");
 			return;
 		}
 
-		void *source_memory = env.rm().attach(*cp_child_ram_dataspace_capability);
-		Dataspace_capability intermediate_dataspace_cap = env.ram().alloc(dataspace_size);
-		void *intermediate_memory = env.rm().attach(intermediate_dataspace_cap);
-		memcpy(intermediate_memory, source_memory, dataspace_size);
-		log("Checkpoint complete.");
-		target_child_checkpointed.resume();
 		timer.msleep(3000);
 		target_child_checkpointed.pause();
 		log("Checkpointed child paused.");
@@ -67,15 +78,16 @@ struct Rtcr::Main
 
 		while(!restored_child_ram_dataspace_capability) {
 			restored_child_ram_dataspace_capability =
-					get_Ram_dataspace_capability_with_size(dataspace_size,
-						 																		 target_child_restored.custom_services().ram_root);
+					get_Ram_dataspace_capability_with_size(counter_dataspace_size,
+																								 target_child_restored.custom_services().ram_root);
 		}
 
 		log("Copying memory...");
 
 		target_child_restored.pause();
+		void *source_memory = env.rm().attach(counter_stored_ram_dataspace_info->memory_content);
 		void *dest_memory = env.rm().attach(*restored_child_ram_dataspace_capability);
-		memcpy(dest_memory, intermediate_memory, dataspace_size);
+		memcpy(dest_memory, source_memory, counter_dataspace_size);
 		log("Restore complete.");
 		target_child_restored.resume();
 
