@@ -1,0 +1,50 @@
+#
+# Build
+#
+
+build { core init drivers/timer test/rtcr_assign_cores test/sheep_counter test/arbitrary_child }
+
+create_boot_directory
+
+#
+# Generate config
+#
+
+install_config {
+<config>
+	<affinity-space width="2" height="1" />
+
+	<parent-provides>
+		<service name="PD"/>
+		<service name="CPU"/>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="RM"/>
+		<service name="LOG"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="IRQ"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="rtcr_assign_cores">
+		<affinity xpos="0" width="2"/>
+		<resource name="RAM" quantum="1G"/>
+	</start>
+</config>
+}
+
+#
+# Boot image
+#
+
+build_boot_image { core init timer rtcr_assign_cores sheep_counter arbitrary_child }
+
+append qemu_args " -nographic -smp 2"
+
+run_genode_until forever
