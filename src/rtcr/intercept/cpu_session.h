@@ -91,9 +91,14 @@ public:
 	 ** Cpu_session interface **
 	 ***************************/
 
+	int set_sched_type(unsigned core, unsigned sched_type) override;
+	int get_sched_type(unsigned core) override;
 	Genode::Thread_capability create_thread(Genode::Pd_session_capability pd_cap,
 			Name const &name, Genode::Affinity::Location affinity, Weight weight,
 			Genode::addr_t utcb) override;
+	Genode::Thread_capability create_fp_edf_thread(Genode::Pd_session_capability pd_cap,
+			Name const &name, Genode::Affinity::Location affinity, Weight,
+			Genode::addr_t utcb, unsigned priority, unsigned deadline) override;
 	void kill_thread(Genode::Thread_capability thread_cap) override;
 
 	void exception_sigh(Genode::Signal_context_capability handler) override;
@@ -101,6 +106,10 @@ public:
 	Genode::Affinity::Space affinity_space() const override;
 	Genode::Dataspace_capability trace_control() override;
 	Quota quota() override;
+	void set(Genode::Ram_session_capability ram_cap) override;
+	void deploy_queue(Genode::Dataspace_capability ds) override;
+	void rq(Genode::Dataspace_capability ds) override;
+	void dead(Genode::Dataspace_capability ds) override;
 	int ref_account(Genode::Cpu_session_capability c) override;
 	int transfer_quota(Genode::Cpu_session_capability c, Genode::size_t q) override;
 	Genode::Capability<Native_cpu> native_cpu() override;

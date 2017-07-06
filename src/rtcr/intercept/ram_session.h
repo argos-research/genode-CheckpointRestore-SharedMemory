@@ -170,6 +170,7 @@ public:
 	int transfer_quota(Genode::Ram_session_capability ram_session, Genode::size_t amount) override;
 	Genode::size_t quota() override;
 	Genode::size_t used() override;
+	void set_label(char *label) override;
 
 };
 
