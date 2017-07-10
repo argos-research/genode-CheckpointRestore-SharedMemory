@@ -40,10 +40,7 @@ void Component::construct(Genode::Env &env)
 
 	while(1)
 	{
-		if(n == 1)
-			log("1 sheep. zzZ");
-		else
-			log(n, " sheeps. zzZ");
+		log(n, " sheep. zzZ");
 		n++;
 		//unsigned int a = n;
 		//n = a;
