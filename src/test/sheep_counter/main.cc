@@ -30,7 +30,7 @@ void Component::construct(Genode::Env &env)
 	Timer::Connection timer(env);
 
 	log("Allocating and attaching memory and its dataspace.");
-	Dataspace_capability ds_cap = env.ram().alloc(4096);
+	Dataspace_capability ds_cap = env.ram().alloc(4 * 4096);
 	unsigned int *addr = env.rm().attach(ds_cap);
 	addr[0] = 1;
 	unsigned int &n = addr[0];

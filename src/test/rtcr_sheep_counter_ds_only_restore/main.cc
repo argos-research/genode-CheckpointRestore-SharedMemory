@@ -26,10 +26,12 @@ public:
 	Main(Genode::Env &env_) : env(env_)
 	{
 		using namespace Genode;
-
 		Timer::Connection timer { env };
 
-		Target_child target_child_checkpointed { env, heap, parent_services, "sheep_counter", 0 };
+		const size_t counter_dataspace_size = 4 * 4096;
+		const size_t granularity = 4096;
+
+		Target_child target_child_checkpointed { env, heap, parent_services, "sheep_counter", granularity };
 		target_child_checkpointed.start();
 
 		timer.msleep(5000);
@@ -45,7 +47,6 @@ public:
 		log("Stored data of the RAM service in target_state:");
 		Stored_ram_session_info *stored_ram_session_info = target_state._stored_ram_sessions.first();
 		Stored_ram_dataspace_info *counter_stored_ram_dataspace_info = nullptr;
-		const size_t counter_dataspace_size = 4096;
 
 		do {
 			log("Stored_ram_session_info at ", stored_ram_session_info, *stored_ram_session_info);
@@ -93,23 +94,6 @@ public:
 
 		log("Main: End");
 		Genode::sleep_forever();
-	}
-
-	void printRamInterceptionInfo(Ram_root *ram_root) {
-		using namespace Genode;
-
-		log("printRamInterceptionInfo()");
-		Ram_session_component *ram_session_component = ram_root->session_infos().first();
-
-		do {
-			log("Ram_session_component at ", ram_session_component);
-			Ram_session_info &ram_session_info = ram_session_component->parent_state();
-			Ram_dataspace_info *ram_dataspace_info = ram_session_info.ram_dataspaces.first();
-
-			do {
-				log("Ram_dataspace_info at ", ram_dataspace_info, " with size ", ram_dataspace_info->size);
-			} while((ram_dataspace_info = ram_dataspace_info->next()) != nullptr);
-		} while((ram_session_component = ram_session_component->next()) != nullptr);
 	}
 
 	const Genode::Ram_dataspace_capability *get_Ram_dataspace_capability_with_size(Genode::size_t size, Ram_root *ram_root) {
