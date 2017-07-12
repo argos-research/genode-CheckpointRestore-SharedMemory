@@ -12,6 +12,7 @@ create_boot_directory
 
 install_config {
 <config>
+	<affinity-space width="4"/>
 	<parent-provides>
 		<service name="PD"/>
 		<service name="CPU"/>
@@ -31,6 +32,7 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 	<start name="rtcr_mc_checkpointer">
+		<affinity xpos="1"/> 
 		<resource name="RAM" quantum="1G"/>
 	</start>
 </config>}
@@ -41,7 +43,7 @@ install_config {
 
 build_boot_image { core init timer rtcr_mc_checkpointer rtcr_mc_counter rtcr_mc_validator }
 
-append qemu_args " -nographic "
+append qemu_args " -nographic -smp 4 "
 
 run_genode_until "3 sheeps.*\n" 40
 #run_genode_until forever

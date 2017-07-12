@@ -29,6 +29,9 @@ void Component::construct(Genode::Env &env)
 {
 	//enter_kdebug("before restore");
 	using namespace Genode;
+
+	log("Affinity space of counter env: \033[32m",env.cpu().affinity_space().width(), " X ", env.cpu().affinity_space().height(),"\033[0m");
+
 	log("Creating Timer session.");
 	Timer::Connection timer(env);
 

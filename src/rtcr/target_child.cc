@@ -106,11 +106,11 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 
 
 
-Target_child::Resources::Resources(Genode::Env &env, const char *label, Custom_services &custom_services)
+Target_child::Resources::Resources(Genode::Env &env, const char *label, Custom_services &custom_services, const Genode::Affinity &affinity)
 :
-	pd  (init_pd(label, *custom_services.pd_root)),
-	cpu (init_cpu(label, *custom_services.cpu_root)),
-	ram (init_ram(label, *custom_services.ram_root)),
+	pd  (init_pd(label, *custom_services.pd_root, affinity)),
+	cpu (init_cpu(label, *custom_services.cpu_root, affinity)),
+	ram (init_ram(label, *custom_services.ram_root, affinity)),
 	rom (env, label)
 //	validator (init_validator(label, *custom_services.validator_root))
 
@@ -128,14 +128,14 @@ Target_child::Resources::~Resources()
 { }
 
 
-Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_root &pd_root)
+Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_root &pd_root, const Genode::Affinity &affinity)
 {
 	// Preparing argument string
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf), "ram_quota=%u, label=\"%s\"", 20*1024*sizeof(long), label);
 
 	// Issuing session method of pd_root
-	Genode::Session_capability pd_cap = pd_root.session(args_buf, Genode::Affinity());
+	Genode::Session_capability pd_cap = pd_root.session(args_buf, affinity);
 
 	// Find created RPC object in pd_root's list
 	Pd_session_component *pd_session = pd_root.session_infos().first();
@@ -153,7 +153,7 @@ Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_roo
 /*
  *  Here goes the affinity !!
  */
-Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_root &cpu_root)
+Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_root &cpu_root, const Genode::Affinity &affinity)
 {
 	// Preparing argument string
 	char args_buf[160];
@@ -162,7 +162,10 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 			Genode::Cpu_session::DEFAULT_PRIORITY, 128*1024, label);
 
 	// Issuing session method of Cpu_root
-	Genode::Session_capability cpu_cap = cpu_root.session(args_buf, Genode::Affinity());
+	Genode::log("Affinity space: ",affinity.space().total());
+
+//	Genode::Session_capability cpu_cap = cpu_root.session(args_buf, Genode::Affinity());
+	Genode::Session_capability cpu_cap = cpu_root.session(args_buf, affinity);
 
 	// Find created RPC object in Cpu_root's list
 	Cpu_session_component *cpu_session = cpu_root.session_infos().first();
@@ -177,7 +180,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 }
 
 
-Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_root &ram_root)
+Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_root &ram_root, const Genode::Affinity &affinity)
 {
 	// Preparing argument string
 	char args_buf[160];
@@ -186,7 +189,7 @@ Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_
 			4*1024*sizeof(long), 0UL, 0UL, label);
 
 	// Issuing session method of Ram_root
-	Genode::Session_capability ram_cap = ram_root.session(args_buf, Genode::Affinity());
+	Genode::Session_capability ram_cap = ram_root.session(args_buf, affinity);
 
 	// Find created RPC object in Ram_root's list
 	Ram_session_component *ram_session = ram_root.session_infos().first();
@@ -224,7 +227,7 @@ Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_
 
 
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-		Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity)
+		Genode::Service_registry &parent_services, const char *name, Genode::size_t granularity, const Genode::Affinity &affinity)
 :
 	_in_bootstrap    (true),
 	_name            (name),
@@ -235,7 +238,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_granularity     (granularity),
 	_restorer        (nullptr),
 	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap),
-	_resources       (_env, _name.string(), _custom_services),
+	_resources       (_env, _name.string(), _custom_services, affinity),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),

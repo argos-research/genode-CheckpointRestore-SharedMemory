@@ -71,13 +71,15 @@ private:
 	 */
 	Cpu_session_info       _parent_state;
 
+	Genode::Affinity		_affinity;
+
 	Cpu_thread_component &_create_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
 			Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb);
 	void _kill_thread(Cpu_thread_component &cpu_thread);
 
 public:
 	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase);
+			Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase, Genode::Affinity const &affinity);
 	~Cpu_session_component();
 
 	Genode::Cpu_session_capability parent_cap() { return _parent_cpu.cap(); }
@@ -153,7 +155,7 @@ private:
 	Genode::List<Cpu_session_component> _session_rpc_objs;
 
 protected:
-	Cpu_session_component *_create_session(const char *args);
+	Cpu_session_component *_create_session(const char *args, Genode::Affinity const &affinity);
 	void _upgrade_session(Cpu_session_component *session, const char *upgrade_args);
 	void _destroy_session(Cpu_session_component *session);
 
