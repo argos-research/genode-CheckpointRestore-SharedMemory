@@ -42,9 +42,9 @@ void Component::construct(Genode::Env &env)
 	{
 		log(n, " sheep. zzZ");
 		n++;
-		//unsigned int a = n;
-		//n = a;
-		timer.msleep(1000);
+
+		for(int i = 0; i < 100000000; i++)
+			__asm__("NOP");
 	}
 
 
