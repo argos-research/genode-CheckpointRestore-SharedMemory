@@ -12,8 +12,9 @@ using namespace Rtcr;
 Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
+	Genode::log("Cpu::\033[31m", __func__, "\033[0m( \033[32m Affinity location: xpos: ",affinity.xpos()," ypos: ",affinity.ypos()," width: ",affinity.width()," height: ",affinity.height()," \033[0m");
 	// Create real CPU thread from parent
-	auto cpu_thread_cap = _parent_cpu.create_thread(parent_pd_cap, name, _affinity.location(), weight, utcb);
+	auto cpu_thread_cap = _parent_cpu.create_thread(parent_pd_cap, name, affinity, weight, utcb);
 
 	// Create custom CPU thread
 	Cpu_thread_component *new_cpu_thread =
@@ -60,14 +61,16 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 	_pd_root         (pd_root),
 	_parent_cpu      (env, label, DEFAULT_PRIORITY, affinity),
 	_parent_state    (creation_args, bootstrap_phase),
-	_affinity		 (affinity)
+	_affinity		 (affinity),
+	_location		 (_affinity.location())
 
 {
 	if(verbose_debug)
 	{
-		Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
-		Genode::log("\033[33m", "Custom Cpu session affinity space:", _affinity.space().total() ,"\033[0m(");
-		Genode::log("\033[33m", "Parent Cpu session affinity space:", _parent_cpu.affinity_space().total() ,"\033[0m(");
+		Genode::log("\033[32mConstructor ",__func__," is called\033[0m");
+		Genode::log("\033[32m 	Core cpu connection ", _parent_cpu.service_name(),": ",_parent_cpu,"\033[0m");
+		Genode::log("\033[32m 	Affinity space of argument affinity: ", _affinity.space().width()," X ",_affinity.space().height(), " total:",_affinity.space().total() ,"\033[0m");
+		Genode::log("\033[32m 	Affinity space of core cpu connection: ", _parent_cpu.affinity_space().width()," X ",_parent_cpu.affinity_space().height(), " total:",_parent_cpu.affinity_space().total() ,"\033[0m");
 	}
 
 }
@@ -96,7 +99,10 @@ Cpu_session_component *Cpu_session_component::find_by_badge(Genode::uint16_t bad
 Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability child_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
-	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
+	if(verbose_debug)
+	{
+		Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
+	}
 
 	// Find corresponding parent PD session cap for the given custom PD session cap
 	Pd_session_component *pd_session = _pd_root.session_infos().first();
@@ -108,7 +114,7 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 	}
 
 	// Create custom CPU thread
-	Cpu_thread_component &new_cpu_thread = _create_thread(child_pd_cap, pd_session->parent_cap(), name, affinity, weight, utcb);
+	Cpu_thread_component &new_cpu_thread = _create_thread(child_pd_cap, pd_session->parent_cap(), name, _location, weight, utcb);
 
 	if(verbose_debug) Genode::log("  Created custom CPU thread ", new_cpu_thread.cap());
 	return new_cpu_thread.cap();

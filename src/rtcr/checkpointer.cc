@@ -1590,8 +1590,9 @@ void Checkpointer::checkpoint()
 	// Copy child dataspaces' content and to stored dataspaces' content
 	_checkpoint_dataspaces();
 
-	if(verbose_debug) Genode::log(_child);
-	if(verbose_debug) Genode::log(_state);
+// COMMENTED OUT LOGS
+//	if(verbose_debug) Genode::log(_child);
+//	if(verbose_debug) Genode::log(_state);
 
 //	enter_kdebug("End of Checkpoint");
 	// Clean up

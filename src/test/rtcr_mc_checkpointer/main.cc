@@ -50,16 +50,16 @@ struct Rtcr::Main
 //		log("FOC platform affinity space: ",platform_specific()->affinity_space().width()," X ",platform_specific()->affinity_space().height()," ( ",platform_specific()->affinity_space().total()," )");
 
 		Entrypoint ep(env, EP_STACK_SIZE, "rtcr_ep");
-		log("Affinity space of ckpt env: \033[32m",env.cpu().affinity_space().width(), " X ", env.cpu().affinity_space().height()," total:",env.cpu().affinity_space().total(),"\033[0m");
+		log("\033[32mAffinity space of parent checkpointer ",__func__," env: ",env.cpu().affinity_space().width(), " X ", env.cpu().affinity_space().height()," total:",env.cpu().affinity_space().total(),"\033[0m");
 
 		Timer::Connection timer { env };
 
-//		const Genode::Affinity::Space aff_space(2);
-//		const Genode::Affinity::Location aff_loc_count(0, 0);
-//		const Genode::Affinity::Location aff_loc_val(1, 0);
+//		const Genode::Affinity &aff_count{Genode::Affinity::Space(2), Genode::Affinity::Location(0, 0)};
+//		const Genode::Affinity &aff_val{Genode::Affinity::Space(2), Genode::Affinity::Location(1, 0)};
 
-		const Genode::Affinity &aff_count{Genode::Affinity::Space(2), Genode::Affinity::Location(0, 0)};
-		const Genode::Affinity &aff_val{Genode::Affinity::Space(2), Genode::Affinity::Location(1, 0)};
+		const Genode::Affinity &aff_count{Genode::Affinity::Space(1), Genode::Affinity::Location(0, 0)};
+		const Genode::Affinity &aff_val{Genode::Affinity::Space(1), Genode::Affinity::Location(1, 0)};
+
 
 		Target_state state(env, heap);
 
@@ -69,9 +69,9 @@ struct Rtcr::Main
 
 		log("Creating child now...");
 		Target_child child_counter { env, heap, parent_services, "rtcr_mc_counter", 0, aff_count };
-		log("\033[32mChild_counter object created\033[0m");
+		log("\033[31mChild_counter object created\033[0m");
 		child_counter.start();
-		log("\033[32mChild_counter started\033[0m");
+		log("\033[31mChild_counter started\033[0m");
 
 		timer.msleep(3000);
 
@@ -82,10 +82,10 @@ struct Rtcr::Main
 
 		timer.msleep(3000);
 
-		Target_child child_validator { env, heap, parent_services, "rtcr_mc_validator", 0, aff_count };
-		log("\033[32mChild_validator object created\033[0m");
+		Target_child child_validator { env, heap, parent_services, "rtcr_mc_validator", 0, aff_val };
+		log("\033[31mChild_validator object created\033[0m");
 		child_validator.start();
-		log("\033[32mChild_validator started\033[0m");
+		log("\033[31mChild_validator started\033[0m");
 
 //		Restorer resto(heap, child_restored, ts);
 //		child_restored.start(resto);

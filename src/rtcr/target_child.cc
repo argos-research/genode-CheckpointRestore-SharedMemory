@@ -162,7 +162,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 			Genode::Cpu_session::DEFAULT_PRIORITY, 128*1024, label);
 
 	// Issuing session method of Cpu_root
-	Genode::log("Affinity space: ",affinity.space().total());
+	Genode::log("\033[32maffinity space argument in ",__func__,": ",affinity.space().total());
 
 //	Genode::Session_capability cpu_cap = cpu_root.session(args_buf, Genode::Affinity());
 	Genode::Session_capability cpu_cap = cpu_root.session(args_buf, affinity);

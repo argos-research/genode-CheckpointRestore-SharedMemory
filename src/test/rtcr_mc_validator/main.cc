@@ -29,7 +29,8 @@ void Component::construct(Genode::Env &env)
 	//enter_kdebug("before restore");
 	using namespace Genode;
 
-	log("Affinity space of validator env: \033[32m",env.cpu().affinity_space().width(), " X ", env.cpu().affinity_space().height(),"\033[0m");
+	log("\033[32mAffinity space of child validator env: ",env.cpu().affinity_space().width(), " X ", env.cpu().affinity_space().height()," total:",env.cpu().affinity_space().total(),"\033[0m");
+
 
 	log("Creating Timer session.");
 	Timer::Connection timer(env);

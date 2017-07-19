@@ -76,7 +76,7 @@ Validator_root::Validator_root(Genode::Env &env, Genode::Allocator &md_alloc, Ge
 		_ds_size(ds_size)
 
 {
-	Genode::log("Validator_root created: \033[31m",__func__,"\033[0m");
+	Genode::log("\033[31mValidator_root created: ",__func__,"\033[0m");
 }
 
 
