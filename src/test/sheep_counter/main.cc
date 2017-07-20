@@ -1,13 +1,12 @@
 /*
- * \brief  Testprogram which just counts sheeps
+ * \brief  Testprogram which just counts sheep.
  * \author Denis Huber
  * \date   2016-08-04
  *
- * This program is a target for the rtcr service. It counts a sheep,
- * prints the number of the sheep and goes to sleep between each 
- * iteration. This component will be checkpointed serialized, 
- * (transfered), deserialized, and restored. It does not know that it is
- * being checkpointed.
+ * This program is a target for the rtcr service. It counts sheep,
+ * prints the number and goes to sleep between each iteration. This
+ * component will be checkpointed, serialized, (transfered), deserialized,
+ *  and restored. It does not know that it is being checkpointed.
  */
 
 #include <base/component.h>
@@ -30,10 +29,11 @@ void Component::construct(Genode::Env &env)
 	Timer::Connection timer(env);
 
 	log("Allocating and attaching memory and its dataspace.");
-	Dataspace_capability ds_cap = env.ram().alloc(4 * 4096);
+
+	Dataspace_capability ds_cap = env.ram().alloc(5 * 4096);
 	unsigned int *addr = env.rm().attach(ds_cap);
-	addr[0] = 1;
-	unsigned int &n = addr[0];
+	unsigned int &n = addr[3];
+	n = 1;
 
 	//env.parent().upgrade(timer, "ram_quota=8K");
 	//env.parent().upgrade(env.ram_session_cap(), "ram_quota=24K");
@@ -43,9 +43,11 @@ void Component::construct(Genode::Env &env)
 		log(n, " sheep. zzZ");
 		n++;
 
+		/*
+		 * Busy waiting is used here to avoid pausing this component during an RPC call to the timer component.
+		 * This could cause a resume call to this component to fail.
+		 */
 		for(int i = 0; i < 100000000; i++)
 			__asm__("NOP");
 	}
-
-
 }
