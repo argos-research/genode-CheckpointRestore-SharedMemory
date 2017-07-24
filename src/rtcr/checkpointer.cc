@@ -1386,6 +1386,7 @@ void Checkpointer::_checkpoint_dataspaces()
 						smd_info->designated_dataspaces.first();
 				while(sdd_info)
 				{
+					Genode::log("checkpoint managed dataspace...");
 					_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
 
 					sdd_info = sdd_info->next();
@@ -1395,6 +1396,7 @@ void Checkpointer::_checkpoint_dataspaces()
 			// Dataspace is not managed
 			else
 			{
+				Genode::log("checkpoint regular dataspace...");
 				_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, memory_info->resto_ds_cap, 0, memory_info->size);
 			}
 
@@ -1416,6 +1418,7 @@ void Checkpointer::_checkpoint_dataspace_content(Genode::Dataspace_capability ds
 	char *dst_addr_start = _state._env.rm().attach(dst_ds_cap);
 	char *src_addr_start = _state._env.rm().attach(src_ds_cap);
 
+	Genode::log("Genode::memcpy(), size: ", size);
 	Genode::memcpy(dst_addr_start + dst_offset, src_addr_start, size);
 
 	_state._env.rm().detach(src_addr_start);
@@ -1548,5 +1551,5 @@ void Checkpointer::checkpoint()
 	_destroy_list(_managed_dataspaces);
 
 	// Resume child
-	//_child.resume();
+	_child.resume();
 }

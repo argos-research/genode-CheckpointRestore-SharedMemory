@@ -23,7 +23,7 @@ namespace Rtcr {
 	class Cpu_session_component;
 	class Cpu_root;
 
-	constexpr bool cpu_verbose_debug = true;
+	constexpr bool cpu_verbose_debug = false;
 	constexpr bool cpu_root_verbose_debug = false;
 }
 

@@ -2,7 +2,7 @@
 # Build
 #
 
-build { core init drivers/timer test/rtcr_sheep_counter_ds_only_restore test/sheep_counter test/arbitrary_child }
+build { core init drivers/timer test/rtcr_sheep_counter_ds_only_restore test/sheep_counter_extended test/arbitrary_child }
 
 create_boot_directory
 
@@ -40,7 +40,7 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init timer rtcr_sheep_counter_ds_only_restore sheep_counter arbitrary_child }
+build_boot_image { core init timer rtcr_sheep_counter_ds_only_restore sheep_counter_extended arbitrary_child }
 
 append qemu_args " -nographic "
 

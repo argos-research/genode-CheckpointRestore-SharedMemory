@@ -72,13 +72,15 @@ private:
 	Genode::Entrypoint  _child_ep;
 	/**
 	 * Granularity for incremental checkpointing in a multiple of pagesize;
-	 * zero means do not use incremental checkpointing
+	 * zero means do not use incremental checkpointing. _granularity * pagesize
+	 * will be the maximum size of the designated dataspaces that will be created
+	 * upon a request to allocate memory.
 	 */
 	Genode::size_t      _granularity;
 	/**
 	 * Restorer needed for restoring a child
 	 */
-	Restorer           *_restorer;
+	Restorer           *_restorer; // TODO: Is this pointer required?
 	/**
 	 * Struct for custom / intercepted services
 	 */

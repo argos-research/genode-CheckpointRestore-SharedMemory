@@ -23,7 +23,7 @@
 namespace Rtcr {
 	class Checkpointer;
 
-	constexpr bool checkpointer_verbose_debug = true;
+	constexpr bool checkpointer_verbose_debug = false;
 }
 
 

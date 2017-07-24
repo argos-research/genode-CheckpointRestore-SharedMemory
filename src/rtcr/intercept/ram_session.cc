@@ -37,13 +37,15 @@ Managed_region_map_info *Fault_handler::_find_faulting_mrm_info()
 
 void Fault_handler::_handle_fault()
 {
+	Genode::log("Fault_handler::_handle_fault()");
+
 	// Find faulting Managed_region_info
 	Managed_region_map_info *faulting_mrm_info = _find_faulting_mrm_info();
 
 	// Get state of faulting Region_map
 	Genode::Region_map::State state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
 
-	if(verbose_debug)
+	//if(verbose_debug)
 	{
 	Genode::log("Handle fault: Region map ",
 			faulting_mrm_info->region_map_cap, " state is ",

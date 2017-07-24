@@ -128,7 +128,7 @@ private:
 	Fault_handler            _page_fault_handler;
 	/**
 	 * Size of Dataspaces which are associated with the managed dataspace
-	 * _granularity is a multiple of a pagesize (4096 Byte)
+	 * _granularity is a multiple of a pagesize (4096 Byte) !!! misleading
 	 * Zero means, no managed dataspaces are used
 	 */
 	Genode::size_t           _granularity;

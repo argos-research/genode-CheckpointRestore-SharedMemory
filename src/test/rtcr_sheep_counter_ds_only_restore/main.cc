@@ -28,10 +28,10 @@ public:
 		using namespace Genode;
 		Timer::Connection timer { env };
 
-		const size_t counter_dataspace_size = 4 * 4096;
-		const size_t granularity = 4096;
+		const size_t counter_dataspace_size = 5 * 4096;
+		const size_t granularity = 1;
 
-		Target_child target_child_checkpointed { env, heap, parent_services, "sheep_counter", granularity };
+		Target_child target_child_checkpointed { env, heap, parent_services, "sheep_counter_extended", granularity };
 		target_child_checkpointed.start();
 
 		timer.msleep(5000);
@@ -44,6 +44,12 @@ public:
 
 		log("Checkpoint complete! --------------------------------------------------");
 
+		timer.msleep(2000);
+		log("Checkpoint! --------------------------------------------------");
+		ckpt.checkpoint();
+		log("Checkpoint complete! --------------------------------------------------");
+
+		// print checkpointed RAM session data and find info for dataspace with matching size
 		log("Stored data of the RAM service in target_state:");
 		Stored_ram_session_info *stored_ram_session_info = target_state._stored_ram_sessions.first();
 		Stored_ram_dataspace_info *counter_stored_ram_dataspace_info = nullptr;
@@ -70,7 +76,7 @@ public:
 		log("Checkpointed child paused.");
 
 		log("Restore!    --------------------------------------------------");
-		Target_child target_child_restored { env, heap, parent_services, "sheep_counter", 0 };
+		Target_child target_child_restored { env, heap, parent_services, "sheep_counter_extended", 0 };
 		log("Starting new child...");
 		target_child_restored.start();
 		log("Waiting for child to attach dataspace...");
@@ -80,11 +86,13 @@ public:
 		while(!restored_child_ram_dataspace_capability) {
 			restored_child_ram_dataspace_capability =
 					get_Ram_dataspace_capability_with_size(counter_dataspace_size,
-																								 target_child_restored.custom_services().ram_root);
+							target_child_restored.custom_services().ram_root);
 		}
 
-		log("Copying memory...");
+		// wait a bit to make sure that the sheep counter has initialized it's memory
+		timer.msleep(10);
 
+		log("Copying memory...");
 		target_child_restored.pause();
 		void *source_memory = env.rm().attach(counter_stored_ram_dataspace_info->memory_content);
 		void *dest_memory = env.rm().attach(*restored_child_ram_dataspace_capability);
