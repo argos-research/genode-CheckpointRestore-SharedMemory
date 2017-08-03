@@ -2,7 +2,7 @@
 # Build
 #
 
-build { core init drivers/timer test/rtcr_mc_checkpointer test/rtcr_mc_counter test/rtcr_mc_validator }
+build { core init drivers/timer test/affinity_test_parent test/affinity_test_counter_child test/affinity_test_validator_child }
 
 create_boot_directory
 
@@ -24,7 +24,7 @@ install_config {
 		<service name="IRQ"/>
 	</parent-provides>
 	<affinity-space width="4" />	
-	<affinity xpos="0" width="1" />	
+#	<affinity xpos="0" width="1" />	
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
@@ -32,11 +32,9 @@ install_config {
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Timer"/></provides>
 	</start>
-	<start name="rtcr_mc_checkpointer">
-		<affinity-space width="3" />
+	<start name="affinity_test_parent">
 		<resource name="RAM" quantum="1G"/>
 		<affinity xpos="1" width="3"/>
-		<service name="Timer"> <child name="timer"/> </service>
 	</start>
 </config>
 }
@@ -45,10 +43,9 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init timer rtcr_mc_checkpointer rtcr_mc_counter rtcr_mc_validator }
+build_boot_image { core init timer affinity_test_parent child_counter child_validator }
 
 append qemu_args " -nographic -smp 4 "
 
-#run_genode_until "3 sheeps.*\n" 40
 run_genode_until forever
  

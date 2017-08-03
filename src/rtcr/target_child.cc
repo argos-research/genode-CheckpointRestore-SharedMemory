@@ -135,6 +135,7 @@ Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_roo
 	Genode::snprintf(args_buf, sizeof(args_buf), "ram_quota=%u, label=\"%s\"", 20*1024*sizeof(long), label);
 
 	// Issuing session method of pd_root
+//	Genode::Session_capability pd_cap = pd_root.session(args_buf, affinity);
 	Genode::Session_capability pd_cap = pd_root.session(args_buf, affinity);
 
 	// Find created RPC object in pd_root's list

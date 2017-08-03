@@ -144,6 +144,7 @@ public:
 	~Ram_session_component();
 
 	Genode::Ram_session_capability parent_cap() { return _parent_ram.cap(); }
+//	Genode::Ram_connection parent_ram() { return _parent_ram; }
 
 	Ram_session_info &parent_state() { return _parent_state; }
 	Ram_session_info const &parent_state() const { return _parent_state; }

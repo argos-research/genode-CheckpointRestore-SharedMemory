@@ -146,15 +146,14 @@ private:
 		/*
 		 *  Multicore validator session component
 		 */
-//		Validator_session_component &validator;
+
 
 		Resources(Genode::Env &env, const char *label, Custom_services &custom_services, const Genode::Affinity &affinity);
 		~Resources();
 
-		Pd_session_component &init_pd(const char *label, Pd_root &pd_root, const Genode::Affinity &aff);
-		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, const Genode::Affinity &aff);
-		Ram_session_component &init_ram(const char *label, Ram_root &ram_root, const Genode::Affinity &aff);
-//		Validator_session_component &init_validator(const char *label, Validator_root &validator_root);
+		Pd_session_component &init_pd(const char *label, Pd_root &pd_root, const Genode::Affinity &affinity);
+		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, const Genode::Affinity &affinity);
+		Ram_session_component &init_ram(const char *label, Ram_root &ram_root, const Genode::Affinity &affinity);
 	} _resources;
 
 	/**
