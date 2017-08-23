@@ -17,6 +17,8 @@ SRC_CC += main.cc \
 
 LIBS   += base
 
+INC_DIR += $(BASE_DIR)/../base-focnados/src/include
+
 vpath pd_session.cc            $(REP_DIR)/src/rtcr/intercept
 vpath cpu_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath ram_session.cc           $(REP_DIR)/src/rtcr/intercept
