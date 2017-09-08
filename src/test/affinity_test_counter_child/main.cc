@@ -16,12 +16,10 @@
 #include <rm_session/connection.h>
 #include <region_map/client.h>
 
-#include "../../rtcr/multicore/validator_session/connection.h"
+//#include "../../rtcr/multicore/validator_session/connection.h"
 #include "../../rtcr/util/sizes.h"
 
-namespace Fiasco {
-#include <l4/sys/kdebug.h>
-}
+
 
 Genode::size_t Component::stack_size() { return 16*1024; }
 

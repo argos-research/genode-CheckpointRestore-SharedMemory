@@ -87,7 +87,7 @@ struct Main
 		** to define two affinities with a subspace of 1, so every child should run on one dedicated core
 		** while the parent takes the other ?
 		**
-		** CORES:	O		O		O		O
+		** CORES:	O		1		2		3
 		** 			^		^		^		^
 		** 		(	|		|		|		|	) Init subspace by run script
 		** 			|	(	|		|		|	) Parent subspace by run script
@@ -96,8 +96,8 @@ struct Main
 		** 		  INIT	 PARENT COUNTER  VALIDATOR
 		*/
 
-		const Affinity &aff_count{Genode::Affinity::Space(1), Genode::Affinity::Location(1, 0)};
-		const Affinity &aff_val{Genode::Affinity::Space(1), Genode::Affinity::Location(2, 0)};
+		const Affinity &aff_count{Genode::Affinity::Space(1), Genode::Affinity::Location(2, 0)};
+		const Affinity &aff_val{Genode::Affinity::Space(1), Genode::Affinity::Location(3, 0)};
 
 
 
@@ -156,6 +156,9 @@ struct Main
 		// Create the initial thread and pd-local region map for the child validator
 		Child::Initial_thread child_validator_it(cpu_v, pd_v.cap(), "child_validator_it");
 		Region_map_client rm_v(pd_v.address_space());
+
+		Thread_capability t_cap = cpu_v.create_thread(pd_v.cap(), "Child running Thread", cpu_v.affinity_space().location_of_index(0), Cpu_session::Weight());
+		log(t_cap.data());
 
 		// Create the actual child
 		validator = new (heap) Child (

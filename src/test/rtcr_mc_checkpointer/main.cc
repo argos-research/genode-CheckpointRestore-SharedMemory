@@ -54,11 +54,11 @@ struct Rtcr::Main
 
 		Timer::Connection timer { env };
 
-//		const Genode::Affinity &aff_count{Genode::Affinity::Space(2), Genode::Affinity::Location(0, 0)};
-//		const Genode::Affinity &aff_val{Genode::Affinity::Space(2), Genode::Affinity::Location(1, 0)};
+		const Genode::Affinity &aff_count{Genode::Affinity::Space(1), Genode::Affinity::Location(0, 0)};
+		const Genode::Affinity &aff_val{Genode::Affinity::Space(1), Genode::Affinity::Location(1, 0)};
 
-		const Genode::Affinity &aff_count{Genode::Affinity::Space(1), Genode::Affinity::Location(1, 0)};
-		const Genode::Affinity &aff_val{Genode::Affinity::Space(1), Genode::Affinity::Location(2, 0)};
+//		const Genode::Affinity &aff_count{Genode::Affinity::Space(1), Genode::Affinity::Location(1, 0)};
+//		const Genode::Affinity &aff_val{Genode::Affinity::Space(1), Genode::Affinity::Location(2, 0)};
 
 
 		Target_state state(env, heap);
