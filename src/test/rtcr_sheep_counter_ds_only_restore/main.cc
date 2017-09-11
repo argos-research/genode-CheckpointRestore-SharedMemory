@@ -75,7 +75,7 @@ public:
 		target_child_checkpointed.pause();
 		log("Checkpointed child paused.");
 
-		log("Restore!    --------------------------------------------------");
+		log("Restore!    ----------------------------------------------------------------------------------------------------------------------------------");
 		Target_child target_child_restored { env, heap, parent_services, "sheep_counter_extended", 0 };
 		log("Starting new child...");
 		target_child_restored.start();

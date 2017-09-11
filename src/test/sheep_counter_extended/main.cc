@@ -12,7 +12,7 @@ class Rtcr::Main
 {
 	enum {
 		ROOT_STACK_SIZE = 16*1024,
-		WRITE_ADDRESS_COUNT = 20,
+		WRITE_ADDRESS_COUNT = 3,
 		PRIME = 1423,
 		TESTED_DATASPACE_SIZE = 5 * 4096,
 		HASH_OFFSET = 4
@@ -31,20 +31,11 @@ public:
 
 		Dataspace_capability ds_cap = env.ram().alloc(TESTED_DATASPACE_SIZE);
 		unsigned int *addr = env.rm().attach(ds_cap);
-		unsigned int &n = addr[0];
+		unsigned volatile int &n = addr[0];
 		n = 1;
-
-		log("writing to addresses:");
-
-		for(int i = 0; i < WRITE_ADDRESS_COUNT; i++) {
-			log(hashFunction(TESTED_DATASPACE_SIZE, i));
-		}
 
 		while(1)
 		{
-			writeTestValues(n, (void *) addr);
-			log(n, " sheep. zzZ");
-
 			/*
 			 * Busy waiting is used here to avoid pausing this component during an RPC call to the timer component.
 			 * This could cause a resume call to this component to fail.
@@ -52,31 +43,42 @@ public:
 			for(int i = 0; i < 100000000; i++)
 				__asm__("NOP");
 
-			bool correct = verifyTestValues(n, (void *) addr);
+			bool correct = verifyTestValues(n - 1, (char *) addr);
 			if (correct)
 				log("Memory content verified!");
 			else
 				log("ERROR! Memory content is not correct!");
 
+			log("writing test values...");
+			writeTestValues(n, (char *) addr);
+			log(n, " sheep. zzZ");
 			n++;
 		}
 	}
 
-	void writeTestValues(int n, void *baseAddress) {
+	void writeTestValues(int n, char *baseAddress) {
 		for(int i = 0; i < WRITE_ADDRESS_COUNT; i++) {
-			*((int *) (baseAddress + hashFunction(TESTED_DATASPACE_SIZE, i))) = i + n;
+			char *address = baseAddress + hashFunction(TESTED_DATASPACE_SIZE, n * WRITE_ADDRESS_COUNT + i);
+			Genode::log("write to ", (void*) address);
+			*((int *) address) = i + n + 1;
 		}
 	}
 
-	bool verifyTestValues(int n, void *baseAddress) {
-		bool correct = true;
+	bool verifyTestValues(int n, char *baseAddress) {
+		//Genode::log("verify test values for n == ", n);
 
 		for(int i = 0; i < WRITE_ADDRESS_COUNT; i++) {
-			if (*((int *) (baseAddress + hashFunction(TESTED_DATASPACE_SIZE, i))) != i + n)
-				correct = false;
+			char *address = baseAddress + hashFunction(TESTED_DATASPACE_SIZE, n * WRITE_ADDRESS_COUNT + i);
+			Genode::log("read from", (void*) address, "...");
+			if (*((int *) (address)) != i + n + 1) {
+				Genode::log("not correct!");
+				return false;
+			}
+
+			Genode::log("correct!");
 		}
 
-		return correct;
+		return true;
 	}
 
 	int hashFunction(int upperBound, int i) {

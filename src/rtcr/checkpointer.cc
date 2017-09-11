@@ -11,6 +11,7 @@
 
 using namespace Rtcr;
 
+/* removes all elements from a list and frees their memory */
 template<typename T>
 void Checkpointer::_destroy_list(Genode::List<T> &list)
 {
@@ -20,6 +21,8 @@ void Checkpointer::_destroy_list(Genode::List<T> &list)
 		Genode::destroy(_alloc, elem);
 	}
 }
+
+/* why are the following lines nessesary? */
 template void Checkpointer::_destroy_list(Genode::List<Kcap_badge_info> &list);
 template void Checkpointer::_destroy_list(Genode::List<Dataspace_translation_info> &list);
 template void Checkpointer::_destroy_list(Genode::List<Ref_badge_info> &list);
@@ -41,7 +44,7 @@ void Checkpointer::_destroy_list(Genode::List<Simplified_managed_dataspace_info>
 	}
 }
 
-
+/* searches the capability map and stores contained capabilities as Kcap_badge_info objects */
 Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 {
 	using Genode::log;
@@ -148,6 +151,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 
 
 Genode::List<Ref_badge_info> Checkpointer::_mark_and_attach_designated_dataspaces(Attached_region_info &ar_info)
+/* marks infos by inserting them into the returned list */
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
@@ -176,6 +180,7 @@ Genode::List<Ref_badge_info> Checkpointer::_mark_and_attach_designated_dataspace
 
 
 void Checkpointer::_detach_and_unmark_designated_dataspaces(Genode::List<Ref_badge_info> &badge_infos, Attached_region_info &ar_info)
+/* not really unmarking anything */
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
@@ -1301,7 +1306,10 @@ Genode::List<Ref_badge_info> Checkpointer::_create_region_map_dataspaces_list(
 	return result_list;
 }
 
-
+/*
+ * Translates Ram_dataspace_info-, Managed_region_map_info- and Designated_dataspace_info-objects to
+ * Simplified_managed_dataspace_info- and Simplified_designated_ds_info-objects
+ */
 void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
@@ -1314,9 +1322,10 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 		Ram_dataspace_info *ramds_info = ram_session->parent_state().ram_dataspaces.first();
 		while(ramds_info)
 		{
-			// RAM dataspace is managed
+
 			if(ramds_info->mrm_info)
 			{
+				// RAM dataspace is managed
 				Genode::List<Sim_dd_info> sim_dd_infos;
 				Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();
 				while(dd_info)
@@ -1324,7 +1333,7 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 					Genode::Ram_dataspace_capability dd_info_cap =
 							Genode::reinterpret_cap_cast<Genode::Ram_dataspace>(dd_info->cap);
 
-					sim_dd_infos.insert(new (_alloc) Sim_dd_info(dd_info_cap, dd_info->rel_addr, dd_info->size));
+					sim_dd_infos.insert(new (_alloc) Sim_dd_info(dd_info_cap, dd_info->rel_addr, dd_info->size, dd_info->attached));
 
 					dd_info = dd_info->next();
 				}
@@ -1387,7 +1396,8 @@ void Checkpointer::_checkpoint_dataspaces()
 				while(sdd_info)
 				{
 					Genode::log("checkpoint managed dataspace...");
-					_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
+					if(sdd_info->modified)
+						_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
 
 					sdd_info = sdd_info->next();
 				}
