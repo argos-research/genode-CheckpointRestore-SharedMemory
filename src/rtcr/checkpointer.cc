@@ -1324,7 +1324,7 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 					Genode::Ram_dataspace_capability dd_info_cap =
 							Genode::reinterpret_cap_cast<Genode::Ram_dataspace>(dd_info->cap);
 
-					sim_dd_infos.insert(new (_alloc) Sim_dd_info(dd_info_cap, dd_info->rel_addr, dd_info->size));
+					sim_dd_infos.insert(new (_alloc) Sim_dd_info(dd_info_cap, dd_info->rel_addr, dd_info->size, dd_info->attached));
 
 					dd_info = dd_info->next();
 				}
@@ -1386,7 +1386,10 @@ void Checkpointer::_checkpoint_dataspaces()
 						smd_info->designated_dataspaces.first();
 				while(sdd_info)
 				{
-					_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
+					if(sdd_info->modified)
+					{
+						_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
+					}
 
 					sdd_info = sdd_info->next();
 				}

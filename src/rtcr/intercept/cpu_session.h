@@ -75,6 +75,12 @@ private:
 			Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb);
 	void _kill_thread(Cpu_thread_component &cpu_thread);
 
+	/*
+	 * KIA4SM method
+	 */
+	Cpu_thread_component &_create_fp_edf_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
+			Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb, unsigned priority, unsigned deadline);
+
 public:
 	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 			Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase);
@@ -104,6 +110,20 @@ public:
 	int ref_account(Genode::Cpu_session_capability c) override;
 	int transfer_quota(Genode::Cpu_session_capability c, Genode::size_t q) override;
 	Genode::Capability<Native_cpu> native_cpu() override;
+
+	/*
+	 * KIA4SM methods
+	 */
+
+	Genode::Thread_capability create_fp_edf_thread(Genode::Pd_session_capability pd_cap,
+			Name const &name, Genode::Affinity::Location affinity, Weight weight,
+			Genode::addr_t utcb, unsigned priority, unsigned deadline) override;
+	int set_sched_type(unsigned core, unsigned sched_type) override;
+	int get_sched_type(unsigned core) override;
+	void set(Genode::Ram_session_capability ram_cap) override;
+	void deploy_queue(Genode::Dataspace_capability ds) override;
+	void rq(Genode::Dataspace_capability ds) override;
+	void dead(Genode::Dataspace_capability ds) override;
 };
 
 

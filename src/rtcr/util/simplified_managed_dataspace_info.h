@@ -32,9 +32,10 @@ struct Rtcr::Simplified_managed_dataspace_info : Genode::List<Simplified_managed
 		Genode::Ram_dataspace_capability const dataspace_cap;
 		Genode::addr_t const addr;
 		Genode::size_t const size;
+		bool const modified;
 
-		Simplified_designated_ds_info(Genode::Ram_dataspace_capability cap, Genode::addr_t addr, Genode::size_t size)
-		: dataspace_cap(cap), addr(addr), size(size) {}
+		Simplified_designated_ds_info(Genode::Ram_dataspace_capability cap, Genode::addr_t addr, Genode::size_t size, bool modified)
+		: dataspace_cap(cap), addr(addr), size(size), modified(modified) {}
 
 		void print(Genode::Output &output) const
 		{

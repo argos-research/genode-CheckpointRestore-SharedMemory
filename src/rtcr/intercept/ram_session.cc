@@ -372,6 +372,13 @@ Genode::size_t Ram_session_component::used()
 }
 
 
+void Ram_session_component::set_label(char *label)
+{
+	// TODO verbose_debug
+	_parent_ram.set_label(label);
+}
+
+
 Ram_session_component *Ram_root::_create_session(const char *args)
 {
 	if(verbose_debug) Genode::log("Ram_root::\033[33m", __func__, "\033[0m(", args,")");
