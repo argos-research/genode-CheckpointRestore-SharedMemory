@@ -3,8 +3,8 @@ package protobuf;
 
 message Stored_ram_dataspace_info{
 	Ram_dataspace_capability const memory_content;
-	size_t                   const size;
-	Cache_attribute          const cached;
-	bool                             const managed;
-	size_t                   const timestamp;
+	size_t                   size = 1;
+	Cache_attribute          cached = 2;
+	bool                     managed = 3;
+	size_t                   timestamp = 4;
 }

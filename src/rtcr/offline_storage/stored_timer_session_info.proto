@@ -2,7 +2,7 @@ syntax = "proto3";
 package protobuf;
 
 message Stored_timer_session_info{
-  	uint16_t 	 sigh_badge;
-	unsigned         timeout;
-	bool             periodic;
+  	uint16_t 	 sigh_badge = 1;
+	unsigned         timeout = 2;
+	bool             periodic = 3;
 }

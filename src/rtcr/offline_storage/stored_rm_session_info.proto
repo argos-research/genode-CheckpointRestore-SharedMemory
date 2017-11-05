@@ -4,5 +4,5 @@ package protobuf;
 import "stored_region_map_info.proto"
 
 message Stored_rom_session_info{
-  repeated Stored_region_map_info stored_region_map_infos;
+  repeated Stored_region_map_info stored_region_map_infos = 1;
 }

@@ -2,7 +2,7 @@ syntax = "proto3";
 package protobuf;
 
 message Stored_general_info{
-	addr_t   const kcap;
-	uint16_t const badge;
-	bool             const bootstrapped;
+	addr_t   kcap = 1;
+	uint16_t badge = 2;
+	bool     bootstrapped = 3;
 }

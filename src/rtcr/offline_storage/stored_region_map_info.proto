@@ -4,8 +4,8 @@ package protobuf;
 import "stored_attached_region_info.proto";
 
 message Stored_region_map_info{
-	size_t   const size;
-	uint16_t const ds_badge;
-	uint16_t sigh_badge;
-	repeated Stored_attached_region_info stored_attached_region_infos;
+	size_t   size = 1;
+	uint16_t ds_badge = 2;
+	uint16_t sigh_badge = 3;
+	repeated Stored_attached_region_info stored_attached_region_infos = 4;
 }
