@@ -1,0 +1,7 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_signal_context_info{
+  uint16_t signal_source_badge;
+  unsigned long imprint;
+}

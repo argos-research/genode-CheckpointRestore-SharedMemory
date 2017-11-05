@@ -1,0 +1,10 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_ram_dataspace_info{
+	Ram_dataspace_capability const memory_content;
+	size_t                   const size;
+	Cache_attribute          const cached;
+	bool                             const managed;
+	size_t                   const timestamp;
+}

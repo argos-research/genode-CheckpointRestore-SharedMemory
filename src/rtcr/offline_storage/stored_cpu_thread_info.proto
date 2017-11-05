@@ -1,0 +1,15 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_cpu_thread_info{
+	uint16_t            const pd_session_badge;
+	Cpu_session::Name   const name;
+	Cpu_session::Weight const weight;
+	addr_t              const utcb;
+	bool started;
+	bool paused;
+	bool single_step;
+	Affinity::Location affinity;
+	uint16_t           sigh_badge;
+	Thread_state       ts;
+}

@@ -1,0 +1,7 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_rom_session_info{
+	uint16_t dataspace_badge;
+	uint16_t sigh_badge;
+}

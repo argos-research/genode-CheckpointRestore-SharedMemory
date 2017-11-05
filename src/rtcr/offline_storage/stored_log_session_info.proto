@@ -1,0 +1,6 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_log_session_info{
+
+}

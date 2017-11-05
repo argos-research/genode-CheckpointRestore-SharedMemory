@@ -1,0 +1,13 @@
+syntax = "proto3";
+package protobuf;
+
+import "ram_dataspace_capability.proto";
+
+message Stored_attached_region_info{
+	uint16_t                 const attached_ds_badge;
+	Ram_dataspace_capability const memory_content;
+	size_t size;
+	off_t offset;
+	addr_t rel_addr;
+	bool executable;
+}
