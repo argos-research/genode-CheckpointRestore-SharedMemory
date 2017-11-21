@@ -1,0 +1,7 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_signal_context_info{
+  uint32 signal_source_badge = 1;
+  uint64 imprint = 2;
+}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_attached_region_info{
+	uint32 attached_ds_badge = 1;
+	uint32 size = 2;
+	uint32 offset = 3;
+	uint32 rel_addr = 4;
+	bool executable = 5;
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_ram_dataspace_info{
+	uint32                   size = 1;
+	uint32          cached = 2;
+	bool                     managed = 3;
+	uint32                   timestamp = 4;
+}

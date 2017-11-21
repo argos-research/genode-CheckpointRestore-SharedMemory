@@ -1,0 +1,15 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_cpu_thread_info{
+	uint32 pd_session_badge = 1;
+	string name = 2;
+	string weight = 3;
+	uint32 utcb = 4;
+	bool started = 5;
+	bool paused = 6;
+	bool single_step = 7;
+	uint32 affinity = 8;
+	uint32           sigh_badge = 9;
+	uint32       ts = 10;
+}

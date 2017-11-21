@@ -1,0 +1,8 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_timer_session_info{
+  	uint32 	 sigh_badge = 1;
+	uint32         timeout = 2;
+	bool             periodic = 3;
+}

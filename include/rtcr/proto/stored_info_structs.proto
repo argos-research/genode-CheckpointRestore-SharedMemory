@@ -1,0 +1,8 @@
+syntax = "proto3";
+package protobuf;
+
+message Stored_general_info{
+	uint32   kcap = 1;
+	uint32	 badge = 2;
+	bool     bootstrapped = 3;
+}
