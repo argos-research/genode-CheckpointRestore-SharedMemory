@@ -4,8 +4,8 @@
  * \date   2016-08-04
  */
 
-#include "target_child.h"
-#include "restorer.h"
+#include "rtcr/target_child.h"
+#include "rtcr/restorer.h"
 
 namespace Fiasco {
 #include <l4/sys/kdebug.h>

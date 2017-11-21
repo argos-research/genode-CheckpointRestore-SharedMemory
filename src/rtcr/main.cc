@@ -11,8 +11,8 @@
 #include <base/log.h>
 
 /* Rtcr includes */
-#include "target_child.h"
-#include "rtcr_root.h"
+#include "rtcr/target_child.h"
+#include "rtcr/rtcr_root.h"
 
 namespace Rtcr {
 	struct Main;

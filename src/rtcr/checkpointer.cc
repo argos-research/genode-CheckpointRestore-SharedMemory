@@ -4,7 +4,7 @@
  * \date   2016-10-26
  */
 
-#include "checkpointer.h"
+#include "rtcr/checkpointer.h"
 //#include "util/debug.h"
 #include <base/internal/cap_map.h>
 #include <base/internal/cap_alloc.h>

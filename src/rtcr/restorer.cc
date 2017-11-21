@@ -4,9 +4,9 @@
  * \date   2016-10-26
  */
 
-#include "restorer.h"
-#include "util/sort.h"
-#include "util/debug.h"
+#include "rtcr/restorer.h"
+#include "rtcr/util/sort.h"
+#include "rtcr/util/debug.h"
 #include <base/internal/cap_map.h>
 #include <base/internal/cap_alloc.h>
 
@@ -1319,7 +1319,7 @@ void Restorer::_restore_dataspace_content(Genode::Dataspace_capability dst_ds_ca
 	_state._env.rm().detach(dst_start_addr);
 }
 
-#include "util/debug.h"
+#include "rtcr/util/debug.h"
 
 void Restorer::_start_threads(Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions)
 {

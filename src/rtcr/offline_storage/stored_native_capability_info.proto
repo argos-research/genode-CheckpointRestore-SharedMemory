@@ -1,6 +1,0 @@
-syntax = "proto3";
-package protobuf;
-
-message Stored_native_capability_info{
-  uint16_t signal_source_badge = 1;
-}

@@ -1,6 +1,0 @@
-syntax = "proto3";
-package protobuf;
-
-message Stored_signal_source_info{
-  
-}

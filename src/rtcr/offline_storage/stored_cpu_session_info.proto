@@ -1,9 +1,0 @@
-syntax = "proto3";
-package protobuf;
-
-import "stored_cpu_thread_info.proto";
-
-message Stored_cpu_session_info{
-  uint16_t sigh_badge = 1;
-  repeated Stored_cpu_thread_info stored_cpu_thread_infos = 2;
-}
