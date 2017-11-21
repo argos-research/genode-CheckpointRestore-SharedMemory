@@ -19,15 +19,15 @@ LIBS   += base
 
 INC_DIR += $(BASE_DIR)/../base-foc/src/include
 
-vpath pd_session.cc            $(REP_DIR)/src/rtcr/intercept
-vpath cpu_session.cc           $(REP_DIR)/src/rtcr/intercept
-vpath ram_session.cc           $(REP_DIR)/src/rtcr/intercept
-vpath rom_session.cc           $(REP_DIR)/src/rtcr/intercept
-vpath rm_session.cc            $(REP_DIR)/src/rtcr/intercept
-vpath log_session.cc           $(REP_DIR)/src/rtcr/intercept
-vpath timer_session.cc         $(REP_DIR)/src/rtcr/intercept
-vpath cpu_thread_component.cc  $(REP_DIR)/src/rtcr/intercept
-vpath region_map_component.cc  $(REP_DIR)/src/rtcr/intercept
+vpath pd_session.cc            $(REP_DIR)/include/rtcr/intercept
+vpath cpu_session.cc           $(REP_DIR)/include/rtcr/intercept
+vpath ram_session.cc           $(REP_DIR)/include/rtcr/intercept
+vpath rom_session.cc           $(REP_DIR)/include/rtcr/intercept
+vpath rm_session.cc            $(REP_DIR)/include/rtcr/intercept
+vpath log_session.cc           $(REP_DIR)/include/rtcr/intercept
+vpath timer_session.cc         $(REP_DIR)/include/rtcr/intercept
+vpath cpu_thread_component.cc  $(REP_DIR)/include/rtcr/intercept
+vpath region_map_component.cc  $(REP_DIR)/include/rtcr/intercept
 vpath target_child.cc          $(REP_DIR)/src/rtcr
 vpath target_state.cc          $(REP_DIR)/src/rtcr
 vpath checkpointer.cc          $(REP_DIR)/src/rtcr
