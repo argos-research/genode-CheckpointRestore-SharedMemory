@@ -36,6 +36,13 @@ struct Rtcr::Stored_cpu_session_info : Stored_session_info, Genode::List<Stored_
 		stored_cpu_thread_infos()
 	{ }
 
+	Stored_cpu_session_info(Genode::uint16_t sigh_badge)
+	:
+		Stored_session_info("","",0,0,false),
+		sigh_badge(sigh_badge),
+		stored_cpu_thread_infos()
+	{ }
+
 	Stored_cpu_session_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

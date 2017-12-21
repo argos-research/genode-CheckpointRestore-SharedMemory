@@ -38,15 +38,32 @@ struct Rtcr::Stored_cpu_thread_info : Stored_normal_info, Genode::List<Stored_cp
 				cpu_thread.cap().local_name(),
 				cpu_thread.parent_state().bootstrapped),
 		pd_session_badge(cpu_thread.parent_state().pd_session_cap.local_name()),
-		name        (cpu_thread.parent_state().name),
-		weight      (cpu_thread.parent_state().weight),
-		utcb        (cpu_thread.parent_state().utcb),
-		started     (cpu_thread.parent_state().started),
-		paused      (cpu_thread.parent_state().paused),
-		single_step (cpu_thread.parent_state().single_step),
-		affinity    (cpu_thread.parent_state().affinity),
-		sigh_badge  (cpu_thread.parent_state().sigh.local_name()),
-		ts          ()
+		name        	(cpu_thread.parent_state().name),
+		weight      	(cpu_thread.parent_state().weight),
+		utcb        	(cpu_thread.parent_state().utcb),
+		started     	(cpu_thread.parent_state().started),
+		paused      	(cpu_thread.parent_state().paused),
+		single_step 	(cpu_thread.parent_state().single_step),
+		affinity    	(cpu_thread.parent_state().affinity),
+		sigh_badge  	(cpu_thread.parent_state().sigh.local_name()),
+		ts          	()
+	{ }
+
+	Stored_cpu_thread_info(Genode::uint16_t _pd_session_badge, Genode::Cpu_session::Name _name, 
+		Genode::Cpu_session::Weight _weight, Genode::addr_t _utcb, bool _started, bool _paused, 
+		bool _single_step, Genode::Affinity::Location _affinity, Genode::uint16_t _sigh_badge)
+	:
+		Stored_normal_info(0,0,false),
+		pd_session_badge(_pd_session_badge),
+		name        	(_name),
+		weight      	(_weight),
+		utcb        	(_utcb),
+		started     	(_started),
+		paused      	(_paused),
+		single_step 	(_single_step),
+		affinity    	(_affinity),
+		sigh_badge  	(_sigh_badge),
+		ts          	()
 	{ }
 
 	Stored_cpu_thread_info *find_by_name(const char *name)
