@@ -34,6 +34,12 @@ struct Rtcr::Stored_ram_session_info : Stored_session_info, Genode::List<Stored_
 		stored_ramds_infos()
 	{ }
 
+	Stored_ram_session_info()
+	:
+		Stored_session_info("","",0,"",false),
+		stored_ramds_infos()
+	{ }
+
 	Stored_ram_session_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

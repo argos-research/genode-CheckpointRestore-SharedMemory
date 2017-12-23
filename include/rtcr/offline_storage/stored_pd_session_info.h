@@ -46,6 +46,20 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
 		stored_linker_area(pd_session.linker_area_component(), targets_lin_kcap)
 	{ }
 
+	Stored_pd_session_info(	Stored_region_map_info stored_address_space, 
+				Stored_region_map_info stored_stack_area, 
+				Stored_region_map_info stored_linker_area)
+	:
+		Stored_session_info("","",0,"",false),
+		stored_context_infos(),
+		stored_source_infos(),
+		stored_native_cap_infos(),
+		stored_address_space(_stored_address_space),
+		stored_stack_area(_stored_stack_area),
+		stored_linker_area(_stored_linker_area)
+	{ }
+
+
 	Stored_pd_session_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

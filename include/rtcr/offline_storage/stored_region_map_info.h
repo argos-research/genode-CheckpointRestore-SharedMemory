@@ -39,6 +39,16 @@ struct Rtcr::Stored_region_map_info : Stored_normal_info, Genode::List<Stored_re
 		stored_attached_region_infos()
 	{ }
 
+	Stored_region_map_info(Genode::size_t _size,
+        			Genode::uint16_t _ds_badge,
+        			Genode::uint16_t _sigh_badge)
+	:
+		Stored_normal_info(0,"",false),
+		size(_size),
+        	ds_badge(_ds_badge),
+       		sigh_badge(_sigh_badge)
+	{ }
+
 	Stored_region_map_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

@@ -36,6 +36,14 @@ struct Rtcr::Stored_rom_session_info : Stored_session_info, Genode::List<Stored_
 		sigh_badge      (rom_session.parent_state().sigh.local_name())
 	{ }
 
+	Stored_rom_session_info(Genode::uint16_t _dataspace_badge,
+        			Genode::uint16_t _sigh_badge)
+	:
+		Stored_session_info("","",0,"",false),
+		dataspace_badge(_dataspace_badge),
+		sigh_badge(_sigh_badge)
+	{ }
+
 	Stored_rom_session_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

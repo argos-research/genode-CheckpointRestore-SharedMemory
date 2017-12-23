@@ -40,6 +40,22 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 		rel_addr   (info.rel_addr),
 		executable (info.executable)
 	{ }
+	
+	Stored_attached_region_info(Genode::uint16_t _attached_ds_badge,
+        				Genode::Ram_dataspace_capability _memory_content,
+        				Genode::size_t _size,
+        				Genode::off_t _offset,
+        				Genode::addr_t _rel_addr,
+        				bool _executable)
+	:
+		Stored_normal_info(0,"",false),
+		attached_ds_badge (_attached_ds_badge),
+                memory_content    (_memory_content),
+                size       (_size),
+                offset     (_offset),
+                rel_addr   (_rel_addr),
+                executable (_executable)
+        { }
 
 	Stored_attached_region_info *find_by_addr(Genode::addr_t addr)
 	{

@@ -32,6 +32,13 @@ struct Rtcr::Stored_signal_context_info : Stored_normal_info, Genode::List<Store
 		imprint(info.imprint)
 	{ }
 
+	Stored_signal_context_info(Genode::uint16_t _signal_source_badge, unsigned long _imprint)
+	:
+		Stored_normal_info(0,"",false),
+		signal_source_badge(_signal_source_badge),
+                imprint(_imprint)
+	{ }
+
 	Stored_signal_context_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)
