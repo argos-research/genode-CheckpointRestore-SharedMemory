@@ -1,0 +1,42 @@
+# Build program images
+build { core init drivers/timer app/rmcr test/sheepcount }
+
+# Create directory where boot files are written to
+create_boot_directory
+
+# Define XML configuration for init
+install_config {
+<config>
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+	<default-route>
+		<any-service><parent/><any-child/></any-service>
+	</default-route>
+	<start name="timer">
+		<resource name="RAM" quantum="10M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="rmcr">
+		<binary name="rmcr"/>
+		<resource name="RAM" quantum="10M"/>
+	</start>
+</config>
+}
+
+# Build boot files from source binaries
+build_boot_image { core init timer rmcr sheepcount }
+
+# Configure Qemu
+append qemu_args " -m 64 -nographic"
+
+# Execute test in Qemu
+run_genode_until "--- timer test finished ---" 30
