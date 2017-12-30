@@ -1,9 +1,12 @@
 syntax = "proto3";
 package protobuf;
 
+import "stored_normal_info.proto";
+
 message Stored_ram_dataspace_info{
 	uint32                   size = 1;
 	uint32          cached = 2;
 	bool                     managed = 3;
 	uint32                   timestamp = 4;
+	Stored_normal_info normal_info = 5;
 }

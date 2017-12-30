@@ -1,6 +1,8 @@
 syntax = "proto3";
 package protobuf;
 
+import "stored_normal_info.proto";
+
 message Stored_cpu_thread_info{
 	uint32 pd_session_badge = 1;
 	string name = 2;
@@ -12,4 +14,5 @@ message Stored_cpu_thread_info{
 	uint32 affinity = 8;
 	uint32           sigh_badge = 9;
 	uint32       ts = 10;
+	Stored_normal_info normal_info= 11;
 }

@@ -1,6 +1,8 @@
 syntax = "proto3";
 package protobuf;
 
+import "stored_normal_info.proto";
+
 message Stored_signal_source_info{
-  
+  Stored_normal_info normal_info = 1;
 }

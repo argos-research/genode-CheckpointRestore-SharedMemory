@@ -1,6 +1,8 @@
 syntax = "proto3";
 package protobuf;
 
-message Stored_log_session_info{
+import "stored_session_info.proto";
 
+message Stored_log_session_info{
+	Stored_session_info session_info = 1;
 }

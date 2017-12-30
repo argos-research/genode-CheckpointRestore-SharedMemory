@@ -1,7 +1,10 @@
 syntax = "proto3";
 package protobuf;
 
+import "stored_session_info.proto";
+
 message Stored_rom_session_info{
 	uint32 dataspace_badge = 1;
 	uint32 sigh_badge = 2;
+	Stored_session_info session_info = 3;
 }

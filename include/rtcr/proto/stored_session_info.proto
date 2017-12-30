@@ -1,0 +1,10 @@
+syntax = "proto3";
+package protobuf;
+
+import "stored_general_info.proto";
+
+message Stored_session_info{
+	string   creation_args = 1;
+	string	 upgrade_args = 2;
+	Stored_general_info     general_info = 3;
+}

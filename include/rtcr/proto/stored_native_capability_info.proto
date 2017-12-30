@@ -1,6 +1,9 @@
 syntax = "proto3";
 package protobuf;
 
+import "stored_normal_info.proto";
+
 message Stored_native_capability_info{
   uint32 signal_source_badge = 1;
+  Stored_normal_info normal_info = 2;
 }

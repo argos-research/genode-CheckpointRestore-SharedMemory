@@ -2,10 +2,12 @@ syntax = "proto3";
 package protobuf;
 
 import "stored_attached_region_info.proto";
+import "stored_normal_info.proto";
 
 message Stored_region_map_info{
 	repeated Stored_attached_region_info stored_attached_region_infos = 1;
 	uint32   size = 2;
 	uint32   ds_badge = 3;
 	uint32   sigh_badge = 4;
+	Stored_normal_info normal_info = 5;
 }

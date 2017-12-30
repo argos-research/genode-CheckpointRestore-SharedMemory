@@ -5,12 +5,14 @@ import "stored_signal_context_info.proto";
 import "stored_signal_source_info.proto";
 import "stored_native_capability_info.proto";
 import "stored_region_map_info.proto";
+import "stored_session_info.proto";
 
 message Stored_pd_session_info {
 	repeated Stored_signal_context_info stored_context_infos = 1;
 	repeated Stored_signal_source_info stored_source_infos = 2;
 	repeated Stored_native_capability_info stored_native_cap_infos = 3;
-	//Stored_region_map_info stored_address_space = 4;
-	//Stored_region_map_info stored_stack_area = 5;
-	//Stored_region_map_info stored_linker_area = 6;
+	Stored_region_map_info stored_address_space = 4;
+	Stored_region_map_info stored_stack_area = 5;
+	Stored_region_map_info stored_linker_area = 6;
+	Stored_session_info session_info = 7;
 }

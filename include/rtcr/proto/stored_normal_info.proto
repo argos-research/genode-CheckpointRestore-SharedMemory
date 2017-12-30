@@ -1,0 +1,8 @@
+syntax = "proto3";
+package protobuf;
+
+import "stored_general_info.proto";
+
+message Stored_normal_info{
+	Stored_general_info general_info = 1;	
+}

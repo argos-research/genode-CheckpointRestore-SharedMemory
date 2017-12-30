@@ -2,7 +2,9 @@ syntax = "proto3";
 package protobuf;
 
 import "stored_ram_dataspace_info.proto";
+import "stored_session_info.proto";
 
 message Stored_ram_session_info{
   repeated Stored_ram_dataspace_info stored_ramds_infos = 1;
+  Stored_session_info session_info = 2;
 }

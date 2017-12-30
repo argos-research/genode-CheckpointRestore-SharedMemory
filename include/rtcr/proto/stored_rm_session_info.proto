@@ -2,7 +2,9 @@ syntax = "proto3";
 package protobuf;
 
 import "stored_region_map_info.proto";
+import "stored_session_info.proto";
 
 message Stored_rm_session_info{
   repeated Stored_region_map_info stored_region_map_infos = 1;
+  Stored_session_info session_info = 2;
 }
