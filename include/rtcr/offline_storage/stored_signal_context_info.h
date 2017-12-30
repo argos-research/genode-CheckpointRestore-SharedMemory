@@ -32,9 +32,12 @@ struct Rtcr::Stored_signal_context_info : Stored_normal_info, Genode::List<Store
 		imprint(info.imprint)
 	{ }
 
-	Stored_signal_context_info(Genode::uint16_t _signal_source_badge, unsigned long _imprint)
+	Stored_signal_context_info(Genode::addr_t kcap,
+                                        Genode::String<160> local_name,
+                                        bool bootstrapped,
+					Genode::uint16_t _signal_source_badge, unsigned long _imprint)
 	:
-		Stored_normal_info(0,"",false),
+		Stored_normal_info(kcap,local_name,bootstrapped),
 		signal_source_badge(_signal_source_badge),
                 imprint(_imprint)
 	{ }

@@ -26,6 +26,13 @@ struct Rtcr::Stored_signal_source_info : Stored_normal_info, Genode::List<Stored
 		Stored_normal_info(targets_kcap, info.cap.local_name(), info.bootstrapped)
 	{ }
 
+	Stored_signal_source_info(Genode::addr_t kcap,
+                                        Genode::String<160> local_name,
+                                        bool bootstrapped)
+	:
+		Stored_normal_info(kcap, local_name, bootstrapped)
+	{ }
+
 	Stored_signal_source_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

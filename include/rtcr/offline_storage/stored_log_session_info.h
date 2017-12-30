@@ -31,6 +31,15 @@ struct Rtcr::Stored_log_session_info : Stored_session_info, Genode::List<Stored_
 				log_session.parent_state().bootstrapped)
 	{ }
 
+	Stored_log_session_info(Genode::String<160> creation_args,
+                                        Genode::String<160> upgrade_args,
+                                        Genode::addr_t kcap,
+                                        Genode::String<160> local_name,
+                                        bool bootstrapped)
+        :
+                Stored_session_info(creation_args,upgrade_args,kcap,local_name,bootstrapped)
+	{ }
+
 	Stored_log_session_info *find_by_badge(Genode::uint16_t badge)
 	{
 		if(badge == this->badge)

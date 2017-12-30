@@ -38,13 +38,16 @@ struct Rtcr::Stored_ram_dataspace_info : Stored_normal_info, Genode::List<Stored
 		timestamp(info.timestamp())
 	{ }
 
-	Stored_ram_dataspace_info(Genode::Ram_dataspace_capability memory_content,
-        			Genode::size_t _size,
-        			Genode::Cache_attribute _cached,
-        			bool _managed,
-        			Genode::size_t _timestamp)
+	Stored_ram_dataspace_info(Genode::addr_t kcap,
+                                        Genode::String<160> local_name,
+                                        bool bootstrapped,
+					Genode::Ram_dataspace_capability memory_content,
+        				Genode::size_t _size,
+        				Genode::Cache_attribute _cached,
+        				bool _managed,
+        				Genode::size_t _timestamp)
 	:
-		Stored_normal_info(0,"",false),
+		Stored_normal_info(kcap,local_name,bootstrapped),
 		memory_content(_memory_content),
                 size(_size), cached(_cached), managed(_managed),
                 timestamp(_timestamp)

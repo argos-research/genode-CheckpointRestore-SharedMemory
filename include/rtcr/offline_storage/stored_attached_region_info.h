@@ -41,14 +41,17 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 		executable (info.executable)
 	{ }
 	
-	Stored_attached_region_info(Genode::uint16_t _attached_ds_badge,
+	Stored_attached_region_info(Genode::addr_t kcap,
+					Genode::String<160> local_name,
+					bool bootstrapped,
+					Genode::uint16_t _attached_ds_badge,
         				Genode::Ram_dataspace_capability _memory_content,
         				Genode::size_t _size,
         				Genode::off_t _offset,
         				Genode::addr_t _rel_addr,
         				bool _executable)
 	:
-		Stored_normal_info(0,"",false),
+		Stored_normal_info(kcap,local_name,bootstrapped),
 		attached_ds_badge (_attached_ds_badge),
                 memory_content    (_memory_content),
                 size       (_size),

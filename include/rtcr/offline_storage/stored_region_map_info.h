@@ -39,11 +39,14 @@ struct Rtcr::Stored_region_map_info : Stored_normal_info, Genode::List<Stored_re
 		stored_attached_region_infos()
 	{ }
 
-	Stored_region_map_info(Genode::size_t _size,
+	Stored_region_map_info(Genode::addr_t kcap,
+                                Genode::String<160> local_name,
+                                bool bootstrapped,
+				Genode::size_t _size,
         			Genode::uint16_t _ds_badge,
         			Genode::uint16_t _sigh_badge)
 	:
-		Stored_normal_info(0,"",false),
+		Stored_normal_info(local_name,local_name,bootstrapped),
 		size(_size),
         	ds_badge(_ds_badge),
        		sigh_badge(_sigh_badge)

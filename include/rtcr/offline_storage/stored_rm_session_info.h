@@ -34,9 +34,13 @@ struct Rtcr::Stored_rm_session_info : Stored_session_info, Genode::List<Stored_r
 		stored_region_map_infos()
 	{ }
 
-	Stored_rm_session_info()
+	Stored_rm_session_info(Genode::String<160> creation_args,
+                                        Genode::String<160> upgrade_args,
+                                        Genode::addr_t kcap,
+                                        Genode::String<160> local_name,
+                                        bool bootstrapped)
 	:
-		Stored_session_info("","",0,"",false),
+		Stored_session_info(creation_args,upgrade_args,kcap,local_name,bootstrapped),
 		stored_region_map_info()
 	{ }
 
