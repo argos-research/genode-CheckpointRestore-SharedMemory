@@ -213,6 +213,7 @@ void Component::construct(Genode::Env &env)
 				log("ignoring spurious fault signal");
 				continue;
 			}
+
 			address_space.processed(state);
 		}
     }
