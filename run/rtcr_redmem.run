@@ -31,7 +31,7 @@ install_config {
 		<provides><service name="Timer"/></provides>
 	</start>
 	<start name="target_redmem-tester">
-		<resource name="RAM" quantum="1G"/>
+		<resource name="RAM" quantum="32M"/>
 	</start>
 </config>}
 

@@ -34,13 +34,24 @@ struct Rtcr::Main
 
 		Timer::Connection timer { env };
 
-		Target_child child { env, heap, parent_services, "sheepcount", 0 };
+		Target_child child { env, heap, parent_services, "sheepcount", 1 };
 		child.start();
 
-		timer.msleep(3000);
+		Target_state ts(env, heap); 
+		Checkpointer ckpt(heap, child, ts);
 
-//		Target_state ts(env, heap);
-//		Checkpointer ckpt(heap, child, ts);
+        while(1)
+        {
+            timer.msleep(5000);
+//          child.pause();
+            ckpt.checkpoint();
+            timer.msleep(1000);
+            //resume() seems not reliable, thus call it multiple times
+            for(int i=0;i<1;i++)
+            	child.resume();
+        }
+        
+//      timer.msleep(3000);       
 //		ckpt.checkpoint();
 
 //		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
