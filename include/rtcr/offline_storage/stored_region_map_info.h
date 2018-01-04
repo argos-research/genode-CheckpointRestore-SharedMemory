@@ -40,7 +40,7 @@ struct Rtcr::Stored_region_map_info : Stored_normal_info, Genode::List<Stored_re
 	{ }
 
 	Stored_region_map_info(Genode::addr_t kcap,
-                                Genode::String<160> local_name,
+                                Genode::uint16_t local_name,
                                 bool bootstrapped,
 				Genode::size_t _size,
         			Genode::uint16_t _ds_badge,

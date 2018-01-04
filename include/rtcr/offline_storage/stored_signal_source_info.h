@@ -27,7 +27,7 @@ struct Rtcr::Stored_signal_source_info : Stored_normal_info, Genode::List<Stored
 	{ }
 
 	Stored_signal_source_info(Genode::addr_t kcap,
-                                        Genode::String<160> local_name,
+                                        Genode::uint16_t local_name,
                                         bool bootstrapped)
 	:
 		Stored_normal_info(kcap, local_name, bootstrapped)

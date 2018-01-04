@@ -36,10 +36,10 @@ struct Rtcr::Stored_cpu_session_info : Stored_session_info, Genode::List<Stored_
 		stored_cpu_thread_infos()
 	{ }
 
-	Stored_cpu_session_info(Genode::String<160> creation_args,
-					Genode::String<160> upgrade_args,
+	Stored_cpu_session_info(const char* creation_args,
+					const char* upgrade_args,
 					Genode::addr_t kcap,
-                                        Genode::String<160> local_name,
+                                        Genode::uint16_t local_name,
                                         bool bootstrapped,
 					Genode::uint16_t sigh_badge)
 	:

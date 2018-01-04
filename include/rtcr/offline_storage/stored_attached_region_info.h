@@ -42,7 +42,7 @@ struct Rtcr::Stored_attached_region_info : Stored_normal_info, Genode::List<Stor
 	{ }
 	
 	Stored_attached_region_info(Genode::addr_t kcap,
-					Genode::String<160> local_name,
+					 Genode::uint16_t local_name,
 					bool bootstrapped,
 					Genode::uint16_t _attached_ds_badge,
         				Genode::Ram_dataspace_capability _memory_content,

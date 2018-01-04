@@ -33,7 +33,7 @@ struct Rtcr::Stored_signal_context_info : Stored_normal_info, Genode::List<Store
 	{ }
 
 	Stored_signal_context_info(Genode::addr_t kcap,
-                                        Genode::String<160> local_name,
+                                        Genode::uint16_t local_name,
                                         bool bootstrapped,
 					Genode::uint16_t _signal_source_badge, unsigned long _imprint)
 	:

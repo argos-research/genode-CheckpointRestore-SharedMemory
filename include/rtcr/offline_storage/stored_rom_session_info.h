@@ -36,10 +36,10 @@ struct Rtcr::Stored_rom_session_info : Stored_session_info, Genode::List<Stored_
 		sigh_badge      (rom_session.parent_state().sigh.local_name())
 	{ }
 
-	Stored_rom_session_info(Genode::String<160> creation_args,
-                                        Genode::String<160> upgrade_args,
+	Stored_rom_session_info(const char* creation_args,
+                                        const char* upgrade_args,
                                         Genode::addr_t kcap,
-                                        Genode::String<160> local_name,
+                                        Genode::uint16_t local_name,
                                         bool bootstrapped,
 				Genode::uint16_t _dataspace_badge,
         			Genode::uint16_t _sigh_badge)

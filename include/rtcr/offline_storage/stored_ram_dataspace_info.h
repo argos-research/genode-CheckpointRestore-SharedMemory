@@ -39,9 +39,9 @@ struct Rtcr::Stored_ram_dataspace_info : Stored_normal_info, Genode::List<Stored
 	{ }
 
 	Stored_ram_dataspace_info(Genode::addr_t kcap,
-                                        Genode::String<160> local_name,
+                                        Genode::uint16_t local_name,
                                         bool bootstrapped,
-					Genode::Ram_dataspace_capability memory_content,
+					Genode::Ram_dataspace_capability _memory_content,
         				Genode::size_t _size,
         				Genode::Cache_attribute _cached,
         				bool _managed,

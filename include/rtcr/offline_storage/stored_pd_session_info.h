@@ -46,14 +46,14 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
 		stored_linker_area(pd_session.linker_area_component(), targets_lin_kcap)
 	{ }
 
-	Stored_pd_session_info(Genode::String<160> creation_args,
-                                        Genode::String<160> upgrade_args,
+	Stored_pd_session_info(const char* creation_args,
+                                        const char* upgrade_args,
                                         Genode::addr_t kcap,
-                                        Genode::String<160> local_name,
+                                        Genode::uint16_t local_name,
                                         bool bootstrapped,
-				Stored_region_map_info stored_address_space, 
-				Stored_region_map_info stored_stack_area, 
-				Stored_region_map_info stored_linker_area)
+				Stored_region_map_info _stored_address_space, 
+				Stored_region_map_info _stored_stack_area, 
+				Stored_region_map_info _stored_linker_area)
 	:
 		Stored_session_info(creation_args,upgrade_args,kcap,local_name,bootstrapped),
 		stored_context_infos(),
