@@ -40,6 +40,8 @@ void Fault_handler::_handle_fault()
 	// Find faulting Managed_region_info
 	Managed_region_map_info *faulting_mrm_info = _find_faulting_mrm_info();
 
+
+
 	// Get state of faulting Region_map
 	Genode::Region_map::State state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
 
@@ -50,7 +52,7 @@ void Fault_handler::_handle_fault()
 			state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
 			state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
 			state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
-			" pf_addr=", Genode::Hex(state.addr));
+			" pf_addr=", Genode::Hex(state.addr), " imprint=", state.imprint);
 	}
 
 	// Find dataspace which contains the faulting address
@@ -75,9 +77,15 @@ void Fault_handler::_handle_fault()
 
 
 	//TODO: Increase instruction pointer (ip) by one word
-	Genode::Region_map_client::State client_state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
+	//Genode::Region_map_client::State client_state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
 	//Genode::Thread_state::Cpu_state* ts = static_cast<Genode::Thread_state::Cpu_state*>(&client_state);
 	//ts->ip++;
+	//faulting_mrm_info->
+
+	//Rm_session_component bla;
+	//bla.find_by_badge(2345);
+
+	//Genode::Region_map_client rm_cli =	Genode::Region_map_client{faulting_mrm_info->region_map_cap};
 
 
 	//continue execution since we resolved the pagefault
