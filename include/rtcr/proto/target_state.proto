@@ -17,4 +17,5 @@ message Target_state {
   repeated Stored_rm_session_info _stored_rm_sessions = 5;
   repeated Stored_log_session_info _stored_log_sessions = 6;
   repeated Stored_timer_session_info _stored_timer_sessions = 7;
+  uint32 _cap_idx_alloc_addr = 8;
 }
