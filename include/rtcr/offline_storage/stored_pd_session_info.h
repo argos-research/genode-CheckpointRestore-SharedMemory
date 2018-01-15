@@ -9,6 +9,7 @@
 
 /* Genode includes */
 #include <util/list.h>
+#include <base/printf.h>
 
 /* Rtcr includes */
 #include "../intercept/pd_session.h"
@@ -51,18 +52,21 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
                                         Genode::addr_t kcap,
                                         Genode::uint16_t local_name,
                                         bool bootstrapped,
-				Stored_region_map_info _stored_address_space, 
-				Stored_region_map_info _stored_stack_area, 
-				Stored_region_map_info _stored_linker_area)
+				Stored_region_map_info* _stored_address_space, 
+				Stored_region_map_info* _stored_stack_area, 
+				Stored_region_map_info* _stored_linker_area)
 	:
 		Stored_session_info(creation_args,upgrade_args,kcap,local_name,bootstrapped),
 		stored_context_infos(),
 		stored_source_infos(),
 		stored_native_cap_infos(),
-		stored_address_space(_stored_address_space),
-		stored_stack_area(_stored_stack_area),
-		stored_linker_area(_stored_linker_area)
-	{ }
+		stored_address_space(_stored_address_space->kcap,_stored_address_space->badge,_stored_address_space->bootstrapped,_stored_address_space->size,_stored_address_space->ds_badge,_stored_address_space->sigh_badge),
+		stored_stack_area(_stored_stack_area->kcap,_stored_stack_area->badge,_stored_stack_area->bootstrapped,_stored_stack_area->size,_stored_stack_area->ds_badge,_stored_stack_area->sigh_badge),
+		stored_linker_area(_stored_linker_area->kcap,_stored_linker_area->badge,_stored_linker_area->bootstrapped,_stored_linker_area->size,_stored_linker_area->ds_badge,_stored_linker_area->sigh_badge)
+	{ 
+		Genode::printf("address_space %p\n",_stored_address_space);
+		Genode::printf("address_space %p\n",&stored_address_space);
+	}
 
 
 	Stored_pd_session_info *find_by_badge(Genode::uint16_t badge)
@@ -87,6 +91,13 @@ struct Rtcr::Stored_pd_session_info : Stored_session_info, Genode::List<Stored_p
 		Stored_session_info::print(output);
 	}
 
+/*	void set_objects(Stored_region_map_info* address_space, Stored_region_map_info* stack_area, Stored_region_map_info* linker_area)
+	{
+		stored_address_space=*address_space;
+		stored_stack_area=*stack_area;
+		stored_linker_area=*linker_area;
+	}
+*/
 };
 
 #endif /* _RTCR_STORED_PD_SESSION_INFO_H_ */
