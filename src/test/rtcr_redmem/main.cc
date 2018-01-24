@@ -43,12 +43,51 @@ struct Rtcr::Main
         while(1)
         {
             timer.msleep(5000);
-//          child.pause();
-            ckpt.checkpoint();
-            timer.msleep(1000);
+          //child.pause();
+//            ckpt.checkpoint();
+//            timer.msleep(1000);
+
+
+        	//if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
+
+        	// Pause all threads of all sessions
+
+
+
+
+
             //resume() seems not reliable, thus call it multiple times
-            for(int i=0;i<1;i++)
-            	child.resume();
+
+
+          child.ram().parent_state().ram_dataspaces.first()->mrm_info->dd_infos.first()->detach();
+          timer.msleep(1000);
+          // Iterate through every session
+                  	Cpu_session_component *cpu_session = &child.cpu();
+                  			//child._custom_services.cpu_root->session_infos().first();
+                  	while(cpu_session)
+                  	{
+
+                  		// Iterate through every CPU thread
+                  		Cpu_thread_component *cpu_thread = cpu_session->parent_state().cpu_threads.first();
+                  		int j=0;
+                  		while(cpu_thread)
+                  		{
+                  			// Pause the CPU thread
+                  			//Genode::Cpu_thread_client client{cpu_thread->parent_cap()};
+                  			//client.pause();
+                  			PINF("j = %i, IP: %lx", j++, cpu_thread->state().ip);
+                  			Genode::Thread_state st = cpu_thread->state();
+                  			//st.ip += 2;
+                  			cpu_thread->state(st);
+                  			cpu_thread = cpu_thread->next();
+                  		}
+
+                  		cpu_session = cpu_session->next();
+                  	}
+
+
+           // for(int i=0;i<10;i++)
+           // 	child.resume();
         }
         
 //      timer.msleep(3000);       

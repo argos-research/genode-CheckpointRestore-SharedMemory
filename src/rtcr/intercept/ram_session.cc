@@ -89,7 +89,7 @@ void Fault_handler::_handle_fault()
 
 
 	//continue execution since we resolved the pagefault
-	Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
+	//Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
 	//dd_info->
 }
 
@@ -372,7 +372,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		_parent_state.ram_dataspaces.insert(new_ramds_info);
 
 		//detach because we need to receive pagefaults
-		new_dd_info->detach();
+		//new_dd_info->detach();
 
 		if(verbose_debug)
 		{
