@@ -21,63 +21,13 @@
 /* Rtcr includes */
 #include "../online_storage/ram_dataspace_info.h"
 #include "../online_storage/ram_session_info.h"
+//#include "../intercept/cpu_session.h"
+#include "fault_handler.h"
 
 namespace Rtcr {
-	class Fault_handler;
 	class Ram_session_component;
 	class Ram_root;
-
-	constexpr bool fh_verbose_debug = true;
-	constexpr bool ram_verbose_debug = true;
-	constexpr bool ram_root_verbose_debug = true;
 }
-
-/**
- * \brief Page fault handler designated to handle the page faults caused for the
- * incremental checkpoint mechanism of the custom Ram_session_component
- *
- * Page fault handler which has a list of region maps and their associated dataspaces.
- * Each page fault signal is handled by finding the faulting region map and attaching
- * the designated dataspace to the faulting address.
- */
-class Rtcr::Fault_handler : public Genode::Thread
-{
-private:
-	/**
-	 * Enable log output for debugging
-	 */
-	static constexpr bool verbose_debug = fh_verbose_debug;
-	/**
-	 * Signal_receiver on which the page fault handler waits
-	 */
-	Genode::Signal_receiver          &_receiver;
-	/**
-	 * List of region maps and their associated dataspaces
-	 * It must contain Managed_region_map_info
-	 */
-	Genode::List<Ram_dataspace_info> &_ramds_infos;
-
-	/**
-	 * Find the first faulting Region_map in the list of Ram_dataspaces
-	 *
-	 * \return Pointer to Managed_region_map_info which contains the faulting Region_map
-	 */
-	Managed_region_map_info *_find_faulting_mrm_info();
-	/**
-	 * Handles the page fault by attaching a designated dataspace into its region map
-	 */
-	void _handle_fault();
-
-public:
-	Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
-			Genode::List<Ram_dataspace_info> &ramds_infos);
-
-	/**
-	 * Entrypoint of the thread
-	 * The thread waits for a signal and calls the handler function if it receives any signal
-	 */
-	void entry();
-};
 
 /**
  * Custom RAM session to monitor the allocation, freeing, and ram quota transfers

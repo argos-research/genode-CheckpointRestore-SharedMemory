@@ -4,6 +4,7 @@ SRC_CC += main.cc \
           pd_session.cc \
           cpu_session.cc \
           ram_session.cc \
+          fault_handler.cc \
           rom_session.cc \
           rm_session.cc \
           log_session.cc \
@@ -22,6 +23,7 @@ INC_DIR += $(BASE_DIR)/../base-foc/src/include
 vpath pd_session.cc            $(REP_DIR)/src/rtcr/intercept
 vpath cpu_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath ram_session.cc           $(REP_DIR)/src/rtcr/intercept
+vpath fault_handler.cc         $(REP_DIR)/src/rtcr/intercept
 vpath rom_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath rm_session.cc            $(REP_DIR)/src/rtcr/intercept
 vpath log_session.cc           $(REP_DIR)/src/rtcr/intercept
