@@ -11,6 +11,7 @@
 #include <base/thread.h>
 
 #include "../online_storage/ram_dataspace_info.h"
+//#include "../intercept/cpu_session.h"
 
 namespace Rtcr {
 	class Fault_handler;

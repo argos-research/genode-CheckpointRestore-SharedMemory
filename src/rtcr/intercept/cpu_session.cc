@@ -52,6 +52,7 @@ Cpu_thread_component &Cpu_session_component::_create_fp_edf_thread(Genode::Pd_se
 	return *new_cpu_thread;
 }
 
+Cpu_session_component* Cpu_session_component::current_session = nullptr;
 
 void Cpu_session_component::_kill_thread(Cpu_thread_component &cpu_thread)
 {
@@ -85,6 +86,7 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 
 {
 	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
+	current_session = this;
 }
 
 

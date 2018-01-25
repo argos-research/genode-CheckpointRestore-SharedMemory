@@ -5,6 +5,7 @@
  *      Author: josef
  */
 #include "fault_handler.h"
+#include "../intercept/cpu_session.h"
 
 using namespace Rtcr;
 
@@ -66,6 +67,45 @@ void Fault_handler::_handle_fault()
 				" in Region_map ", faulting_mrm_info->region_map_cap);
 		return;
 	}
+
+	Cpu_session_component* c = Cpu_session_component::current_session;
+
+
+	while (c) {
+
+		// Iterate through every CPU thread
+		Cpu_thread_component *cpu_thread =
+				c->parent_state().cpu_threads.first();
+		int j = 0;
+		while (cpu_thread) {
+			// Pause the CPU thread
+			//Genode::Cpu_thread_client client{cpu_thread->parent_cap()};
+			//client.pause();
+			//if(cpu_thread->state().unresolved_page_fault)
+			{
+
+				PINF("PF-Handler! Thread: %i, Pagefault: %i, IP: %lx", j++,
+						cpu_thread->state().unresolved_page_fault,
+						cpu_thread->state().ip);
+				Genode::Thread_state st = cpu_thread->state();
+				//st.ip += 2;
+				cpu_thread->state(st);
+
+			}
+			cpu_thread = cpu_thread->next();
+		}
+
+		c = c->next();
+	}
+
+
+
+
+
+
+
+
+
 
 	// Don't attach found dataspace to its designated address,
 	// because we need to continue receiving pagefaults in order

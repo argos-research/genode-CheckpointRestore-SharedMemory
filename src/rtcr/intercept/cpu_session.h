@@ -124,6 +124,8 @@ public:
 	void deploy_queue(Genode::Dataspace_capability ds) override;
 	void rq(Genode::Dataspace_capability ds) override;
 	void dead(Genode::Dataspace_capability ds) override;
+
+	static Cpu_session_component* current_session;
 };
 
 
