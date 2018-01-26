@@ -8,6 +8,7 @@
 
 using namespace Rtcr;
 
+Cpu_session_component* Cpu_session_component::current_session = nullptr;
 
 Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
@@ -52,8 +53,6 @@ Cpu_thread_component &Cpu_session_component::_create_fp_edf_thread(Genode::Pd_se
 	return *new_cpu_thread;
 }
 
-Cpu_session_component* Cpu_session_component::current_session = nullptr;
-
 void Cpu_session_component::_kill_thread(Cpu_thread_component &cpu_thread)
 {
 	auto parent_cap = cpu_thread.parent_cap();
@@ -86,7 +85,9 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 
 {
 	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
-	current_session = this;
+
+	if(current_session == nullptr)
+		current_session = this;
 }
 
 

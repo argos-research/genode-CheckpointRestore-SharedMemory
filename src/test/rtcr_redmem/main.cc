@@ -43,6 +43,9 @@ struct Rtcr::Main {
 
 		while (1) {
 			timer.msleep(5000);
+			//int* bla = (int*)0x20000;
+			//*bla=3;
+
 			//child.pause();
 			//ckpt.checkpoint();
 			//timer.msleep(1000);
@@ -52,13 +55,13 @@ struct Rtcr::Main {
 			// Pause all threads of all sessions
 
 			//resume() seems not reliable, thus call it multiple times
-
+			//Cpu_thread_client c2;
 			child.ram().parent_state().ram_dataspaces.first()->mrm_info->dd_infos.first()->detach();
 			timer.msleep(1000);
 			// Iterate through every session
 			Cpu_session_component *cpu_session = &child.cpu();
 			//child._custom_services.cpu_root->session_infos().first();
-			while (cpu_session) {
+/*			while (cpu_session) {
 
 				// Iterate through every CPU thread
 				Cpu_thread_component *cpu_thread =
@@ -71,7 +74,7 @@ struct Rtcr::Main {
 					//if(cpu_thread->state().unresolved_page_fault)
 					{
 
-						PINF("Thread: %i, Pagefault: %i, IP: %lx", j++,
+						PINF("Thread: %i, Pagefault: %lu, IP: %lx", j++,
 								cpu_thread->state().unresolved_page_fault,
 								cpu_thread->state().ip);
 						Genode::Thread_state st = cpu_thread->state();
@@ -84,7 +87,7 @@ struct Rtcr::Main {
 
 				cpu_session = cpu_session->next();
 			}
-
+*/
 			// for(int i=0;i<10;i++)
 			// 	child.resume();
 		}

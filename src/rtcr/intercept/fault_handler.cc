@@ -42,7 +42,6 @@ void Fault_handler::_handle_fault()
 	Managed_region_map_info *faulting_mrm_info = _find_faulting_mrm_info();
 
 
-
 	// Get state of faulting Region_map
 	Genode::Region_map::State state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
 
@@ -53,7 +52,7 @@ void Fault_handler::_handle_fault()
 			state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
 			state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
 			state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
-			" pf_addr=", Genode::Hex(state.addr));
+			" pf_addr=", Genode::Hex(state.addr), " ip: ", Genode::Hex(state.pf_ip));
 	}
 
 	// Find dataspace which contains the faulting address
@@ -67,6 +66,9 @@ void Fault_handler::_handle_fault()
 				" in Region_map ", faulting_mrm_info->region_map_cap);
 		return;
 	}
+
+
+
 
 	Cpu_session_component* c = Cpu_session_component::current_session;
 
@@ -83,13 +85,14 @@ void Fault_handler::_handle_fault()
 			//client.pause();
 			//if(cpu_thread->state().unresolved_page_fault)
 			{
-
-				PINF("PF-Handler! Thread: %i, Pagefault: %i, IP: %lx", j++,
+				if(state.pf_ip == cpu_thread->state().ip)
+					PINF("Page-faulting Thread: %i, Pagefault: %i, IP: %lx", j,
 						cpu_thread->state().unresolved_page_fault,
 						cpu_thread->state().ip);
-				Genode::Thread_state st = cpu_thread->state();
+//				Genode::Thread_state st = cpu_thread->state();
 				//st.ip += 2;
-				cpu_thread->state(st);
+//				cpu_thread->state(st);
+				j++;
 
 			}
 			cpu_thread = cpu_thread->next();
