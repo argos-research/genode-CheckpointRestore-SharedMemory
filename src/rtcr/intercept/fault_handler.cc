@@ -6,6 +6,7 @@
  */
 #include "fault_handler.h"
 #include "../intercept/cpu_session.h"
+#include "../arm_v7a/instruction.h"
 
 using namespace Rtcr;
 
@@ -56,8 +57,10 @@ void Fault_handler::_handle_fault()
 	}
 
 	// Find dataspace which contains the faulting address
+
 	Designated_dataspace_info *dd_info = faulting_mrm_info->dd_infos.first();
 	if(dd_info) dd_info = dd_info->find_by_addr(state.addr);
+
 
 	// Check if a dataspace was found
 	if(!dd_info)
@@ -68,32 +71,27 @@ void Fault_handler::_handle_fault()
 	}
 
 
+	// Find thread which caused the fault
 
-
+	Cpu_thread_component * cpu_thread = nullptr;
 	Cpu_session_component* c = Cpu_session_component::current_session;
-
-
 	while (c) {
-
 		// Iterate through every CPU thread
-		Cpu_thread_component *cpu_thread =
+		cpu_thread =
 				c->parent_state().cpu_threads.first();
 		int j = 0;
 		while (cpu_thread) {
 			// Pause the CPU thread
-			//Genode::Cpu_thread_client client{cpu_thread->parent_cap()};
-			//client.pause();
 			//if(cpu_thread->state().unresolved_page_fault)
 			{
 				if(state.pf_ip == cpu_thread->state().ip)
+				{
 					PINF("Page-faulting Thread: %i, Pagefault: %i, IP: %lx", j,
 						cpu_thread->state().unresolved_page_fault,
 						cpu_thread->state().ip);
-//				Genode::Thread_state st = cpu_thread->state();
-				//st.ip += 2;
-//				cpu_thread->state(st);
+					goto found_thread;
+				}
 				j++;
-
 			}
 			cpu_thread = cpu_thread->next();
 		}
@@ -101,13 +99,43 @@ void Fault_handler::_handle_fault()
 		c = c->next();
 	}
 
+	found_thread:
+
+	//TODO: Find memory region/dataspace that the ip points into
+
+	//TODO: TRY THIS
+	//this->_ramds_infos.first()->mrm_info->dd_infos.first()->findbyaddr
+
+	Ram_dataspace_info* rinf = this->_ramds_infos.first();
+	Designated_dataspace_info* dinf;
+	while(rinf)
+	{
+		dinf = rinf->mrm_info->dd_infos.first()->find_by_addr(state.pf_ip);
+		if(dinf)
+			break;
+		PINF("didn't find yet a dataspace");
+		rinf = rinf->next();
+	}
+
+	if(dinf)
+		PINF("found a dataspace.");
+	else
+		PINF("didn't find a dataspace");
 
 
+	//example instruction
+	unsigned int instr = 0b00000000010001010101001110110100;
+	//unsigned int instr = 0xe5832004;
+	//TODO: get real instruction
+
+	/* decode the instruction and update states accordingly */
+	bool writes = false;
+	bool ldst = Instruction::load_store(instr, writes, state.format, state.reg);
 
 
-
-
-
+	PINF("instruction: %x, %s, %s, %s, reg: %x", instr, ldst ? "LOADSTORE" : "OTHER",
+			writes ? "store" : "load",
+				state.format == Region_map::LSB8 ? "LSB8 " : (state.format == Region_map::LSB16 ? "LSB16" : "LSB32"), state.reg);
 
 
 	// Don't attach found dataspace to its designated address,
@@ -116,24 +144,16 @@ void Fault_handler::_handle_fault()
 	//dd_info->attach();
 	//dd_info->detach();
 
-	//TODO: Resolve pagefault by simulating access
+	//TODO: simulate instruction
 
-
-	//TODO: Increase instruction pointer (ip) by one word
-	//Genode::Region_map_client::State client_state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
-	//Genode::Thread_state::Cpu_state* ts = static_cast<Genode::Thread_state::Cpu_state*>(&client_state);
-	//ts->ip++;
-	//faulting_mrm_info->
-
-	//Rm_session_component bla;
-	//bla.find_by_badge(2345);
-
-	//Genode::Region_map_client rm_cli =	Genode::Region_map_client{faulting_mrm_info->region_map_cap};
-
+	// Increase instruction pointer (ip) by one word
+	Genode::Thread_state st = cpu_thread->state();
+	st.ip += Instruction::size();
+	cpu_thread->state(st);
+	PINF("IP: %lx", st.ip);
 
 	//continue execution since we resolved the pagefault
-	//Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
-	//dd_info->
+	Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
 }
 
 
