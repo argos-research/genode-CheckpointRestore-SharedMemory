@@ -32,6 +32,9 @@ namespace Rtcr {
 class Rtcr::Fault_handler : public Genode::Thread
 {
 private:
+
+	Genode::Env& _env;
+
 	/**
 	 * Enable log output for debugging
 	 */

@@ -103,24 +103,7 @@ void Fault_handler::_handle_fault()
 
 	//TODO: Find memory region/dataspace that the ip points into
 
-	//TODO: TRY THIS
-	//this->_ramds_infos.first()->mrm_info->dd_infos.first()->findbyaddr
 
-	Ram_dataspace_info* rinf = this->_ramds_infos.first();
-	Designated_dataspace_info* dinf;
-	while(rinf)
-	{
-		dinf = rinf->mrm_info->dd_infos.first()->find_by_addr(state.pf_ip);
-		if(dinf)
-			break;
-		PINF("didn't find yet a dataspace");
-		rinf = rinf->next();
-	}
-
-	if(dinf)
-		PINF("found a dataspace.");
-	else
-		PINF("didn't find a dataspace");
 
 
 	//example instruction
@@ -145,6 +128,16 @@ void Fault_handler::_handle_fault()
 	//dd_info->detach();
 
 	//TODO: simulate instruction
+	char* addr = _env.rm().attach(dd_info->cap);
+	long long unsigned int value;
+	memcpy(&value,addr + state.addr,sizeof(value));
+	PINF("Value at %lx: %llx", state.addr, value);
+	//value+=10;
+	//memcpy(addr + state.addr,&value,sizeof(value));
+	_env.rm().detach(addr);
+	//dd_info->attach();
+
+
 
 	// Increase instruction pointer (ip) by one word
 	Genode::Thread_state st = cpu_thread->state();
@@ -161,6 +154,7 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 		Genode::List<Ram_dataspace_info> &ramds_infos)
 :
 	Thread(env, "managed dataspace pager", 16*1024),
+	_env(env),
 	_receiver(receiver), _ramds_infos(ramds_infos)
 { }
 

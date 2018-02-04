@@ -56,8 +56,116 @@ struct Rtcr::Main {
 
 			//resume() seems not reliable, thus call it multiple times
 			//Cpu_thread_client c2;
+
+
 			child.ram().parent_state().ram_dataspaces.first()->mrm_info->dd_infos.first()->detach();
-			timer.msleep(1000);
+			timer.msleep(3000);
+
+
+
+#if 0
+
+			//instruction that is in the binary
+			unsigned int example_instruction = 0xe5843014;
+			//TODO: TRY THIS
+			//this->_ramds_infos.first()->mrm_info->dd_infos.first()->findbyaddr
+			child.pause();
+			Ram_dataspace_info* rinf = child.ram().parent_state().ram_dataspaces.first();
+			PINF("looking for ds");
+
+
+			while(rinf)
+			{
+				Designated_dataspace_info* ddinf = rinf->mrm_info->dd_infos.first();//->find_by_addr(state.pf_ip);
+				while(ddinf)
+				{
+					unsigned int* addr = env.rm().attach(ddinf->cap);
+
+					PINF("searching ds of size %u, first 4 bytes: %x", ddinf->size, *addr);
+
+					for(unsigned long i = 0; i <= ddinf->size-sizeof(example_instruction); i++)
+					{
+						if(example_instruction == * ((char*)addr+i))
+						{
+							PINF("FOUND IT!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+						}
+					}
+
+					//Genode::Dataspace ds(ddinf->cap);
+					//this->
+					//PINF("ds size: %lu", ds.size());
+					//ddinf->cap
+
+
+					//Designated_dataspace_info* t = ddinf->find_by_addr(state.pf_ip);
+					//if(t)
+					//	PINF("FOUND a dataspace");
+					env.rm().detach(addr);
+					PINF("didn't find yet a dataspace");
+					ddinf = ddinf->next();
+				}
+				rinf = rinf->next();
+			}
+		/*	if(ddinf)
+				PINF("found a dataspace.");
+			else
+				PINF("didn't find a dataspace");
+*/
+
+#endif
+#if 1
+			PINF("search space exhausted. Looking in ROM DSs");
+			Rom_session_component* rsc = child.custom_services().rom_root->session_infos().first();
+			while(rsc)
+			{
+				unsigned int* addr = env.rm().attach(rsc->dataspace());
+
+				PINF("searching ds of size %u, first 4 bytes: %x", 0, *addr);
+
+				for(unsigned long i = 0; i <= 16 /*rsc->size-sizeof(example_instruction)*/; i++)
+				{
+					if(example_instruction == * ((char*)addr+i))
+					{
+						PINF("FOUND IT!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+					}
+				}
+
+				//Genode::Dataspace ds(ddinf->cap);
+				//this->
+				//PINF("ds size: %lu", ds.size());
+				//ddinf->cap
+
+
+				//Designated_dataspace_info* t = ddinf->find_by_addr(state.pf_ip);
+				//if(t)
+				//	PINF("FOUND a dataspace");
+				env.rm().detach(addr);
+				PINF("didn't find yet a dataspace");
+
+				rsc = rsc->next();
+			}
+
+
+
+
+#endif
+
+
+
+
+/*
+			Ram_dataspace_info* rdsi = child.ram().parent_state().ram_dataspaces.first();
+			while(rdsi)
+			{
+				Designated_dataspace_info* ddi = rdsi->mrm_info->dd_infos.first();
+				{
+					ddi->detach();
+					ddi = ddi->next();
+				}
+				rdsi = rdsi->next();
+			}
+
+*/
 			// Iterate through every session
 			Cpu_session_component *cpu_session = &child.cpu();
 			//child._custom_services.cpu_root->session_infos().first();
