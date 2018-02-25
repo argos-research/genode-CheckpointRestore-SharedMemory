@@ -9,6 +9,10 @@
 #include <base/signal.h>
 #include <base/sleep.h>
 #include <base/log.h>
+#include <base/child.h>
+//#include <base/internal/elf.h>
+#include <../src/include/base/internal/elf.h>
+//#include <../src/include/base/internal/elf_format.h>
 #include <timer_session/connection.h>
 
 /* Rtcr includes */
@@ -61,15 +65,77 @@ struct Rtcr::Main {
 			child.ram().parent_state().ram_dataspaces.first()->mrm_info->dd_infos.first()->detach();
 			timer.msleep(3000);
 
-
-
-#if 0
-
 			//instruction that is in the binary
-			unsigned int example_instruction = 0xe5843014;
+//			unsigned int example_instruction = 0xe5843014;
+			unsigned short example_instruction = 0x84e5;
+			unsigned short current_instruction;
+
+#if 1
+
+
 			//TODO: TRY THIS
 			//this->_ramds_infos.first()->mrm_info->dd_infos.first()->findbyaddr
 			child.pause();
+
+
+
+		    static Rom_connection rom("sheepcount");
+		    Dataspace_capability elf_ds = rom.dataspace();
+
+			/* attach ELF locally */
+			addr_t elf_addr;
+			try { elf_addr = env.rm().attach(elf_ds); }
+			catch (Region_map::Attach_failed) {
+				error("local attach of ELF executable failed"); throw; }
+
+			/* setup ELF object and read program entry pointer */
+			Elf_binary elf(elf_addr);
+			if (!elf.valid())
+				PINF("Invalid binary");
+
+			PINF("First 4 Bytes: %x", *(uint8_t* )elf_addr);
+
+			addr_t entry = elf.entry();
+			Elf_segment seg;
+			for (unsigned n = 0; (seg = elf.get_segment(n)).valid(); ++n) {
+				if (seg.flags().skip)
+					continue;
+
+				/* same values for r/o and r/w segments */
+				addr_t const addr = (addr_t) seg.start();
+				size_t const size = seg.mem_size();
+
+				bool parent_info = false;
+
+				bool const write = seg.flags().w;
+				bool const exec = seg.flags().x;
+				if (!write) {
+					/* read-only segment */
+
+					if (seg.file_size() != seg.mem_size())
+						warning(
+								"filesz and memsz for read-only segment differ");
+
+					off_t const offset = seg.file_offset();
+					if (exec)
+						//remote_rm.attach_executable(elf_ds, addr, size, offset);
+					{
+						addr_t inst_addr = 0x1001bdc;
+						//TODO: EINHÄNGEN, und an anderer Stelle damit keine Überlappung
+						//env.rm().attach(elf_ds, size, addr, true, offset, true);
+						PINF("Address: %lx, Offset: %lx, value: %x, target inst: %x", addr, offset,
+								*((uint32_t*) (elf_addr + offset)),*((uint32_t*) (elf_addr + offset + inst_addr - addr)));
+					}
+				//	else
+				//	remote_rm.attach_at(elf_ds, addr, size, offset);
+
+			}
+		}
+
+
+
+
+#else
 			Ram_dataspace_info* rinf = child.ram().parent_state().ram_dataspaces.first();
 			PINF("looking for ds");
 
@@ -79,13 +145,14 @@ struct Rtcr::Main {
 				Designated_dataspace_info* ddinf = rinf->mrm_info->dd_infos.first();//->find_by_addr(state.pf_ip);
 				while(ddinf)
 				{
-					unsigned int* addr = env.rm().attach(ddinf->cap);
+					char* addr = env.rm().attach(ddinf->cap);
 
 					PINF("searching ds of size %u, first 4 bytes: %x", ddinf->size, *addr);
 
 					for(unsigned long i = 0; i <= ddinf->size-sizeof(example_instruction); i++)
 					{
-						if(example_instruction == * ((char*)addr+i))
+						memcpy(&current_instruction,addr+i,sizeof(current_instruction));
+						if(example_instruction == current_instruction)
 						{
 							PINF("FOUND IT!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 						}
@@ -112,8 +179,10 @@ struct Rtcr::Main {
 				PINF("didn't find a dataspace");
 */
 
+
 #endif
-#if 1
+#if 0
+
 			PINF("search space exhausted. Looking in ROM DSs");
 			Rom_session_component* rsc = child.custom_services().rom_root->session_infos().first();
 			while(rsc)
