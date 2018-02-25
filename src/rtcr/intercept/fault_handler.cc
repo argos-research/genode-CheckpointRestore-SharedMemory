@@ -167,7 +167,8 @@ void Fault_handler::_handle_fault()
 		PINF("Old register value: %x", old_val);
 		unsigned const reg = state.reg;
 		to_big_endian(state.value);
-		thread_state.set_gpr(reg,state.value);
+		///*if(reg!=3)*/thread_state.set_gpr(reg,state.value);
+		thread_state.set_gpr(9,1234);
 	}
 
 	else

@@ -51,7 +51,7 @@ void Component::construct(Genode::Env &env)
 	while(1)
 	{
         log(n, " sheep. zzZ");
-		n++;
+		//n++;
 		timer.msleep(1000);
 	}
 
