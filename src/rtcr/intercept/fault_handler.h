@@ -52,13 +52,17 @@ private:
 	 */
 	Genode::List<Ram_dataspace_info> &_ramds_infos;
 	/**
-	 * Address where the binary is attached
+	 * Address where the ELF binary is attached
 	 */
 	Genode::addr_t elf_addr;
 	/**
 	 * Offset of the code segment of the binary
 	 */
 	Genode::off_t elf_seg_offset;
+	/**
+	 * Size of the code segment of the binary
+	 */
+	Genode::size_t elf_seg_size;
 	/**
 	 * Virtual memory address of the code segment
 	 */

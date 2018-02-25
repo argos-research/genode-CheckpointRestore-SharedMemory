@@ -101,24 +101,6 @@ void Fault_handler::_handle_fault()
 
 	found_thread:
 
-	//TODO: Find memory region/dataspace that the ip points into
-
-
-
-
-	//example instruction
-	unsigned int instr = 0b00000000010001010101001110110100;
-	//unsigned int instr = 0xe5832004;
-	//TODO: get real instruction
-
-	/* decode the instruction and update states accordingly */
-	bool writes = false;
-	bool ldst = Instruction::load_store(instr, writes, state.format, state.reg);
-
-
-	PINF("instruction: %x, %s, %s, %s, reg: %x", instr, ldst ? "LOADSTORE" : "OTHER",
-			writes ? "store" : "load",
-				state.format == Region_map::LSB8 ? "LSB8 " : (state.format == Region_map::LSB16 ? "LSB16" : "LSB32"), state.reg);
 
 
 	// Don't attach found dataspace to its designated address,
@@ -134,67 +116,25 @@ void Fault_handler::_handle_fault()
 	PINF("Value at %lx: %llx", state.addr, value);
 
 
-
-    static Rom_connection rom("sheepcount");
-	Dataspace_capability elf_ds = rom.dataspace();
-
-	/* attach ELF locally */
-	addr_t elf_addr;
-	try {
-		elf_addr = _env.rm().attach(elf_ds);
-	} catch (Region_map::Attach_failed) {
-		error("local attach of ELF executable failed");
-		throw;
-	}
-
-	/* setup ELF object and read program entry pointer */
-	Elf_binary elf(elf_addr);
-	if (!elf.valid())
-		PINF("Invalid binary");
-
-	PINF("First 4 Bytes: %x", *(uint8_t* )elf_addr);
-
-	addr_t entry = elf.entry();
-	Elf_segment seg;
-	for (unsigned n = 0; (seg = elf.get_segment(n)).valid(); ++n) {
-		if (seg.flags().skip)
-			continue;
-
-		/* same values for r/o and r/w segments */
-		addr_t const addr = (addr_t) seg.start();
-		size_t const size = seg.mem_size();
-
-		bool parent_info = false;
-
-		bool const write = seg.flags().w;
-		bool const exec = seg.flags().x;
-		if (!write) {
-			/* read-only segment */
-
-			if (seg.file_size() != seg.mem_size())
-				warning("filesz and memsz for read-only segment differ");
-
-			off_t const offset = seg.file_offset();
-			if (exec)
-			//remote_rm.attach_executable(elf_ds, addr, size, offset);
-			{
-				addr_t inst_addr = 0x1001bdc;
-				//TODO: EINHÄNGEN, und an anderer Stelle damit keine Überlappung
-				//env.rm().attach(elf_ds, size, addr, true, offset, true);
-				PINF("Address: %lx, Offset: %lx, value: %x, target inst: %x",
-						addr, offset, *((uint32_t* ) (elf_addr + offset)),
-						*((uint32_t* ) (elf_addr + offset + inst_addr - addr)));
-			}
-			//	else
-			//	remote_rm.attach_at(elf_ds, addr, size, offset);
-
-		}
-	}
-
-	_env.rm().detach(elf_addr);
+	addr_t inst_addr = state.pf_ip;
+	unsigned instr = *((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
+	PINF("Address: %lx, Offset: %lx, value: %x, target inst: %x",
+			elf_seg_addr, elf_seg_offset, *((uint32_t* ) (elf_addr + elf_seg_offset)),
+			*((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr)));
 
 
+	//example instruction
+	//unsigned instr = 0b00000000010001010101001110110100;
+	//unsigned int instr = 0xe5832004;
 
+	/* decode the instruction and update states accordingly */
+	bool writes = false;
+	bool ldst = Instruction::load_store(instr, writes, state.format, state.reg);
+
+
+	PINF("instruction: %x, %s, %s, %s, reg: %x", instr, ldst ? "LOADSTORE" : "OTHER",
+			writes ? "store" : "load",
+				state.format == Region_map::LSB8 ? "LSB8 " : (state.format == Region_map::LSB16 ? "LSB16" : "LSB32"), state.reg);
 
 
 
@@ -223,7 +163,61 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 	Thread(env, "managed dataspace pager", 16*1024),
 	_env(env),
 	_receiver(receiver), _ramds_infos(ramds_infos)
-{ }
+{
+
+    static Rom_connection rom("sheepcount");
+	Dataspace_capability elf_ds = rom.dataspace();
+
+	/* attach ELF locally */
+	try {
+		elf_addr = _env.rm().attach(elf_ds);
+	} catch (Region_map::Attach_failed) {
+		error("local attach of ELF executable failed");
+		throw;
+	}
+
+	/* setup ELF object and read program entry pointer */
+	Elf_binary elf(elf_addr);
+	if (!elf.valid())
+		PINF("Invalid binary");
+
+	PINF("First 4 Bytes: %x", *(uint8_t* )elf_addr);
+
+	addr_t entry = elf.entry();
+	Elf_segment seg;
+	for (unsigned n = 0; (seg = elf.get_segment(n)).valid(); ++n) {
+		if (seg.flags().skip)
+			continue;
+
+		/* same values for r/o and r/w segments */
+		elf_seg_addr = (addr_t) seg.start();
+		elf_seg_size = seg.mem_size();
+
+		bool parent_info = false;
+
+		bool const write = seg.flags().w;
+		bool const exec = seg.flags().x;
+		if (!write) {
+			/* read-only segment */
+
+			if (seg.file_size() != seg.mem_size())
+				warning("filesz and memsz for read-only segment differ");
+
+			elf_seg_offset = seg.file_offset();
+			if (exec)
+			{
+				/* Found the executable segment, break in order not
+				 * to overwrite the addresses with other segments'.
+				 */
+				break;
+			}
+		}
+	}
+
+
+
+
+}
 
 
 void Fault_handler::entry()
