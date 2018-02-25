@@ -132,6 +132,73 @@ void Fault_handler::_handle_fault()
 	long long unsigned int value;
 	memcpy(&value,addr + state.addr,sizeof(value));
 	PINF("Value at %lx: %llx", state.addr, value);
+
+
+
+    static Rom_connection rom("sheepcount");
+	Dataspace_capability elf_ds = rom.dataspace();
+
+	/* attach ELF locally */
+	addr_t elf_addr;
+	try {
+		elf_addr = _env.rm().attach(elf_ds);
+	} catch (Region_map::Attach_failed) {
+		error("local attach of ELF executable failed");
+		throw;
+	}
+
+	/* setup ELF object and read program entry pointer */
+	Elf_binary elf(elf_addr);
+	if (!elf.valid())
+		PINF("Invalid binary");
+
+	PINF("First 4 Bytes: %x", *(uint8_t* )elf_addr);
+
+	addr_t entry = elf.entry();
+	Elf_segment seg;
+	for (unsigned n = 0; (seg = elf.get_segment(n)).valid(); ++n) {
+		if (seg.flags().skip)
+			continue;
+
+		/* same values for r/o and r/w segments */
+		addr_t const addr = (addr_t) seg.start();
+		size_t const size = seg.mem_size();
+
+		bool parent_info = false;
+
+		bool const write = seg.flags().w;
+		bool const exec = seg.flags().x;
+		if (!write) {
+			/* read-only segment */
+
+			if (seg.file_size() != seg.mem_size())
+				warning("filesz and memsz for read-only segment differ");
+
+			off_t const offset = seg.file_offset();
+			if (exec)
+			//remote_rm.attach_executable(elf_ds, addr, size, offset);
+			{
+				addr_t inst_addr = 0x1001bdc;
+				//TODO: EINHÄNGEN, und an anderer Stelle damit keine Überlappung
+				//env.rm().attach(elf_ds, size, addr, true, offset, true);
+				PINF("Address: %lx, Offset: %lx, value: %x, target inst: %x",
+						addr, offset, *((uint32_t* ) (elf_addr + offset)),
+						*((uint32_t* ) (elf_addr + offset + inst_addr - addr)));
+			}
+			//	else
+			//	remote_rm.attach_at(elf_ds, addr, size, offset);
+
+		}
+	}
+
+	_env.rm().detach(elf_addr);
+
+
+
+
+
+
+
 	//value+=10;
 	//memcpy(addr + state.addr,&value,sizeof(value));
 	_env.rm().detach(addr);

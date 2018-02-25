@@ -9,6 +9,9 @@
 #define _RTCR_FAULT_HANDLER_H_
 
 #include <base/thread.h>
+#include <rom_session/connection.h>
+
+#include <../src/include/base/internal/elf.h>
 
 #include "../online_storage/ram_dataspace_info.h"
 //#include "../intercept/cpu_session.h"
@@ -48,6 +51,18 @@ private:
 	 * It must contain Managed_region_map_info
 	 */
 	Genode::List<Ram_dataspace_info> &_ramds_infos;
+	/**
+	 * Address where the binary is attached
+	 */
+	Genode::addr_t elf_addr;
+	/**
+	 * Offset of the code segment of the binary
+	 */
+	Genode::off_t elf_seg_offset;
+	/**
+	 * Virtual memory address of the code segment
+	 */
+	Genode::addr_t elf_seg_addr;
 
 	/**
 	 * Find the first faulting Region_map in the list of Ram_dataspaces
