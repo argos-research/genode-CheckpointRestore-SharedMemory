@@ -38,6 +38,8 @@ private:
 
 	Genode::Env& _env;
 
+	void _get_register_mapping(Genode::addr_t* (&regs)[15], Genode::Cpu_state& state);
+
 	/**
 	 * Enable log output for debugging
 	 */

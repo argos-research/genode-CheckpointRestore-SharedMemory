@@ -10,7 +10,6 @@
 
 using namespace Rtcr;
 
-
 Managed_region_map_info *Fault_handler::_find_faulting_mrm_info()
 {
 	Genode::Region_map::State state;
@@ -36,6 +35,14 @@ Managed_region_map_info *Fault_handler::_find_faulting_mrm_info()
 	return result_info;
 }
 
+void to_big_endian(unsigned& le)
+{
+	unsigned swapped = ((le>>24)&0xff) | // move byte 3 to byte 0
+	                    ((le<<8)&0xff0000) | // move byte 1 to byte 2
+	                    ((le>>8)&0xff00) | // move byte 2 to byte 1
+	                    ((le<<24)&0xff000000); // byte 0 to byte 3
+	le=swapped;
+}
 
 void Fault_handler::_handle_fault()
 {
@@ -101,6 +108,8 @@ void Fault_handler::_handle_fault()
 
 	found_thread:
 
+	// Get copy of state
+	Genode::Thread_state thread_state = cpu_thread->state();
 
 
 	// Don't attach found dataspace to its designated address,
@@ -110,10 +119,9 @@ void Fault_handler::_handle_fault()
 	//dd_info->detach();
 
 	//TODO: simulate instruction
-	char* addr = _env.rm().attach(dd_info->cap);
-	long long unsigned int value;
-	memcpy(&value,addr + state.addr,sizeof(value));
-	PINF("Value at %lx: %llx", state.addr, value);
+
+
+
 
 
 	addr_t inst_addr = state.pf_ip;
@@ -122,12 +130,7 @@ void Fault_handler::_handle_fault()
 			elf_seg_addr, elf_seg_offset, *((uint32_t* ) (elf_addr + elf_seg_offset)),
 			*((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr)));
 
-
-	//example instruction
-	//unsigned instr = 0b00000000010001010101001110110100;
-	//unsigned int instr = 0xe5832004;
-
-	/* decode the instruction and update states accordingly */
+	/* decode the instruction and update state accordingly */
 	bool writes = false;
 	bool ldst = Instruction::load_store(instr, writes, state.format, state.reg);
 
@@ -135,6 +138,46 @@ void Fault_handler::_handle_fault()
 	PINF("instruction: %x, %s, %s, %s, reg: %x", instr, ldst ? "LOADSTORE" : "OTHER",
 			writes ? "store" : "load",
 				state.format == Region_map::LSB8 ? "LSB8 " : (state.format == Region_map::LSB16 ? "LSB16" : "LSB32"), state.reg);
+
+	size_t access_size =
+			state.format == Region_map::LSB8 ? 1 : (state.format == Region_map::LSB16 ? 2 : 4);
+
+	char* addr = _env.rm().attach(dd_info->cap);
+
+	/* The address included in the pagefault report
+	 * is 8-byte-aligned. In order to obtain the exact
+	 * address of the memory access, we use the address
+	 * included in the instruction.
+	 */
+	state.addr += ( instr % 8 );
+
+
+	//addr_t* regs[15];
+	//_get_register_mapping(regs,thread_state);
+
+
+	if(!writes)
+	{
+		state.value = 0;
+		memcpy(&state.value,addr + state.addr,access_size);
+		PINF("Value at %lx: %x", state.addr, state.value);
+		//thread_state.r3 =51;
+		unsigned old_val = 0;
+		thread_state.get_gpr(state.reg, old_val);
+		PINF("Old register value: %x", old_val);
+		unsigned const reg = state.reg;
+		to_big_endian(state.value);
+		thread_state.set_gpr(reg,state.value);
+	}
+
+	else
+	{
+		thread_state.get_gpr(state.reg, state.value);
+		PINF("Old register value: %x", state.value);
+		to_big_endian(state.value);
+		memcpy(addr + state.addr,&state.value,access_size);
+	}
+
 
 
 
@@ -147,10 +190,10 @@ void Fault_handler::_handle_fault()
 
 
 	// Increase instruction pointer (ip) by one word
-	Genode::Thread_state st = cpu_thread->state();
-	st.ip += Instruction::size();
-	cpu_thread->state(st);
-	PINF("IP: %lx", st.ip);
+	thread_state.ip += Instruction::size();
+	// Write back modified state
+	cpu_thread->state(thread_state);
+	PINF("IP: %lx", thread_state.ip);
 
 	//continue execution since we resolved the pagefault
 	Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);

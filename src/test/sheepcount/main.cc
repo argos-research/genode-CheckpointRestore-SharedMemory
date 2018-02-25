@@ -34,14 +34,14 @@ void Component::construct(Genode::Env &env)
 	timer.msleep(3000);
 	log("Allocating and attaching memory and its dataspace.");
 	Dataspace_capability ds_cap = env.ram().alloc(4096);
-	unsigned char* addr = env.rm().attach(ds_cap);
+	unsigned* addr = env.rm().attach(ds_cap);
 //    unsigned int counter = 0;
 //	unsigned int *addr = &counter;
 //	unsigned int *addr = (unsigned int*) MANAGED_ADDR;
 	//addr[0x432]
-	addr_t base_addr = 0x353;
-	unsigned char &n = addr[base_addr];
-	n = 0x90; //144
+	addr_t base_addr = 0x58;
+	unsigned &n = addr[base_addr];
+	n = 0xfffffff0; //144
 
 	log("base value: ", (unsigned int) n, ", base addr: ", Genode::Hex(base_addr));
 
