@@ -132,6 +132,8 @@ struct Rtcr::Main {
 			}
 		}
 
+		env.rm().detach(elf_addr);
+
 
 
 
