@@ -166,16 +166,17 @@ void Fault_handler::_handle_fault()
 		thread_state.get_gpr(state.reg, old_val);
 		PINF("Old register value: %x", old_val);
 		unsigned const reg = state.reg;
-		to_big_endian(state.value);
+		//to_big_endian(state.value);
 		///*if(reg!=3)*/thread_state.set_gpr(reg,state.value);
-		thread_state.set_gpr(9,1234);
+		thread_state.set_gpr(/*reg*/9,state.value);
 	}
 
 	else
 	{
-		thread_state.get_gpr(state.reg, state.value);
+		unsigned const reg = state.reg;
+		thread_state.get_gpr(reg, state.value);
 		PINF("Old register value: %x", state.value);
-		to_big_endian(state.value);
+		//to_big_endian(state.value);
 		memcpy(addr + state.addr,&state.value,access_size);
 	}
 
