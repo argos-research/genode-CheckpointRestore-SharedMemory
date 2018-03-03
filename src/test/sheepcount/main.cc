@@ -41,9 +41,10 @@ void Component::construct(Genode::Env &env)
 	//addr[0x432]
 	addr_t base_addr = 0x5b;
 	unsigned &n = addr[base_addr];
-	unsigned test =50;
-	n = 0xfffffff0; //144
+	//unsigned test =50;
+	//n = 0xfffffff0; //144
 
+	n=12345;
 	log("base value: ", (unsigned int) n, ", base addr: ", Genode::Hex(base_addr));
 
 	//env.parent().upgrade(timer, "ram_quota=8K");
@@ -51,10 +52,8 @@ void Component::construct(Genode::Env &env)
 
 	while(1)
 	{
-        log(n, " sheep. zzZ", test);
-        n=test;
-		//n++;
-        test++;
+        log(Genode::Hex(n), " sheep. zzZ");
+		n++;
 		timer.msleep(1000);
 	}
 

@@ -76,7 +76,7 @@ struct Rtcr::Main {
 			//TODO: TRY THIS
 			//this->_ramds_infos.first()->mrm_info->dd_infos.first()->findbyaddr
 			child.pause();
-
+PINF("size of size_t: %u", sizeof(size_t));
 
 
 

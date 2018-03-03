@@ -44,6 +44,16 @@ void to_big_endian(unsigned& le)
 	le=swapped;
 }
 
+void print_all_gprs(Thread_state s)
+{
+	unsigned value;
+	for(unsigned id = 0; id < 16; id++)
+	{
+		s.get_gpr(id,value);
+		PINF("Reg %u: hex: %x, dec: %u",id,value,value);
+	}
+}
+
 void Fault_handler::_handle_fault()
 {
 	// Find faulting Managed_region_info
@@ -120,15 +130,14 @@ void Fault_handler::_handle_fault()
 
 	//TODO: simulate instruction
 
-
+	//cpu_thread->all_regs();
 
 
 
 	addr_t inst_addr = state.pf_ip;
 	unsigned instr = *((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
-	PINF("Address: %lx, Offset: %lx, value: %x, target inst: %x",
-			elf_seg_addr, elf_seg_offset, *((uint32_t* ) (elf_addr + elf_seg_offset)),
-			*((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr)));
+	PINF("elf_addr: %lx, elf_seg_offset: %lx, inst_addr: %lx, elf_seg_addr: %lx",
+			elf_addr, elf_seg_offset, inst_addr, elf_seg_addr);
 
 	/* decode the instruction and update state accordingly */
 	bool writes = false;
@@ -156,31 +165,42 @@ void Fault_handler::_handle_fault()
 	//_get_register_mapping(regs,thread_state);
 
 
+	print_all_gprs(thread_state);
+#define SZENARIO_WORKAROUND
+#ifdef SZENARIO_WORKAROUND
+
+	unsigned reg_map[16]={0,9,2,11,4,5,6,7,8,1,10,3,12,13,14,15};
+
 	if(!writes)
 	{
 		state.value = 0;
 		memcpy(&state.value,addr + state.addr,access_size);
 		PINF("Value at %lx: %x", state.addr, state.value);
-		//thread_state.r3 =51;
-		unsigned old_val = 0;
-		thread_state.get_gpr(state.reg, old_val);
-		PINF("Old register value: %x", old_val);
-		unsigned const reg = state.reg;
-		//to_big_endian(state.value);
-		///*if(reg!=3)*/thread_state.set_gpr(reg,state.value);
-		thread_state.set_gpr(/*reg*/9,state.value);
+		thread_state.set_gpr(reg_map[state.reg],state.value);
 	}
 
 	else
 	{
-		unsigned const reg = state.reg;
-		thread_state.get_gpr(reg, state.value);
-		PINF("Old register value: %x", state.value);
-		//to_big_endian(state.value);
+		thread_state.get_gpr(reg_map[state.reg], state.value);
+		PINF("Register value: %x", state.value);
 		memcpy(addr + state.addr,&state.value,access_size);
 	}
+#else
+	if(!writes)
+	{
+		state.value = 0;
+		memcpy(&state.value,addr + state.addr,access_size);
+		PINF("Value at %lx: %x", state.addr, state.value);
+		thread_state.set_gpr(state.reg,state.value);
+	}
 
-
+	else
+	{
+		thread_state.get_gpr(state.reg, state.value);
+		PINF("Register value: %x", state.value);
+		memcpy(addr + state.addr,&state.value,access_size);
+	}
+#endif
 
 
 
@@ -195,7 +215,8 @@ void Fault_handler::_handle_fault()
 	thread_state.ip += Instruction::size();
 	// Write back modified state
 	cpu_thread->state(thread_state);
-	PINF("IP: %lx", thread_state.ip);
+	//print_all_gprs(cpu_thread->state());
+	//PINF("IP: %lx", thread_state.ip);
 
 	//continue execution since we resolved the pagefault
 	Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
