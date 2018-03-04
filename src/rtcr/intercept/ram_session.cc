@@ -6,6 +6,8 @@
 
 #include "ram_session.h"
 
+#include "../target_child.h"
+
 using namespace Rtcr;
 
 void Ram_session_component::_destroy_ramds_info(Ram_dataspace_info &ramds_info)
@@ -95,8 +97,87 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 {
 	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(size=", Genode::Hex(size),")");
 
+
+	if(_granularity == Target_child::GRANULARITY_REDUNDANT_MEMORY) //redundant memory
+	{
+		Genode::log("Using Redundant Memory");
+		// Create a Region map; if Rm_session is out of ram_quota, upgrade it
+		Genode::Capability<Genode::Region_map> new_region_map_cap =
+			Genode::retry<Genode::Rm_session::Out_of_metadata>(
+				[&] () { return _parent_rm.create(size); },
+				[&] ()
+				{
+					char args[Genode::Parent::Session_args::MAX_SIZE];
+					Genode::snprintf(args, sizeof(args), "ram_quota=%u", 256*1024);
+					_env.parent().upgrade(_parent_rm, args);
+				});
+
+		// Create Ram_dataspace_info and a Managed_region_map_info which contains a list of Designated_dataspace_infos
+		Genode::Region_map_client new_rm_client(new_region_map_cap);
+
+		Managed_region_map_info *new_mrm_info =
+				new (_md_alloc) Managed_region_map_info(new_region_map_cap);
+
+		Ram_dataspace_info *new_ramds_info =
+				new (_md_alloc) Ram_dataspace_info(
+						Genode::static_cap_cast<Genode::Ram_dataspace>(new_rm_client.dataspace()),
+						size, cached, _bootstrap_phase, new_mrm_info);
+
+		// Set our pagefault handler for the Region_map with the  context of the Managed_region_map_info
+		new_rm_client.fault_handler(_receiver.manage(&new_mrm_info->context));
+
+
+
+
+
+		// Allocate dataspace and associate with the Region_map
+		Genode::Dataspace_capability ds_cap;
+
+		// Try to allocate a dataspace which will be associated with the new Region_map
+		try
+		{
+			ds_cap = _parent_ram.alloc(size, cached);
+		}
+		catch(Genode::Ram_session::Quota_exceeded)
+		{
+			Genode::error("_parent_ram has no memory!");
+			return Genode::Capability<Genode::Ram_dataspace>();
+		}
+
+		// Create a Designated_dataspace_info
+		Designated_dataspace_info *new_dd_info =
+				new (_md_alloc) Designated_dataspace_info(*new_mrm_info, ds_cap, 0, size);
+
+		// Insert it into Managed_region_map_info's list
+		new_mrm_info->dd_infos.insert(new_dd_info);
+
+
+
+
+
+
+		// Insert new Ram_dataspace_info into the list
+		Genode::Lock::Guard lock_guard(_parent_state.ram_dataspaces_lock);
+		_parent_state.ram_dataspaces.insert(new_ramds_info);
+
+		//detach because we need to receive pagefaults
+		//new_dd_info->detach();
+
+		if(verbose_debug)
+		{
+			Genode::log("  Allocated managed dataspace (",
+					"RM=", new_mrm_info->region_map_cap,
+					" DS=", new_ramds_info->cap, ")",
+					" containing ", size,
+					" byte dataspace");
+		}
+
+		// Return the stored Ram_dataspace_capability of the Region_map
+		return new_ramds_info->cap;
+	}
+
 	// Use incremental checkpoint
-	if(_granularity > 1)
+	else if(_granularity > 0)
 	{
 		// Size of a memory page
 		Genode::size_t const PAGESIZE = 4096;
@@ -200,82 +281,6 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 					" DS=", new_ramds_info->cap, ")",
 					" containing ", num_dataspaces, "*", ds_size,
 					" + ", (remaining_dataspace_size == 0 ? "" : "1*"), remaining_dataspace_size, " Dataspaces");
-		}
-
-		// Return the stored Ram_dataspace_capability of the Region_map
-		return new_ramds_info->cap;
-	}
-	else if(_granularity == 1) //redundant memory
-	{
-		// Create a Region map; if Rm_session is out of ram_quota, upgrade it
-		Genode::Capability<Genode::Region_map> new_region_map_cap =
-			Genode::retry<Genode::Rm_session::Out_of_metadata>(
-				[&] () { return _parent_rm.create(size); },
-				[&] ()
-				{
-					char args[Genode::Parent::Session_args::MAX_SIZE];
-					Genode::snprintf(args, sizeof(args), "ram_quota=%u", 256*1024);
-					_env.parent().upgrade(_parent_rm, args);
-				});
-
-		// Create Ram_dataspace_info and a Managed_region_map_info which contains a list of Designated_dataspace_infos
-		Genode::Region_map_client new_rm_client(new_region_map_cap);
-
-		Managed_region_map_info *new_mrm_info =
-				new (_md_alloc) Managed_region_map_info(new_region_map_cap);
-
-		Ram_dataspace_info *new_ramds_info =
-				new (_md_alloc) Ram_dataspace_info(
-						Genode::static_cap_cast<Genode::Ram_dataspace>(new_rm_client.dataspace()),
-						size, cached, _bootstrap_phase, new_mrm_info);
-
-		// Set our pagefault handler for the Region_map with the  context of the Managed_region_map_info
-		new_rm_client.fault_handler(_receiver.manage(&new_mrm_info->context));
-
-
-
-
-
-		// Allocate dataspace and associate with the Region_map
-		Genode::Dataspace_capability ds_cap;
-
-		// Try to allocate a dataspace which will be associated with the new Region_map
-		try
-		{
-			ds_cap = _parent_ram.alloc(size, cached);
-		}
-		catch(Genode::Ram_session::Quota_exceeded)
-		{
-			Genode::error("_parent_ram has no memory!");
-			return Genode::Capability<Genode::Ram_dataspace>();
-		}
-
-		// Create a Designated_dataspace_info
-		Designated_dataspace_info *new_dd_info =
-				new (_md_alloc) Designated_dataspace_info(*new_mrm_info, ds_cap, 0, size);
-
-		// Insert it into Managed_region_map_info's list
-		new_mrm_info->dd_infos.insert(new_dd_info);
-
-
-
-
-
-
-		// Insert new Ram_dataspace_info into the list
-		Genode::Lock::Guard lock_guard(_parent_state.ram_dataspaces_lock);
-		_parent_state.ram_dataspaces.insert(new_ramds_info);
-
-		//detach because we need to receive pagefaults
-		//new_dd_info->detach();
-
-		if(verbose_debug)
-		{
-			Genode::log("  Allocated managed dataspace (",
-					"RM=", new_mrm_info->region_map_cap,
-					" DS=", new_ramds_info->cap, ")",
-					" containing ", size,
-					" byte dataspace");
 		}
 
 		// Return the stored Ram_dataspace_capability of the Region_map

@@ -179,6 +179,8 @@ public:
 
 	~Target_child();
 
+	static const Genode::size_t GRANULARITY_REDUNDANT_MEMORY = 0xffffffff;
+
 	/**
 	 * Return the custom Pd session
 	 */

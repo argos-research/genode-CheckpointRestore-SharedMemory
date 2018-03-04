@@ -39,7 +39,7 @@ struct Rtcr::Main {
 
 		Timer::Connection timer { env };
 
-		Target_child child { env, heap, parent_services, "sheepcount", 1 };
+		Target_child child { env, heap, parent_services, "sheepcount", Target_child::GRANULARITY_REDUNDANT_MEMORY };
 		child.start();
 
 		Target_state ts(env, heap);

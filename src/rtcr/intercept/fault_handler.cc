@@ -169,7 +169,7 @@ void Fault_handler::_handle_fault()
 #define SZENARIO_WORKAROUND
 #ifdef SZENARIO_WORKAROUND
 
-	unsigned reg_map[16]={0,9,2,11,4,5,6,7,8,1,10,3,12,13,14,15};
+	const unsigned reg_map[16] ={8,9,10,11,3,4,5,6,7,0,1,2,12,13,14,15};
 
 	if(!writes)
 	{
@@ -230,7 +230,6 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 	_env(env),
 	_receiver(receiver), _ramds_infos(ramds_infos)
 {
-
     static Rom_connection rom("sheepcount");
 	Dataspace_capability elf_ds = rom.dataspace();
 
