@@ -15,7 +15,7 @@ using namespace Rtcr;
 
 
 Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		Genode::size_t granularity, bool &bootstrap_phase)
+		Genode::size_t granularity, bool &bootstrap_phase, const char* name)
 :
 	_env(env), _md_alloc(md_alloc), _resource_ep(ep), _bootstrap_phase(bootstrap_phase)
 {
@@ -25,7 +25,7 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 	cpu_root = new (_md_alloc) Cpu_root(_env, _md_alloc, _resource_ep, *pd_root, _bootstrap_phase);
 	cpu_service = new (_md_alloc) Genode::Local_service("CPU", cpu_root);
 
-	ram_root = new (_md_alloc) Ram_root(_env, _md_alloc, _resource_ep, granularity, _bootstrap_phase);
+	ram_root = new (_md_alloc) Ram_root(_env, _md_alloc, _resource_ep, granularity, _bootstrap_phase, name);
 	ram_service = new (_md_alloc) Genode::Local_service("RAM", ram_root);
 }
 
@@ -201,7 +201,8 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_restorer        (nullptr),
-	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap),
+	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap,
+			granularity == GRANULARITY_REDUNDANT_MEMORY ? _name.string() : ""),
 	_resources       (_env, _name.string(), _custom_services),
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),

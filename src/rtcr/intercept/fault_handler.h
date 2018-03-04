@@ -71,6 +71,11 @@ private:
 	Genode::addr_t elf_seg_addr;
 
 	/**
+	 * ROM name of binary for redundant memory
+	 */
+	Genode::String<32>  _name;
+
+	/**
 	 * Find the first faulting Region_map in the list of Ram_dataspaces
 	 *
 	 * \return Pointer to Managed_region_map_info which contains the faulting Region_map
@@ -83,7 +88,7 @@ private:
 
 public:
 	Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
-			Genode::List<Ram_dataspace_info> &ramds_infos);
+			Genode::List<Ram_dataspace_info> &ramds_infos, const char* name = "");
 
 	/**
 	 * Entrypoint of the thread

@@ -54,7 +54,7 @@ void Ram_session_component::_destroy_ramds_info(Ram_dataspace_info &ramds_info)
 
 
 Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::size_t granularity,
-		const char *label, const char *creation_args, bool &bootstrap_phase)
+		const char *label, const char *creation_args, bool &bootstrap_phase, const char* name)
 :
 	_env                (env),
 	_md_alloc           (md_alloc),
@@ -63,7 +63,7 @@ Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator
 	_parent_rm          (env),
 	_parent_state       (creation_args, bootstrap_phase),
 	_receiver           (),
-	_page_fault_handler (env, _receiver, _parent_state.ram_dataspaces),
+	_page_fault_handler (env, _receiver, _parent_state.ram_dataspaces, name),
 	_granularity        (granularity)
 {
 	_page_fault_handler.start();
@@ -401,7 +401,7 @@ Ram_session_component *Ram_root::_create_session(const char *args)
 
 	// Create custom RAM session
 	Ram_session_component *new_session =
-			new (md_alloc()) Ram_session_component(_env, _md_alloc, _granularity, label_buf, readjusted_args, _bootstrap_phase);
+			new (md_alloc()) Ram_session_component(_env, _md_alloc, _granularity, label_buf, readjusted_args, _bootstrap_phase, _name);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
@@ -442,7 +442,7 @@ void Ram_root::_destroy_session(Ram_session_component *session)
 
 
 Ram_root::Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
-		Genode::size_t granularity, bool &bootstrap_phase)
+		Genode::size_t granularity, bool &bootstrap_phase, const char* name)
 :
 	Root_component<Ram_session_component>(session_ep, md_alloc),
 	_env              (env),
@@ -451,7 +451,8 @@ Ram_root::Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entryp
 	_bootstrap_phase  (bootstrap_phase),
 	_granularity      (granularity),
 	_objs_lock        (),
-	_session_rpc_objs ()
+	_session_rpc_objs (),
+	_name			  (name)
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
 }

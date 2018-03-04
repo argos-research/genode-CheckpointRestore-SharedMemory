@@ -224,13 +224,17 @@ void Fault_handler::_handle_fault()
 
 
 Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
-		Genode::List<Ram_dataspace_info> &ramds_infos)
+		Genode::List<Ram_dataspace_info> &ramds_infos, const char* name)
 :
 	Thread(env, "managed dataspace pager", 16*1024),
 	_env(env),
-	_receiver(receiver), _ramds_infos(ramds_infos)
+	_receiver(receiver), _ramds_infos(ramds_infos),
+	_name(name)
 {
-    static Rom_connection rom("sheepcount");
+	if(_name=="")
+		return;
+
+    static Rom_connection rom(_name.string());
 	Dataspace_capability elf_ds = rom.dataspace();
 
 	/* attach ELF locally */

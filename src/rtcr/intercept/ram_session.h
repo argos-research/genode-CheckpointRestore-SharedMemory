@@ -90,7 +90,7 @@ private:
 
 public:
 	Ram_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::size_t granularity,
-			const char *label, const char *creation_args, bool &bootstrap_phase);
+			const char *label, const char *creation_args, bool &bootstrap_phase, const char* name = "");
 	~Ram_session_component();
 
 	Genode::Ram_session_capability parent_cap() { return _parent_ram.cap(); }
@@ -168,6 +168,10 @@ private:
 	 * List for monitoring session objects
 	 */
 	Genode::List<Ram_session_component> _session_rpc_objs;
+	/**
+	 * ROM name of target binary
+	 */
+	const char* _name;
 
 protected:
 	Ram_session_component *_create_session(const char *args);
@@ -176,7 +180,7 @@ protected:
 
 public:
 	Ram_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
-			Genode::size_t granularity, bool &bootstrap_phase);
+			Genode::size_t granularity, bool &bootstrap_phase, const char* name = "");
     ~Ram_root();
 
 	Genode::List<Ram_session_component> &session_infos() { return _session_rpc_objs; }

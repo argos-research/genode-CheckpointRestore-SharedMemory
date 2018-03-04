@@ -72,7 +72,8 @@ private:
 	Genode::Entrypoint  _child_ep;
 	/**
 	 * Granularity for incremental checkpointing in a multiple of pagesize;
-	 * zero means do not use incremental checkpointing
+	 * zero means do not use incremental checkpointing;
+	 * GRANULARITY_REDUNDANT_MEMORY means use redundant memory
 	 */
 	Genode::size_t      _granularity;
 	/**
@@ -112,7 +113,7 @@ private:
 		Genode::Local_service *timer_service = nullptr;
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-				Genode::size_t granularity, bool &bootstrap_phase);
+				Genode::size_t granularity, bool &bootstrap_phase, const char* name = "");
 		~Custom_services();
 
 		Genode::Service *find(const char *service_name);
