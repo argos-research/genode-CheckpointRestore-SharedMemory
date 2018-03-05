@@ -180,6 +180,22 @@ void Fault_handler::_handle_fault_redundant_memory()
 		memcpy(checkpoint_ds_addr + state.addr,&state.value,access_size);
 	}
 
+
+#if 1
+	//JUST for testing!
+	dd_info->create_new_checkpoint();
+	unsigned val;
+	memcpy(&val,(char*)(primary_ds_addr + state.addr),4);
+	PINF("Value in orig mem: %x", val);
+
+	for(Designated_redundant_ds_info::Redundant_checkpoint* i = dd_info->get_first_checkpoint(); i != nullptr; i=i->next())
+	{
+
+		memcpy(&val,(char*)(i->get_address() + state.addr),4);
+		PINF("Value in checkpoint: %x, addr %lx", val, i->get_address() + state.addr);
+	}
+#endif
+
 	_env.rm().detach(primary_ds_addr);
 
 	// Increase instruction pointer (ip) by one instruction

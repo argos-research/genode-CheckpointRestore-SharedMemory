@@ -10,12 +10,12 @@ namespace Rtcr {
 
 struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_info
 {
-private:
+
 	/**
 	 * Struct representing one checkpoint.
 	 * The list tail is the current checkpoint that is used for redundant writing.
 	 */
-	struct Redundant_checkpoint : public Genode::List<Redundant_checkpoint>, Genode::List<Redundant_checkpoint>::Element
+	struct Redundant_checkpoint : public Genode::List<Redundant_checkpoint>::Element
 	{
 	private:
 		bool _attached;
@@ -69,15 +69,15 @@ private:
 		}
 	};
 
-
+	private:
 
 	/* Head and tail of redundant checkpoint list.
 	 * The tail is used for redundant writing.
 	 * The head is needed for restoring or
 	 * flattening checkpoints.
 	 */
-	Redundant_checkpoint* _red_cp_head;
-	Redundant_checkpoint* _red_cp_tail;
+	Genode::List<Redundant_checkpoint> _checkpoints;
+	Redundant_checkpoint* _current_checkpoint;
 
 	Genode::Ram_connection& _parent_ram;
 	Genode::Cache_attribute _cached;
@@ -102,25 +102,33 @@ public:
 	{
 		//Create first snapshot
 		Genode::Dataspace_capability const red_ds = _parent_ram.alloc(size,_cached);
-		_red_cp_head = _red_cp_tail = new (alloc) Redundant_checkpoint(red_ds, size, _rm);
-		//The first checkpoint is cumulative since writes are duplicated since the start
-		//_red_cp_head->_is_cumulative = true;
-		_red_cp_tail->attach();
+		create_new_checkpoint();
+		_current_checkpoint = _checkpoints.first();
+	}
+
+	Redundant_checkpoint*  get_current_checkpoint()
+	{
+		return _current_checkpoint;
 	}
 
 	Genode::addr_t get_current_checkpoint_addr()
 	{
-		return _red_cp_tail->get_address();
+		return _current_checkpoint->get_address();
+	}
+
+	Redundant_checkpoint* get_first_checkpoint()
+	{
+		return _checkpoints.first();
 	}
 
 	void create_new_checkpoint()
 	{
-		Genode::Dataspace_capability const red_ds = _parent_ram.alloc(size,_cached);
-		Redundant_checkpoint* new_tail = new (_alloc) Redundant_checkpoint(red_ds, size, _rm);
-		_red_cp_tail->insert(new_tail);
-		new_tail->attach();
-		_red_cp_tail = new_tail;
-		// don't detach; this will be done by checkpoint flattener
+		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
+		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _rm);
+		new_checkpoint->attach();
+		_checkpoints.insert(new_checkpoint);
+		_current_checkpoint = new_checkpoint;
+		// don't detach old head; this will be done by checkpoint flattener
 	}
 };
 
