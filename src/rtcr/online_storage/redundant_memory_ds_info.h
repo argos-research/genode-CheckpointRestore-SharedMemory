@@ -3,10 +3,13 @@
 
 #include "ram_dataspace_info.h"
 
+#include <util/bit_array.h>
+
 
 namespace Rtcr {
 	struct Designated_redundant_ds_info;
 }
+
 
 struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_info
 {
@@ -18,26 +21,39 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 	struct Redundant_checkpoint : public Genode::List<Redundant_checkpoint>::Element
 	{
 	private:
+		friend class Designated_redundant_ds_info;
 		bool _attached;
 		Genode::Dataspace_capability const  _red_ds_cap;
 		Genode::addr_t _addr;
 		bool _is_cumulative;
 		Genode::size_t _size;
 		Genode::Region_map& _rm;
+		Genode::Allocator& _alloc;
+		//marks the bytes that have been modified in this snapshot
+		Genode::Bit_array_base* _written_bytes;
+		Genode::addr_t* _bitset_array;
+		static const Genode::size_t BITSET_UNIT_BITSIZE = sizeof(*_bitset_array)*8;
 	public:
-		// The actual ds used for redundant writing
-
 		/* If the snapshot is not cumulative, it is not a complete
 		 * memory snapshot, i.e. some blocks refer to the previous
 		 * snapshot.
 		 */
 		Redundant_checkpoint(Genode::Dataspace_capability const  ds_cap, Genode::size_t size,
-				Genode::Region_map& rm)
+				Genode::Allocator& alloc, Genode::Region_map& rm)
 		:
 			_attached(false), _red_ds_cap(ds_cap), _addr(0),
-			_is_cumulative(false), _size(size),
-			_rm(rm)
-		{}
+			_is_cumulative(false), _size(size),	_rm(rm), _alloc(alloc)
+		{
+			_bitset_array = new(_alloc) Genode::addr_t[_size/BITSET_UNIT_BITSIZE];
+			_written_bytes = new(_alloc) Genode::Bit_array_base((_size + BITSET_UNIT_BITSIZE - 1)
+					& ~(BITSET_UNIT_BITSIZE - 1), _bitset_array, true);
+		}
+
+		~Redundant_checkpoint()
+		{
+			Genode::destroy(_alloc, _written_bytes);
+			Genode::destroy(_alloc, _bitset_array);
+		}
 
 		Genode::addr_t attach()
 		{
@@ -69,7 +85,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 		}
 	};
 
-	private:
+private:
 
 	/* Head and tail of redundant checkpoint list.
 	 * The tail is used for redundant writing.
@@ -100,8 +116,6 @@ public:
 	_alloc(alloc),
 	_rm(rm)
 	{
-		//Create first snapshot
-		Genode::Dataspace_capability const red_ds = _parent_ram.alloc(size,_cached);
 		create_new_checkpoint();
 		_current_checkpoint = _checkpoints.first();
 	}
@@ -124,11 +138,20 @@ public:
 	void create_new_checkpoint()
 	{
 		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
-		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _rm);
+		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
 		new_checkpoint->attach();
 		_checkpoints.insert(new_checkpoint);
 		_current_checkpoint = new_checkpoint;
 		// don't detach old head; this will be done by checkpoint flattener
+	}
+
+	// dst is relative to dataspace start address
+	void write_in_current_snapshot(Genode::addr_t dst, void* src, Genode::size_t data_size)
+	{
+		// Do the actual write
+		Genode::memcpy((Genode::uint8_t*)get_current_checkpoint_addr() + dst, src, data_size);
+		// Mark written bytes
+		_current_checkpoint->_written_bytes->set(dst, data_size);
 	}
 };
 
