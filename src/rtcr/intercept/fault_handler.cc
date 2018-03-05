@@ -177,12 +177,12 @@ void Fault_handler::_handle_fault_redundant_memory()
 		memcpy(primary_ds_addr + state.addr,&state.value,access_size);
 		//write backup into snapshot memory
 		dd_info->write_in_current_snapshot(state.addr,&state.value,access_size);
+		//JUST for testing!
+		dd_info->create_new_checkpoint();
 	}
 
 
 #if 1
-	//JUST for testing!
-	dd_info->create_new_checkpoint();
 	unsigned val;
 	memcpy(&val,(char*)(primary_ds_addr + state.addr),4);
 	PINF("Value in orig mem: %x", val);

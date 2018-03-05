@@ -102,6 +102,8 @@ private:
 
 	Genode::Region_map& _rm;
 
+	Genode::size_t _num_checkpoints;
+
 public:
 	/**
 	 * Constructor
@@ -114,7 +116,8 @@ public:
 	_parent_ram(parent_ram),
 	_cached(cached),
 	_alloc(alloc),
-	_rm(rm)
+	_rm(rm),
+	_num_checkpoints(0)
 	{
 		create_new_checkpoint();
 		_current_checkpoint = _checkpoints.first();
@@ -140,8 +143,9 @@ public:
 		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
 		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
 		new_checkpoint->attach();
-		_checkpoints.insert(new_checkpoint);
+		_checkpoints.insert(new_checkpoint, _current_checkpoint);
 		_current_checkpoint = new_checkpoint;
+		++_num_checkpoints;
 		// don't detach old head; this will be done by checkpoint flattener
 	}
 
