@@ -54,8 +54,9 @@ void print_all_gprs(Thread_state s)
 	}
 }
 
-void Fault_handler::_handle_fault()
+void Fault_handler::_handle_fault_redundant_memory()
 {
+
 	// Find faulting Managed_region_info
 	Managed_region_map_info *faulting_mrm_info = _find_faulting_mrm_info();
 
@@ -185,6 +186,7 @@ void Fault_handler::_handle_fault()
 		PINF("Register value: %x", state.value);
 		memcpy(addr + state.addr,&state.value,access_size);
 	}
+
 #else
 	if(!writes)
 	{
@@ -223,6 +225,41 @@ void Fault_handler::_handle_fault()
 }
 
 
+void Fault_handler::_handle_fault()
+{
+	// Find faulting Managed_region_info
+	Managed_region_map_info *faulting_mrm_info = _find_faulting_mrm_info();
+
+	// Get state of faulting Region_map
+	Genode::Region_map::State state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
+
+	if(verbose_debug)
+	{
+	Genode::log("Handle fault: Region map ",
+			faulting_mrm_info->region_map_cap, " state is ",
+			state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
+			state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
+			state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
+			" pf_addr=", Genode::Hex(state.addr));
+	}
+
+	// Find dataspace which contains the faulting address
+	Designated_dataspace_info *dd_info = faulting_mrm_info->dd_infos.first();
+	if(dd_info) dd_info = dd_info->find_by_addr(state.addr);
+
+	// Check if a dataspace was found
+	if(!dd_info)
+	{
+		Genode::warning("No designated dataspace for addr = ", state.addr,
+				" in Region_map ", faulting_mrm_info->region_map_cap);
+		return;
+	}
+
+	// Attach found dataspace to its designated address
+	dd_info->attach();
+}
+
+
 Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
 		Genode::List<Ram_dataspace_info> &ramds_infos, const char* name)
 :
@@ -252,7 +289,6 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 
 	PINF("First 4 Bytes: %x", *(uint8_t* )elf_addr);
 
-	addr_t entry = elf.entry();
 	Elf_segment seg;
 	for (unsigned n = 0; (seg = elf.get_segment(n)).valid(); ++n) {
 		if (seg.flags().skip)
@@ -261,8 +297,6 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 		/* same values for r/o and r/w segments */
 		elf_seg_addr = (addr_t) seg.start();
 		elf_seg_size = seg.mem_size();
-
-		bool parent_info = false;
 
 		bool const write = seg.flags().w;
 		bool const exec = seg.flags().x;
@@ -295,6 +329,11 @@ void Fault_handler::entry()
 	{
 		Genode::Signal signal = _receiver.wait_for_signal();
 		for(unsigned int i = 0; i < signal.num(); ++i)
-			_handle_fault();
+		{
+			if(_name == "")
+				_handle_fault();
+			else
+				_handle_fault_redundant_memory();
+		}
 	}
 }

@@ -38,8 +38,6 @@ private:
 
 	Genode::Env& _env;
 
-	void _get_register_mapping(Genode::addr_t* (&regs)[15], Genode::Cpu_state& state);
-
 	/**
 	 * Enable log output for debugging
 	 */
@@ -71,7 +69,8 @@ private:
 	Genode::addr_t elf_seg_addr;
 
 	/**
-	 * ROM name of binary for redundant memory
+	 * ROM name of binary for redundant memory.
+	 * If "", do not use redundant memory.
 	 */
 	Genode::String<32>  _name;
 
@@ -85,6 +84,11 @@ private:
 	 * Handles the page fault by attaching a designated dataspace into its region map
 	 */
 	void _handle_fault();
+
+	/**
+	 * Handles the page fault by emulating the instruction with redundant writing
+	 */
+	void _handle_fault_redundant_memory();
 
 public:
 	Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
