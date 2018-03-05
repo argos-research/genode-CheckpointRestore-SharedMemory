@@ -126,10 +126,6 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		// Set our pagefault handler for the Region_map with the  context of the Managed_region_map_info
 		new_rm_client.fault_handler(_receiver.manage(&new_mrm_info->context));
 
-
-
-
-
 		// Allocate dataspace and associate with the Region_map
 		Genode::Dataspace_capability ds_cap;
 
@@ -150,9 +146,6 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 
 		// Insert it into Managed_region_map_info's list
 		new_mrm_info->dd_infos.insert(new_dd_info);
-
-
-
 
 
 

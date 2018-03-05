@@ -50,7 +50,7 @@ void print_all_gprs(Thread_state s)
 	for(unsigned id = 0; id < 16; id++)
 	{
 		s.get_gpr(id,value);
-		PINF("Reg %u: hex: %x, dec: %u",id,value,value);
+		PINF("Reg %u:\t0x%x,\tdec: %u",id,value,value);
 	}
 }
 
@@ -59,7 +59,6 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 	// Find faulting Managed_region_info
 	Managed_region_map_info *faulting_mrm_info = _find_faulting_mrm_info();
-
 
 	// Get state of faulting Region_map
 	Genode::Region_map::State state = Genode::Region_map_client{faulting_mrm_info->region_map_cap}.state();
@@ -75,10 +74,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 	}
 
 	// Find dataspace which contains the faulting address
-
 	Designated_dataspace_info *dd_info = faulting_mrm_info->dd_infos.first();
 	if(dd_info) dd_info = dd_info->find_by_addr(state.addr);
-
 
 	// Check if a dataspace was found
 	if(!dd_info)
@@ -88,9 +85,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 		return;
 	}
 
-
 	// Find thread which caused the fault
-
 	Cpu_thread_component * cpu_thread = nullptr;
 	Cpu_session_component* c = Cpu_session_component::current_session;
 	while (c) {
@@ -113,7 +108,6 @@ void Fault_handler::_handle_fault_redundant_memory()
 			}
 			cpu_thread = cpu_thread->next();
 		}
-
 		c = c->next();
 	}
 
@@ -121,19 +115,6 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 	// Get copy of state
 	Genode::Thread_state thread_state = cpu_thread->state();
-
-
-	// Don't attach found dataspace to its designated address,
-	// because we need to continue receiving pagefaults in order
-	// to simulate them
-	//dd_info->attach();
-	//dd_info->detach();
-
-	//TODO: simulate instruction
-
-	//cpu_thread->all_regs();
-
-
 
 	addr_t inst_addr = state.pf_ip;
 	unsigned instr = *((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
@@ -152,30 +133,38 @@ void Fault_handler::_handle_fault_redundant_memory()
 	size_t access_size =
 			state.format == Region_map::LSB8 ? 1 : (state.format == Region_map::LSB16 ? 2 : 4);
 
-	char* addr = _env.rm().attach(dd_info->cap);
+	// Don't attach found dataspace to its designated address,
+	// because we need to continue receiving pagefaults in order
+	// to simulate them. We however attach it in Rtcrs address
+	// space in order to simulate the instruction from within
+	// this function.
+	char* primary_ds_addr = _env.rm().attach(dd_info->cap);
 
 	/* The address included in the pagefault report
 	 * is 8-byte-aligned. In order to obtain the exact
-	 * address of the memory access, we use the address
-	 * included in the instruction.
+	 * address of the memory access, we complement the
+	 * last 8 byte by using the relative address
+	 * contained in the instruction.
 	 */
 	state.addr += ( instr % 8 );
 
-
-	//addr_t* regs[15];
-	//_get_register_mapping(regs,thread_state);
-
-
 	print_all_gprs(thread_state);
+
+	/* Use a register mapping table in order to be able to
+	 * deal with Fiasco.OC register backups.
+	 */
 #define SZENARIO_WORKAROUND
 #ifdef SZENARIO_WORKAROUND
-
 	const unsigned reg_map[16] ={8,9,10,11,3,4,5,6,7,0,1,2,12,13,14,15};
+#else
+	const unsigned reg_map[16] ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+#endif
+
 
 	if(!writes)
 	{
 		state.value = 0;
-		memcpy(&state.value,addr + state.addr,access_size);
+		memcpy(&state.value,primary_ds_addr + state.addr,access_size);
 		PINF("Value at %lx: %x", state.addr, state.value);
 		thread_state.set_gpr(reg_map[state.reg],state.value);
 	}
@@ -184,41 +173,15 @@ void Fault_handler::_handle_fault_redundant_memory()
 	{
 		thread_state.get_gpr(reg_map[state.reg], state.value);
 		PINF("Register value: %x", state.value);
-		memcpy(addr + state.addr,&state.value,access_size);
+		memcpy(primary_ds_addr + state.addr,&state.value,access_size);
 	}
 
-#else
-	if(!writes)
-	{
-		state.value = 0;
-		memcpy(&state.value,addr + state.addr,access_size);
-		PINF("Value at %lx: %x", state.addr, state.value);
-		thread_state.set_gpr(state.reg,state.value);
-	}
+	_env.rm().detach(primary_ds_addr);
 
-	else
-	{
-		thread_state.get_gpr(state.reg, state.value);
-		PINF("Register value: %x", state.value);
-		memcpy(addr + state.addr,&state.value,access_size);
-	}
-#endif
-
-
-
-	//value+=10;
-	//memcpy(addr + state.addr,&value,sizeof(value));
-	_env.rm().detach(addr);
-	//dd_info->attach();
-
-
-
-	// Increase instruction pointer (ip) by one word
+	// Increase instruction pointer (ip) by one instruction
 	thread_state.ip += Instruction::size();
 	// Write back modified state
 	cpu_thread->state(thread_state);
-	//print_all_gprs(cpu_thread->state());
-	//PINF("IP: %lx", thread_state.ip);
 
 	//continue execution since we resolved the pagefault
 	Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
