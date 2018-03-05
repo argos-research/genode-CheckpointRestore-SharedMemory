@@ -140,9 +140,10 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 			return Genode::Capability<Genode::Ram_dataspace>();
 		}
 
-		// Create a Designated_dataspace_info
-		Designated_dataspace_info *new_dd_info =
-				new (_md_alloc) Designated_dataspace_info(*new_mrm_info, ds_cap, 0, size);
+		// Create a Designated_redundant_ds_info
+		Designated_redundant_ds_info *new_dd_info =
+				new (_md_alloc) Designated_redundant_ds_info(*new_mrm_info,
+						ds_cap, 0, size, _md_alloc, _env.rm(), _parent_ram, cached);
 
 		// Insert it into Managed_region_map_info's list
 		new_mrm_info->dd_infos.insert(new_dd_info);

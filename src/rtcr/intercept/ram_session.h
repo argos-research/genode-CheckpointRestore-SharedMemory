@@ -20,6 +20,7 @@
 
 /* Rtcr includes */
 #include "../online_storage/ram_dataspace_info.h"
+#include "../online_storage/redundant_memory_ds_info.h"
 #include "../online_storage/ram_session_info.h"
 //#include "../intercept/cpu_session.h"
 #include "fault_handler.h"

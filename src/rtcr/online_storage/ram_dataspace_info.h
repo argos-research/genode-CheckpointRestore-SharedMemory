@@ -10,6 +10,7 @@
 /* Genode includes */
 #include <util/list.h>
 #include <ram_session/ram_session.h>
+#include <ram_session/connection.h>
 #include <region_map/client.h>
 
 /* Rtcr includes */

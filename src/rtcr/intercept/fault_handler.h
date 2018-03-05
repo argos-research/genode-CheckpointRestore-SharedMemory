@@ -14,6 +14,7 @@
 #include <../src/include/base/internal/elf.h>
 
 #include "../online_storage/ram_dataspace_info.h"
+#include "../online_storage/redundant_memory_ds_info.h"
 //#include "../intercept/cpu_session.h"
 
 namespace Rtcr {

@@ -74,8 +74,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 	}
 
 	// Find dataspace which contains the faulting address
-	Designated_dataspace_info *dd_info = faulting_mrm_info->dd_infos.first();
-	if(dd_info) dd_info = dd_info->find_by_addr(state.addr);
+	Designated_redundant_ds_info *dd_info = (Designated_redundant_ds_info *) faulting_mrm_info->dd_infos.first();
+	if(dd_info) dd_info = (Designated_redundant_ds_info *) dd_info->find_by_addr(state.addr);
 
 	// Check if a dataspace was found
 	if(!dd_info)
@@ -139,6 +139,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	// space in order to simulate the instruction from within
 	// this function.
 	char* primary_ds_addr = _env.rm().attach(dd_info->cap);
+	char* checkpoint_ds_addr = (char*) dd_info->get_current_checkpoint_addr();
 
 	/* The address included in the pagefault report
 	 * is 8-byte-aligned. In order to obtain the exact
@@ -173,7 +174,10 @@ void Fault_handler::_handle_fault_redundant_memory()
 	{
 		thread_state.get_gpr(reg_map[state.reg], state.value);
 		PINF("Register value: %x", state.value);
+		//write into memory used by Target
 		memcpy(primary_ds_addr + state.addr,&state.value,access_size);
+		//write backup into snapshot memory
+		memcpy(checkpoint_ds_addr + state.addr,&state.value,access_size);
 	}
 
 	_env.rm().detach(primary_ds_addr);

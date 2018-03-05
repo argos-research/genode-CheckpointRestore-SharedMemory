@@ -65,11 +65,6 @@ struct Rtcr::Main {
 			child.ram().parent_state().ram_dataspaces.first()->mrm_info->dd_infos.first()->detach();
 			timer.msleep(3000);
 
-			//instruction that is in the binary
-//			unsigned int example_instruction = 0xe5843014;
-			unsigned short example_instruction = 0x84e5;
-			unsigned short current_instruction;
-
 #if 1
 
 
@@ -182,7 +177,7 @@ PINF("size of size_t: %u", sizeof(size_t));
 
 */
 			// Iterate through every session
-			Cpu_session_component *cpu_session = &child.cpu();
+			//Cpu_session_component *cpu_session = &child.cpu();
 			//child._custom_services.cpu_root->session_infos().first();
 /*			while (cpu_session) {
 
