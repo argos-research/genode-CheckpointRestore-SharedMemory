@@ -60,7 +60,7 @@ void Component::construct(Genode::Env &env)
 	{
         log(Genode::Hex(n), " sheep. zzZ", Genode::Hex(k));
 		k++;
-		n = k;
+		n = k*0x10;
 		register unsigned r0 asm("r0");
 		register unsigned r1 asm("r1");
 		register unsigned r2 asm("r2");
