@@ -148,6 +148,8 @@ private:
 
 	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 
+	void _checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
+
 	void _checkpoint_dataspaces();
 	void _checkpoint_dataspace_content(Genode::Dataspace_capability dst_ds_cap, Genode::Dataspace_capability src_ds_cap,
 			Genode::addr_t dst_offset, Genode::size_t size);
@@ -155,6 +157,8 @@ private:
 public:
 	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
 	~Checkpointer();
+
+	void activate_redundant_memory();
 
 	/**
 	 * Checkpoint all (known) RPC objects and capabilities from _child to _state

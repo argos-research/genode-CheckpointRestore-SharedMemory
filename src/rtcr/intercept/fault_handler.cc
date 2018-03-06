@@ -183,7 +183,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 #if 1
 	//TODO: JUST for testing! Remove later.
-	dd_info->create_new_checkpoint();
+	//dd_info->create_new_checkpoint();
 	// Show original memory and all checkpoint values at specified location
 	// plus values before and after (since we access 2 variables)
 	unsigned val, bef, aft;

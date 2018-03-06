@@ -207,7 +207,8 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
-	_child           (nullptr)
+	_child           (nullptr),
+	use_redundant_memory(granularity == GRANULARITY_REDUNDANT_MEMORY)
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
 	_in_bootstrap = false;
@@ -305,7 +306,14 @@ void Target_child::resume()
 		{
 			// Pause the CPU thread
 			Genode::Cpu_thread_client client{cpu_thread->parent_cap()};
-			client.resume();
+			//Resume in a loop since resuming is not reliable on Fiasco.OC
+			//But only for full checkpointing;
+			//incremental and redundant checkpointing will not work
+			//with multiple resume()-calls.
+			//for(Genode::size_t i = 0; i <
+			//		(this->_granularity != 0 || this->_granularity ==
+			//				GRANULARITY_REDUNDANT_MEMORY ? 1 : 32 ); i++)
+				client.resume();
 
 			cpu_thread = cpu_thread->next();
 		}

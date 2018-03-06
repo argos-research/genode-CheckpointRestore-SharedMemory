@@ -227,6 +227,10 @@ public:
 	Genode::Service *resolve_session_request(const char *service_name, const char *args);
 	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
 
+	/**
+	 * If redundant memory checkpointing is used
+	 */
+	const bool use_redundant_memory;
 };
 
 #endif /* _RTCR_TARGET_CHILD_H_ */

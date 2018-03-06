@@ -1366,6 +1366,32 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 }
 
 
+void Checkpointer::_checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+
+	Ram_session_component *ram_session = ram_sessions.first();
+	while(ram_session)
+	{
+		Ram_dataspace_info *ramds_info = ram_session->parent_state().ram_dataspaces.first();
+		while(ramds_info)
+		{
+			if(ramds_info->mrm_info)
+			{
+				Designated_redundant_ds_info *drds_info = (Designated_redundant_ds_info*) ramds_info->mrm_info->dd_infos.first();
+				while(drds_info)
+				{
+					if(drds_info->redundant_writing()) drds_info->create_new_checkpoint();
+					drds_info = (Designated_redundant_ds_info*) drds_info->next();
+				}
+			}
+			ramds_info = ramds_info->next();
+		}
+		ram_session = ram_session->next();
+	}
+}
+
+
 void Checkpointer::_checkpoint_dataspaces()
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
@@ -1431,6 +1457,9 @@ Checkpointer::Checkpointer(Genode::Allocator &alloc, Target_child &child, Target
 	_alloc(alloc), _child(child), _state(state)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Checkpointer", "\033[0m(...)");
+
+//	if(_child.use_redundant_memory)
+//		activate_redundant_memory();
 }
 
 Checkpointer::~Checkpointer()
@@ -1443,6 +1472,29 @@ Checkpointer::~Checkpointer()
 	_destroy_list(_managed_dataspaces);
 }
 
+void Checkpointer::activate_redundant_memory()
+{
+	//_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
+	// due to the incomplete Fiasco.OC register backups delivered to Genode,
+	// a full instruction simulation and thus redundant memory of ALL dataspaces is
+	// not possible. Otherwise, cnt would not be needed.
+	Genode::size_t cnt = 0;
+	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
+			rdsi != nullptr && cnt < 6; rdsi = rdsi->next(), cnt++)
+	{
+		PINF("RDSI");
+		for(Designated_redundant_ds_info* drdsi =
+				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
+				drdsi != nullptr;
+				drdsi = (Designated_redundant_ds_info*) drdsi->next())
+		{
+			PINF("DRDSI red mem");
+			drdsi->redundant_writing(true);
+		}
+	}
+
+
+}
 
 void Checkpointer::checkpoint()
 {
@@ -1535,11 +1587,19 @@ void Checkpointer::checkpoint()
 		}
 	}
 
-	// Detach all designated dataspaces
-	_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
+	if(_child.use_redundant_memory)
+	{
+		// Redirect redundant writes to a fresh set of dataspaces
+		_checkpoint_redundant_dataspaces(_child.custom_services().ram_root->session_infos());
+	}
+	else
+	{
+		// Detach all designated dataspaces
+		_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
 
-	// Copy child dataspaces' content and to stored dataspaces' content
-	_checkpoint_dataspaces();
+		// Copy child dataspaces' content and to stored dataspaces' content
+		_checkpoint_dataspaces();
+	}
 
 	if(verbose_debug) Genode::log(_child);
 	if(verbose_debug) Genode::log(_state);

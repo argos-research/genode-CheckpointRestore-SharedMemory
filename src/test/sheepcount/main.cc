@@ -54,8 +54,6 @@ void Component::construct(Genode::Env &env)
 	//env.parent().upgrade(env.ram_session_cap(), "ram_quota=24K");
 
 
-
-
 	while(1)
 	{
         log(Genode::Hex(n), " sheep. zzZ", Genode::Hex(k));
@@ -97,7 +95,14 @@ void Component::construct(Genode::Env &env)
 		{
 			log("Reg ", i, ":\t", Genode::Hex(stack_regs[i]), ",\tdec:", stack_regs[i]);
 		}
-		timer.msleep(1000);
+
+		//Use busy loop instead of timer;
+		//Pause/Resume does not work reliably with timer
+		//timer.msleep(1000);
+		for(long long unsigned volatile busy = 0; busy <= 0x1FFFFFF; busy++)
+		{}
 	}
+
+//	PINF("%llx",busy);
 
 }

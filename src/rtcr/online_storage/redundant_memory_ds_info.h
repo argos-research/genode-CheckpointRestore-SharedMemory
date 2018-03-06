@@ -109,6 +109,8 @@ private:
 
 	Genode::size_t _num_checkpoints;
 
+	bool _redundant_writing;
+
 	class Flattener_thread : public Genode::Thread
 	{
 	private:
@@ -146,6 +148,7 @@ public:
 	_alloc(alloc),
 	_rm(rm),
 	_num_checkpoints(0),
+	_redundant_writing(false),
 	_flattener_thread(this)
 	{
 		create_new_checkpoint();
@@ -154,6 +157,25 @@ public:
 		//since it records writes since the start
 		_current_checkpoint->_is_cumulative = true;
 		_flattener_thread.start();
+	}
+
+	bool redundant_writing()
+	{
+		return _redundant_writing;
+	}
+
+	void redundant_writing(bool enable)
+	{
+		if(enable && !_redundant_writing)
+		{
+			_redundant_writing = true;
+			detach();
+		}
+		else if(!enable && _redundant_writing)
+		{
+			_redundant_writing = false;
+			attach();
+		}
 	}
 
 	Redundant_checkpoint*  get_current_checkpoint()
@@ -190,6 +212,7 @@ public:
 		// Do the actual write
 		Genode::memcpy((Genode::uint8_t*)get_current_checkpoint_addr() + dst, src, data_size);
 		// Mark written bytes
+		PINF("about to mark dst: %lx, size: %x, in dataspace of size %x",dst,data_size,_current_checkpoint->_size);
 		_current_checkpoint->_written_bytes->set(dst, data_size);
 	}
 
