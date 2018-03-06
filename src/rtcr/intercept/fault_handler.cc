@@ -168,7 +168,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 		PINF("Value at %lx: %x", state.addr, state.value);
 		thread_state.set_gpr(reg_map[state.reg],state.value);
 		//TODO: JUST for testing! Remove later.
-		dd_info->flatten_previous_snapshots();
+		//dd_info->flatten_previous_snapshots();
 	}
 
 	else
@@ -179,11 +179,11 @@ void Fault_handler::_handle_fault_redundant_memory()
 		memcpy(primary_ds_addr + state.addr,&state.value,access_size);
 		//write backup into snapshot memory
 		dd_info->write_in_current_snapshot(state.addr,&state.value,access_size);
-		//TODO: JUST for testing! Remove later.
-		dd_info->create_new_checkpoint();
 	}
 
 #if 1
+	//TODO: JUST for testing! Remove later.
+	dd_info->create_new_checkpoint();
 	// Show original memory and all checkpoint values at specified location
 	// plus values before and after (since we access 2 variables)
 	unsigned val, bef, aft;
@@ -304,10 +304,6 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 			}
 		}
 	}
-
-
-
-
 }
 
 

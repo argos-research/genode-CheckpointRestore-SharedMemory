@@ -95,8 +95,13 @@ private:
 	Genode::List<Redundant_checkpoint> _checkpoints;
 	Redundant_checkpoint* _current_checkpoint;
 
+	Genode::Semaphore _sema;
+
 	Genode::Ram_connection& _parent_ram;
+
 	Genode::Cache_attribute _cached;
+
+	Genode::Env& _env;
 
 	Genode::Allocator& _alloc;
 
@@ -104,26 +109,51 @@ private:
 
 	Genode::size_t _num_checkpoints;
 
+	class Flattener_thread : public Genode::Thread
+	{
+	private:
+		Designated_redundant_ds_info* _parent;
+	public:
+		Flattener_thread(Designated_redundant_ds_info* parent) :
+			Thread(parent->_env, "Redundant checkpoint flattener", 16*1024),
+			_parent(parent)
+		{
+		}
+
+		void entry()
+		{
+			while(true)
+			{
+				//Synchronization is done inside the method via _sema
+				_parent->flatten_previous_snapshots();
+			}
+		}
+	} _flattener_thread;
+
 public:
 	/**
 	 * Constructor
 	 */
 	Designated_redundant_ds_info(Managed_region_map_info &mrm_info, Genode::Dataspace_capability ds_cap,
-			Genode::addr_t addr, Genode::size_t size, Genode::Allocator& alloc, Genode::Region_map& rm,
+			Genode::addr_t addr, Genode::size_t size, Genode::Env& env, Genode::Allocator& alloc, Genode::Region_map& rm,
 			Genode::Ram_connection& parent_ram, Genode::Cache_attribute cached)
 			:
 	Designated_dataspace_info(mrm_info, ds_cap, addr, size),
+	_sema(0),
 	_parent_ram(parent_ram),
 	_cached(cached),
+	_env(env),
 	_alloc(alloc),
 	_rm(rm),
-	_num_checkpoints(0)
+	_num_checkpoints(0),
+	_flattener_thread(this)
 	{
 		create_new_checkpoint();
 		_current_checkpoint = _checkpoints.first();
 		//first checkpoint is always cumulative
 		//since it records writes since the start
 		_current_checkpoint->_is_cumulative = true;
+		_flattener_thread.start();
 	}
 
 	Redundant_checkpoint*  get_current_checkpoint()
@@ -149,6 +179,8 @@ public:
 		_checkpoints.insert(new_checkpoint, _current_checkpoint);
 		_current_checkpoint = new_checkpoint;
 		++_num_checkpoints;
+		// Wake up flattener thread
+		_sema.up();
 		// don't detach old head; this will be done by checkpoint flattener
 	}
 
@@ -163,6 +195,7 @@ public:
 
 	void flatten_previous_snapshots()
 	{
+		_sema.down();
 		Redundant_checkpoint* reference = _checkpoints.first();
 		Redundant_checkpoint* changes = reference->next();
 		while(changes != _current_checkpoint && changes != nullptr)
