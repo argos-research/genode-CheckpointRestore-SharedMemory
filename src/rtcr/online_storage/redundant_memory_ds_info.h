@@ -121,6 +121,9 @@ public:
 	{
 		create_new_checkpoint();
 		_current_checkpoint = _checkpoints.first();
+		//first checkpoint is always cumulative
+		//since it records writes since the start
+		_current_checkpoint->_is_cumulative = true;
 	}
 
 	Redundant_checkpoint*  get_current_checkpoint()
@@ -156,6 +159,32 @@ public:
 		Genode::memcpy((Genode::uint8_t*)get_current_checkpoint_addr() + dst, src, data_size);
 		// Mark written bytes
 		_current_checkpoint->_written_bytes->set(dst, data_size);
+	}
+
+	void flatten_previous_snapshots()
+	{
+		Redundant_checkpoint* reference = _checkpoints.first();
+		Redundant_checkpoint* changes = reference->next();
+		while(changes != _current_checkpoint)
+		{
+			for(Genode::size_t i = 0; i < size; i++)
+			{
+				//if a byte was changed in the newer snapshot,
+				//apply it to the reference
+				if(changes->_written_bytes->get(i,1))
+				{
+					*((Genode::uint8_t*)reference->_addr+i) = *((Genode::uint8_t*)changes->_addr+i);
+				}
+			}
+			//the reference now contains all the changes,
+			//the newer snapshot can thus be deleted.
+			changes->detach();
+			_checkpoints.remove(changes);
+			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->_red_ds_cap));
+			Genode::destroy(_alloc, changes);
+			--_num_checkpoints;
+			changes = reference->next();
+		}
 	}
 };
 

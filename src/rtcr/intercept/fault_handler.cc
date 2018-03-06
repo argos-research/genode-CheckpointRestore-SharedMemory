@@ -179,6 +179,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 		dd_info->write_in_current_snapshot(state.addr,&state.value,access_size);
 		//TODO: JUST for testing! Remove later.
 		dd_info->create_new_checkpoint();
+		dd_info->flatten_previous_snapshots();
 	}
 
 
