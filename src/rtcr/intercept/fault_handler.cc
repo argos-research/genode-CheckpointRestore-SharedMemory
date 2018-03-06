@@ -167,6 +167,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 		memcpy(&state.value,primary_ds_addr + state.addr,access_size);
 		PINF("Value at %lx: %x", state.addr, state.value);
 		thread_state.set_gpr(reg_map[state.reg],state.value);
+		//TODO: JUST for testing! Remove later.
+		dd_info->flatten_previous_snapshots();
 	}
 
 	else
@@ -179,9 +181,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 		dd_info->write_in_current_snapshot(state.addr,&state.value,access_size);
 		//TODO: JUST for testing! Remove later.
 		dd_info->create_new_checkpoint();
-		dd_info->flatten_previous_snapshots();
 	}
-
 
 #if 1
 	// Show original memory and all checkpoint values at specified location

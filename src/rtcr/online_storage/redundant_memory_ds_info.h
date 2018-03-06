@@ -165,8 +165,9 @@ public:
 	{
 		Redundant_checkpoint* reference = _checkpoints.first();
 		Redundant_checkpoint* changes = reference->next();
-		while(changes != _current_checkpoint)
+		while(changes != _current_checkpoint && changes != nullptr)
 		{
+			PINF("Flattening");
 			for(Genode::size_t i = 0; i < size; i++)
 			{
 				//if a byte was changed in the newer snapshot,
