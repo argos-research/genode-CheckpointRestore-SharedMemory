@@ -30,21 +30,15 @@ void Component::construct(Genode::Env &env)
 	log("Creating Timer session.");
 	Timer::Connection timer(env);
 
-
-	timer.msleep(3000);
 	log("Allocating and attaching memory and its dataspace.");
 	Dataspace_capability ds_cap = env.ram().alloc(4096);
+	timer.msleep(1000);
 	unsigned stack_regs[16] = {0};
 	unsigned* addr = env.rm().attach(ds_cap);
-//    unsigned int counter = 0;
-//	unsigned int *addr = &counter;
-//	unsigned int *addr = (unsigned int*) MANAGED_ADDR;
-	//addr[0x432]
+
 	addr_t base_addr = 0x5b;
 	unsigned &n = addr[base_addr];
 	unsigned &k = addr[base_addr + 4];
-	//unsigned test =50;
-	//n = 0xfffffff0; //144
 
 	n=12345;
 	k=5;

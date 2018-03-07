@@ -151,12 +151,6 @@ public:
 	_redundant_writing(false),
 	_flattener_thread(this)
 	{
-		create_new_checkpoint();
-		_current_checkpoint = _checkpoints.first();
-		//first checkpoint is always cumulative
-		//since it records writes since the start
-		_current_checkpoint->_is_cumulative = true;
-		_flattener_thread.start();
 	}
 
 	bool redundant_writing()
@@ -169,6 +163,15 @@ public:
 		if(enable && !_redundant_writing)
 		{
 			_redundant_writing = true;
+			if(_num_checkpoints == 0)
+			{
+				create_new_checkpoint();
+				_current_checkpoint = _checkpoints.first();
+				//first checkpoint is always cumulative
+				//since it records writes since the start
+				_current_checkpoint->_is_cumulative = true;
+				_flattener_thread.start();
+			}
 			detach();
 		}
 		else if(!enable && _redundant_writing)

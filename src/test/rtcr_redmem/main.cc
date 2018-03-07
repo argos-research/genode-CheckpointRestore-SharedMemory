@@ -44,27 +44,17 @@ struct Rtcr::Main {
 
 		Target_state ts(env, heap);
 		Checkpointer ckpt(heap, child, ts);
+		timer.msleep(1000);
+		ckpt.activate_redundant_memory();
 
 		while (1) {
-			timer.msleep(1000);
+
 			timer.msleep(5000);
-			ckpt.activate_redundant_memory();
-/*			ckpt.checkpoint();
-			child.pause();
-			int cnt = 0;
-			//7 rdsis (0-6), but the last one (6) cannot be detached -> Kernel alignment error
-			for(Ram_dataspace_info* rdsi = child.ram().parent_state().ram_dataspaces.first(); rdsi != nullptr && cnt < 6; rdsi = rdsi->next(), cnt++)
-			{
-				PINF("RDSI");
-				for(Designated_redundant_ds_info* drdsi = (Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first(); drdsi != nullptr; drdsi = (Designated_redundant_ds_info*) drdsi->next())
-				{
-					PINF("DDSI");
-					drdsi->redundant_writing(true);
-				}
-			}
-			timer.msleep(1000);
+
+			ckpt.checkpoint();
+
 			child.resume();
-*/
+
 		}
 
 //		ckpt.checkpoint();
