@@ -1,9 +1,9 @@
 #ifndef _RTCR_REDUNDANT_MEMORY_DS_INFO_H_
 #define _RTCR_REDUNDANT_MEMORY_DS_INFO_H_
 
+#include "../util/bitset.h"
 #include "ram_dataspace_info.h"
 
-#include <util/bit_array.h>
 
 
 namespace Rtcr {
@@ -30,7 +30,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 		Genode::Region_map& _rm;
 		Genode::Allocator& _alloc;
 		//marks the bytes that have been modified in this snapshot
-		Genode::Bit_array_base* _written_bytes;
+		Bitset* _written_bytes;
 		Genode::addr_t* _bitset_array;
 		static const Genode::size_t BITSET_UNIT_BITSIZE = sizeof(*_bitset_array)*8;
 	public:
@@ -45,7 +45,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 			_is_cumulative(false), _size(size),	_rm(rm), _alloc(alloc)
 		{
 			_bitset_array = new(_alloc) Genode::addr_t[_size/BITSET_UNIT_BITSIZE];
-			_written_bytes = new(_alloc) Genode::Bit_array_base((_size + BITSET_UNIT_BITSIZE - 1)
+			_written_bytes = new(_alloc) Bitset((_size + BITSET_UNIT_BITSIZE - 1)
 					& ~(BITSET_UNIT_BITSIZE - 1), _bitset_array, true);
 		}
 
