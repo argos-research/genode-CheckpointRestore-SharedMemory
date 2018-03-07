@@ -77,6 +77,10 @@ void Fault_handler::_handle_fault_redundant_memory()
 	Designated_redundant_ds_info *dd_info = (Designated_redundant_ds_info *) faulting_mrm_info->dd_infos.first();
 	if(dd_info) dd_info = (Designated_redundant_ds_info *) dd_info->find_by_addr(state.addr);
 
+	dd_info->lock();
+
+	dd_info->new_checkpoint_if_pending();
+
 	// Check if a dataspace was found
 	if(!dd_info)
 	{
@@ -148,7 +152,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	 */
 	state.addr += ( instr % 8 );
 
-	print_all_gprs(thread_state);
+//	print_all_gprs(thread_state);
 
 	/* Use a register mapping table in order to be able to
 	 * deal with strange Fiasco.OC register backups.
@@ -210,6 +214,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 	//continue execution since we resolved the pagefault
 	Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
+
+	dd_info->unlock();
 }
 
 

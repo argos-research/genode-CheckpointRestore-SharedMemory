@@ -1381,7 +1381,8 @@ void Checkpointer::_checkpoint_redundant_dataspaces(Genode::List<Ram_session_com
 				Designated_redundant_ds_info *drds_info = (Designated_redundant_ds_info*) ramds_info->mrm_info->dd_infos.first();
 				while(drds_info)
 				{
-					if(drds_info->redundant_writing()) drds_info->create_new_checkpoint();
+					if(drds_info->redundant_writing())
+						drds_info->trigger_new_checkpoint();
 					drds_info = (Designated_redundant_ds_info*) drds_info->next();
 				}
 			}
@@ -1492,14 +1493,40 @@ void Checkpointer::activate_redundant_memory()
 			drdsi->redundant_writing(true);
 		}
 	}
-
-
 }
+
+void Checkpointer::_lock_redundant_dataspaces(bool lock)
+{
+	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
+			rdsi != nullptr; rdsi = rdsi->next())
+	{
+		PINF("RDSI");
+		for(Designated_redundant_ds_info* drdsi =
+				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
+				drdsi != nullptr;
+				drdsi = (Designated_redundant_ds_info*) drdsi->next())
+		{
+			if(drdsi->redundant_writing())
+			{
+				if(lock)
+					drdsi->lock();
+				else
+					drdsi->unlock();
+			}
+		}
+	}
+}
+
+
 
 void Checkpointer::checkpoint()
 {
 	using Genode::log;
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
+
+
+	if(_child.use_redundant_memory)
+		_lock_redundant_dataspaces(true);
 
 	// Pause child
 	_child.pause();
@@ -1611,5 +1638,9 @@ void Checkpointer::checkpoint()
 	_destroy_list(_managed_dataspaces);
 
 	// Resume child
-	//_child.resume();
+	_child.resume();
+
+	if(_child.use_redundant_memory)
+		_lock_redundant_dataspaces(false);
+
 }

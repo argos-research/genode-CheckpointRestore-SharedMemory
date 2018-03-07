@@ -11,7 +11,7 @@ namespace Rtcr {
 }
 
 
-struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_info
+struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_info, Genode::Lock, Genode::Semaphore
 {
 
 	/**
@@ -111,6 +111,21 @@ private:
 
 	bool _redundant_writing;
 
+	bool _new_checkpoint_pending;
+
+	void _create_new_checkpoint()
+	{
+		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
+		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
+		new_checkpoint->attach();
+		_checkpoints.insert(new_checkpoint, _current_checkpoint);
+		_current_checkpoint = new_checkpoint;
+		++_num_checkpoints;
+		// Wake up flattener thread
+		_sema.up();
+		// don't detach old head; this will be done by checkpoint flattener
+	}
+
 	class Flattener_thread : public Genode::Thread
 	{
 	private:
@@ -149,6 +164,7 @@ public:
 	_rm(rm),
 	_num_checkpoints(0),
 	_redundant_writing(false),
+	_new_checkpoint_pending(false),
 	_flattener_thread(this)
 	{
 	}
@@ -165,7 +181,7 @@ public:
 			_redundant_writing = true;
 			if(_num_checkpoints == 0)
 			{
-				create_new_checkpoint();
+				_create_new_checkpoint();
 				_current_checkpoint = _checkpoints.first();
 				//first checkpoint is always cumulative
 				//since it records writes since the start
@@ -178,6 +194,20 @@ public:
 		{
 			_redundant_writing = false;
 			attach();
+		}
+	}
+
+	void trigger_new_checkpoint()
+	{
+		_new_checkpoint_pending = true;
+	}
+
+	void new_checkpoint_if_pending()
+	{
+		if(_new_checkpoint_pending)
+		{
+			_create_new_checkpoint();
+			_new_checkpoint_pending = false;
 		}
 	}
 
@@ -194,19 +224,6 @@ public:
 	Redundant_checkpoint* get_first_checkpoint()
 	{
 		return _checkpoints.first();
-	}
-
-	void create_new_checkpoint()
-	{
-		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
-		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
-		new_checkpoint->attach();
-		_checkpoints.insert(new_checkpoint, _current_checkpoint);
-		_current_checkpoint = new_checkpoint;
-		++_num_checkpoints;
-		// Wake up flattener thread
-		_sema.up();
-		// don't detach old head; this will be done by checkpoint flattener
 	}
 
 	// dst is relative to dataspace start address

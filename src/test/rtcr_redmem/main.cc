@@ -49,11 +49,11 @@ struct Rtcr::Main {
 
 		while (1) {
 
-			timer.msleep(5000);
+			timer.msleep(3000);
 
 			ckpt.checkpoint();
 
-			child.resume();
+			//child.resume();
 
 		}
 

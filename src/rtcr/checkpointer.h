@@ -150,6 +150,8 @@ private:
 
 	void _checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 
+	void _lock_redundant_dataspaces(bool lock);
+
 	void _checkpoint_dataspaces();
 	void _checkpoint_dataspace_content(Genode::Dataspace_capability dst_ds_cap, Genode::Dataspace_capability src_ds_cap,
 			Genode::addr_t dst_offset, Genode::size_t size);

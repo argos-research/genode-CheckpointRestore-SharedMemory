@@ -87,7 +87,7 @@ void Component::construct(Genode::Env &env)
 		//stack_regs[15] = r15;
 		for(int i = 0; i < 16; i++)
 		{
-			log("Reg ", i, ":\t", Genode::Hex(stack_regs[i]), ",\tdec:", stack_regs[i]);
+			//log("Reg ", i, ":\t", Genode::Hex(stack_regs[i]), ",\tdec:", stack_regs[i]);
 		}
 
 		//Use busy loop instead of timer;
