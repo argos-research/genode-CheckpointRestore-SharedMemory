@@ -142,7 +142,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	// to simulate them. We however attach it in Rtcrs address
 	// space in order to simulate the instruction from within
 	// this function.
-	char* primary_ds_addr = _env.rm().attach(dd_info->cap);
+	addr_t primary_ds_addr = dd_info->attach_primary_ds_locally();
 
 	/* The address included in the pagefault report
 	 * is 8-byte-aligned. In order to obtain the exact
@@ -168,7 +168,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	if(!writes)
 	{
 		state.value = 0;
-		memcpy(&state.value,primary_ds_addr + state.addr,access_size);
+		memcpy(&state.value,(uint8_t*) (primary_ds_addr + state.addr),access_size);
 		PINF("Value at %lx: %x", state.addr, state.value);
 		thread_state.set_gpr(reg_map[state.reg],state.value);
 		//TODO: JUST for testing! Remove later.
@@ -180,7 +180,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 		thread_state.get_gpr(reg_map[state.reg], state.value);
 		PINF("Register value: %x", state.value);
 		//write into memory used by Target
-		memcpy(primary_ds_addr + state.addr,&state.value,access_size);
+		memcpy((uint8_t*)(primary_ds_addr + state.addr),&state.value,access_size);
 		//write backup into snapshot memory
 		dd_info->write_in_current_snapshot(state.addr,&state.value,access_size);
 	}
@@ -194,18 +194,20 @@ void Fault_handler::_handle_fault_redundant_memory()
 	memcpy(&val,(char*)(primary_ds_addr + state.addr),4);
 	memcpy(&bef,(char*)(primary_ds_addr + state.addr)-0x10,4);
 	memcpy(&aft,(char*)(primary_ds_addr + state.addr)+0x10,4);
-	PINF("Value in orig mem: %x !%x! %x", bef, val, aft);
+	PINF("Value in orig mem at\t%lx:\t%x\t!%x!\t%x", primary_ds_addr + state.addr, bef, val, aft);
+	//original memory address "wandert" -> ist das auch so, wenn ich orig mem nie aushänge?
 
 	for(Designated_redundant_ds_info::Redundant_checkpoint* i = dd_info->get_first_checkpoint(); i != nullptr; i=i->next())
 	{
 		memcpy(&val,(char*)(i->get_address() + state.addr),4);
 		memcpy(&bef,(char*)(i->get_address() + state.addr)-0x10,4);
 		memcpy(&aft,(char*)(i->get_address() + state.addr)+0x10,4);
-		PINF("Value in checkpoint: %x !%x! %x, addr %lx", bef, val, aft, i->get_address() + state.addr);
+		PINF("Value in checkpoint at\t%lx:\t%x\t!%x!\t%x", i->get_address() + state.addr, bef, val, aft);
 	}
 #endif
 
-	_env.rm().detach(primary_ds_addr);
+	//don't detach and reattach every time to avoid overhead
+	dd_info->detach_primary_ds_locally();
 
 	// Increase instruction pointer (ip) by one instruction
 	thread_state.ip += Instruction::size();

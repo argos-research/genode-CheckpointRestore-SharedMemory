@@ -11,7 +11,7 @@ namespace Rtcr {
 }
 
 
-struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_info, Genode::Lock, Genode::Semaphore
+struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_info, Genode::Lock
 {
 
 	/**
@@ -113,6 +113,10 @@ private:
 
 	bool _new_checkpoint_pending;
 
+	bool _primary_ds_attached_locally;
+
+	Genode::addr_t _primary_ds_local_addr;
+
 	void _create_new_checkpoint()
 	{
 		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
@@ -165,8 +169,40 @@ public:
 	_num_checkpoints(0),
 	_redundant_writing(false),
 	_new_checkpoint_pending(false),
+	_primary_ds_attached_locally(false),
+	_primary_ds_local_addr(0),
 	_flattener_thread(this)
 	{
+	}
+
+	bool primary_ds_attached_locally()
+	{
+		return _primary_ds_attached_locally;
+	}
+
+	Genode::addr_t attach_primary_ds_locally()
+	{
+		if(!_primary_ds_attached_locally)
+		{
+			_primary_ds_local_addr = _env.rm().attach(cap);
+			_primary_ds_attached_locally = true;
+		}
+		return _primary_ds_local_addr;
+	}
+
+	void detach_primary_ds_locally()
+	{
+		if(_primary_ds_attached_locally)
+		{
+			_env.rm().detach(_primary_ds_local_addr);
+			_primary_ds_local_addr = 0;
+			_primary_ds_attached_locally = false;
+		}
+	}
+
+	Genode::addr_t primary_ds_local_addr()
+	{
+		return _primary_ds_local_addr;
 	}
 
 	bool redundant_writing()
