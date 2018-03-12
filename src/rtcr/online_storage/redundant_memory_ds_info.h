@@ -222,7 +222,7 @@ public:
 				//first checkpoint is always cumulative
 				//since it records writes since the start
 				_current_checkpoint->_is_cumulative = true;
-				_flattener_thread.start();
+				//_flattener_thread.start();
 			}
 			detach();
 		}

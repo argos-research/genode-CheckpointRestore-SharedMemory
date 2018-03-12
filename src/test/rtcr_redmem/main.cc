@@ -39,7 +39,7 @@ struct Rtcr::Main {
 
 		Timer::Connection timer { env };
 
-		Target_child child { env, heap, parent_services, "sheepcount", child.GRANULARITY_REDUNDANT_MEMORY};
+		Target_child child{ env, heap, parent_services, "sheepcount", child.GRANULARITY_REDUNDANT_MEMORY };
 		child.start();
 
 		Target_state ts(env, heap);
@@ -47,7 +47,7 @@ struct Rtcr::Main {
 		timer.msleep(1000);
 		ckpt.activate_redundant_memory();
 
-		while (1) {
+		for (int i = 0; i < 5 ; i++) {
 
 			timer.msleep(3000);
 
@@ -56,14 +56,19 @@ struct Rtcr::Main {
 			//child.resume();
 
 		}
+		timer.msleep(2000);
 
-//		ckpt.checkpoint();
 
-//		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
-//		Restorer resto(heap, child_restored, ts);
-//		child_restored.start(resto);
+		child.exit(0);
+		child.pause();
 
-		//log("The End");
+		timer.msleep(2000);
+
+		Target_child child_restored { env, heap, parent_services, "sheepcount", child.GRANULARITY_REDUNDANT_MEMORY };
+		Restorer resto(heap, child_restored, ts);
+		child_restored.start(resto);
+
+		log("The End");
 		Genode::sleep_forever();
 	}
 };

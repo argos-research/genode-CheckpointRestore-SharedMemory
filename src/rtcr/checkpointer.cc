@@ -1483,13 +1483,13 @@ void Checkpointer::activate_redundant_memory()
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
 			rdsi != nullptr && cnt < 6; rdsi = rdsi->next(), cnt++)
 	{
-		PINF("RDSI");
+		PINF("activate_redundant_memory() RDSI");
 		for(Designated_redundant_ds_info* drdsi =
 				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
 				drdsi != nullptr;
 				drdsi = (Designated_redundant_ds_info*) drdsi->next())
 		{
-			PINF("DRDSI red mem");
+			PINF("activate_redundant_memory() DRDSI");
 			drdsi->redundant_writing(true);
 		}
 	}
@@ -1500,12 +1500,13 @@ void Checkpointer::_lock_redundant_dataspaces(bool lock)
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
 			rdsi != nullptr; rdsi = rdsi->next())
 	{
-		PINF("RDSI");
+		PINF("_lock_redundant_dataspaces(lock=%s) RDSI", lock ? "true" : "false");
 		for(Designated_redundant_ds_info* drdsi =
 				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
 				drdsi != nullptr;
 				drdsi = (Designated_redundant_ds_info*) drdsi->next())
 		{
+			PINF("_lock_redundant_dataspaces(lock=%s) DRDSI", lock ? "true" : "false");
 			if(drdsi->redundant_writing())
 			{
 				if(lock)

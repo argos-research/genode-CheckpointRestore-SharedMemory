@@ -77,9 +77,16 @@ void Fault_handler::_handle_fault_redundant_memory()
 	Designated_redundant_ds_info *dd_info = (Designated_redundant_ds_info *) faulting_mrm_info->dd_infos.first();
 	if(dd_info) dd_info = (Designated_redundant_ds_info *) dd_info->find_by_addr(state.addr);
 
+	Genode::log("Found DRDSI");
+
 	dd_info->lock();
 
-	dd_info->new_checkpoint_if_pending();
+	Genode::log("Locked DRDSI");
+
+	if(state.type == Genode::Region_map::State::WRITE_FAULT)
+		dd_info->new_checkpoint_if_pending();
+
+	Genode::log("Checkpointed DRDSI");
 
 	// Check if a dataspace was found
 	if(!dd_info)
@@ -88,6 +95,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 				" in Region_map ", faulting_mrm_info->region_map_cap);
 		return;
 	}
+
+	Genode::log("Found DRDSI :)");
 
 	// Find thread which caused the fault
 	Cpu_thread_component * cpu_thread = nullptr;
@@ -117,6 +126,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 	found_thread:
 
+	Genode::log("Found thread");
+
 	// Get copy of state
 	Genode::Thread_state thread_state = cpu_thread->state();
 
@@ -141,7 +152,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 	// because we need to continue receiving pagefaults in order
 	// to simulate them. We however attach it in Rtcrs address
 	// space in order to simulate the instruction from within
-	// this function.
+	// this function. If it's already attached, we only get
+	// the local address.
 	addr_t primary_ds_addr = dd_info->attach_primary_ds_locally();
 
 	/* The address included in the pagefault report
@@ -207,7 +219,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 #endif
 
 	//don't detach and reattach every time to avoid overhead
-	dd_info->detach_primary_ds_locally();
+	//dd_info->detach_primary_ds_locally();
 
 	// Increase instruction pointer (ip) by one instruction
 	thread_state.ip += Instruction::size();
