@@ -33,6 +33,7 @@ class Rtcr::Target_state
 {
 	friend class Checkpointer;
 	friend class Restorer;
+	friend class Main;
 
 private:
 	Genode::Env       &_env;
