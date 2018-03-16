@@ -39,34 +39,54 @@ struct Rtcr::Main {
 
 		Timer::Connection timer { env };
 
-		Target_child child{ env, heap, parent_services, "sheepcount", child.GRANULARITY_REDUNDANT_MEMORY };
-		child.start();
+		const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
+
+		Target_child* child = new (heap) Target_child { env, heap, parent_services, "sheepcount", granularity };
+		child->start();
 
 		Target_state ts(env, heap);
-		Checkpointer ckpt(heap, child, ts);
+		Checkpointer ckpt(heap, *child, ts);
 		timer.msleep(1000);
 		ckpt.activate_redundant_memory();
 
-		for (int i = 0; i < 5 ; i++) {
+		child->resume();
+
+		for (int i = 0; i < 2 ; i++) {
 
 			timer.msleep(3000);
 
 			ckpt.checkpoint();
 
-			//child.resume();
+			//child->resume();
 
 		}
 		timer.msleep(2000);
 
 
-		child.exit(0);
-		child.pause();
+		child->exit(0);
+		child->pause();
+		Genode::destroy(heap,child);
 
 		timer.msleep(2000);
 
-		Target_child child_restored { env, heap, parent_services, "sheepcount", child.GRANULARITY_REDUNDANT_MEMORY };
-		Restorer resto(heap, child_restored, ts);
-		child_restored.start(resto);
+
+		Ram_dataspace_info* rdsi = child->ram().parent_state().ram_dataspaces.first();
+		PINF("found RDSI");
+		Designated_redundant_ds_info* drdsi = (Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
+		addr_t primary_ds_loc_addr = env.rm().attach(drdsi->cap);
+		memcpy((char*)primary_ds_loc_addr,(char*)drdsi->get_first_checkpoint()->get_address(),drdsi->size);
+		env.rm().detach(primary_ds_loc_addr);
+
+
+		Target_child child_restored { env, heap, parent_services, "sheepcount", granularity };
+		//Restorer resto(heap, child_restored, ts);
+		child_restored.start();
+
+
+		timer.msleep(3000);
+
+
+
 
 		log("The End");
 		Genode::sleep_forever();

@@ -194,7 +194,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 		//write into memory used by Target
 		memcpy((uint8_t*)(primary_ds_addr + state.addr),&state.value,access_size);
 		//write backup into snapshot memory
-		dd_info->write_in_current_snapshot(state.addr,&state.value,access_size);
+		dd_info->write_in_active_snapshot(state.addr,&state.value,access_size);
 	}
 
 #if 1
@@ -266,7 +266,6 @@ void Fault_handler::_handle_fault()
 	// Attach found dataspace to its designated address
 	dd_info->attach();
 }
-
 
 Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
 		Genode::List<Ram_dataspace_info> &ramds_infos, const char* name)

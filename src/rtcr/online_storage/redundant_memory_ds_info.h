@@ -16,7 +16,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 
 	/**
 	 * Struct representing one checkpoint.
-	 * The list tail is the current checkpoint that is used for redundant writing.
+	 * The list tail is the active checkpoint that is used for redundant writing.
 	 */
 	struct Redundant_checkpoint : public Genode::List<Redundant_checkpoint>::Element
 	{
@@ -93,7 +93,7 @@ private:
 	 * flattening checkpoints.
 	 */
 	Genode::List<Redundant_checkpoint> _checkpoints;
-	Redundant_checkpoint* _current_checkpoint;
+	Redundant_checkpoint* _active_checkpoint;
 
 	Genode::Semaphore _sema;
 
@@ -122,8 +122,8 @@ private:
 		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
 		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
 		new_checkpoint->attach();
-		_checkpoints.insert(new_checkpoint, _current_checkpoint);
-		_current_checkpoint = new_checkpoint;
+		_checkpoints.insert(new_checkpoint, _active_checkpoint);
+		_active_checkpoint = new_checkpoint;
 		++_num_checkpoints;
 		// Wake up flattener thread
 		_sema.up();
@@ -218,11 +218,11 @@ public:
 			if(_num_checkpoints == 0)
 			{
 				_create_new_checkpoint();
-				_current_checkpoint = _checkpoints.first();
+				_active_checkpoint = _checkpoints.first();
 				//first checkpoint is always cumulative
 				//since it records writes since the start
-				_current_checkpoint->_is_cumulative = true;
-				//_flattener_thread.start();
+				_active_checkpoint->_is_cumulative = true;
+				_flattener_thread.start();
 			}
 			detach();
 		}
@@ -247,14 +247,14 @@ public:
 		}
 	}
 
-	Redundant_checkpoint*  get_current_checkpoint()
+	Redundant_checkpoint*  get_active_checkpoint()
 	{
-		return _current_checkpoint;
+		return _active_checkpoint;
 	}
 
-	Genode::addr_t get_current_checkpoint_addr()
+	Genode::addr_t get_active_checkpoint_addr()
 	{
-		return _current_checkpoint->get_address();
+		return _active_checkpoint->get_address();
 	}
 
 	Redundant_checkpoint* get_first_checkpoint()
@@ -263,13 +263,13 @@ public:
 	}
 
 	// dst is relative to dataspace start address
-	void write_in_current_snapshot(Genode::addr_t dst, void* src, Genode::size_t data_size)
+	void write_in_active_snapshot(Genode::addr_t dst, void* src, Genode::size_t data_size)
 	{
 		// Do the actual write
-		Genode::memcpy((Genode::uint8_t*)get_current_checkpoint_addr() + dst, src, data_size);
+		Genode::memcpy((Genode::uint8_t*)get_active_checkpoint_addr() + dst, src, data_size);
 		// Mark written bytes
-		PINF("about to mark dst: %lx, size: %x, in dataspace of size %x",dst,data_size,_current_checkpoint->_size);
-		_current_checkpoint->_written_bytes->set(dst, data_size);
+		PINF("about to mark dst: %lx, size: %x, in dataspace of size %x",dst,data_size,_active_checkpoint->_size);
+		_active_checkpoint->_written_bytes->set(dst, data_size);
 	}
 
 	void flatten_previous_snapshots()
@@ -277,7 +277,7 @@ public:
 		_sema.down();
 		Redundant_checkpoint* reference = _checkpoints.first();
 		Redundant_checkpoint* changes = reference->next();
-		while(changes != _current_checkpoint && changes != nullptr)
+		while(changes != _active_checkpoint && changes != nullptr)
 		{
 			PINF("Flattening");
 			for(Genode::size_t i = 0; i < size; i++)

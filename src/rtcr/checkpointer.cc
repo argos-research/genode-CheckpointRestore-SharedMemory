@@ -1481,7 +1481,7 @@ void Checkpointer::activate_redundant_memory()
 	// not possible. Otherwise, cnt would not be needed.
 	Genode::size_t cnt = 0;
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
-			rdsi != nullptr && cnt < 6; rdsi = rdsi->next(), cnt++)
+			rdsi != nullptr && cnt < 1; rdsi = rdsi->next(), cnt++)
 	{
 		PINF("activate_redundant_memory() RDSI");
 		for(Designated_redundant_ds_info* drdsi =
