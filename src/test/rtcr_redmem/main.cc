@@ -60,15 +60,9 @@ struct Rtcr::Main {
 			//child->resume();
 
 		}
+		timer.msleep(5000);
+		//child->pause();
 		timer.msleep(2000);
-
-
-		child->exit(0);
-		child->pause();
-		Genode::destroy(heap,child);
-
-		timer.msleep(2000);
-
 
 		Ram_dataspace_info* rdsi = child->ram().parent_state().ram_dataspaces.first();
 		PINF("found RDSI");
@@ -76,11 +70,21 @@ struct Rtcr::Main {
 		addr_t primary_ds_loc_addr = env.rm().attach(drdsi->cap);
 		memcpy((char*)primary_ds_loc_addr,(char*)drdsi->get_first_checkpoint()->get_address(),drdsi->size);
 		env.rm().detach(primary_ds_loc_addr);
+		PINF("MEMORY RESTORED!!!");
 
 
-		Target_child child_restored { env, heap, parent_services, "sheepcount", granularity };
+		//child->resume();
+
+		timer.msleep(5000);
+		Genode::destroy(heap,child);
+
+		timer.msleep(2000);
+
+
+
+		//Target_child child_restored { env, heap, parent_services, "sheepcount", granularity };
 		//Restorer resto(heap, child_restored, ts);
-		child_restored.start();
+		//child_restored.start();
 
 
 		timer.msleep(3000);
