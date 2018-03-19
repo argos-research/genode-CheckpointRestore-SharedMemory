@@ -1473,7 +1473,7 @@ Checkpointer::~Checkpointer()
 	_destroy_list(_managed_dataspaces);
 }
 
-void Checkpointer::activate_redundant_memory()
+void Checkpointer::set_redundant_memory(bool active)
 {
 	//_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
 	// due to the incomplete Fiasco.OC register backups delivered to Genode,
@@ -1490,7 +1490,7 @@ void Checkpointer::activate_redundant_memory()
 				drdsi = (Designated_redundant_ds_info*) drdsi->next())
 		{
 			PINF("activate_redundant_memory() DRDSI");
-			drdsi->redundant_writing(true);
+			drdsi->redundant_writing(active);
 		}
 	}
 }

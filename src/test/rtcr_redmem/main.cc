@@ -47,7 +47,7 @@ struct Rtcr::Main {
 		Target_state ts(env, heap);
 		Checkpointer ckpt(heap, *child, ts);
 		timer.msleep(1000);
-		ckpt.activate_redundant_memory();
+		ckpt.set_redundant_memory(true);
 
 		child->resume();
 
@@ -60,6 +60,7 @@ struct Rtcr::Main {
 			//child->resume();
 
 		}
+		ckpt.set_redundant_memory(false);
 		timer.msleep(5000);
 		//child->pause();
 		timer.msleep(2000);

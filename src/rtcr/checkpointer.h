@@ -160,7 +160,7 @@ public:
 	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
 	~Checkpointer();
 
-	void activate_redundant_memory();
+	void set_redundant_memory(bool active);
 
 	/**
 	 * Checkpoint all (known) RPC objects and capabilities from _child to _state
