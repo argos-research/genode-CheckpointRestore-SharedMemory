@@ -51,31 +51,22 @@ struct Rtcr::Main {
 
 		child->resume();
 
-		for (int i = 0; i < 2 ; i++) {
+		for (int i = 0; i < 3 ; i++) {
 
 			timer.msleep(3000);
 
 			ckpt.checkpoint();
 
 		}
+		timer.msleep(2000);
+
 		ckpt.set_redundant_memory(false);
-		timer.msleep(5000);
-		//child->pause();
+
 		timer.msleep(2000);
 
 		Ram_dataspace_info* rdsi = child->ram().parent_state().ram_dataspaces.first();
 		PINF("found RDSI");
 		Designated_redundant_ds_info* drdsi = (Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
-		addr_t primary_ds_loc_addr = env.rm().attach(drdsi->cap);
-		memcpy((char*)primary_ds_loc_addr,(char*)drdsi->get_first_checkpoint()->get_address(),drdsi->size);
-		env.rm().detach(primary_ds_loc_addr);
-		PINF("MEMORY RESTORED!!!");
-
-
-		//child->resume();
-
-		timer.msleep(5000);
-		//Genode::destroy(heap,child);
 
 		child->pause();
 		timer.msleep(2000);
@@ -93,14 +84,14 @@ struct Rtcr::Main {
 
 
 		timer.msleep(1000);
-		ckpt2.set_redundant_memory(true);
+		//ckpt2.set_redundant_memory(true);
 
 
 		Ram_dataspace_info* rdsi2 = child2->ram().parent_state().ram_dataspaces.first();
 		PINF("found RDSI");
 		Designated_redundant_ds_info* drdsi2 = (Designated_redundant_ds_info*) rdsi2->mrm_info->dd_infos.first();
 		addr_t primary_ds_loc_addr2 = env.rm().attach(drdsi2->cap);
-		memcpy((char*)primary_ds_loc_addr2,(char*)drdsi->get_first_checkpoint()->get_address(),drdsi2->size);
+		drdsi->copy_from_latest_checkpoint((void*)primary_ds_loc_addr2);
 		env.rm().detach(primary_ds_loc_addr2);
 		PINF("MEMORY RESTORED!!!");
 

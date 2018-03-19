@@ -3,6 +3,7 @@
 
 #include "../util/bitset.h"
 #include "ram_dataspace_info.h"
+#include <util/string.h>
 
 
 
@@ -97,6 +98,8 @@ private:
 
 	Genode::Semaphore _sema;
 
+	Genode::Lock _lock;
+
 	Genode::Ram_connection& _parent_ram;
 
 	Genode::Cache_attribute _cached;
@@ -145,8 +148,18 @@ private:
 		{
 			while(true)
 			{
-				//Synchronization is done inside the method via _sema
-				_parent->flatten_previous_snapshots();
+				//_sema is for waking up the thread when adding a new snapshot
+				_parent->_sema.down();
+				//_lock makes sure that the restorer waits until the checkpoints
+				//are flattened into one before restoring. Otherwise he would
+				//be restoring from an incremental snapshot and thus from
+				//uninitialized memory
+				_parent->_lock.lock();
+				while(_parent->_num_checkpoints > 2)
+				{
+					_parent->flatten_previous_snapshots();
+				}
+				_parent->_lock.unlock();
 			}
 		}
 	} _flattener_thread;
@@ -161,6 +174,7 @@ public:
 			:
 	Designated_dataspace_info(mrm_info, ds_cap, addr, size),
 	_sema(0),
+	_lock(Genode::Lock::UNLOCKED),
 	_parent_ram(parent_ram),
 	_cached(cached),
 	_env(env),
@@ -262,6 +276,13 @@ public:
 		return _checkpoints.first();
 	}
 
+	void copy_from_latest_checkpoint(void* dst)
+	{
+		_lock.lock();
+		Genode::memcpy(dst, (Genode::uint8_t*) _checkpoints.first()->_addr, size);
+		_lock.unlock();
+	}
+
 	// dst is relative to dataspace start address
 	void write_in_active_snapshot(Genode::addr_t dst, void* src, Genode::size_t data_size)
 	{
@@ -274,7 +295,6 @@ public:
 
 	void flatten_previous_snapshots()
 	{
-		_sema.down();
 		Redundant_checkpoint* reference = _checkpoints.first();
 		Redundant_checkpoint* changes = reference->next();
 		while(changes != _active_checkpoint && changes != nullptr)
