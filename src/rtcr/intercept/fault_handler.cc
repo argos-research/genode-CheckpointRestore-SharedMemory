@@ -186,8 +186,6 @@ void Fault_handler::_handle_fault_redundant_memory()
 		memcpy(&state.value,(uint8_t*) (primary_ds_addr + state.addr),access_size);
 		PINF("Value at %lx: %x", state.addr, state.value);
 		thread_state.set_gpr(reg_map[state.reg],state.value);
-		//TODO: JUST for testing! Remove later.
-		//dd_info->flatten_previous_snapshots();
 	}
 
 	else
@@ -201,23 +199,9 @@ void Fault_handler::_handle_fault_redundant_memory()
 	}
 
 #if 1
-	//TODO: JUST for testing! Remove later.
-	//dd_info->create_new_checkpoint();
-	// Show original memory and all checkpoint values at specified location
-	// plus values before and after (since we access 2 variables)
-	unsigned val, bef, aft;
-	memcpy(&val,(char*)(primary_ds_addr + state.addr),4);
-	memcpy(&bef,(char*)(primary_ds_addr + state.addr)-0x10,4);
-	memcpy(&aft,(char*)(primary_ds_addr + state.addr)+0x10,4);
-	PINF("Value in orig mem at\t%lx:\t%x\t!%x!\t%x", primary_ds_addr + state.addr, bef, val, aft);
-	//original memory address "wandert" -> ist das auch so, wenn ich orig mem nie aushänge?
-
 	for(Designated_redundant_ds_info::Redundant_checkpoint* i = dd_info->get_first_checkpoint(); i != nullptr; i=i->next())
 	{
-		memcpy(&val,(char*)(i->get_address() + state.addr),4);
-		memcpy(&bef,(char*)(i->get_address() + state.addr)-0x10,4);
-		memcpy(&aft,(char*)(i->get_address() + state.addr)+0x10,4);
-		PINF("Value in checkpoint at\t%lx:\t%x\t!%x!\t%x", i->get_address() + state.addr, bef, val, aft);
+		i->print_changed_content();
 	}
 #endif
 

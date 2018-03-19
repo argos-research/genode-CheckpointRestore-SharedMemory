@@ -84,6 +84,17 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 		{
 			return _addr;
 		}
+
+		void print_changed_content()
+		{
+			Genode::printf("Changes (fmt: \"rel addr: content;\") in snapshot at 0x%lx ->\t", _addr);
+			for(Genode::addr_t i = 0; i<_size-4; i += 4)
+			{
+				if(_written_bytes->get(i,4))
+					Genode::printf("0x%lx: 0x%x; ", i, *((Genode::uint32_t*) ((_addr + i))));
+			}
+			Genode::printf("\n");
+		}
 	};
 
 private:
@@ -289,7 +300,6 @@ public:
 		// Do the actual write
 		Genode::memcpy((Genode::uint8_t*)get_active_checkpoint_addr() + dst, src, data_size);
 		// Mark written bytes
-		PINF("about to mark dst: %lx, size: %x, in dataspace of size %x",dst,data_size,_active_checkpoint->_size);
 		_active_checkpoint->_written_bytes->set(dst, data_size);
 	}
 
