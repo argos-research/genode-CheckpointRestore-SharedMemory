@@ -41,7 +41,7 @@ struct Rtcr::Main {
 
 		const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
 
-		Target_child* child = new (heap) Target_child { env, heap, parent_services, "sheepcount", granularity };
+		Target_child* child = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
 		child->start();
 
 		Target_state ts(env, heap);
@@ -77,10 +77,12 @@ struct Rtcr::Main {
 		//child->resume();
 
 		timer.msleep(5000);
-		Genode::destroy(heap,child);
+		//Genode::destroy(heap,child);
 
+		child->pause();
 		timer.msleep(2000);
-
+		Target_child* child2 = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
+		child2->start();
 
 
 		//Target_child child_restored { env, heap, parent_services, "sheepcount", granularity };

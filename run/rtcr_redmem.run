@@ -2,7 +2,7 @@
 # Build
 #
 
-build { core init drivers/timer test/rtcr_redmem test/sheepcount test/arbitrary_child }
+build { core init drivers/timer test/rtcr_redmem test/arbitrary_child test/sheep_counter }
 
 create_boot_directory
 
@@ -39,7 +39,7 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init timer target_redmem-tester sheepcount arbitrary_child }
+build_boot_image { core init timer target_redmem-tester arbitrary_child sheep_counter }
 
 append qemu_args " -nographic "
 
