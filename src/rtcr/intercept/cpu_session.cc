@@ -86,8 +86,7 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 {
 	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
 
-	if(current_session == nullptr)
-		current_session = this;
+	current_session = this;
 }
 
 

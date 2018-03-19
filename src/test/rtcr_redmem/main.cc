@@ -57,8 +57,6 @@ struct Rtcr::Main {
 
 			ckpt.checkpoint();
 
-			//child->resume();
-
 		}
 		ckpt.set_redundant_memory(false);
 		timer.msleep(5000);
@@ -82,6 +80,9 @@ struct Rtcr::Main {
 		child->pause();
 		timer.msleep(2000);
 		Target_child* child2 = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
+		Target_state ts2(env, heap);
+		Checkpointer ckpt2(heap, *child2, ts2);
+
 		child2->start();
 
 
@@ -91,7 +92,9 @@ struct Rtcr::Main {
 		//child_restored.start();
 
 
-		timer.msleep(2000);
+		timer.msleep(1000);
+		ckpt2.set_redundant_memory(true);
+
 
 		Ram_dataspace_info* rdsi2 = child2->ram().parent_state().ram_dataspaces.first();
 		PINF("found RDSI");

@@ -16,10 +16,6 @@
 #include <rm_session/connection.h>
 #include <region_map/client.h>
 
-//namespace Fiasco {
-//#include <l4/sys/kdebug.h>
-//}
-enum { MANAGED_ADDR = 0x10000000 };
 
 Genode::size_t Component::stack_size() { return 16*1024; }
 
@@ -32,27 +28,30 @@ void Component::construct(Genode::Env &env)
 
 	log("Allocating and attaching memory and its dataspace.");
 	Dataspace_capability ds_cap = env.ram().alloc(4096);
-	timer.msleep(1000);
+
 	unsigned stack_regs[16] = {0};
-	unsigned* addr = env.rm().attach(ds_cap);
+	unsigned* ds_addr = env.rm().attach(ds_cap);
 
 	addr_t base_addr = 0x5b;
-	unsigned &n = addr[base_addr];
-	unsigned &k = addr[base_addr + 4];
+	unsigned &n = ds_addr[base_addr / sizeof(n)];
+	unsigned &k = ds_addr[(base_addr + 4) / sizeof(k)];
 
 	n=12345;
 	k=0;
 	log("base value: ", (unsigned int) n, ", base addr: ", Genode::Hex(base_addr));
 
-	//env.parent().upgrade(timer, "ram_quota=8K");
-	//env.parent().upgrade(env.ram_session_cap(), "ram_quota=24K");
-
-
 	while(1)
 	{
+		//Use busy loop instead of timer;
+		//Pause/Resume does not work reliably with timer
+		//timer.msleep(1000);
+		for(long long unsigned volatile busy = 0; busy <= 0x2FFFFFF; busy++)
+		{}
+
         log(Genode::Hex(k), " sheep. *10: ", Genode::Hex(n));
 		k++;
 		n = k*0x10;
+
 		register unsigned r0 asm("r0");
 		register unsigned r1 asm("r1");
 		register unsigned r2 asm("r2");
@@ -89,14 +88,6 @@ void Component::construct(Genode::Env &env)
 		{
 			//log("Reg ", i, ":\t", Genode::Hex(stack_regs[i]), ",\tdec:", stack_regs[i]);
 		}
-
-		//Use busy loop instead of timer;
-		//Pause/Resume does not work reliably with timer
-		//timer.msleep(1000);
-		for(long long unsigned volatile busy = 0; busy <= 0x1FFFFFF; busy++)
-		{}
 	}
-
-//	PINF("%llx",busy);
 
 }

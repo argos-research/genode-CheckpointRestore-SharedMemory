@@ -101,6 +101,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	// Find thread which caused the fault
 	Cpu_thread_component * cpu_thread = nullptr;
 	Cpu_session_component* c = Cpu_session_component::current_session;
+	search_thread:
 	while (c) {
 		// Iterate through every CPU thread
 		cpu_thread =
@@ -123,6 +124,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 		}
 		c = c->next();
 	}
+	c = c->next();
+	goto search_thread;
 
 	found_thread:
 
