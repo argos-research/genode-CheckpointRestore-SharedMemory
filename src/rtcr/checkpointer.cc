@@ -1475,6 +1475,8 @@ Checkpointer::~Checkpointer()
 
 void Checkpointer::set_redundant_memory(bool active)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...), ", active ? "ENABLE" : "DISABLE");
+
 	//_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
 	// due to the incomplete Fiasco.OC register backups delivered to Genode,
 	// a full instruction simulation and thus redundant memory of ALL dataspaces is
@@ -1483,13 +1485,11 @@ void Checkpointer::set_redundant_memory(bool active)
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
 			rdsi != nullptr && cnt < 1; rdsi = rdsi->next(), cnt++)
 	{
-		PINF("activate_redundant_memory() RDSI");
 		for(Designated_redundant_ds_info* drdsi =
 				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
 				drdsi != nullptr;
 				drdsi = (Designated_redundant_ds_info*) drdsi->next())
 		{
-			PINF("activate_redundant_memory() DRDSI");
 			drdsi->redundant_writing(active);
 		}
 	}
@@ -1497,16 +1497,16 @@ void Checkpointer::set_redundant_memory(bool active)
 
 void Checkpointer::_lock_redundant_dataspaces(bool lock)
 {
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...), ", lock ? "LOCK" : "UNLOCK");
+
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
 			rdsi != nullptr; rdsi = rdsi->next())
 	{
-		PINF("_lock_redundant_dataspaces(lock=%s) RDSI", lock ? "true" : "false");
 		for(Designated_redundant_ds_info* drdsi =
 				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
 				drdsi != nullptr;
 				drdsi = (Designated_redundant_ds_info*) drdsi->next())
 		{
-			PINF("_lock_redundant_dataspaces(lock=%s) DRDSI", lock ? "true" : "false");
 			if(drdsi->redundant_writing())
 			{
 				if(lock)

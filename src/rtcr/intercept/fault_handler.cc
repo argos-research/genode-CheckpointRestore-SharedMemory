@@ -127,6 +127,9 @@ void Fault_handler::_handle_fault_redundant_memory()
 	// Get copy of state
 	Genode::Thread_state thread_state = cpu_thread->state();
 
+	if(verbose_register_debug)
+		print_all_gprs(thread_state);
+
 	// Get instruction
 	addr_t inst_addr = state.pf_ip;
 	unsigned instr = *((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
@@ -198,7 +201,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 	if(redundant_memory_verbose_debug)
 	{
-		PINF("%s value: %x", writes ? "Stored" : "Loaded", state.value);
+		PINF("%s value: 0x%x", writes ? "Stored" : "Loaded", state.value);
 		dd_info->print_all_snapshot_content();
 	}
 

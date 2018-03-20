@@ -38,6 +38,8 @@ struct Rtcr::Main {
 		using namespace Genode;
 
 		Timer::Connection timer { env };
+		size_t time_start;
+		size_t time_end;
 
 		const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
 
@@ -55,8 +57,10 @@ struct Rtcr::Main {
 
 			timer.msleep(3000);
 
+			time_start = timer.elapsed_ms();
 			ckpt.checkpoint();
-
+			time_end = timer.elapsed_ms();
+			PINF("Time for checkpointing: %ums", time_end-time_start);
 		}
 		timer.msleep(2000);
 

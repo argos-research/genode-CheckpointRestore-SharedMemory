@@ -100,7 +100,6 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 
 	if(_granularity == Target_child::GRANULARITY_REDUNDANT_MEMORY) //redundant memory
 	{
-		Genode::log("Using Redundant Memory");
 		// Create a Region map; if Rm_session is out of ram_quota, upgrade it
 		Genode::Capability<Genode::Region_map> new_region_map_cap =
 			Genode::retry<Genode::Rm_session::Out_of_metadata>(
@@ -159,7 +158,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 
 		if(verbose_debug)
 		{
-			Genode::log("  Allocated managed dataspace (",
+			Genode::log("  Allocated managed dataspace for redundant memory (",
 					"RM=", new_mrm_info->region_map_cap,
 					" DS=", new_ramds_info->cap, ")",
 					" containing ", size,

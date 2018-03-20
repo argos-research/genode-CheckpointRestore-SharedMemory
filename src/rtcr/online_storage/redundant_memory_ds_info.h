@@ -10,9 +10,8 @@
 namespace Rtcr {
 	struct Designated_redundant_ds_info;
 	constexpr bool redundant_memory_verbose_debug = true;
-#ifndef FOC_RED_MEM_REGISTER_WORKAROUND
+	constexpr bool verbose_register_debug = false;
 #define FOC_RED_MEM_REGISTER_WORKAROUND
-#endif /* FOC_RED_MEM_REGISTER_WORKAROUND */
 }
 
 
@@ -92,10 +91,10 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 		void print_changed_content()
 		{
 			Genode::printf("Changes (fmt: \"rel addr: content;\") in snapshot at 0x%lx ->\t", _addr);
-			for(Genode::addr_t i = 0; i<_size-4; i += 4)
+			for(Genode::addr_t i = 0; i<_size; i += 1)
 			{
-				if(_written_bytes->get(i,4))
-					Genode::printf("0x%lx: 0x%x; ", i, *((Genode::uint32_t*) ((_addr + i))));
+				if(_written_bytes->get(i,1))
+					Genode::printf("0x%lx: 0x%x; ", i, *((Genode::uint8_t*) ((_addr + i))));
 			}
 			Genode::printf("\n");
 		}
@@ -156,7 +155,8 @@ private:
 		Redundant_checkpoint* changes = reference->next();
 		while(changes != _active_checkpoint && changes != nullptr)
 		{
-			PINF("Flattening");
+			if(redundant_memory_verbose_debug)
+				Genode::log("Flattening redundant memory snapshots");
 			for(Genode::size_t i = 0; i < size; i++)
 			{
 				//if a byte was changed in the newer snapshot,
@@ -184,7 +184,7 @@ private:
 		Designated_redundant_ds_info* _parent;
 	public:
 		Flattener_thread(Designated_redundant_ds_info* parent) :
-			Thread(parent->_env, "Redundant checkpoint flattener", 16*1024),
+			Thread(parent->_env, "Redundant memory snapshot flattener", 16*1024),
 			_parent(parent)
 		{
 		}

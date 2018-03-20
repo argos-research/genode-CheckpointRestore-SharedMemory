@@ -16,6 +16,7 @@
 #include <rm_session/connection.h>
 #include <region_map/client.h>
 
+//#define VERBOSE_REGISTER_DEBUG
 
 Genode::size_t Component::stack_size() { return 16*1024; }
 
@@ -29,29 +30,35 @@ void Component::construct(Genode::Env &env)
 	log("Allocating and attaching memory and its dataspace.");
 	Dataspace_capability ds_cap = env.ram().alloc(4096);
 
-	unsigned stack_regs[16] = {0};
-	unsigned* ds_addr = env.rm().attach(ds_cap);
+#ifdef VERBOSE_REGISTER_DEBUG
+	uint32_t stack_regs[16] = {0};
+#endif /* VERBOSE_REGISTER_DEBUG */
 
-	addr_t base_addr = 0x5b;
-	unsigned &n = ds_addr[base_addr / sizeof(n)];
-	unsigned &k = ds_addr[(base_addr + 4) / sizeof(k)];
+	Genode::uint8_t* ds_addr = env.rm().attach(ds_cap);
 
-	n=12345;
-	k=0;
-	log("base value: ", (unsigned int) n, ", base addr: ", Genode::Hex(base_addr));
+	addr_t var_base_addr = 0x54;
+	uint16_t &n = *(uint16_t*) (ds_addr + var_base_addr + 2);
+	uint32_t &k = *(uint32_t*) (ds_addr + var_base_addr + 28);
+
+	n=0;
+	k=0xBEAD;
+	size_t time_start;
+	size_t time_end;
 
 	while(1)
 	{
 		//Use busy loop instead of timer;
 		//Pause/Resume does not work reliably with timer
-		//timer.msleep(1000);
 		for(long long unsigned volatile busy = 0; busy <= 0x2FFFFFF; busy++)
 		{}
 
-        log(Genode::Hex(k), " sheep. *10: ", Genode::Hex(n));
-		k++;
-		n = k*0x10;
+		time_start = timer.elapsed_ms();
+		n++;
+		time_end = timer.elapsed_ms();
+		k = n*0x10;
+        log(Genode::Hex(n), " sheep. *10: ", Genode::Hex(k), ", Time for n++ (read, increment, write): ", time_end-time_start, "ms");
 
+#ifdef VERBOSE_REGISTER_DEBUG
 		register unsigned r0 asm("r0");
 		register unsigned r1 asm("r1");
 		register unsigned r2 asm("r2");
@@ -67,7 +74,7 @@ void Component::construct(Genode::Env &env)
 		register unsigned r12 asm("r12");
 		register unsigned r13 asm("r13");
 		register unsigned r14 asm("r14");
-		//register unsigned r15 asm("r15");
+		//register unsigned r15 asm("r15"); -> IP
 		stack_regs[0] = r0;
 		stack_regs[1] = r1;
 		stack_regs[2] = r2;
@@ -83,11 +90,13 @@ void Component::construct(Genode::Env &env)
 		stack_regs[12] = r12;
 		stack_regs[13] = r13;
 		stack_regs[14] = r14;
-		//stack_regs[15] = r15;
-		for(int i = 0; i < 16; i++)
+		//stack_regs[15] = r15; -> IP
+		for(int i = 0; i < 14; i++)
 		{
-			//log("Reg ", i, ":\t", Genode::Hex(stack_regs[i]), ",\tdec:", stack_regs[i]);
+			log("Reg ", i, ":\t", Genode::Hex(stack_regs[i]), ",\tdec:", stack_regs[i]);
 		}
+#endif /* VERBOSE_REGISTER_DEBUG */
+
 	}
 
 }
