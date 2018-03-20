@@ -65,8 +65,8 @@ struct Rtcr::Main {
 		timer.msleep(2000);
 
 		Ram_dataspace_info* rdsi = child->ram().parent_state().ram_dataspaces.first();
-		PINF("found RDSI");
 		Designated_redundant_ds_info* drdsi = (Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
+		PINF("Found source DRDSI");
 
 		child->pause();
 		timer.msleep(2000);
@@ -88,12 +88,12 @@ struct Rtcr::Main {
 
 
 		Ram_dataspace_info* rdsi2 = child2->ram().parent_state().ram_dataspaces.first();
-		PINF("found RDSI");
 		Designated_redundant_ds_info* drdsi2 = (Designated_redundant_ds_info*) rdsi2->mrm_info->dd_infos.first();
+		PINF("Found destination DRDSI");
 		addr_t primary_ds_loc_addr2 = env.rm().attach(drdsi2->cap);
 		drdsi->copy_from_latest_checkpoint((void*)primary_ds_loc_addr2);
 		env.rm().detach(primary_ds_loc_addr2);
-		PINF("MEMORY RESTORED!!!");
+		PINF("MEMORY RESTORED!");
 
 		timer.msleep(3000);
 

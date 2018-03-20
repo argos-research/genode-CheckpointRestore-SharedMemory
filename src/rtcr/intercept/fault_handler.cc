@@ -77,17 +77,6 @@ void Fault_handler::_handle_fault_redundant_memory()
 	Designated_redundant_ds_info *dd_info = (Designated_redundant_ds_info *) faulting_mrm_info->dd_infos.first();
 	if(dd_info) dd_info = (Designated_redundant_ds_info *) dd_info->find_by_addr(state.addr);
 
-	Genode::log("Found DRDSI");
-
-	dd_info->lock();
-
-	Genode::log("Locked DRDSI");
-
-	if(state.type == Genode::Region_map::State::WRITE_FAULT)
-		dd_info->new_checkpoint_if_pending();
-
-	Genode::log("Checkpointed DRDSI");
-
 	// Check if a dataspace was found
 	if(!dd_info)
 	{
@@ -96,26 +85,34 @@ void Fault_handler::_handle_fault_redundant_memory()
 		return;
 	}
 
-	Genode::log("Found DRDSI :)");
+	if(redundant_memory_verbose_debug)
+		Genode::log("fault handler found DRDSI");
+
+	dd_info->lock();
+
+	if(state.type == Genode::Region_map::State::WRITE_FAULT)
+		dd_info->new_checkpoint_if_pending();
+
 
 	// Find thread which caused the fault
 	Cpu_thread_component * cpu_thread = nullptr;
 	Cpu_session_component* c = Cpu_session_component::current_session;
-	search_thread:
 	while (c) {
 		// Iterate through every CPU thread
 		cpu_thread =
 				c->parent_state().cpu_threads.first();
 		int j = 0;
 		while (cpu_thread) {
-			// Pause the CPU thread
+			/* unresolved_page_fault is never set,
+			 * so we have to rely on IP only
+			 */
 			//if(cpu_thread->state().unresolved_page_fault)
 			{
 				if(state.pf_ip == cpu_thread->state().ip)
 				{
-					PINF("Page-faulting Thread: %i, Pagefault: %i, IP: %lx", j,
-						cpu_thread->state().unresolved_page_fault,
-						cpu_thread->state().ip);
+					if(redundant_memory_verbose_debug)
+						Genode::log("Found page-faulting thread: #", j, ", IP: ",
+								Genode::Hex(cpu_thread->state().ip));
 					goto found_thread;
 				}
 				j++;
@@ -124,40 +121,22 @@ void Fault_handler::_handle_fault_redundant_memory()
 		}
 		c = c->next();
 	}
-	c = c->next();
-	goto search_thread;
 
 	found_thread:
-
-	Genode::log("Found thread");
 
 	// Get copy of state
 	Genode::Thread_state thread_state = cpu_thread->state();
 
+	// Get instruction
 	addr_t inst_addr = state.pf_ip;
 	unsigned instr = *((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
-	PINF("elf_addr: %lx, elf_seg_offset: %lx, inst_addr: %lx, elf_seg_addr: %lx",
-			elf_addr, elf_seg_offset, inst_addr, elf_seg_addr);
 
-	/* decode the instruction and update state accordingly */
+	// decode the instruction and update state accordingly
 	bool writes = false;
 	bool ldst = Instruction::load_store(instr, writes, state.format, state.reg);
 
-
-	PINF("instruction: %x, %s, %s, %s, reg: %x", instr, ldst ? "LOADSTORE" : "OTHER",
-			writes ? "store" : "load",
-				state.format == Region_map::LSB8 ? "LSB8 " : (state.format == Region_map::LSB16 ? "LSB16" : "LSB32"), state.reg);
-
 	size_t access_size =
 			state.format == Region_map::LSB8 ? 1 : (state.format == Region_map::LSB16 ? 2 : 4);
-
-	// Don't attach found dataspace to its designated address,
-	// because we need to continue receiving pagefaults in order
-	// to simulate them. We however attach it in Rtcrs address
-	// space in order to simulate the instruction from within
-	// this function. If it's already attached, we only get
-	// the local address.
-	addr_t primary_ds_addr = dd_info->attach_primary_ds_locally();
 
 	/* The address included in the pagefault report
 	 * is 8-byte-aligned. In order to obtain the exact
@@ -167,13 +146,35 @@ void Fault_handler::_handle_fault_redundant_memory()
 	 */
 	state.addr += ( instr % 8 );
 
-//	print_all_gprs(thread_state);
+	if(!ldst)
+	{
+		PWRN("Not a LOAD/STORE instruction");
+		return;
+	}
+
+	if(redundant_memory_verbose_debug)
+	{
+		PINF("Instruction: %x: %s %u Bytes from %s%lx to %s%lx", instr,
+			writes ? "STORE" : "LOAD", access_size,
+				writes ? "register R" : "relative memory address 0x",
+					writes ? (addr_t) state.reg : state.addr,
+						writes ? "relative memory address 0x" : "register R",
+							writes ? state.addr : (addr_t) state.reg);
+	}
+
+	/* Don't attach found dataspace to its designated address,
+	 * because we need to continue receiving pagefaults in order
+	 * to simulate them. We however attach it in Rtcrs address
+	 * space in order to simulate the instruction from within
+	 * this function. If it's already attached, we only get
+	 * the local address.
+	 */
+	addr_t primary_ds_addr = dd_info->attach_primary_ds_locally();
 
 	/* Use a register mapping table in order to be able to
 	 * deal with strange Fiasco.OC register backups.
 	 */
-#define SZENARIO_WORKAROUND
-#ifdef SZENARIO_WORKAROUND
+#ifdef FOC_RED_MEM_REGISTER_WORKAROUND
 	const unsigned reg_map[16] ={8,9,10,11,3,4,5,6,7,0,1,2,12,13,14,15};
 #else
 	const unsigned reg_map[16] ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
@@ -184,28 +185,24 @@ void Fault_handler::_handle_fault_redundant_memory()
 	{
 		state.value = 0;
 		memcpy(&state.value,(uint8_t*) (primary_ds_addr + state.addr),access_size);
-		PINF("Value at %lx: %x", state.addr, state.value);
 		thread_state.set_gpr(reg_map[state.reg],state.value);
 	}
-
 	else
 	{
 		thread_state.get_gpr(reg_map[state.reg], state.value);
-		PINF("Register value: %x", state.value);
 		//write into memory used by Target
 		memcpy((uint8_t*)(primary_ds_addr + state.addr),&state.value,access_size);
 		//write backup into snapshot memory
 		dd_info->write_in_active_snapshot(state.addr,&state.value,access_size);
 	}
 
-#if 1
-	for(Designated_redundant_ds_info::Redundant_checkpoint* i = dd_info->get_first_checkpoint(); i != nullptr; i=i->next())
+	if(redundant_memory_verbose_debug)
 	{
-		i->print_changed_content();
+		PINF("%s value: %x", writes ? "Stored" : "Loaded", state.value);
+		dd_info->print_all_snapshot_content();
 	}
-#endif
 
-	//don't detach and reattach every time to avoid overhead
+	// Don't detach and reattach every time to avoid overhead
 	//dd_info->detach_primary_ds_locally();
 
 	// Increase instruction pointer (ip) by one instruction
@@ -213,7 +210,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	// Write back modified state
 	cpu_thread->state(thread_state);
 
-	//continue execution since we resolved the pagefault
+	// Continue execution since we resolved the pagefault
 	Genode::Region_map_client{faulting_mrm_info->region_map_cap}.processed(state);
 
 	dd_info->unlock();
@@ -279,9 +276,8 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 	/* setup ELF object and read program entry pointer */
 	Elf_binary elf(elf_addr);
 	if (!elf.valid())
-		PINF("Invalid binary");
+		error("Invalid binary");
 
-	PINF("First 4 Bytes: %x", *(uint8_t* )elf_addr);
 
 	Elf_segment seg;
 	for (unsigned n = 0; (seg = elf.get_segment(n)).valid(); ++n) {

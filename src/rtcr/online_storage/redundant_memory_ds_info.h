@@ -9,6 +9,10 @@
 
 namespace Rtcr {
 	struct Designated_redundant_ds_info;
+	constexpr bool redundant_memory_verbose_debug = true;
+#ifndef FOC_RED_MEM_REGISTER_WORKAROUND
+#define FOC_RED_MEM_REGISTER_WORKAROUND
+#endif /* FOC_RED_MEM_REGISTER_WORKAROUND */
 }
 
 
@@ -142,7 +146,37 @@ private:
 		// Wake up flattener thread
 		_sema.up();
 		// don't detach old head; this will be done by checkpoint flattener
+		if(redundant_memory_verbose_debug)
+			Genode::log("Created redundant memory checkpoint");
 	}
+
+	void _flatten_previous_snapshots()
+	{
+		Redundant_checkpoint* reference = _checkpoints.first();
+		Redundant_checkpoint* changes = reference->next();
+		while(changes != _active_checkpoint && changes != nullptr)
+		{
+			PINF("Flattening");
+			for(Genode::size_t i = 0; i < size; i++)
+			{
+				//if a byte was changed in the newer snapshot,
+				//apply it to the reference
+				if(changes->_written_bytes->get(i,1))
+				{
+					*((Genode::uint8_t*)reference->_addr+i) = *((Genode::uint8_t*)changes->_addr+i);
+				}
+			}
+			//the reference now contains all the changes,
+			//the newer snapshot can thus be deleted.
+			changes->detach();
+			_checkpoints.remove(changes);
+			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->_red_ds_cap));
+			Genode::destroy(_alloc, changes);
+			--_num_checkpoints;
+			changes = reference->next();
+		}
+	}
+
 
 	class Flattener_thread : public Genode::Thread
 	{
@@ -168,7 +202,7 @@ private:
 				_parent->_lock.lock();
 				while(_parent->_num_checkpoints > 2)
 				{
-					_parent->flatten_previous_snapshots();
+					_parent->_flatten_previous_snapshots();
 				}
 				_parent->_lock.unlock();
 			}
@@ -303,32 +337,14 @@ public:
 		_active_checkpoint->_written_bytes->set(dst, data_size);
 	}
 
-	void flatten_previous_snapshots()
+	void print_all_snapshot_content()
 	{
-		Redundant_checkpoint* reference = _checkpoints.first();
-		Redundant_checkpoint* changes = reference->next();
-		while(changes != _active_checkpoint && changes != nullptr)
+		for(auto i = _checkpoints.first(); i != nullptr; i=i->next())
 		{
-			PINF("Flattening");
-			for(Genode::size_t i = 0; i < size; i++)
-			{
-				//if a byte was changed in the newer snapshot,
-				//apply it to the reference
-				if(changes->_written_bytes->get(i,1))
-				{
-					*((Genode::uint8_t*)reference->_addr+i) = *((Genode::uint8_t*)changes->_addr+i);
-				}
-			}
-			//the reference now contains all the changes,
-			//the newer snapshot can thus be deleted.
-			changes->detach();
-			_checkpoints.remove(changes);
-			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->_red_ds_cap));
-			Genode::destroy(_alloc, changes);
-			--_num_checkpoints;
-			changes = reference->next();
+			i->print_changed_content();
 		}
 	}
+
 };
 
 
