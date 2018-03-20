@@ -1,0 +1,110 @@
+diff --git a/src/rtcr/checkpointer.h b/src/rtcr/checkpointer.h
+index cb58551..45dbcc3 100644
+--- a/src/rtcr/checkpointer.h
++++ b/src/rtcr/checkpointer.h
+@@ -23,7 +23,7 @@
+ namespace Rtcr {
+ 	class Checkpointer;
+ 
+-	constexpr bool checkpointer_verbose_debug = true;
++	constexpr bool checkpointer_verbose_debug = false;
+ }
+ 
+ 
+diff --git a/src/rtcr/intercept/cpu_session.h b/src/rtcr/intercept/cpu_session.h
+index fb6dcc2..c9c935a 100644
+--- a/src/rtcr/intercept/cpu_session.h
++++ b/src/rtcr/intercept/cpu_session.h
+@@ -23,7 +23,7 @@ namespace Rtcr {
+ 	class Cpu_session_component;
+ 	class Cpu_root;
+ 
+-	constexpr bool cpu_verbose_debug = true;
++	constexpr bool cpu_verbose_debug = false;
+ 	constexpr bool cpu_root_verbose_debug = false;
+ }
+ 
+diff --git a/src/rtcr/intercept/cpu_thread_component.h b/src/rtcr/intercept/cpu_thread_component.h
+index cc4e491..822d3b2 100644
+--- a/src/rtcr/intercept/cpu_thread_component.h
++++ b/src/rtcr/intercept/cpu_thread_component.h
+@@ -19,7 +19,7 @@
+ namespace Rtcr {
+ 	class Cpu_thread_component;
+ 
+-	constexpr bool cpu_thread_verbose_debug = true;
++	constexpr bool cpu_thread_verbose_debug = false;
+ }
+ 
+ class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>,
+diff --git a/src/rtcr/intercept/fault_handler.h b/src/rtcr/intercept/fault_handler.h
+index 0151918..15366ad 100644
+--- a/src/rtcr/intercept/fault_handler.h
++++ b/src/rtcr/intercept/fault_handler.h
+@@ -20,9 +20,9 @@
+ namespace Rtcr {
+ 	class Fault_handler;
+ 
+-	constexpr bool fh_verbose_debug = true;
+-	constexpr bool ram_verbose_debug = true;
+-	constexpr bool ram_root_verbose_debug = true;
++	constexpr bool fh_verbose_debug = false;
++	constexpr bool ram_verbose_debug = false;
++	constexpr bool ram_root_verbose_debug = false;
+ }
+ 
+ /**
+diff --git a/src/rtcr/intercept/pd_session.h b/src/rtcr/intercept/pd_session.h
+index 3abe21b..a68ada1 100644
+--- a/src/rtcr/intercept/pd_session.h
++++ b/src/rtcr/intercept/pd_session.h
+@@ -21,7 +21,7 @@ namespace Rtcr {
+ 	class Pd_session_component;
+ 	class Pd_root;
+ 
+-	constexpr bool pd_verbose_debug = true;
++	constexpr bool pd_verbose_debug = false;
+ 	constexpr bool pd_root_verbose_debug = false;
+ }
+ 
+diff --git a/src/rtcr/intercept/rm_session.h b/src/rtcr/intercept/rm_session.h
+index aa7286a..0252c6e 100644
+--- a/src/rtcr/intercept/rm_session.h
++++ b/src/rtcr/intercept/rm_session.h
+@@ -20,8 +20,8 @@ namespace Rtcr {
+ 	class Rm_session_component;
+ 	class Rm_root;
+ 
+-	constexpr bool rm_verbose_debug = true;
+-	constexpr bool rm_root_verbose_debug = true;
++	constexpr bool rm_verbose_debug = false;
++	constexpr bool rm_root_verbose_debug = false;
+ }
+ 
+ /**
+diff --git a/src/rtcr/online_storage/redundant_memory_ds_info.h b/src/rtcr/online_storage/redundant_memory_ds_info.h
+index 1dcfd41..69f21c0 100644
+--- a/src/rtcr/online_storage/redundant_memory_ds_info.h
++++ b/src/rtcr/online_storage/redundant_memory_ds_info.h
+@@ -9,7 +9,7 @@
+ 
+ namespace Rtcr {
+ 	struct Designated_redundant_ds_info;
+-	constexpr bool redundant_memory_verbose_debug = true;
++	constexpr bool redundant_memory_verbose_debug = false;
+ 	constexpr bool verbose_register_debug = false;
+ #define FOC_RED_MEM_REGISTER_WORKAROUND
+ }
+diff --git a/src/rtcr/target_child.h b/src/rtcr/target_child.h
+index 0bdd2c9..6ad5fec 100644
+--- a/src/rtcr/target_child.h
++++ b/src/rtcr/target_child.h
+@@ -28,7 +28,7 @@
+ namespace Rtcr {
+ 	class Target_child;
+ 
+-	constexpr bool child_verbose_debug = true;
++	constexpr bool child_verbose_debug = false;
+ 
+ 	// Forward declaration
+ 	class Restorer;
