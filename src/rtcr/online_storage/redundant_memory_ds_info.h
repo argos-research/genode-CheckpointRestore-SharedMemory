@@ -271,6 +271,7 @@ public:
 
 	void redundant_writing(bool enable)
 	{
+		lock();
 		if(enable && !_redundant_writing)
 		{
 			_redundant_writing = true;
@@ -290,6 +291,7 @@ public:
 			_redundant_writing = false;
 			attach();
 		}
+		unlock();
 	}
 
 	void trigger_new_checkpoint()

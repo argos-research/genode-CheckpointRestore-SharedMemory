@@ -1460,7 +1460,7 @@ Checkpointer::Checkpointer(Genode::Allocator &alloc, Target_child &child, Target
 	if(verbose_debug) Genode::log("\033[33m", "Checkpointer", "\033[0m(...)");
 
 //	if(_child.use_redundant_memory)
-//		activate_redundant_memory();
+//		set_redundant_memory(true);
 }
 
 Checkpointer::~Checkpointer()
