@@ -12,6 +12,7 @@
 #include <ram_session/ram_session.h>
 
 /* Rtcr includes */
+#include "../online_storage/redundant_memory_ds_info.h"
 
 
 namespace Rtcr {
@@ -33,9 +34,13 @@ struct Rtcr::Simplified_managed_dataspace_info : Genode::List<Simplified_managed
 		Genode::addr_t const addr;
 		Genode::size_t const size;
 		bool const modified;
+		Rtcr::Designated_redundant_ds_info* const redundant_memory;
 
-		Simplified_designated_ds_info(Genode::Ram_dataspace_capability cap, Genode::addr_t addr, Genode::size_t size, bool modified)
-		: dataspace_cap(cap), addr(addr), size(size), modified(modified) {}
+		Simplified_designated_ds_info(Genode::Ram_dataspace_capability cap, Genode::addr_t addr,
+				Genode::size_t size, bool modified, Rtcr::Designated_redundant_ds_info* redundant_memory = nullptr)
+		: dataspace_cap(cap), addr(addr), size(size), modified(modified),
+		  redundant_memory(redundant_memory)
+		{}
 
 		void print(Genode::Output &output) const
 		{

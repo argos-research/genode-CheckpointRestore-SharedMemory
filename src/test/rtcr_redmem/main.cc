@@ -20,6 +20,7 @@
 #include "../../rtcr/target_state.h"
 #include "../../rtcr/checkpointer.h"
 #include "../../rtcr/restorer.h"
+#include "../../rtcr/util/simplified_managed_dataspace_info.h"
 
 namespace Rtcr {
 struct Main;
@@ -41,19 +42,20 @@ struct Rtcr::Main {
 		size_t time_start;
 		size_t time_end;
 
+		//const Genode::size_t granularity = 0;
+		//const Genode::size_t granularity = 1;
 		const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
 
 		Target_child* child = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
 		child->start();
 
-		Target_state ts(env, heap);
+		//Target_state ts(env, heap, false);
+		Target_state ts(env, heap, true);
 		Checkpointer ckpt(heap, *child, ts);
 		timer.msleep(1000);
 		ckpt.set_redundant_memory(true);
 
-		child->resume();
-
-		for (int i = 0; i < 3 ; i++) {
+		for (int i = 0; i < 2 ; i++) {
 
 			timer.msleep(3000);
 
@@ -68,40 +70,43 @@ struct Rtcr::Main {
 
 		timer.msleep(2000);
 
-		Ram_dataspace_info* rdsi = child->ram().parent_state().ram_dataspaces.first();
-		Designated_redundant_ds_info* drdsi = (Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
-		PINF("Found source DRDSI");
-
 		child->pause();
-		timer.msleep(2000);
-		Target_child* child2 = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
-		Target_state ts2(env, heap);
-		Checkpointer ckpt2(heap, *child2, ts2);
+		timer.msleep(1000);
+		Target_child* child_restored = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
+		Target_state ts_restored(env, heap, true);
+		Checkpointer ckpt_restored(heap, *child_restored, ts_restored);
 
-		child2->start();
-
-
-
-		//Target_child child_restored { env, heap, parent_services, "sheepcount", granularity };
-		//Restorer resto(heap, child_restored, ts);
-		//child_restored.start();
-
+		child_restored->start();
 
 		timer.msleep(1000);
-		//ckpt2.set_redundant_memory(true);
+		//ckpt_restored.set_redundant_memory(true);
 
 
-		Ram_dataspace_info* rdsi2 = child2->ram().parent_state().ram_dataspaces.first();
-		Designated_redundant_ds_info* drdsi2 = (Designated_redundant_ds_info*) rdsi2->mrm_info->dd_infos.first();
-		PINF("Found destination DRDSI");
-		addr_t primary_ds_loc_addr2 = env.rm().attach(drdsi2->cap);
-		drdsi->copy_from_latest_checkpoint((void*)primary_ds_loc_addr2);
-		env.rm().detach(primary_ds_loc_addr2);
+		// Manual memory-only restore
+
+		/* Find the custom dataspace info with the snapshot inside:
+		 * It's the ds that sheep_counter created last during runtime,
+		 * so it's the last one in the list.
+		 */
+		Designated_redundant_ds_info* src_drdsi = nullptr;
+		for(auto src_smdi = ts._managed_redundant_dataspaces.first(); src_smdi != nullptr; src_smdi = src_smdi->next())
+			for(auto src_sddsi = src_smdi->designated_dataspaces.first(); src_sddsi != nullptr; src_sddsi = src_sddsi->next())
+				src_drdsi = src_sddsi->redundant_memory;
+		/* Now, locate the target ds of the new task.
+		 * The order of ram_dataspaces is reversed,
+		 * so this time we need the first element.
+		 */
+		Ram_dataspace_info* dst_rdsi = child_restored->ram().parent_state().ram_dataspaces.first();
+		Designated_dataspace_info* dst_ddsi = dst_rdsi->mrm_info->dd_infos.first();
+		addr_t primary_ds_loc_addr = env.rm().attach(dst_ddsi->cap);
+		// Now we can do the memory restoration:
+		src_drdsi->copy_from_latest_checkpoint((void*)primary_ds_loc_addr);
+		env.rm().detach(primary_ds_loc_addr);
 		PINF("MEMORY RESTORED!");
 
-		timer.msleep(3000);
+		timer.msleep(5000);
 
-		log("The End");
+		log("The End.");
 		Genode::sleep_forever();
 	}
 };

@@ -145,13 +145,15 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	 */
 	bool attached;
 
+	const bool redundant_memory;
 	/**
 	 * Constructor
 	 */
 	Designated_dataspace_info(Managed_region_map_info &mrm_info, Genode::Dataspace_capability ds_cap,
-			Genode::addr_t addr, Genode::size_t size)
+			Genode::addr_t addr, Genode::size_t size, bool redundant_memory = false)
 	:
-		mrm_info(mrm_info), cap(ds_cap), rel_addr(addr), size(size), attached(false)
+		mrm_info(mrm_info), cap(ds_cap), rel_addr(addr), size(size),
+		attached(false), redundant_memory(redundant_memory)
 	{
 		// Every new dataspace shall be attached and marked
 		attach();

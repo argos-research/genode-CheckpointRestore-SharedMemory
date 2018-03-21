@@ -43,5 +43,5 @@ build_boot_image { core init timer target_redmem-tester arbitrary_child sheep_co
 
 append qemu_args " -nographic "
 
-#run_genode_until "3 sheeps.*\n" 10
-run_genode_until forever
+#run_genode_until forever
+run_genode_until "The End." 100

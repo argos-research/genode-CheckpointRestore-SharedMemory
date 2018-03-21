@@ -9,11 +9,12 @@
 using namespace Rtcr;
 
 
-Target_state::Target_state(Genode::Env &env, Genode::Allocator &alloc)
+Target_state::Target_state(Genode::Env &env, Genode::Allocator &alloc, bool redundant_memory)
 :
 	_env   (env),
 	_alloc (alloc),
-	_cap_idx_alloc_addr(0)
+	_cap_idx_alloc_addr(0),
+	_redundant_memory(redundant_memory)
 { }
 
 

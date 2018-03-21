@@ -1324,7 +1324,12 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 					Genode::Ram_dataspace_capability dd_info_cap =
 							Genode::reinterpret_cap_cast<Genode::Ram_dataspace>(dd_info->cap);
 
-					sim_dd_infos.insert(new (_alloc) Sim_dd_info(dd_info_cap, dd_info->rel_addr, dd_info->size, dd_info->attached));
+					// Check if it's a redundant memory ds and pass a reference (which is otherwise NULL)
+					Designated_redundant_ds_info* drdsi = nullptr;
+					if(dd_info->redundant_memory)
+						drdsi = static_cast<Designated_redundant_ds_info*>(dd_info);
+
+					sim_dd_infos.insert(new (_alloc) Sim_dd_info(dd_info_cap, dd_info->rel_addr, dd_info->size, dd_info->attached, drdsi));
 
 					dd_info = dd_info->next();
 				}
@@ -1526,8 +1531,14 @@ void Checkpointer::checkpoint()
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 
 
+	if(_managed_dataspaces.first() != nullptr)
+	{
+		//_destroy_list(_managed_dataspaces);
+	}
 	if(_child.use_redundant_memory)
+	{
 		_lock_redundant_dataspaces(true);
+	}
 
 	// Pause child
 	_child.pause();
@@ -1568,7 +1579,8 @@ void Checkpointer::checkpoint()
 
 	// Prepare state lists
 	// implicitly _copy_dataspaces modified with the child's currently known dataspaces and copy dataspaces
-	_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
+	if(!_child.use_redundant_memory)
+		_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
 	_prepare_pd_sessions(_state._stored_pd_sessions, _child.custom_services().pd_root->session_infos());
 	_prepare_cpu_sessions(_state._stored_cpu_sessions, _child.custom_services().cpu_root->session_infos());
 	if(_child.custom_services().rm_root)
@@ -1591,6 +1603,12 @@ void Checkpointer::checkpoint()
 
 	// Create a list of managed dataspaces
 	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
+
+	if(_child.use_redundant_memory)
+	{
+		_destroy_list(_state._managed_redundant_dataspaces);
+		_state._managed_redundant_dataspaces = _managed_dataspaces;
+	}
 
 	if(verbose_debug)
 	{
@@ -1636,7 +1654,8 @@ void Checkpointer::checkpoint()
 	_destroy_list(_kcap_mappings);
 	_destroy_list(_dataspace_translations);
 	_destroy_list(_region_maps);
-	_destroy_list(_managed_dataspaces);
+	if(!_child.use_redundant_memory)
+		_destroy_list(_managed_dataspaces);
 
 	// Resume child
 	_child.resume();

@@ -38,6 +38,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 		Genode::addr_t* _bitset_array;
 		static const Genode::size_t BITSET_UNIT_BITSIZE = sizeof(*_bitset_array)*8;
 	public:
+
 		/* If the snapshot is not cumulative, it is not a complete
 		 * memory snapshot, i.e. some blocks refer to the previous
 		 * snapshot.
@@ -217,7 +218,7 @@ public:
 			Genode::addr_t addr, Genode::size_t size, Genode::Env& env, Genode::Allocator& alloc, Genode::Region_map& rm,
 			Genode::Ram_connection& parent_ram, Genode::Cache_attribute cached)
 			:
-	Designated_dataspace_info(mrm_info, ds_cap, addr, size),
+	Designated_dataspace_info(mrm_info, ds_cap, addr, size, true),
 	_sema(0),
 	_lock(Genode::Lock::UNLOCKED),
 	_parent_ram(parent_ram),
