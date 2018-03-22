@@ -70,7 +70,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 			state.type == Genode::Region_map::State::READ_FAULT  ? "READ_FAULT"  :
 			state.type == Genode::Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
 			state.type == Genode::Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY",
-			" pf_addr=", Genode::Hex(state.addr), " ip: ", Genode::Hex(state.pf_ip));
+			" pf_addr=", Genode::Hex(state.addr), " ip: ", Genode::Hex(state.ip));
 	}
 
 	// Find dataspace which contains the faulting address
@@ -108,7 +108,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 			 */
 			//if(cpu_thread->state().unresolved_page_fault)
 			{
-				if(state.pf_ip == cpu_thread->state().ip)
+				if(state.ip == cpu_thread->state().ip)
 				{
 					if(redundant_memory_verbose_debug)
 						Genode::log("Found page-faulting thread: #", j, ", IP: ",
@@ -131,7 +131,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 		print_all_gprs(thread_state);
 
 	// Get instruction
-	addr_t inst_addr = state.pf_ip;
+	addr_t inst_addr = state.ip;
 	unsigned instr = *((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
 
 	// decode the instruction and update state accordingly
