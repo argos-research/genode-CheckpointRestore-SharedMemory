@@ -1334,7 +1334,7 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 					dd_info = dd_info->next();
 				}
 
-				_managed_dataspaces.insert(new (_alloc) Simplified_managed_dataspace_info(ramds_info->cap, sim_dd_infos));
+				_managed_dataspaces->insert(new (_alloc) Simplified_managed_dataspace_info(ramds_info->cap, sim_dd_infos));
 			}
 
 			ramds_info = ramds_info->next();
@@ -1410,7 +1410,7 @@ void Checkpointer::_checkpoint_dataspaces()
 		if(!memory_info->processed)
 		{
 			// Resolve managed dataspace of the incremental checkpointing mechanism
-			Simplified_managed_dataspace_info *smd_info = _managed_dataspaces.first();
+			Simplified_managed_dataspace_info *smd_info = _managed_dataspaces->first();
 			if(smd_info) smd_info = smd_info->find_by_badge(memory_info->resto_ds_cap.local_name());
 			// Dataspace is managed
 			if(smd_info)
@@ -1476,7 +1476,8 @@ Checkpointer::~Checkpointer()
 	_destroy_list(_kcap_mappings);
 	_destroy_list(_dataspace_translations);
 	_destroy_list(_region_maps);
-	_destroy_list(_managed_dataspaces);
+	if(_managed_dataspaces != nullptr)
+		_destroy_list(*_managed_dataspaces);
 }
 
 void Checkpointer::set_redundant_memory(bool active)
@@ -1531,11 +1532,11 @@ void Checkpointer::checkpoint()
 	using Genode::log;
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 
+	_managed_dataspaces = &_state._managed_redundant_dataspaces;
 
 	if(_child.use_redundant_memory)
 	{
-		_destroy_list(_state._managed_redundant_dataspaces);
-		_destroy_list(_managed_dataspaces);
+		_destroy_list(*_managed_dataspaces);
 		_lock_redundant_dataspaces(true);
 	}
 
@@ -1603,15 +1604,10 @@ void Checkpointer::checkpoint()
 	// Create a list of managed dataspaces
 	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
 
-	if(_child.use_redundant_memory)
-	{
-		_state._managed_redundant_dataspaces = _managed_dataspaces;
-	}
-
 	if(verbose_debug)
 	{
 		Genode::log("Managed dataspaces:");
-		Simplified_managed_dataspace_info const *smd_info = _managed_dataspaces.first();
+		Simplified_managed_dataspace_info const *smd_info = _managed_dataspaces->first();
 		if(!smd_info) Genode::log(" <empty>\n");
 		while(smd_info)
 		{
@@ -1653,7 +1649,7 @@ void Checkpointer::checkpoint()
 	_destroy_list(_dataspace_translations);
 	_destroy_list(_region_maps);
 	if(!_child.use_redundant_memory)
-		_destroy_list(_managed_dataspaces);
+		_destroy_list(*_managed_dataspaces);
 
 	// Resume child
 	_child.resume();

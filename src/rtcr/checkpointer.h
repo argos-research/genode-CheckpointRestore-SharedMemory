@@ -61,7 +61,7 @@ private:
 	 * These dataspaces are not needed to be copied
 	 */
 	Genode::List<Ref_badge_info>            _region_maps;
-	Genode::List<Simplified_managed_dataspace_info> _managed_dataspaces;
+	Genode::List<Simplified_managed_dataspace_info>* _managed_dataspaces;
 
 
 	template<typename T>
