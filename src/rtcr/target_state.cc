@@ -197,5 +197,26 @@ void Target_state::print(Genode::Output &output) const
 			timer_info = timer_info->next();
 		}
 	}
+	// Redundant memory / managed dataspaces
+	if(_redundant_memory)
+	{
+		Genode::print(output, "Managed redundant memory dataspaces:\n");
+		auto smd_info = _managed_redundant_dataspaces.first();
+		if(!smd_info) Genode::print(output, " <empty>\n");
+		while(smd_info)
+		{
+			smd_info->print(output);
+			auto sdd_info =	smd_info->designated_dataspaces.first();
+			while(sdd_info)
+			{
+				sdd_info->print(output);
+				Genode::print(output,"\n");
+				sdd_info->redundant_memory->print_all_snapshot_content();
+				Genode::print(output,"\n");
+				sdd_info = sdd_info->next();
+			}
+			smd_info = smd_info->next();
+		}
+	}
 }
 
