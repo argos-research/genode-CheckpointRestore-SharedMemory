@@ -205,7 +205,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	if(redundant_memory_verbose_debug)
 	{
 		PINF("%s value: 0x%x", writes ? "Stored" : "Loaded", state.value);
-		dd_info->print_all_snapshot_content();
+		Genode::log(*dd_info,"\n");
 	}
 
 	// Don't detach and reattach every time to avoid overhead

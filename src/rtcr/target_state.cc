@@ -205,14 +205,12 @@ void Target_state::print(Genode::Output &output) const
 		if(!smd_info) Genode::print(output, " <empty>\n");
 		while(smd_info)
 		{
-			smd_info->print(output);
+			Genode::print(output, " ", *smd_info, "\n");
 			auto sdd_info =	smd_info->designated_dataspaces.first();
 			while(sdd_info)
 			{
-				sdd_info->print(output);
-				Genode::print(output,"\n");
-				sdd_info->redundant_memory->print_all_snapshot_content();
-				Genode::print(output,"\n");
+				Genode::print(output, "  ", *sdd_info, "\n   ");
+				Genode::print(output, *sdd_info->redundant_memory);
 				sdd_info = sdd_info->next();
 			}
 			smd_info = smd_info->next();

@@ -89,15 +89,16 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 			return _addr;
 		}
 
-		void print_changed_content()
+		void print(Genode::Output &output) const
 		{
-			Genode::printf("Changes (fmt: \"rel addr: content;\") in snapshot at 0x%lx ->\t", _addr);
+			Genode::print(output, "\n    Changes (fmt: \"rel addr: content;\") in snapshot at ",
+					Genode::Hex(_addr), "\t->\t");
 			for(Genode::addr_t i = 0; i<_size; i += 1)
 			{
 				if(_written_bytes->get(i,1))
-					Genode::printf("0x%lx: 0x%x; ", i, *((Genode::uint8_t*) ((_addr + i))));
+					Genode::print(output, Genode::Hex(i), ": ",
+							Genode::Hex(*(Genode::uint8_t*) (_addr + i)), "; ");
 			}
-			Genode::printf("\n");
 		}
 	};
 
@@ -340,11 +341,12 @@ public:
 		_active_checkpoint->_written_bytes->set(dst, data_size);
 	}
 
-	void print_all_snapshot_content()
+	void print(Genode::Output &output) const
 	{
+		Genode::print(output, "Designated_redundant_ds_info, size ", size);
 		for(auto i = _checkpoints.first(); i != nullptr; i=i->next())
 		{
-			i->print_changed_content();
+			Genode::print(output, *i);
 		}
 	}
 
