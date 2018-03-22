@@ -1342,6 +1342,7 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 
 		ram_session = ram_session->next();
 	}
+
 }
 
 
@@ -1531,12 +1532,10 @@ void Checkpointer::checkpoint()
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 
 
-	if(_managed_dataspaces.first() != nullptr)
-	{
-		//_destroy_list(_managed_dataspaces);
-	}
 	if(_child.use_redundant_memory)
 	{
+		_destroy_list(_state._managed_redundant_dataspaces);
+		_destroy_list(_managed_dataspaces);
 		_lock_redundant_dataspaces(true);
 	}
 
@@ -1606,7 +1605,6 @@ void Checkpointer::checkpoint()
 
 	if(_child.use_redundant_memory)
 	{
-		_destroy_list(_state._managed_redundant_dataspaces);
 		_state._managed_redundant_dataspaces = _managed_dataspaces;
 	}
 

@@ -122,6 +122,9 @@ void Fault_handler::_handle_fault_redundant_memory()
 		c = c->next();
 	}
 
+	PERR("Did not find page-faulting thread!");
+	return;
+
 	found_thread:
 
 	// Get copy of state
