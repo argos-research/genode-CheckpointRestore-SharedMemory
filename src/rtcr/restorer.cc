@@ -1263,6 +1263,55 @@ void Restorer::_restore_cap_space()
 	}
 }
 
+void Restorer::_restore_dataspaces_redundant_memory()
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+
+	Dataspace_translation_info *memory_info = _dataspace_translations.first();
+
+	Simplified_managed_dataspace_info *src_smd_info = _state._managed_redundant_dataspaces.first();
+	while(memory_info)
+	{
+		if(!memory_info->processed)
+		{
+			// Resolve managed dataspace of the incremental checkpointing mechanism
+			Simplified_managed_dataspace_info *dst_smd_info = _managed_dataspaces.first();
+
+			if(dst_smd_info) dst_smd_info = dst_smd_info->find_by_badge(memory_info->resto_ds_cap.local_name());
+			// Dataspace is managed
+			if(dst_smd_info)
+			{
+				Simplified_managed_dataspace_info::Simplified_designated_ds_info *dst_sdd_info =
+						dst_smd_info->designated_dataspaces.first();
+				Simplified_managed_dataspace_info::Simplified_designated_ds_info *src_sdd_info =
+						src_smd_info->designated_dataspaces.first();
+				while(dst_sdd_info)
+				{
+					//TODO: For the szenario this produces some errors
+					//since redundant memory is not enabled for all DSs.
+					_restore_redundant_dataspace_content(dst_sdd_info->dataspace_cap, *src_sdd_info->redundant_memory,
+							dst_sdd_info->addr, dst_sdd_info->size);
+
+					dst_sdd_info = dst_sdd_info->next();
+					src_sdd_info = src_sdd_info->next();
+				}
+
+				src_smd_info = src_smd_info->next();
+			}
+			// Dataspace is not managed
+			else
+			{
+				_restore_dataspace_content(memory_info->resto_ds_cap, memory_info->ckpt_ds_cap, 0, memory_info->size);
+			}
+
+			memory_info->processed = true;
+		}
+
+		memory_info = memory_info->next();
+	}
+}
+
+
 
 void Restorer::_restore_dataspaces()
 {
@@ -1316,6 +1365,31 @@ void Restorer::_restore_dataspace_content(Genode::Dataspace_capability dst_ds_ca
 	Genode::memcpy(dst_start_addr, src_start_addr + src_offset, size);
 
 	_state._env.rm().detach(src_start_addr);
+	_state._env.rm().detach(dst_start_addr);
+}
+
+void Restorer::_restore_redundant_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
+		Rtcr::Designated_redundant_ds_info& src_drdsi, Genode::addr_t src_offset, Genode::size_t size)
+{
+	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(dst ", dst_ds_cap,
+			", src offset=", Genode::Hex(src_offset),
+			", src size=", Genode::Hex(src_drdsi.size), ", dst size=", Genode::Hex(size), ")");
+
+	if(src_offset != 0)
+	{
+		Genode::error("Nonzero offset not supported!");
+		return;
+	}
+	if(size != src_drdsi.size)
+	{
+		Genode::error("Distinct sizes!");
+		return;
+	}
+
+	char *dst_start_addr = _state._env.rm().attach(dst_ds_cap);
+
+	src_drdsi.copy_from_latest_checkpoint(dst_start_addr);
+
 	_state._env.rm().detach(dst_start_addr);
 }
 
@@ -1525,7 +1599,10 @@ void Restorer::restore()
 	_restore_cap_space();
 
 	// Copy stored dataspaces' content to child dataspaces' content
-	_restore_dataspaces();
+	if(_state._redundant_memory)
+		_restore_dataspaces_redundant_memory();
+	else
+		_restore_dataspaces();
 
 	Genode::log("After: \n", _child);
 

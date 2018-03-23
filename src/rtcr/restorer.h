@@ -176,8 +176,11 @@ private:
 	void _restore_cap_space();
 
 	void _restore_dataspaces();
+	void _restore_dataspaces_redundant_memory();
 	void _restore_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
 			Genode::Dataspace_capability src_ds_cap, Genode::addr_t src_offset, Genode::size_t size);
+	void _restore_redundant_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
+			Rtcr::Designated_redundant_ds_info& src_drdsi, Genode::addr_t src_offset, Genode::size_t size);
 
 	void _start_threads(
 			Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions);

@@ -75,12 +75,12 @@ struct Rtcr::Main {
 		Target_child* child_restored = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
 
 		Restorer resto(heap, *child_restored, ts);
-		//child_restored->start(resto);
+		child_restored->start(resto);
 
 		Target_state ts_restored(env, heap, true);
 		Checkpointer ckpt_restored(heap, *child_restored, ts_restored);
 
-		child_restored->start();
+		//child_restored->start();
 
 		timer.msleep(3000);
 		//ckpt_restored.set_redundant_memory(true);
@@ -90,12 +90,12 @@ struct Rtcr::Main {
 
 		/* Find the custom dataspace info with the snapshot inside:
 		 * It's the ds that sheep_counter created last during runtime,
-		 * so it's the last one in the list.
+		 * so it's the first one in the list.
 		 */
-		Designated_redundant_ds_info* src_drdsi = nullptr;
-		for(auto src_smdi = ts._managed_redundant_dataspaces.first(); src_smdi != nullptr; src_smdi = src_smdi->next())
-			for(auto src_sddsi = src_smdi->designated_dataspaces.first(); src_sddsi != nullptr; src_sddsi = src_sddsi->next())
-				src_drdsi = src_sddsi->redundant_memory;
+		Simplified_managed_dataspace_info* src_smdi = ts._managed_redundant_dataspaces.first();
+		Simplified_managed_dataspace_info::Simplified_designated_ds_info* src_sddsi = src_smdi->designated_dataspaces.first();
+		Designated_redundant_ds_info* src_drdsi = src_sddsi->redundant_memory;
+
 		/* Now, locate the target ds of the new task.
 		 * The order of ram_dataspaces is reversed,
 		 * so this time we need the first element.

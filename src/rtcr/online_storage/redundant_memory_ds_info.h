@@ -327,6 +327,11 @@ public:
 
 	void copy_from_latest_checkpoint(void* dst)
 	{
+		if(_checkpoints.first() == nullptr)
+		{
+			Genode::error("No snapshot available! Is redundant writing enabled?");
+			return;
+		}
 		_lock.lock();
 		Genode::memcpy(dst, (Genode::uint8_t*) _checkpoints.first()->_addr, size);
 		_lock.unlock();

@@ -1308,6 +1308,8 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 
 	typedef Simplified_managed_dataspace_info::Simplified_designated_ds_info Sim_dd_info;
 
+	Simplified_managed_dataspace_info* last_elem = 0;
+
 	Ram_session_component *ram_session = ram_sessions.first();
 	while(ram_session)
 	{
@@ -1334,7 +1336,9 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 					dd_info = dd_info->next();
 				}
 
-				_managed_dataspaces->insert(new (_alloc) Simplified_managed_dataspace_info(ramds_info->cap, sim_dd_infos));
+				Simplified_managed_dataspace_info* new_elem = new (_alloc) Simplified_managed_dataspace_info(ramds_info->cap, sim_dd_infos);
+				_managed_dataspaces->insert(new_elem, last_elem);
+				last_elem = new_elem;
 			}
 
 			ramds_info = ramds_info->next();
@@ -1579,8 +1583,7 @@ void Checkpointer::checkpoint()
 
 	// Prepare state lists
 	// implicitly _copy_dataspaces modified with the child's currently known dataspaces and copy dataspaces
-	if(!_child.use_redundant_memory)
-		_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
+	_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
 	_prepare_pd_sessions(_state._stored_pd_sessions, _child.custom_services().pd_root->session_infos());
 	_prepare_cpu_sessions(_state._stored_cpu_sessions, _child.custom_services().cpu_root->session_infos());
 	if(_child.custom_services().rm_root)
