@@ -210,7 +210,7 @@ void Target_state::print(Genode::Output &output) const
 			while(sdd_info)
 			{
 				Genode::print(output, "  ", *sdd_info, "\n   ");
-				Genode::print(output, *sdd_info->redundant_memory);
+				Genode::print(output, *sdd_info->redundant_memory, "\n");
 				sdd_info = sdd_info->next();
 			}
 			smd_info = smd_info->next();
