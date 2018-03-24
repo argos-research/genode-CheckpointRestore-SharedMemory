@@ -1291,6 +1291,7 @@ void Restorer::_restore_dataspaces_redundant_memory()
 					//since redundant memory is not enabled for all DSs.
 					_restore_redundant_dataspace_content(dst_sdd_info->dataspace_cap, *src_sdd_info->redundant_memory,
 							dst_sdd_info->addr, dst_sdd_info->size);
+					_restore_dataspace_content(dst_sdd_info->dataspace_cap, memory_info->ckpt_ds_cap, dst_sdd_info->addr, dst_sdd_info->size);
 
 					dst_sdd_info = dst_sdd_info->next();
 					src_sdd_info = src_sdd_info->next();

@@ -391,6 +391,8 @@ void Checkpointer::_prepare_region_maps(Genode::List<Stored_region_map_info> &st
 	child_info = child_infos.first();
 	while(child_info)
 	{
+		Genode::log("Cap: ", child_info->cap(), ", Ds-cap: ", child_info->dataspace());
+
 		stored_info = stored_infos.first();
 		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap().local_name());
 
@@ -637,6 +639,14 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 	child_info = child_infos.first();
 	while(child_info)
 	{
+		Designated_redundant_ds_info* drdsi = nullptr;
+		Designated_dataspace_info* dsi = child_info->mrm_info->dd_infos.first();
+		if(dsi && dsi->redundant_memory)
+		{
+			drdsi = static_cast<Designated_redundant_ds_info*>(dsi);
+		}
+
+
 		// Find corresponding state_info
 		stored_info = stored_infos.first();
 		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap.local_name());
@@ -644,12 +654,16 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 		// No corresponding stored_info => create it
 		if(!stored_info)
 		{
-			stored_info = &_create_stored_ram_dataspace(*child_info);
+			if(drdsi && drdsi->redundant_writing())
+				stored_info = &_create_stored_ram_dataspace(*child_info, &drdsi->get_first_checkpoint()->red_ds_cap);
+			else
+				stored_info = &_create_stored_ram_dataspace(*child_info);
 			stored_infos.insert(stored_info);
 		}
 
 		// Nothing to update in stored_info
 
+		//TODO: dont remember for redundant memory
 		// Remeber this dataspace for checkpoint, if not already in list
 		Dataspace_translation_info *trans_info = _dataspace_translations.first();
 		if(trans_info) trans_info = trans_info->find_by_resto_badge(child_info->cap.local_name());
@@ -683,7 +697,11 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 		stored_info = next_info;
 	}
 }
-Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_dataspace_info &child_info)
+
+
+
+Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_dataspace_info &child_info,
+		const Genode::Dataspace_capability* red_mem_ds)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
@@ -705,9 +723,18 @@ Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_datasp
 
 		if(!ramds_cap.valid())
 		{
-			if(verbose_debug) Genode::log("Dataspace ", child_info.cap, " is not known. "
-					"Creating dataspace with size ", Genode::Hex(child_info.size));
-			ramds_cap = _state._env.ram().alloc(child_info.size);
+			if(red_mem_ds)
+			{
+				if(verbose_debug) Genode::log("Dataspace ", child_info.cap, " has redundant memory. "
+						"Linking with redundant memory dataspace ", *red_mem_ds);
+				ramds_cap = Genode::reinterpret_cap_cast<Genode::Ram_dataspace>(*red_mem_ds);
+			}
+			else
+			{
+				if(verbose_debug) Genode::log("Dataspace ", child_info.cap, " is not known. "
+						"Creating dataspace with size ", Genode::Hex(child_info.size));
+				ramds_cap = _state._env.ram().alloc(child_info.size);
+			}
 		}
 		else
 		{
@@ -1350,7 +1377,8 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 }
 
 
-void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions)
+void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions,
+		Genode::List<Designated_dataspace_info>* attached_dataspaces)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
@@ -1365,13 +1393,28 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 				Designated_dataspace_info *dd_info = ramds_info->mrm_info->dd_infos.first();
 				while(dd_info)
 				{
-					if(dd_info->attached) dd_info->detach();
+					if(dd_info->attached)
+					{
+						dd_info->detach();
+						// remember attached dataspaces for reattaching when using redundant memory
+						if(attached_dataspaces)
+							attached_dataspaces->insert(dd_info);
+					}
 					dd_info = dd_info->next();
 				}
 			}
 			ramds_info = ramds_info->next();
 		}
 		ram_session = ram_session->next();
+	}
+}
+
+void Checkpointer::_attach_designated_dataspaces(Genode::List<Designated_dataspace_info> ddis)
+{
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
+	for(Designated_dataspace_info* ddi = ddis.first(); ddi != nullptr; ddi = ddi->next())
+	{
+		ddi->attach();
 	}
 }
 
@@ -1425,7 +1468,10 @@ void Checkpointer::_checkpoint_dataspaces()
 				{
 					if(sdd_info->modified)
 					{
-						_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
+						PINF("mang");
+						//TODO red mem	sdd_info->redundant_memory
+						if(!sdd_info->redundant_memory)
+							_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
 					}
 
 					sdd_info = sdd_info->next();
@@ -1435,6 +1481,7 @@ void Checkpointer::_checkpoint_dataspaces()
 			// Dataspace is not managed
 			else
 			{
+				PINF("nonmang");
 				_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, memory_info->resto_ds_cap, 0, memory_info->size);
 			}
 
@@ -1630,19 +1677,20 @@ void Checkpointer::checkpoint()
 		}
 	}
 
+	Genode::List<Designated_dataspace_info> attached_dataspaces;
+
+	_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos(), &attached_dataspaces);
+	// Copy child dataspaces' content and to stored dataspaces' content
+	_checkpoint_dataspaces();
+
 	if(_child.use_redundant_memory)
 	{
+		_attach_designated_dataspaces(attached_dataspaces);
+
 		// Redirect redundant writes to a fresh set of dataspaces
 		_checkpoint_redundant_dataspaces(_child.custom_services().ram_root->session_infos());
 	}
-	else
-	{
-		// Detach all designated dataspaces
-		_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
 
-		// Copy child dataspaces' content and to stored dataspaces' content
-		_checkpoint_dataspaces();
-	}
 
 	if(verbose_debug) Genode::log(_child);
 	if(verbose_debug) Genode::log(_state);

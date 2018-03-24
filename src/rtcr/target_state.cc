@@ -198,7 +198,7 @@ void Target_state::print(Genode::Output &output) const
 		}
 	}
 	// Redundant memory / managed dataspaces
-	if(_redundant_memory)
+	if(_redundant_memory && false)
 	{
 		Genode::print(output, "Managed redundant memory dataspaces:\n");
 		auto smd_info = _managed_redundant_dataspaces.first();

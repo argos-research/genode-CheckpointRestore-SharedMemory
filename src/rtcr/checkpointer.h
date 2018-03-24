@@ -114,7 +114,8 @@ private:
 	void _destroy_stored_ram_session(Stored_ram_session_info &stored_info);
 
 	void _prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_info> &stored_infos, Genode::List<Ram_dataspace_info> &child_infos);
-	Stored_ram_dataspace_info &_create_stored_ram_dataspace(Ram_dataspace_info &child_info);
+	Stored_ram_dataspace_info &_create_stored_ram_dataspace(Ram_dataspace_info &child_info,	const Genode::Dataspace_capability* red_mem_ds = nullptr);
+
 	void _destroy_stored_ram_dataspace(Stored_ram_dataspace_info &stored_info);
 
 	void _prepare_cpu_sessions(Genode::List<Stored_cpu_session_info> &stored_infos, Genode::List<Cpu_session_component> &child_infos);
@@ -146,7 +147,10 @@ private:
 
 	void _create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions);
 
-	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
+	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions,
+			Genode::List<Designated_dataspace_info>* attached_dataspaces = nullptr);
+
+	void _attach_designated_dataspaces(Genode::List<Designated_dataspace_info> ddis);
 
 	void _checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 

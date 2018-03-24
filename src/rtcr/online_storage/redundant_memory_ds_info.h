@@ -27,7 +27,6 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 	private:
 		friend class Designated_redundant_ds_info;
 		bool _attached;
-		Genode::Dataspace_capability const  _red_ds_cap;
 		Genode::addr_t _addr;
 		bool _is_cumulative;
 		Genode::size_t _size;
@@ -39,6 +38,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 		static const Genode::size_t BITSET_UNIT_BITSIZE = sizeof(*_bitset_array)*8;
 	public:
 
+		Genode::Dataspace_capability const  red_ds_cap;
 		/* If the snapshot is not cumulative, it is not a complete
 		 * memory snapshot, i.e. some blocks refer to the previous
 		 * snapshot.
@@ -46,8 +46,8 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 		Redundant_checkpoint(Genode::Dataspace_capability const  ds_cap, Genode::size_t size,
 				Genode::Allocator& alloc, Genode::Region_map& rm)
 		:
-			_attached(false), _red_ds_cap(ds_cap), _addr(0),
-			_is_cumulative(false), _size(size),	_rm(rm), _alloc(alloc)
+			_attached(false), _addr(0), _is_cumulative(false),
+			_size(size), _rm(rm), _alloc(alloc), red_ds_cap(ds_cap)
 		{
 			_bitset_array = new(_alloc) Genode::addr_t[_size/BITSET_UNIT_BITSIZE];
 			_written_bytes = new(_alloc) Bitset((_size + BITSET_UNIT_BITSIZE - 1)
@@ -67,7 +67,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 				PWRN("Trying to re-attach already attached redundant memory checkpoint");
 				return 0;
 			}
-			_addr = _rm.attach(_red_ds_cap);
+			_addr = _rm.attach(red_ds_cap);
 			_attached = true;
 			return _addr;
 		}
@@ -91,8 +91,8 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 
 		void print(Genode::Output &output) const
 		{
-			Genode::print(output, "\n    Changes (fmt: \"rel addr: content;\") in snapshot at ",
-					Genode::Hex(_addr), "\t->\t");
+			Genode::print(output, "\n    Changes (fmt: \"rel addr: content;\") in snapshot ",
+					this->red_ds_cap, "\t->\t");
 			for(Genode::addr_t i = 0; i<_size; i += 1)
 			{
 				if(_written_bytes->get(i,1))
@@ -172,7 +172,7 @@ private:
 			//the newer snapshot can thus be deleted.
 			changes->detach();
 			_checkpoints.remove(changes);
-			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->_red_ds_cap));
+			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->red_ds_cap));
 			Genode::destroy(_alloc, changes);
 			--_num_checkpoints;
 			changes = reference->next();
