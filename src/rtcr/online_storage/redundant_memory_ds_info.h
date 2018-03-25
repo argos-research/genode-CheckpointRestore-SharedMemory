@@ -113,7 +113,9 @@ private:
 	Genode::List<Redundant_checkpoint> _checkpoints;
 	Redundant_checkpoint* _active_checkpoint;
 
-	Genode::Semaphore _sema;
+	Genode::Semaphore _sema_used_snapshots;
+
+	Genode::Semaphore _sema_free_snapshots;
 
 	Genode::Lock _lock;
 
@@ -160,6 +162,7 @@ private:
 		}
 		else
 		{
+			_sema_free_snapshots.down();
 			new_checkpoint = _allocated_snapshots[_num_checkpoints];
 			Genode::memset(new_checkpoint->_bitset_array, 0, size/Redundant_checkpoint::BITSET_UNIT_BITSIZE);
 			new_checkpoint->_is_cumulative = false;
@@ -170,7 +173,7 @@ private:
 		_active_checkpoint = new_checkpoint;
 		++_num_checkpoints;
 		// Wake up flattener thread
-		_sema.up();
+		_sema_used_snapshots.up();
 		// don't detach old head; this will be done by checkpoint flattener
 		if(redundant_memory_verbose_debug)
 			Genode::log("Created redundant memory checkpoint");
@@ -203,6 +206,8 @@ private:
 				_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->red_ds_cap));
 				Genode::destroy(_alloc, changes);
 			}
+			else
+				_sema_free_snapshots.up();
 			--_num_checkpoints;
 			changes = reference->next();
 		}
@@ -233,7 +238,7 @@ private:
 			while(true)
 			{
 				//_sema is for waking up the thread when adding a new snapshot
-				_parent->_sema.down();
+				_parent->_sema_used_snapshots.down();
 				//_lock makes sure that the restorer waits until the checkpoints
 				//are flattened into one before restoring. Otherwise he would
 				//be restoring from an incremental snapshot and thus from
@@ -257,7 +262,8 @@ public:
 			Genode::Ram_connection& parent_ram, Genode::Cache_attribute cached)
 			:
 	Designated_dataspace_info(mrm_info, ds_cap, addr, size, true),
-	_sema(0),
+	_sema_used_snapshots(0),
+	_sema_free_snapshots(fixed_snapshot_amount),
 	_lock(Genode::Lock::UNLOCKED),
 	_parent_ram(parent_ram),
 	_cached(cached),
