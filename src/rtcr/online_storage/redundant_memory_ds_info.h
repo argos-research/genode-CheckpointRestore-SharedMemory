@@ -11,6 +11,7 @@ namespace Rtcr {
 	struct Designated_redundant_ds_info;
 	constexpr bool redundant_memory_verbose_debug = true;
 	constexpr bool verbose_register_debug = false;
+	constexpr Genode::size_t fixed_snapshot_amount = 8;
 #define FOC_RED_MEM_REGISTER_WORKAROUND
 }
 
@@ -91,14 +92,14 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 
 		void print(Genode::Output &output) const
 		{
-			Genode::print(output, "\n    Changes (fmt: \"rel addr: content;\") in snapshot ",
-					this->red_ds_cap, "\t->\t");
+			Genode::print(output, "\n    Changes in snapshot ", red_ds_cap, "\t->\t");
 			for(Genode::addr_t i = 0; i<_size; i += 1)
 			{
 				if(_written_bytes->get(i,1))
 					Genode::print(output, Genode::Hex(i), ": ",
 							Genode::Hex(*(Genode::uint8_t*) (_addr + i)), "; ");
 			}
+			Genode::print(output, "next: ", Genode::Hex((Genode::uint64_t) this->_next));
 		}
 	};
 
@@ -136,10 +137,34 @@ private:
 
 	Genode::addr_t _primary_ds_local_addr;
 
+	Redundant_checkpoint* _allocated_snapshots[fixed_snapshot_amount];
+
+	void _allocate_snapshots()
+	{
+		for(Genode::size_t i=0; i<fixed_snapshot_amount; i++)
+		{
+			Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
+			Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
+			_allocated_snapshots[i] = new_checkpoint;
+		}
+	}
+
 	void _create_new_checkpoint()
 	{
-		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
-		Redundant_checkpoint* new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
+		Redundant_checkpoint* new_checkpoint;
+
+		if(!fixed_snapshot_amount)
+		{
+			Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
+			new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
+		}
+		else
+		{
+			new_checkpoint = _allocated_snapshots[_num_checkpoints];
+			Genode::memset(new_checkpoint->_bitset_array, 0, size/Redundant_checkpoint::BITSET_UNIT_BITSIZE);
+			new_checkpoint->_is_cumulative = false;
+			new_checkpoint->_next = nullptr;
+		}
 		new_checkpoint->attach();
 		_checkpoints.insert(new_checkpoint, _active_checkpoint);
 		_active_checkpoint = new_checkpoint;
@@ -172,8 +197,11 @@ private:
 			//the newer snapshot can thus be deleted.
 			changes->detach();
 			_checkpoints.remove(changes);
-			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->red_ds_cap));
-			Genode::destroy(_alloc, changes);
+			if(!fixed_snapshot_amount)
+			{
+				_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->red_ds_cap));
+				Genode::destroy(_alloc, changes);
+			}
 			--_num_checkpoints;
 			changes = reference->next();
 		}
@@ -236,6 +264,20 @@ public:
 	{
 	}
 
+	/**
+	 * Destructor
+	 */
+	~Designated_redundant_ds_info()
+	{
+		_lock.lock();
+		for(Redundant_checkpoint* i = _checkpoints.first(); i != nullptr; i = i->next())
+		{
+			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(i->red_ds_cap));
+			Genode::destroy(_alloc, i);
+		}
+		_lock.unlock();
+	}
+
 	bool primary_ds_attached_locally()
 	{
 		return _primary_ds_attached_locally;
@@ -279,6 +321,7 @@ public:
 			_redundant_writing = true;
 			if(_num_checkpoints == 0)
 			{
+				_allocate_snapshots();
 				_create_new_checkpoint();
 				_active_checkpoint = _checkpoints.first();
 				//first checkpoint is always cumulative
@@ -349,7 +392,8 @@ public:
 
 	void print(Genode::Output &output) const
 	{
-		Genode::print(output, "Designated_redundant_ds_info, size ", size);
+		Genode::print(output, "Designated_redundant_ds_info, size ", size, ", "
+				"recorded writes (if any) listed below, fmt: \"<rel addr>: <content>; [...]\"");
 		for(auto i = _checkpoints.first(); i != nullptr; i=i->next())
 		{
 			Genode::print(output, *i);

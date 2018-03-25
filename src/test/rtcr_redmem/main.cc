@@ -55,7 +55,7 @@ struct Rtcr::Main {
 		timer.msleep(1000);
 		ckpt.set_redundant_memory(true);
 
-		for (int i = 0; i < 4 ; i++) {
+		for (int i = 0; i < 8 ; i++) {
 
 			timer.msleep(3000);
 
