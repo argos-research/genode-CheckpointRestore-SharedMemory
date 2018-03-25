@@ -1377,8 +1377,7 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 }
 
 
-void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions,
-		Genode::List<Designated_dataspace_info>* attached_dataspaces)
+void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
@@ -1394,12 +1393,7 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 				while(dd_info)
 				{
 					if(dd_info->attached)
-					{
 						dd_info->detach();
-						// remember attached dataspaces for reattaching when using redundant memory
-						if(attached_dataspaces)
-							attached_dataspaces->insert(dd_info);
-					}
 					dd_info = dd_info->next();
 				}
 			}
@@ -1408,16 +1402,6 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 		ram_session = ram_session->next();
 	}
 }
-
-void Checkpointer::_attach_designated_dataspaces(Genode::List<Designated_dataspace_info> ddis)
-{
-	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
-	for(Designated_dataspace_info* ddi = ddis.first(); ddi != nullptr; ddi = ddi->next())
-	{
-		ddi->attach();
-	}
-}
-
 
 void Checkpointer::_checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions)
 {
@@ -1535,10 +1519,10 @@ void Checkpointer::set_redundant_memory(bool active)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...), ", active ? "ENABLE" : "DISABLE");
 
-	//_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
-	// due to the incomplete Fiasco.OC register backups delivered to Genode,
+	// TODO: due to the incomplete Fiasco.OC register backups delivered to Genode,
 	// a full instruction simulation and thus redundant memory of ALL dataspaces is
-	// not possible. Otherwise, cnt would not be needed.
+	// not possible -> Only detach first ds (the one that was requested inside the
+	// main method of the target program). Otherwise, cnt would not be needed.
 	Genode::size_t cnt = 0;
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
 			rdsi != nullptr && cnt < 1; rdsi = rdsi->next(), cnt++)
@@ -1677,16 +1661,13 @@ void Checkpointer::checkpoint()
 		}
 	}
 
-	Genode::List<Designated_dataspace_info> attached_dataspaces;
+	_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
 
-	_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos(), &attached_dataspaces);
 	// Copy child dataspaces' content and to stored dataspaces' content
 	_checkpoint_dataspaces();
 
 	if(_child.use_redundant_memory)
 	{
-		_attach_designated_dataspaces(attached_dataspaces);
-
 		// Redirect redundant writes to a fresh set of dataspaces
 		_checkpoint_redundant_dataspaces(_child.custom_services().ram_root->session_infos());
 	}

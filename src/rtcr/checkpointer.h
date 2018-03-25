@@ -147,10 +147,7 @@ private:
 
 	void _create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions);
 
-	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions,
-			Genode::List<Designated_dataspace_info>* attached_dataspaces = nullptr);
-
-	void _attach_designated_dataspaces(Genode::List<Designated_dataspace_info> ddis);
+	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 
 	void _checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 

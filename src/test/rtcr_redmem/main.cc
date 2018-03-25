@@ -43,7 +43,7 @@ struct Rtcr::Main {
 		size_t time_end;
 
 		//const Genode::size_t granularity = 0;
-		//const Genode::size_t granularity = 1;
+		//const Genode::size_t granularity = 1000;
 		const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
 
 		Target_child* child = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };

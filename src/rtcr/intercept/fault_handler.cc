@@ -86,7 +86,17 @@ void Fault_handler::_handle_fault_redundant_memory()
 	}
 
 	if(redundant_memory_verbose_debug)
-		Genode::log("fault handler found DRDSI");
+		Genode::log("Fault handler found DRDSI");
+
+	if(!dd_info->redundant_writing())
+	{
+		if(redundant_memory_verbose_debug)
+			Genode::log("Dataspace not using redundant memory; re-attaching");
+		dd_info->attach();
+		return;
+	}
+	else if(redundant_memory_verbose_debug)
+			Genode::log("Dataspace using redundant memory; emulating instruction");
 
 	dd_info->lock();
 
