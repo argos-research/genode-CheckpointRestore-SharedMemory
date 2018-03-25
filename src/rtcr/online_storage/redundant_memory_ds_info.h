@@ -66,7 +66,7 @@ struct Rtcr::Designated_redundant_ds_info: public Rtcr::Designated_dataspace_inf
 			if(_attached)
 			{
 				PWRN("Trying to re-attach already attached redundant memory checkpoint");
-				return 0;
+				return _addr;
 			}
 			_addr = _rm.attach(red_ds_cap);
 			_attached = true;
@@ -180,6 +180,7 @@ private:
 	{
 		Redundant_checkpoint* reference = _checkpoints.first();
 		Redundant_checkpoint* changes = reference->next();
+		Genode::size_t num_checkpoints_before = _num_checkpoints;
 		while(changes != _active_checkpoint && changes != nullptr)
 		{
 			if(redundant_memory_verbose_debug)
@@ -204,6 +205,14 @@ private:
 			}
 			--_num_checkpoints;
 			changes = reference->next();
+		}
+
+		// Move active checkpoint to array position 1 to avoid overwriting
+		if(fixed_snapshot_amount)
+		{
+			Redundant_checkpoint* temp = _allocated_snapshots[1];
+			_allocated_snapshots[1] = _allocated_snapshots[num_checkpoints_before-1];
+			_allocated_snapshots[num_checkpoints_before-1] = temp;
 		}
 	}
 
