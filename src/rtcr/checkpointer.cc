@@ -1470,7 +1470,7 @@ void Checkpointer::_checkpoint_dataspaces()
 					{
 						PINF("mang");
 						//TODO red mem	sdd_info->redundant_memory
-						if(!sdd_info->redundant_memory)
+						if(!sdd_info->redundant_memory || !sdd_info->redundant_memory->redundant_writing())
 							_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
 					}
 
