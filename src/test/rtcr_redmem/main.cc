@@ -55,7 +55,7 @@ struct Rtcr::Main {
 		timer.msleep(1000);
 		ckpt.set_redundant_memory(true);
 
-		for (int i = 0; i < 2 ; i++) {
+		for (int i = 0; i < 4 ; i++) {
 
 			timer.msleep(3000);
 
@@ -66,19 +66,14 @@ struct Rtcr::Main {
 		}
 		timer.msleep(2000);
 
-		ckpt.set_redundant_memory(false);
-
-		timer.msleep(2000);
-
 		child->pause();
 		timer.msleep(1000);
 		Target_child* child_restored = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
+		Target_state ts_restored(env, heap, true);
+		Checkpointer ckpt_restored(heap, *child_restored, ts_restored);
 
 		Restorer resto(heap, *child_restored, ts);
 		child_restored->start(resto);
-
-		Target_state ts_restored(env, heap, true);
-		Checkpointer ckpt_restored(heap, *child_restored, ts_restored);
 
 		//child_restored->start();
 

@@ -290,6 +290,7 @@ public:
 		}
 		else if(!enable && _redundant_writing)
 		{
+			Genode::warning("Disabling redundant memory serves only debugging purposes and might have unwanted side-effects!");
 			_redundant_writing = false;
 			attach();
 		}

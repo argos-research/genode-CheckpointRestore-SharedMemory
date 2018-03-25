@@ -391,8 +391,6 @@ void Checkpointer::_prepare_region_maps(Genode::List<Stored_region_map_info> &st
 	child_info = child_infos.first();
 	while(child_info)
 	{
-		Genode::log("Cap: ", child_info->cap(), ", Ds-cap: ", child_info->dataspace());
-
 		stored_info = stored_infos.first();
 		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap().local_name());
 
@@ -1452,8 +1450,6 @@ void Checkpointer::_checkpoint_dataspaces()
 				{
 					if(sdd_info->modified)
 					{
-						PINF("mang");
-						//TODO red mem	sdd_info->redundant_memory
 						if(!sdd_info->redundant_memory || !sdd_info->redundant_memory->redundant_writing())
 							_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
 					}
@@ -1465,7 +1461,6 @@ void Checkpointer::_checkpoint_dataspaces()
 			// Dataspace is not managed
 			else
 			{
-				PINF("nonmang");
 				_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, memory_info->resto_ds_cap, 0, memory_info->size);
 			}
 
@@ -1626,7 +1621,7 @@ void Checkpointer::checkpoint()
 
 	if(verbose_debug)
 	{
-		Genode::log("Dataspaces to checkpoint:");
+		Genode::log("Dataspaces to checkpoint + already checkpointed redundant memory dataspaces:");
 		Dataspace_translation_info *info = _dataspace_translations.first();
 		while(info)
 		{
