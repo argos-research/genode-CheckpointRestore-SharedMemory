@@ -59,8 +59,13 @@ private:
 	/**
 	 * List of dataspace badges which are (known) managed dataspaces
 	 * These dataspaces are not needed to be copied
+	 * Only references are copied, since they are used for restoration
+	 * from redundant memory checkpoints
 	 */
 	Genode::List<Ref_badge_info>            _region_maps;
+	/**
+	 * Points to the respective structure in the target state
+	 */
 	Genode::List<Simplified_managed_dataspace_info>* _managed_dataspaces;
 
 
@@ -114,6 +119,10 @@ private:
 	void _destroy_stored_ram_session(Stored_ram_session_info &stored_info);
 
 	void _prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_info> &stored_infos, Genode::List<Ram_dataspace_info> &child_infos);
+	/**
+	 * For a given ds info, create a stored ram ds, where memory will be checkpointed to.
+	 * Alternatively, if red_mem_ds != nullptr, link it with an existing redundant memory ds.
+	 */
 	Stored_ram_dataspace_info &_create_stored_ram_dataspace(Ram_dataspace_info &child_info,	const Genode::Dataspace_capability* red_mem_ds = nullptr);
 
 	void _destroy_stored_ram_dataspace(Stored_ram_dataspace_info &stored_info);
@@ -149,8 +158,16 @@ private:
 
 	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 
-	void _checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
+	/**
+	 * Triggers creation of new checkpoints on the next write attempt for
+	 * all dataspaces that have redundant memory checkpointing enabled
+	 */
+	void _trigger_new_redundant_memory_checkpoint(Genode::List<Ram_session_component> &ram_sessions);
 
+	/**
+	 * Locks all dataspaces that have redundant memory checkpointing enabled
+	 * for thread-safe access and modification
+	 */
 	void _lock_redundant_dataspaces(bool lock);
 
 	void _checkpoint_dataspaces();
@@ -161,6 +178,9 @@ public:
 	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
 	~Checkpointer();
 
+	/**
+	 * Activates and deactivates redundant memory checkpointing
+	 */
 	void set_redundant_memory(bool active);
 
 	/**

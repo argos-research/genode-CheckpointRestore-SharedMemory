@@ -30,7 +30,6 @@ class Rtcr::Fault_handler : public Genode::Thread
 private:
 
 	Genode::Env& _env;
-
 	/**
 	 * Enable log output for debugging
 	 */
@@ -44,6 +43,11 @@ private:
 	 * It must contain Managed_region_map_info
 	 */
 	Genode::List<Ram_dataspace_info> &_ramds_infos;
+	/**
+	 * ROM name of ELF binary for redundant memory -> access instruction for emulation.
+	 * If "", do not use redundant memory.
+	 */
+	Genode::String<32>  _name;
 	/**
 	 * Address where the ELF binary is attached
 	 */
@@ -60,13 +64,6 @@ private:
 	 * Virtual memory address of the code segment
 	 */
 	Genode::addr_t elf_seg_addr;
-
-	/**
-	 * ROM name of binary for redundant memory.
-	 * If "", do not use redundant memory.
-	 */
-	Genode::String<32>  _name;
-
 	/**
 	 * Find the first faulting Region_map in the list of Ram_dataspaces
 	 *
@@ -77,7 +74,6 @@ private:
 	 * Handles the page fault by attaching a designated dataspace into its region map
 	 */
 	void _handle_fault();
-
 	/**
 	 * Handles the page fault by emulating the instruction with redundant writing
 	 */
@@ -86,7 +82,6 @@ private:
 public:
 	Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver,
 			Genode::List<Ram_dataspace_info> &ramds_infos, const char* name = "");
-
 	/**
 	 * Entrypoint of the thread
 	 * The thread waits for a signal and calls the handler function if it receives any signal

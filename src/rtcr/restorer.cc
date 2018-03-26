@@ -1269,6 +1269,8 @@ void Restorer::_restore_dataspaces_redundant_memory()
 
 	Dataspace_translation_info *memory_info = _dataspace_translations.first();
 
+	// Use this list for obtaining source redundant memory dataspaces.
+	// The order is the same as for the destination dataspaces.
 	Simplified_managed_dataspace_info *src_smd_info = _state._managed_redundant_dataspaces.first();
 	while(memory_info)
 	{
@@ -1287,6 +1289,8 @@ void Restorer::_restore_dataspaces_redundant_memory()
 						src_smd_info->designated_dataspaces.first();
 				while(dst_sdd_info)
 				{
+					// If redundant memory is enabled for the source, use the
+					// appropriate and safe restoration method.
 					if(src_sdd_info->redundant_memory && src_sdd_info->redundant_memory->redundant_writing())
 						_restore_redundant_dataspace_content(dst_sdd_info->dataspace_cap, *src_sdd_info->redundant_memory,
 							dst_sdd_info->addr, dst_sdd_info->size);
@@ -1373,7 +1377,7 @@ void Restorer::_restore_redundant_dataspace_content(Genode::Dataspace_capability
 		Rtcr::Designated_redundant_ds_info& src_drdsi, Genode::addr_t src_offset, Genode::size_t size)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(dst ", dst_ds_cap,
-			", src offset=", Genode::Hex(src_offset),
+			", src ", src_drdsi.get_first_checkpoint()->red_ds_cap, ", src offset=", Genode::Hex(src_offset),
 			", src size=", Genode::Hex(src_drdsi.size), ", dst size=", Genode::Hex(size), ")");
 
 	if(src_offset != 0)

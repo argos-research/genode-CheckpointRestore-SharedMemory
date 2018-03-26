@@ -153,7 +153,10 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		Genode::Lock::Guard lock_guard(_parent_state.ram_dataspaces_lock);
 		_parent_state.ram_dataspaces.insert(new_ramds_info);
 
-		//detach because we need to receive pagefaults
+		// TODO: detach because we need to receive pagefaults.
+		// For now we do this later manually due to incomplete
+		// FOC register backups, by calling
+		// Checkpointer::set_redundant_memory()
 		//new_dd_info->detach();
 
 		if(verbose_debug)

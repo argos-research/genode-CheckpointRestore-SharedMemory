@@ -176,9 +176,19 @@ private:
 	void _restore_cap_space();
 
 	void _restore_dataspaces();
+	/**
+	 * Redundant memory version of _restore_dataspaces():
+	 * Checks for every dataspace if redundant memory was used;
+	 * if yes, restores from the respective redundant memory snapshot instead.
+	 */
 	void _restore_dataspaces_redundant_memory();
 	void _restore_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
 			Genode::Dataspace_capability src_ds_cap, Genode::addr_t src_offset, Genode::size_t size);
+	/**
+	 * Redundant memory version of _restore_dataspace_content(): Accepts
+	 * a Designated_redundant_ds_info as source instead and uses its restore method
+	 * to ensure thread safety, currentness and consistency of the source ds.
+	 */
 	void _restore_redundant_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
 			Rtcr::Designated_redundant_ds_info& src_drdsi, Genode::addr_t src_offset, Genode::size_t size);
 

@@ -10,9 +10,7 @@
 #include <base/sleep.h>
 #include <base/log.h>
 #include <base/child.h>
-//#include <base/internal/elf.h>
 #include <../src/include/base/internal/elf.h>
-//#include <../src/include/base/internal/elf_format.h>
 #include <timer_session/connection.h>
 
 /* Rtcr includes */

@@ -144,7 +144,13 @@ struct Rtcr::Designated_dataspace_info : public Genode::List<Designated_dataspac
 	 * Indicates whether this dataspace is attached to its Region_map
 	 */
 	bool attached;
-
+	/**
+	 * Indicates whether this dataspace supports redundant memory
+	 * and can thus be casted to Designated_redundant_ds_info.
+	 * Does not tell if redundant memory is currently enabled;
+	 * for that Designated_redundant_ds_info::redundant_writing()
+	 * must be used.
+	 */
 	const bool redundant_memory;
 	/**
 	 * Constructor

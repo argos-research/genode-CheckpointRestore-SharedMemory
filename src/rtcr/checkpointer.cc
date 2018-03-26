@@ -655,6 +655,9 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 		if(!stored_info)
 		{
 			if(drdsi && drdsi->redundant_writing())
+				// In case of a redundant memory enabled ds, we do not want to create
+				// a new dataspace for checkpointing but link it with the already
+				// existing one
 				stored_info = &_create_stored_ram_dataspace(*child_info, &drdsi->get_first_checkpoint()->red_ds_cap);
 			else
 				stored_info = &_create_stored_ram_dataspace(*child_info);
@@ -663,7 +666,6 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 
 		// Nothing to update in stored_info
 
-		//TODO: dont remember for redundant memory
 		// Remeber this dataspace for checkpoint, if not already in list
 		Dataspace_translation_info *trans_info = _dataspace_translations.first();
 		if(trans_info) trans_info = trans_info->find_by_resto_badge(child_info->cap.local_name());
@@ -1335,6 +1337,7 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 
 	typedef Simplified_managed_dataspace_info::Simplified_designated_ds_info Sim_dd_info;
 
+	// Used for inserting new list elements in reverse order
 	Simplified_managed_dataspace_info* last_elem = 0;
 
 	Ram_session_component *ram_session = ram_sessions.first();
@@ -1403,7 +1406,7 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 	}
 }
 
-void Checkpointer::_checkpoint_redundant_dataspaces(Genode::List<Ram_session_component> &ram_sessions)
+void Checkpointer::_trigger_new_redundant_memory_checkpoint(Genode::List<Ram_session_component> &ram_sessions)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
@@ -1452,6 +1455,9 @@ void Checkpointer::_checkpoint_dataspaces()
 				{
 					if(sdd_info->modified)
 					{
+						// Copy ds content to the checkpoint.
+						// Do not do so if redundant writing is enabled, because then the checkpoint
+						// has already been created on-the-fly during target runtime.
 						if(!sdd_info->redundant_memory || !sdd_info->redundant_memory->redundant_writing())
 							_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
 					}
@@ -1497,6 +1503,7 @@ Checkpointer::Checkpointer(Genode::Allocator &alloc, Target_child &child, Target
 {
 	if(verbose_debug) Genode::log("\033[33m", "Checkpointer", "\033[0m(...)");
 
+//	TODO: enabled manually at a later point due to incomplete FOC register backups
 //	if(_child.use_redundant_memory)
 //		set_redundant_memory(true);
 }
@@ -1518,7 +1525,7 @@ void Checkpointer::set_redundant_memory(bool active)
 
 	// TODO: due to the incomplete Fiasco.OC register backups delivered to Genode,
 	// a full instruction simulation and thus redundant memory of ALL dataspaces is
-	// not possible -> Only detach first ds (the one that was requested inside the
+	// not possible -> So we only detach the first ds (which was requested inside the
 	// main method of the target program). Otherwise, cnt would not be needed.
 	Genode::size_t cnt = 0;
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
@@ -1568,6 +1575,7 @@ void Checkpointer::checkpoint()
 
 	if(_child.use_redundant_memory)
 	{
+		// Clear list before re-using it
 		_destroy_list(*_managed_dataspaces);
 		_lock_redundant_dataspaces(true);
 	}
@@ -1666,7 +1674,7 @@ void Checkpointer::checkpoint()
 	if(_child.use_redundant_memory)
 	{
 		// Redirect redundant writes to a fresh set of dataspaces
-		_checkpoint_redundant_dataspaces(_child.custom_services().ram_root->session_infos());
+		_trigger_new_redundant_memory_checkpoint(_child.custom_services().ram_root->session_infos());
 	}
 
 
