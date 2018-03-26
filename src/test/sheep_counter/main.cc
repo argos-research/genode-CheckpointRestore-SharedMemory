@@ -91,7 +91,7 @@ void Component::construct(Genode::Env &env)
 		stack_regs[13] = r13;
 		stack_regs[14] = r14;
 		//stack_regs[15] = r15; -> IP
-		for(int i = 0; i < 14; i++)
+		for(int i = 0; i < 15; i++)
 		{
 			log("Reg ", i, ":\t", Genode::Hex(stack_regs[i]), ",\tdec:", stack_regs[i]);
 		}
