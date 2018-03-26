@@ -70,12 +70,12 @@ void Designated_redundant_ds_info::Flattener_thread::entry()
 {
 	while(true)
 	{
-		//_sema is for waking up the thread when adding a new snapshot
+		// Wait until a new checkpoint is available
 		_parent->_sema_used_snapshots.down();
-		//_lock makes sure that the restorer waits until the checkpoints
-		//are flattened into one before restoring. Otherwise he would
-		//be restoring from an incremental snapshot and thus from
-		//uninitialized memory
+		// _lock makes sure that the restorer waits until the checkpoints
+		// are flattened into one before restoring. Otherwise he would
+		// be restoring from an incremental snapshot and thus from
+		// uninitialized memory
 		_parent->_lock.lock();
 		while(_parent->_num_checkpoints > 2)
 		{
@@ -102,17 +102,21 @@ void Designated_redundant_ds_info::_create_new_checkpoint()
 
 	if(!fixed_snapshot_amount)
 	{
+		// Allocate new checkpoint if not using static allocation
 		Genode::Dataspace_capability const ds = _parent_ram.alloc(size,_cached);
 		new_checkpoint = new (_alloc) Redundant_checkpoint(ds, size, _alloc, _rm);
 	}
 	else
 	{
+		// Use already allocated object
 		_sema_free_snapshots.down();
 		new_checkpoint = _allocated_snapshots[_num_checkpoints];
 		Genode::memset(new_checkpoint->_bitset_array, 0, size/Redundant_checkpoint::BITSET_UNIT_BITSIZE);
+		// reset member fields
 		new_checkpoint->_is_cumulative = false;
 		new_checkpoint->_next = nullptr;
 	}
+	// Attach so it can be used for writing
 	new_checkpoint->attach();
 	_checkpoints.insert(new_checkpoint, _active_checkpoint);
 	_active_checkpoint = new_checkpoint;
@@ -146,6 +150,7 @@ void Designated_redundant_ds_info::_flatten_previous_snapshots()
 		//the newer snapshot can thus be deleted.
 		changes->detach();
 		_checkpoints.remove(changes);
+		// When using static allocation, the snapshot will be reused later
 		if(!fixed_snapshot_amount)
 		{
 			_parent_ram.free(Genode::static_cap_cast<Genode::Ram_dataspace>(changes->red_ds_cap));
@@ -157,9 +162,9 @@ void Designated_redundant_ds_info::_flatten_previous_snapshots()
 		changes = reference->next();
 	}
 
-	// Move active checkpoint to array position 1 to avoid overwriting
 	if(fixed_snapshot_amount)
 	{
+		// Move active checkpoint to array position 1 to avoid overwriting
 		Redundant_checkpoint* temp = _allocated_snapshots[1];
 		_allocated_snapshots[1] = _allocated_snapshots[num_checkpoints_before-1];
 		_allocated_snapshots[num_checkpoints_before-1] = temp;
@@ -189,9 +194,6 @@ _flattener_thread(this)
 {
 }
 
-/**
- * Destructor
- */
 Designated_redundant_ds_info::~Designated_redundant_ds_info()
 {
 	_lock.lock();
@@ -244,22 +246,26 @@ void Designated_redundant_ds_info::redundant_writing(bool enable)
 	if(enable && !_redundant_writing)
 	{
 		_redundant_writing = true;
+		// If redundant writing is enabled for the first time,
+		// a snapshot has to be created first.
 		if(_num_checkpoints == 0)
 		{
 			_allocate_snapshots();
 			_create_new_checkpoint();
 			_active_checkpoint = _checkpoints.first();
-			//first checkpoint is always cumulative
-			//since it records writes since the start
+			// first checkpoint is always cumulative
+			// since it records writes since the start
 			_active_checkpoint->_is_cumulative = true;
 			_flattener_thread.start();
 		}
+		// Detach so that each access attempt triggers a page fault
 		detach();
 	}
 	else if(!enable && _redundant_writing)
 	{
 		Genode::warning("Disabling redundant memory serves only debugging purposes and might have unwanted side-effects!");
 		_redundant_writing = false;
+		// Attach to disable page faults
 		attach();
 	}
 	unlock();
@@ -267,6 +273,8 @@ void Designated_redundant_ds_info::redundant_writing(bool enable)
 
 void Designated_redundant_ds_info::trigger_new_checkpoint()
 {
+	// Set variable so that on the next write access,
+	// a new checkpoint is created
 	_new_checkpoint_pending = true;
 }
 
@@ -301,6 +309,9 @@ void Designated_redundant_ds_info::copy_from_latest_checkpoint(void* dst)
 		Genode::error("No snapshot available! Is redundant writing enabled?");
 		return;
 	}
+	// The lock makes sure that the copy will not start if the flattener
+	// is still flattening checkpoints. Otherwise, we would copy
+	// inconsistent/old data.
 	_lock.lock();
 	Genode::memcpy(dst, (Genode::uint8_t*) _checkpoints.first()->_addr, size);
 	_lock.unlock();

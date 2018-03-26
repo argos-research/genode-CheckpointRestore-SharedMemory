@@ -196,13 +196,14 @@ void Fault_handler::_handle_fault_redundant_memory()
 	const unsigned reg_map[16] ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 #endif
 
-
+	// LOAD: Get value from memory address and load it into register
 	if(!writes)
 	{
 		state.value = 0;
 		memcpy(&state.value,(uint8_t*) (primary_ds_addr + state.addr),access_size);
 		thread_state.set_gpr(reg_map[state.reg],state.value);
 	}
+	// STORE: Get value from register and store it in memory address
 	else
 	{
 		thread_state.get_gpr(reg_map[state.reg], state.value);
@@ -275,8 +276,11 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 	_receiver(receiver), _ramds_infos(ramds_infos),
 	_name(name)
 {
+	// If not using redundant memory, do nothing
 	if(_name=="")
 		return;
+
+	// Else, load ELF binary so we can access it when emulating instructions
 
     static Rom_connection rom(_name.string());
 	Dataspace_capability elf_ds = rom.dataspace();

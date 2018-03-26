@@ -1,10 +1,3 @@
-/*
- * fault_handler.h
- *
- *  Created on: Jan 25, 2018
- *      Author: josef
- */
-
 #ifndef _RTCR_FAULT_HANDLER_H_
 #define _RTCR_FAULT_HANDLER_H_
 
@@ -15,7 +8,6 @@
 
 #include "../online_storage/ram_dataspace_info.h"
 #include "../online_storage/redundant_memory_ds_info.h"
-//#include "../intercept/cpu_session.h"
 
 namespace Rtcr {
 	class Fault_handler;
