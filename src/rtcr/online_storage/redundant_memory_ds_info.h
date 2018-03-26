@@ -9,6 +9,11 @@ namespace Rtcr {
 	struct Designated_redundant_ds_info;
 	constexpr bool redundant_memory_verbose_debug = true;
 	constexpr bool verbose_register_debug = false;
+	/**
+	 * Controls static allocation of snapshot memory.
+	 * Must be either 0 (disabled -> use dynamic allocation)
+	 * or a number >= 3.
+	 */
 	constexpr Genode::size_t fixed_snapshot_amount = 8;
 #define FOC_RED_MEM_REGISTER_WORKAROUND
 }
