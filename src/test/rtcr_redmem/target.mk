@@ -5,6 +5,7 @@ SRC_CC += main.cc \
           cpu_session.cc \
           ram_session.cc \
           fault_handler.cc \
+          redundant_memory_ds_info.cc \
           rom_session.cc \
           rm_session.cc \
           log_session.cc \
@@ -24,6 +25,7 @@ vpath pd_session.cc            $(REP_DIR)/src/rtcr/intercept
 vpath cpu_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath ram_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath fault_handler.cc         $(REP_DIR)/src/rtcr/intercept
+vpath redundant_memory_ds_info.cc $(REP_DIR)/src/rtcr/online_storage
 vpath rom_session.cc           $(REP_DIR)/src/rtcr/intercept
 vpath rm_session.cc            $(REP_DIR)/src/rtcr/intercept
 vpath log_session.cc           $(REP_DIR)/src/rtcr/intercept
