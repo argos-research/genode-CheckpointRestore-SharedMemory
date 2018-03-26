@@ -24,6 +24,9 @@
 
 namespace Rtcr {
 struct Main;
+enum cr_type_t {full, incremental, redundant_memory};
+constexpr cr_type_t cr_type = redundant_memory;
+constexpr bool restore_memory_only = false;
 }
 
 struct Rtcr::Main {
@@ -42,23 +45,34 @@ struct Rtcr::Main {
 		size_t time_start;
 		size_t time_end;
 
-		const Genode::size_t granularity = 0;
-		//const Genode::size_t granularity = 1000;
-		//const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
+		if(restore_memory_only && cr_type != redundant_memory)
+		{
+			PERR("Memory-only restore only supported on redundant memory.");
+			Genode::sleep_forever();
+			return;
+		}
+
+		const Genode::size_t granularity = cr_type == full ? 0 :
+				cr_type == incremental ? 0x100 : Target_child::GRANULARITY_REDUNDANT_MEMORY;
 
 		Target_child* child = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
-		Target_state ts(env, heap, false);
-		//Target_state ts(env, heap, true);
+		Target_state ts(env, heap, cr_type == redundant_memory);
 		Checkpointer ckpt(heap, *child, ts);
 		child->start();
 
 		timer.msleep(1000);
-		//ckpt.set_redundant_memory(true);
 
-		for (int i = 0; i < 8 ; i++) {
+		if(cr_type == redundant_memory)
+		{
+			PINF("Enable redundant memory");
+			ckpt.set_redundant_memory(true);
+		}
+
+		for (int i = 0; i < 3 ; i++) {
 
 			timer.msleep(3000);
 
+			PINF("Trigger checkpoint");
 			time_start = timer.elapsed_ms();
 			ckpt.checkpoint();
 			time_end = timer.elapsed_ms();
@@ -66,23 +80,28 @@ struct Rtcr::Main {
 		}
 		timer.msleep(2000);
 
+		PINF("Pause target and create new process as restoration target");
 		child->pause();
-		timer.msleep(1000);
 		Target_child* child_restored = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
-		Target_state ts_restored(env, heap, true);
+		Target_state ts_restored(env, heap, cr_type == redundant_memory);
 		Checkpointer ckpt_restored(heap, *child_restored, ts_restored);
 
-		Restorer resto(heap, *child_restored, ts);
-		child_restored->start(resto);
+		if(!restore_memory_only)
+		{
+			Restorer resto(heap, *child_restored, ts);
+			child_restored->start(resto);
+			timer.msleep(2000);
+			log("The End.");
+			Genode::sleep_forever();
+			return;
+		}
 
-		//child_restored->start();
-
+		child_restored->start();
 		timer.msleep(3000);
-		//ckpt_restored.set_redundant_memory(true);
-
 
 		// Manual memory-only restore
 
+		PINF("Restore memory");
 		/* Find the custom dataspace info with the snapshot inside:
 		 * It's the ds that sheep_counter created last during runtime,
 		 * so it's the first one in the list.
@@ -101,7 +120,6 @@ struct Rtcr::Main {
 		// Now we can do the memory restoration:
 		src_drdsi->copy_from_latest_checkpoint((void*)primary_ds_loc_addr);
 		env.rm().detach(primary_ds_loc_addr);
-		PINF("MEMORY RESTORED!");
 
 		timer.msleep(5000);
 
