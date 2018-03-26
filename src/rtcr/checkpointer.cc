@@ -638,7 +638,9 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 	while(child_info)
 	{
 		Designated_redundant_ds_info* drdsi = nullptr;
-		Designated_dataspace_info* dsi = child_info->mrm_info->dd_infos.first();
+		Designated_dataspace_info* dsi = nullptr;
+		if(child_info->mrm_info)
+			dsi = child_info->mrm_info->dd_infos.first();
 		if(dsi && dsi->redundant_memory)
 		{
 			drdsi = static_cast<Designated_redundant_ds_info*>(dsi);

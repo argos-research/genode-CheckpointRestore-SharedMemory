@@ -42,18 +42,18 @@ struct Rtcr::Main {
 		size_t time_start;
 		size_t time_end;
 
-		//const Genode::size_t granularity = 0;
+		const Genode::size_t granularity = 0;
 		//const Genode::size_t granularity = 1000;
-		const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
+		//const Genode::size_t granularity = Target_child::GRANULARITY_REDUNDANT_MEMORY;
 
 		Target_child* child = new (heap) Target_child { env, heap, parent_services, "sheep_counter", granularity };
-		//Target_state ts(env, heap, false);
-		Target_state ts(env, heap, true);
+		Target_state ts(env, heap, false);
+		//Target_state ts(env, heap, true);
 		Checkpointer ckpt(heap, *child, ts);
 		child->start();
 
 		timer.msleep(1000);
-		ckpt.set_redundant_memory(true);
+		//ckpt.set_redundant_memory(true);
 
 		for (int i = 0; i < 8 ; i++) {
 
