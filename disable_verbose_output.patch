@@ -1,5 +1,5 @@
 diff --git a/src/rtcr/checkpointer.h b/src/rtcr/checkpointer.h
-index cb58551..45dbcc3 100644
+index b37fafa..2284b04 100644
 --- a/src/rtcr/checkpointer.h
 +++ b/src/rtcr/checkpointer.h
 @@ -23,7 +23,7 @@
@@ -38,19 +38,15 @@ index cc4e491..822d3b2 100644
  
  class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>,
 diff --git a/src/rtcr/intercept/fault_handler.h b/src/rtcr/intercept/fault_handler.h
-index 0151918..15366ad 100644
+index 41d49f4..22e032f 100644
 --- a/src/rtcr/intercept/fault_handler.h
 +++ b/src/rtcr/intercept/fault_handler.h
-@@ -20,9 +20,9 @@
+@@ -12,7 +12,7 @@
  namespace Rtcr {
  	class Fault_handler;
  
 -	constexpr bool fh_verbose_debug = true;
--	constexpr bool ram_verbose_debug = true;
--	constexpr bool ram_root_verbose_debug = true;
 +	constexpr bool fh_verbose_debug = false;
-+	constexpr bool ram_verbose_debug = false;
-+	constexpr bool ram_root_verbose_debug = false;
  }
  
  /**
@@ -67,6 +63,21 @@ index 3abe21b..a68ada1 100644
  	constexpr bool pd_root_verbose_debug = false;
  }
  
+diff --git a/src/rtcr/intercept/ram_session.h b/src/rtcr/intercept/ram_session.h
+index 833e242..1b86f7c 100644
+--- a/src/rtcr/intercept/ram_session.h
++++ b/src/rtcr/intercept/ram_session.h
+@@ -28,8 +28,8 @@ namespace Rtcr {
+ 	class Ram_session_component;
+ 	class Ram_root;
+ 
+-	constexpr bool ram_verbose_debug = true;
+-	constexpr bool ram_root_verbose_debug = true;
++	constexpr bool ram_verbose_debug = false;
++	constexpr bool ram_root_verbose_debug = false;
+ }
+ 
+ /**
 diff --git a/src/rtcr/intercept/rm_session.h b/src/rtcr/intercept/rm_session.h
 index aa7286a..0252c6e 100644
 --- a/src/rtcr/intercept/rm_session.h
@@ -83,20 +94,20 @@ index aa7286a..0252c6e 100644
  
  /**
 diff --git a/src/rtcr/online_storage/redundant_memory_ds_info.h b/src/rtcr/online_storage/redundant_memory_ds_info.h
-index 1dcfd41..69f21c0 100644
+index 407d0a0..d8a56c5 100644
 --- a/src/rtcr/online_storage/redundant_memory_ds_info.h
 +++ b/src/rtcr/online_storage/redundant_memory_ds_info.h
-@@ -9,7 +9,7 @@
+@@ -7,7 +7,7 @@
  
  namespace Rtcr {
  	struct Designated_redundant_ds_info;
 -	constexpr bool redundant_memory_verbose_debug = true;
 +	constexpr bool redundant_memory_verbose_debug = false;
  	constexpr bool verbose_register_debug = false;
- #define FOC_RED_MEM_REGISTER_WORKAROUND
- }
+ 	/**
+ 	 * Controls static allocation of snapshot memory.
 diff --git a/src/rtcr/target_child.h b/src/rtcr/target_child.h
-index 0bdd2c9..6ad5fec 100644
+index b502217..dd29f73 100644
 --- a/src/rtcr/target_child.h
 +++ b/src/rtcr/target_child.h
 @@ -28,7 +28,7 @@
