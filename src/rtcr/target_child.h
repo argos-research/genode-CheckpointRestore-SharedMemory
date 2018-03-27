@@ -72,7 +72,7 @@ private:
 	Genode::Entrypoint  _child_ep;
 	/**
 	 * Granularity for incremental checkpointing in a multiple of pagesize;
-	 * zero means do not use incremental checkpointing;
+	 * zero means do not use incremental checkpointing but full checkpointing;
 	 * GRANULARITY_REDUNDANT_MEMORY means use redundant memory
 	 */
 	Genode::size_t      _granularity;

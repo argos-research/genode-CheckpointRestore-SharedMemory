@@ -1,5 +1,3 @@
-/*
- */
 #include <base/component.h>
 #include <timer_session/connection.h>
 #include <region_map/client.h>
@@ -17,8 +15,6 @@
 #include <cap_session/connection.h>
 #include <rm_session/client.h>
 
-//Genode::size_t Component::stack_size() { return 16*1024; }
-
 
 enum {
 	MANAGED_SIZE = 0x00010000,
@@ -27,8 +23,6 @@ enum {
 
 
 using namespace Genode;
-
-
 
 
 /**
@@ -158,11 +152,8 @@ void Component::construct(Genode::Env &env)
 {
     log("Hello from rmcr");
 	Timer::Connection timer(env);
-
-
-    static Rom_connection rom("sheepcount");
+    static Rom_connection rom("sheep_counter");
     Dataspace_capability elf_ds = rom.dataspace();
-
 
     /* create environment for new child */
 	static Pd_connection  pd;
@@ -184,13 +175,9 @@ void Component::construct(Genode::Env &env)
 
 	/* create child */
 	static Test_child child(elf_ds, pd, ram.cap(), cpu.cap(), &cap);
-
     log("child created");
-	/* allocate dataspace used for creating shared memory between parent and child */
-	//Dataspace_capability ds = env()->ram_session()->alloc(4096);
-	//volatile int *local_addr = env()->rm_session()->attach(ds);
 
-	for (int i = 0; i < 4; i++)
+	while(true)
     {
 		log("wait for region-manager fault");
 		Signal s = fault_handler.wait_for_signal();
@@ -220,69 +207,3 @@ void Component::construct(Genode::Env &env)
 
 
 }
-
-
-
-
-#if 0
-void Component::construct(Genode::Env &env)
-{
-    log("Hello from rmcr");
-	Timer::Connection timer(env);
-
-
-    static Rom_connection rom("sheep_counter");
-    Dataspace_capability elf_ds = rom.dataspace();
-
-
-    /* create environment for new child */
-	static Pd_connection  pd;
-	static Ram_connection ram;
-	static Cpu_connection cpu;
-	static Cap_connection cap;
-
-	/* transfer some of our own ram quota to the new child */
-	enum { CHILD_QUOTA = 1*1024*1024 };
-	ram.ref_account(Genode::env()->ram_session_cap());
-	Genode::env()->ram_session()->transfer_quota(ram.cap(), CHILD_QUOTA);
-
-	static Signal_receiver fault_handler;
-
-	/* register fault handler at the child's address space */
-	static Signal_context signal_context;
-	Region_map_client address_space(pd.address_space());
-	address_space.fault_handler(fault_handler.manage(&signal_context));
-
-	/* create child */
-	static Test_child child(elf_ds, pd, ram.cap(), cpu.cap(), &cap);
-
-    log("child created");
-	/* allocate dataspace used for creating shared memory between parent and child */
-	//Dataspace_capability ds = env()->ram_session()->alloc(4096);
-	//volatile int *local_addr = env()->rm_session()->attach(ds);
-
-	for (int i = 0; i < 4; i++) 
-    {
-		log("wait for region-manager fault");
-		fault_handler.wait_for_signal();
-		log("received region-manager fault signal, request fault state");
-
-		Region_map::State state = address_space.state();
-
-		char const *state_name =
-			state.type == Region_map::State::READ_FAULT  ? "READ_FAULT"  :
-			state.type == Region_map::State::WRITE_FAULT ? "WRITE_FAULT" :
-			state.type == Region_map::State::EXEC_FAULT  ? "EXEC_FAULT"  : "READY";
-
-		log("rm session state is ", state_name, ", pf_addr=", Hex(state.addr));
-
-		/* ignore spuriuous fault signal */
-		if (state.type == Region_map::State::READY) {
-			log("ignoring spurious fault signal");
-			continue;
-		}
-    }
-    
-    
-}
-#endif

@@ -1,9 +1,3 @@
-/*
- * fault_handler.cpp
- *
- *  Created on: Jan 25, 2018
- *      Author: josef
- */
 #include "fault_handler.h"
 #include "../intercept/cpu_session.h"
 #include "../arm_v7a/instruction.h"
@@ -33,15 +27,6 @@ Managed_region_map_info *Fault_handler::_find_faulting_mrm_info()
 	}
 
 	return result_info;
-}
-
-void to_big_endian(unsigned& le)
-{
-	unsigned swapped = ((le>>24)&0xff) | // move byte 3 to byte 0
-	                    ((le<<8)&0xff0000) | // move byte 1 to byte 2
-	                    ((le>>8)&0xff00) | // move byte 2 to byte 1
-	                    ((le<<24)&0xff000000); // byte 0 to byte 3
-	le=swapped;
 }
 
 void print_all_gprs(Thread_state s)
@@ -74,8 +59,8 @@ void Fault_handler::_handle_fault_redundant_memory()
 	}
 
 	// Find dataspace which contains the faulting address
-	Designated_redundant_ds_info *dd_info = (Designated_redundant_ds_info *) faulting_mrm_info->dd_infos.first();
-	if(dd_info) dd_info = (Designated_redundant_ds_info *) dd_info->find_by_addr(state.addr);
+	Designated_redundant_ds_info *dd_info = static_cast<Designated_redundant_ds_info*>(faulting_mrm_info->dd_infos.first());
+	if(dd_info) dd_info = static_cast<Designated_redundant_ds_info*>(dd_info->find_by_addr(state.addr));
 
 	// Check if a dataspace was found
 	if(!dd_info)
@@ -145,7 +130,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 	// Get instruction
 	addr_t inst_addr = state.ip;
-	unsigned instr = *((uint32_t* ) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
+	unsigned instr = *((uint32_t*) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
 
 	// decode the instruction and update state accordingly
 	bool writes = false;
@@ -189,6 +174,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 
 	/* Use a register mapping table in order to be able to
 	 * deal with strange Fiasco.OC register backups.
+	 * TODO: Fix whatever is going wrong and avoid mapping.
 	 */
 #ifdef FOC_RED_MEM_REGISTER_WORKAROUND
 	const unsigned reg_map[16] ={8,9,10,11,3,4,5,6,7,0,1,2,12,13,14,15};

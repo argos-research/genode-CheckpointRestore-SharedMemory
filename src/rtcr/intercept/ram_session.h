@@ -22,12 +22,14 @@
 #include "../online_storage/ram_dataspace_info.h"
 #include "../online_storage/redundant_memory_ds_info.h"
 #include "../online_storage/ram_session_info.h"
-//#include "../intercept/cpu_session.h"
 #include "fault_handler.h"
 
 namespace Rtcr {
 	class Ram_session_component;
 	class Ram_root;
+
+	constexpr bool ram_verbose_debug = true;
+	constexpr bool ram_root_verbose_debug = true;
 }
 
 /**

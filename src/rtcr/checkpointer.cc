@@ -646,7 +646,6 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 			drdsi = static_cast<Designated_redundant_ds_info*>(dsi);
 		}
 
-
 		// Find corresponding state_info
 		stored_info = stored_infos.first();
 		if(stored_info) stored_info = stored_info->find_by_badge(child_info->cap.local_name());
@@ -1370,13 +1369,10 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 				_managed_dataspaces->insert(new_elem, last_elem);
 				last_elem = new_elem;
 			}
-
 			ramds_info = ramds_info->next();
 		}
-
 		ram_session = ram_session->next();
 	}
-
 }
 
 
@@ -1418,12 +1414,12 @@ void Checkpointer::_trigger_new_redundant_memory_checkpoint(Genode::List<Ram_ses
 		{
 			if(ramds_info->mrm_info)
 			{
-				Designated_redundant_ds_info *drds_info = (Designated_redundant_ds_info*) ramds_info->mrm_info->dd_infos.first();
+				Designated_redundant_ds_info *drds_info = static_cast<Designated_redundant_ds_info*>(ramds_info->mrm_info->dd_infos.first());
 				while(drds_info)
 				{
 					if(drds_info->redundant_writing())
 						drds_info->trigger_new_checkpoint();
-					drds_info = (Designated_redundant_ds_info*) drds_info->next();
+					drds_info = static_cast<Designated_redundant_ds_info*>(drds_info->next());
 				}
 			}
 			ramds_info = ramds_info->next();
@@ -1436,7 +1432,6 @@ void Checkpointer::_trigger_new_redundant_memory_checkpoint(Genode::List<Ram_ses
 void Checkpointer::_checkpoint_dataspaces()
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
-
 
 	Dataspace_translation_info *memory_info = _dataspace_translations.first();
 	while(memory_info)
@@ -1461,20 +1456,16 @@ void Checkpointer::_checkpoint_dataspaces()
 						if(!sdd_info->redundant_memory || !sdd_info->redundant_memory->redundant_writing())
 							_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
 					}
-
 					sdd_info = sdd_info->next();
 				}
-
 			}
 			// Dataspace is not managed
 			else
 			{
 				_checkpoint_dataspace_content(memory_info->ckpt_ds_cap, memory_info->resto_ds_cap, 0, memory_info->size);
 			}
-
 			memory_info->processed = true;
 		}
-
 		memory_info = memory_info->next();
 	}
 }
@@ -1503,7 +1494,8 @@ Checkpointer::Checkpointer(Genode::Allocator &alloc, Target_child &child, Target
 {
 	if(verbose_debug) Genode::log("\033[33m", "Checkpointer", "\033[0m(...)");
 
-//	TODO: enabled manually at a later point due to incomplete FOC register backups
+//	TODO: this is commented out and instead enabled manually at a later point
+//	due to incomplete FOC register backups:
 //	if(_child.use_redundant_memory)
 //		set_redundant_memory(true);
 }
@@ -1531,12 +1523,9 @@ void Checkpointer::set_redundant_memory(bool active)
 	for(Ram_dataspace_info* rdsi = _child.ram().parent_state().ram_dataspaces.first();
 			rdsi != nullptr && cnt < 1; rdsi = rdsi->next(), cnt++)
 	{
-		for(Designated_redundant_ds_info* drdsi =
-				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
-				drdsi != nullptr;
-				drdsi = (Designated_redundant_ds_info*) drdsi->next())
+		for(Designated_dataspace_info* ddsi = rdsi->mrm_info->dd_infos.first(); ddsi != nullptr; ddsi = ddsi->next())
 		{
-			drdsi->redundant_writing(active);
+			static_cast<Designated_redundant_ds_info*>(ddsi)->redundant_writing(active);
 		}
 	}
 }
@@ -1549,9 +1538,9 @@ void Checkpointer::_lock_redundant_dataspaces(bool lock)
 			rdsi != nullptr; rdsi = rdsi->next())
 	{
 		for(Designated_redundant_ds_info* drdsi =
-				(Designated_redundant_ds_info*) rdsi->mrm_info->dd_infos.first();
+				static_cast<Designated_redundant_ds_info*>(rdsi->mrm_info->dd_infos.first());
 				drdsi != nullptr;
-				drdsi = (Designated_redundant_ds_info*) drdsi->next())
+				drdsi = static_cast<Designated_redundant_ds_info*>(drdsi->next()))
 		{
 			if(drdsi->redundant_writing())
 			{

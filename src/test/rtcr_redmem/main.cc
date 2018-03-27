@@ -3,6 +3,7 @@
  * \author Denis Huber
  * \date   2016-08-26
  */
+// Extended for redundant memory and memory-only restore
 
 /* Genode include */
 #include <base/component.h>
@@ -24,7 +25,7 @@ namespace Rtcr {
 struct Main;
 enum cr_type_t {full, incremental, redundant_memory};
 constexpr cr_type_t cr_type = redundant_memory;
-constexpr bool restore_memory_only = false;
+constexpr bool restore_memory_only = true;
 }
 
 struct Rtcr::Main {

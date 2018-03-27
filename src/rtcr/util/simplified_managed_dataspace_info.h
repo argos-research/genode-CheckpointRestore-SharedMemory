@@ -37,9 +37,8 @@ struct Rtcr::Simplified_managed_dataspace_info : Genode::List<Simplified_managed
 		Rtcr::Designated_redundant_ds_info* const redundant_memory;
 
 		Simplified_designated_ds_info(Genode::Ram_dataspace_capability cap, Genode::addr_t addr,
-				Genode::size_t size, bool modified, Rtcr::Designated_redundant_ds_info* redundant_memory = nullptr)
-		: dataspace_cap(cap), addr(addr), size(size), modified(modified),
-		  redundant_memory(redundant_memory)
+				Genode::size_t size, bool modified, Designated_redundant_ds_info* redundant_memory = nullptr)
+		: dataspace_cap(cap), addr(addr), size(size), modified(modified), redundant_memory(redundant_memory)
 		{}
 
 		void print(Genode::Output &output) const

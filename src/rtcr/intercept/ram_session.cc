@@ -147,8 +147,6 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		// Insert it into Managed_region_map_info's list
 		new_mrm_info->dd_infos.insert(new_dd_info);
 
-
-
 		// Insert new Ram_dataspace_info into the list
 		Genode::Lock::Guard lock_guard(_parent_state.ram_dataspaces_lock);
 		_parent_state.ram_dataspaces.insert(new_ramds_info);

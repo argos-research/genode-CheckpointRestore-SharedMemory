@@ -1,5 +1,5 @@
 # Build program images
-build { core init drivers/timer app/rmcr test/sheepcount }
+build { core init drivers/timer app/rmcr test/sheep_counter }
 
 # Create directory where boot files are written to
 create_boot_directory
@@ -33,7 +33,7 @@ install_config {
 }
 
 # Build boot files from source binaries
-build_boot_image { core init timer rmcr sheepcount }
+build_boot_image { core init timer rmcr sheep_counter }
 
 # Configure Qemu
 append qemu_args " -m 64 -nographic"
