@@ -112,14 +112,14 @@ class Test_child : public Child_policy
 			_address_space(pd.address_space()), _pd(pd), _ram(ram), _cpu(cpu),
 			_initial_thread(_cpu, _pd, "child"),
 			_child(elf_ds, Dataspace_capability(), _pd, _pd, _ram, _ram,
-			       _cpu, _initial_thread, *env()->rm_session(), _address_space,
-			       _entrypoint, *this),
-			_log_service("LOG"),
-			_timer_service("Timer")
+			_cpu, _initial_thread, *env()->rm_session(), _address_space,
+			_entrypoint, *this), _log_service("LOG"), _timer_service("Timer")
 		{
 			/* start execution of the new child */
 			_entrypoint.activate();
 		}
+
+
 
 
 		/****************************
@@ -131,12 +131,12 @@ class Test_child : public Child_policy
 		Service *resolve_session_request(const char *service, const char *)
 		{
 			/* forward white-listed session requests to our parent */
-            if(strcmp(service, "LOG") == 0)
-                return &_log_service;
-            else if(strcmp(service, "Timer") == 0)
-                return &_timer_service;
+			if(strcmp(service, "LOG") == 0)
+				return &_log_service;
+			else if(strcmp(service, "Timer") == 0)
+				return &_timer_service;
 			else
-                return 0;
+				return 0;
 		}
 
 		void filter_session_args(const char *service,
@@ -152,8 +152,8 @@ void Component::construct(Genode::Env &env)
 {
     log("Hello from rmcr");
 	Timer::Connection timer(env);
-    static Rom_connection rom("sheep_counter");
-    Dataspace_capability elf_ds = rom.dataspace();
+	static Rom_connection rom("sheep_counter");
+	Dataspace_capability elf_ds = rom.dataspace();
 
     /* create environment for new child */
 	static Pd_connection  pd;
