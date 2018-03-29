@@ -94,8 +94,7 @@ void Fault_handler::_handle_fault_redundant_memory()
 	Cpu_session_component* c = Cpu_session_component::current_session;
 	while (c) {
 		// Iterate through every CPU thread
-		cpu_thread =
-				c->parent_state().cpu_threads.first();
+		cpu_thread = c->parent_state().cpu_threads.first();
 		int j = 0;
 		while (cpu_thread) {
 			/* unresolved_page_fault is never set,
@@ -129,15 +128,13 @@ void Fault_handler::_handle_fault_redundant_memory()
 		print_all_gprs(thread_state);
 
 	// Get instruction
-	addr_t inst_addr = state.ip;
-	unsigned instr = *((uint32_t*) (elf_addr + elf_seg_offset + inst_addr - elf_seg_addr));
+	unsigned instr = *((uint32_t*) (elf_addr + elf_seg_offset + state.ip - elf_seg_addr));
 
 	// decode the instruction and update state accordingly
 	bool writes = false;
 	bool ldst = Instruction::load_store(instr, writes, state.format, state.reg);
 
-	size_t access_size =
-			state.format == Region_map::LSB8 ? 1 : (state.format == Region_map::LSB16 ? 2 : 4);
+	size_t access_size = state.format == Region_map::LSB8 ? 1 : (state.format == Region_map::LSB16 ? 2 : 4);
 
 	/* The address included in the pagefault report
 	 * is 8-byte-aligned. In order to obtain the exact
@@ -177,9 +174,9 @@ void Fault_handler::_handle_fault_redundant_memory()
 	 * TODO: Fix whatever is going wrong and avoid mapping.
 	 */
 #ifdef FOC_RED_MEM_REGISTER_WORKAROUND
-	const unsigned reg_map[16] ={8,9,10,11,3,4,5,6,7,0,1,2,12,13,14,15};
+	constexpr unsigned reg_map[16] ={8,9,10,11,3,4,5,6,7,0,1,2,12,13,14,15};
 #else
-	const unsigned reg_map[16] ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+	constexpr unsigned reg_map[16] ={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 #endif
 
 	// LOAD: Get value from memory address and load it into register
@@ -268,7 +265,7 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 
 	// Else, load ELF binary so we can access it when emulating instructions
 
-    static Rom_connection rom(_name.string());
+	static Rom_connection rom(_name.string());
 	Dataspace_capability elf_ds = rom.dataspace();
 
 	/* attach ELF locally */
@@ -283,7 +280,6 @@ Fault_handler::Fault_handler(Genode::Env &env, Genode::Signal_receiver &receiver
 	Elf_binary elf(elf_addr);
 	if (!elf.valid())
 		error("Invalid binary");
-
 
 	Elf_segment seg;
 	for (unsigned n = 0; (seg = elf.get_segment(n)).valid(); ++n) {
