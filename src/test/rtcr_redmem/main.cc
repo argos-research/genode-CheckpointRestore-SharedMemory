@@ -68,9 +68,7 @@ struct Rtcr::Main {
 		}
 
 		for (int i = 0; i < 3 ; i++) {
-
 			timer.msleep(3000);
-
 			PINF("Trigger checkpoint");
 			time_start = timer.elapsed_ms();
 			ckpt.checkpoint();
