@@ -1332,7 +1332,7 @@ Genode::List<Ref_badge_info> Checkpointer::_create_region_map_dataspaces_list(
 
 void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions)
 {
-	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
+	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	typedef Simplified_managed_dataspace_info::Simplified_designated_ds_info Sim_dd_info;
 
