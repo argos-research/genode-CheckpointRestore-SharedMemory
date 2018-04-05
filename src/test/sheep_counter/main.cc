@@ -56,7 +56,7 @@ void Component::construct(Genode::Env &env)
 		n++;
 		time_end = timer.elapsed_ms();
 		k = n*0x10;
-        log(Genode::Hex(n), " sheep. *10: ", Genode::Hex(k), ", Time for n++ (read, increment, write): ", time_end-time_start, "ms");
+        log(Genode::Hex(n), " sheep. *10: ", Genode::Hex(k), ", Time for n++ (read, increment, write): ", time_end-time_start, " ms");
 
 #ifdef VERBOSE_REGISTER_DEBUG
 		register unsigned r0 asm("r0");

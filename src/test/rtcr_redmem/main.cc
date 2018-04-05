@@ -73,7 +73,7 @@ struct Rtcr::Main {
 			time_start = timer.elapsed_ms();
 			ckpt.checkpoint();
 			time_end = timer.elapsed_ms();
-			PINF("Time for checkpointing: %ums", time_end-time_start);
+			PINF("Time for checkpointing: %u ms", time_end-time_start);
 		}
 		timer.msleep(2000);
 
