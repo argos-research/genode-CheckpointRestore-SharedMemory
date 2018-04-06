@@ -22,10 +22,10 @@
 
 namespace Rtcr {
 	class Checkpointer;
-
+	//checkpoint/restore only memory content
+	constexpr bool cr_only_memory = true;
 	constexpr bool checkpointer_verbose_debug = true;
 }
-
 
 class Rtcr::Checkpointer
 {

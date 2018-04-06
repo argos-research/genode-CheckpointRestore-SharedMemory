@@ -1562,6 +1562,16 @@ void Checkpointer::checkpoint()
 
 	_managed_dataspaces = &_state._managed_redundant_dataspaces;
 
+	if(cr_only_memory)
+	{
+		//Memory-only Checkpoint/Restore
+		_destroy_list(*_managed_dataspaces);
+		_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
+		_trigger_new_redundant_memory_checkpoint(_child.custom_services().ram_root->session_infos());
+		return;
+	}
+
+
 	if(_child.use_redundant_memory)
 	{
 		// Clear list before re-using it

@@ -25,7 +25,7 @@ namespace Rtcr {
 struct Main;
 enum cr_type_t {full, incremental, redundant_memory};
 constexpr cr_type_t cr_type = redundant_memory;
-constexpr bool restore_memory_only = true;
+//memory-only C/R can be turned off/on by setting cr_only_memory in checkpointer.h
 }
 
 struct Rtcr::Main {
@@ -44,7 +44,7 @@ struct Rtcr::Main {
 		size_t time_start;
 		size_t time_end;
 
-		if(restore_memory_only && cr_type != redundant_memory)
+		if(cr_only_memory && cr_type != redundant_memory)
 		{
 			PERR("Memory-only restore only supported on redundant memory.");
 			Genode::sleep_forever();
@@ -83,7 +83,7 @@ struct Rtcr::Main {
 		Target_state ts_restored(env, heap, cr_type == redundant_memory);
 		Checkpointer ckpt_restored(heap, *child_restored, ts_restored);
 
-		if(!restore_memory_only)
+		if(!cr_only_memory)
 		{
 			Restorer resto(heap, *child_restored, ts);
 			child_restored->start(resto);
@@ -92,14 +92,13 @@ struct Rtcr::Main {
 			Genode::sleep_forever();
 			return;
 		}
-
 		child_restored->start();
 		timer.msleep(3000);
 
 		// Manual memory-only restore
 
 		PINF("Restore memory");
-		/* Find the custom dataspace info with the snapshot inside:
+		/* Get the custom dataspace info with the snapshot inside:
 		 * It's the ds that sheep_counter created last during runtime,
 		 * so it's the first one in the list.
 		 */
@@ -107,7 +106,7 @@ struct Rtcr::Main {
 		Simplified_managed_dataspace_info::Simplified_designated_ds_info* src_sddsi = src_smdi->designated_dataspaces.first();
 		Designated_redundant_ds_info* src_drdsi = src_sddsi->redundant_memory;
 
-		/* Now, locate the target ds of the new task.
+		/* Locate the target ds of the new task.
 		 * The order of ram_dataspaces is reversed,
 		 * so this time we need the first element.
 		 */
