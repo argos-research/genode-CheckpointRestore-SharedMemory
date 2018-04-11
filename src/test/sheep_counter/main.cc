@@ -28,7 +28,7 @@ void Component::construct(Genode::Env &env)
 	Timer::Connection timer(env);
 
 	log("Allocating and attaching memory and its dataspace.");
-	Dataspace_capability ds_cap = env.ram().alloc(4096);
+	Dataspace_capability ds_cap = env.ram().alloc(20*4096);
 
 #ifdef VERBOSE_REGISTER_DEBUG
 	uint32_t stack_regs[16] = {0};
