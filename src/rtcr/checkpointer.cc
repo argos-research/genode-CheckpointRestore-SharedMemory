@@ -99,6 +99,8 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	addr_t const local_array_start  = local_struct_start + 8;
 	addr_t const local_array_end    = local_array_start + array_size;
 
+	auto* my_cap_allocator = (Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>*)cap_idx_alloc_addr;
+
 	if(verbose_kcap_mappings_debug)
 	{
 		log("child_ds_start:     ", Hex(child_ds_start));
@@ -121,6 +123,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	enum { UNUSED = 0, INVALID_ID = 0xffff };
 	for(addr_t curr = local_array_start; curr < local_array_end; curr += array_ele_size)
 	{
+		Genode::Cap_index* my_cap_idx = (Genode::Cap_index*)curr;
 
 		size_t const badge_offset = 6;
 
@@ -137,8 +140,11 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 			Kcap_badge_info *state_info = new (_alloc) Kcap_badge_info(kcap, badge);
 			result.insert(state_info);
 
-			if(verbose_kcap_mappings_debug) log("+ ", Hex(kcap), ": ", badge, " (", Hex(badge), ")");
+		//	if(verbose_kcap_mappings_debug)
+				log("+ ", Hex(kcap), ": ", badge, " (", Hex(badge), "), -- ", Hex(my_cap_idx->kcap()));
 		}
+
+
 	}
 
 	_state._env.rm().detach(local_ds_start);
