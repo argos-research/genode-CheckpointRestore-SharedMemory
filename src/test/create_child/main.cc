@@ -10,7 +10,7 @@
 #include <base/component.h>
 #include <base/child.h>
 #include <base/sleep.h>
-#include <ram_session/connection.h>
+//#include <ram_session/connection.h>
 #include <rom_session/connection.h>
 #include <cpu_session/connection.h>
 #include <cap_session/connection.h>
@@ -26,7 +26,7 @@ private:
 	struct Resources
 	{
 		Genode::Pd_connection  pd;
-		Genode::Ram_connection ram;
+		//Genode::Ram_connection ram;
 		Genode::Cpu_connection cpu;
 
 		Resources(char const *label)
@@ -36,8 +36,8 @@ private:
 
 			/* transfer some of our own ram quota to the new child */
 			enum { CHILD_QUOTA = 1*1024*1024 };
-			ram.ref_account(env()->ram_session_cap());
-			env()->ram_session()->transfer_quota(ram.cap(), CHILD_QUOTA);
+			pd.ref_account(env()->ram_session_cap());
+			env()->ram_session()->transfer_quota(pd.cap(), CHILD_QUOTA);
 
 			/* register handler for unresolvable page faults */
 			Region_map_client address_space(pd.address_space());
@@ -73,7 +73,7 @@ public:
 		_log_service("LOG"), _rm_service("RM"), _timer_service("Timer"),
 		_child(_elf.dataspace(), Genode::Dataspace_capability(),
 		       _resources.pd,  _resources.pd,
-		       _resources.ram, _resources.ram,
+		       //_resources.ram, _resources.ram,
 		       _resources.cpu, _initial_thread,
 		       *Genode::env()->rm_session(), _address_space, ep.rpc_ep(), *this)
 	{ }
