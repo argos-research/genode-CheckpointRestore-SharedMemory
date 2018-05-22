@@ -20,7 +20,7 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 	_env(env), _md_alloc(md_alloc), _resource_ep(ep), _bootstrap_phase(bootstrap_phase)
 {
 	pd_root  = new (_md_alloc) Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-	bool foo=true;
+	bool foo=false;
 
 	pd_session = new (_md_alloc) Pd_session_component(env,md_alloc,ep,"sheep_counter","PD",foo);
 	pd_factory = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory(*pd_session);
@@ -82,16 +82,16 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 	}*/
 	else if(!Genode::strcmp(service_name, "ROM"))
 	{
-		bool foo=true;
+		bool foo=false;
 		if(!rom_root)    rom_root = new (_md_alloc) Rom_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-		if(!rom_session) rom_session = new (_md_alloc) Rom_session_component(_env,_md_alloc,_resource_ep,"ROM","ROM",foo);
+		if(!rom_session) rom_session = new (_md_alloc) Rom_session_component(_env,_md_alloc,_resource_ep,"sheep_counter","ROM",foo);
 		if(!rom_factory) rom_factory = new (_md_alloc) Genode::Local_service<Rtcr::Rom_session_component>::Single_session_factory(*rom_session);
 		if(!rom_service) rom_service = new (_md_alloc) Genode::Local_service<Rtcr::Rom_session_component>(*rom_factory);
 		service = rom_service;
 	}
 	else if(!Genode::strcmp(service_name, "RM"))
 	{
-		bool foo=true;
+		bool foo=false;
 		if(!rm_root)    rm_root = new (_md_alloc) Rm_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
 		if(!rm_session)	rm_session = new (_md_alloc) Rm_session_component(_env,_md_alloc,_resource_ep,"RM",foo);
 		if(!rm_factory)	rm_factory = new (_md_alloc) Genode::Local_service<Rtcr::Rm_session_component>::Single_session_factory(*rm_session);
@@ -100,16 +100,16 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 	}
 	else if(!Genode::strcmp(service_name, "LOG"))
 	{
-		bool foo=true;
+		bool foo=false;
 		if(!log_root)    log_root = new (_md_alloc) Log_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-		if(!log_session) log_session = new (_md_alloc) Log_session_component(_env,_md_alloc,_resource_ep,"LOG","LOG",foo);
+		if(!log_session) log_session = new (_md_alloc) Log_session_component(_env,_md_alloc,_resource_ep,"sheep_counter","LOG",foo);
 		if(!log_factory) log_factory = new (_md_alloc) Genode::Local_service<Rtcr::Log_session_component>::Single_session_factory(*log_session);
 		if(!log_service) log_service = new (_md_alloc) Genode::Local_service<Rtcr::Log_session_component>(*log_factory);
 		service = log_service;
 	}
 	else if(!Genode::strcmp(service_name, "Timer"))
 	{
-		bool foo=true;
+		bool foo=false;
 		if(!timer_root)    timer_root = new (_md_alloc) Timer_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
 		if(!timer_session) timer_session = new (_md_alloc) Timer_session_component(_env,_md_alloc,_resource_ep,"TIMER",foo);
 		if(!timer_factory) timer_factory = new (_md_alloc) Genode::Local_service<Rtcr::Timer_session_component>::Single_session_factory(*timer_session);
@@ -559,33 +559,41 @@ void Target_child::print(Genode::Output &output) const
 
 }
 
-
-Genode::Service *Target_child::resolve_session_request(const char *service_name, const char *args)
+Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Service::Name const &name,
+		                              Genode::Session_label const &label)
 {
-	Genode::log("Palim palim");
-	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", args, ")");
+	Genode::log("Resolve session request ",name);
+	return Route { *_custom_services.find(name.string()), label, Genode::Session::Diag{false} };
+	Genode::log("Could not find ",name);
+	Genode::Child_policy::Route *foo=0;
+	return *foo;
+}
 
-	Genode::Service *service = 0;
+Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Service::Name &service_name, Genode::Session_label &label)
+{
+	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", label, ")");
+
+	Genode::Child_policy::Route *service = 0;
 
 	// Service known from parent?
 	//service = _parent_services.find(service_name);
 	if(service)
-		return service;
+		return *service;
 
 	// Service is a local, custom service?
 	//service = _custom_services.find(service_name);
 	if(service)
-		return service;
+		return *service;
 
 	// Service not known, cannot intercept it
 	if(!service)
 	{
-		service = new (_md_alloc) Genode::Parent_service(service_name);
+		//service = new (_md_alloc) Genode::Parent_service(service_name);
 		//_parent_services.insert(service);
 		Genode::warning("Unknown service: ", service_name);
 	}
 
-	return service;
+	return *service;
 }
 
 

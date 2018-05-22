@@ -238,8 +238,10 @@ public:
 	 ** Child-policy interface **
 	 ****************************/
 
-	Name name() const { Genode::log("grab name");return _name.string(); }
-	Genode::Service *resolve_session_request(const char *service_name, const char *args);
+	Name name() const {return _name.string(); }
+	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name const &,
+		                              Genode::Session_label const &) override;
+	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name &service_name, Genode::Session_label &label);
 	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
