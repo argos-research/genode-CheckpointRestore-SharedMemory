@@ -243,7 +243,7 @@ void Restorer::_recreate_signal_contexts(Pd_session_component &pd_session,
 }
 
 
-void Restorer::_identify_recreate_ram_sessions(Ram_root &ram_root, Genode::List<Stored_ram_session_info> &stored_ram_sessions)
+/*void Restorer::_identify_recreate_ram_sessions(Ram_root &ram_root, Genode::List<Stored_ram_session_info> &stored_ram_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
@@ -291,7 +291,7 @@ void Restorer::_identify_recreate_ram_sessions(Ram_root &ram_root, Genode::List<
 
 		stored_ram_session = stored_ram_session->next();
 	}
-}
+}*/
 
 
 void Restorer::_recreate_ram_dataspaces(Ram_session_component &ram_session,
@@ -617,7 +617,7 @@ void Restorer::_restore_state_pd_sessions(Pd_root &pd_root, Genode::List<Stored_
 }
 
 
-void Restorer::_restore_state_ram_sessions(Ram_root &ram_root, Genode::List<Stored_ram_session_info> &stored_ram_sessions)
+/*void Restorer::_restore_state_ram_sessions(Pd_root &ram_root, Genode::List<Stored_ram_session_info> &stored_ram_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
@@ -640,7 +640,7 @@ void Restorer::_restore_state_ram_sessions(Ram_root &ram_root, Genode::List<Stor
 
 		stored_ram_session = stored_ram_session->next();
 	}
-}
+}*/
 
 
 void Restorer::_restore_state_ram_dataspaces(
@@ -998,13 +998,13 @@ void Restorer::_restore_state_timer_sessions(Timer_root &timer_root, Genode::Lis
 }
 
 
-void Restorer::_create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions)
+void Restorer::_create_managed_dataspace_list(Genode::List<Pd_session_component> &ram_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
 	typedef Simplified_managed_dataspace_info::Simplified_designated_ds_info Sim_dd_info;
 
-	Ram_session_component *ram_session = ram_sessions.first();
+	Pd_session_component *ram_session = ram_sessions.first();
 	while(ram_session)
 	{
 		Ram_dataspace_info *ramds_info = ram_session->parent_state().ram_dataspaces.first();
@@ -1256,7 +1256,7 @@ void Restorer::_restore_cap_space()
 		{
 			// Install capabilities to the child's cap space
 			Genode::Pd_session_client pd_client(_child.pd().parent_cap());
-			Genode::Foc_native_pd_client(pd_client.native_pd()).install(kcap_info->cap, kcap_info->kcap);
+			//Genode::Foc_native_pd_client(pd_client.native_pd()).install(kcap_info->cap, kcap_info->kcap);
 		}
 
 		kcap_info = kcap_info->next();
@@ -1410,7 +1410,7 @@ void Restorer::restore()
 
 	// Identify or recreate RPC objects (caution: PD <- CPU thread <- Native cap ( "<-" means requires))
 	// During the iterations _kcap_mappings and _rpcobject_translations are filled for the next steps
-	_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
+	//_identify_recreate_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
 	_identify_recreate_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
 	_identify_recreate_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
 			_child.custom_services().pd_root->session_infos());
@@ -1449,7 +1449,7 @@ void Restorer::restore()
 	// Restore state of all objects using the translation of old badges to new badges
 	// (caution: RAM <- Region map (incl. PD session) ( "<-" means requires))
 	//   Also make a mapping of memory to restore
-	_restore_state_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
+	//_restore_state_ram_sessions(*_child.custom_services().ram_root, _state._stored_ram_sessions);
 	_restore_state_pd_sessions(*_child.custom_services().pd_root, _state._stored_pd_sessions);
 	_restore_state_cpu_sessions(*_child.custom_services().cpu_root, _state._stored_cpu_sessions,
 			_child.custom_services().pd_root->session_infos());
@@ -1481,7 +1481,7 @@ void Restorer::restore()
 	}
 
 	// Create a list of managed dataspaces
-	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
+	_create_managed_dataspace_list(_child.custom_services().pd_root->session_infos());
 
 	if(verbose_debug)
 	{
