@@ -12,10 +12,10 @@
 #include <timer_session/connection.h>
 
 /* Rtcr includes */
-#include "../../rtcr/target_child.h"
-#include "../../rtcr/target_state.h"
-#include "../../rtcr/checkpointer.h"
-#include "../../rtcr/restorer.h"
+#include "rtcr/target_child.h"
+#include "rtcr/target_state.h"
+#include "rtcr/checkpointer.h"
+#include "rtcr/restorer.h"
 
 namespace Rtcr {
 	struct Main;
@@ -26,17 +26,18 @@ struct Rtcr::Main
 	enum { ROOT_STACK_SIZE = 16*1024 };
 	Genode::Env              &env;
 	Genode::Heap              heap            { env.ram(), env.rm() };
-	Genode::Service_registry  parent_services { };
+	Genode::Registry<Genode::Service>  parent_services { };
 
 	Main(Genode::Env &env_) : env(env_)
 	{
 		using namespace Genode;
-
+		Genode::log("create env connection");
 		Timer::Connection timer { env };
-
+		Genode::log("create sheep counter");
 		Target_child child { env, heap, parent_services, "sheep_counter", 0 };
+		Genode::log("start sheep counter");
 		child.start();
-
+		Genode::log("started sheep counter");
 		timer.msleep(3000);
 
 		Target_state ts(env, heap);
