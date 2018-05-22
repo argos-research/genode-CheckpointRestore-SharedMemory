@@ -42,6 +42,9 @@ struct Rtcr::Ram_dataspace_info : Normal_obj_info, private Simple_counter<Ram_da
 	 */
 	Managed_region_map_info *mrm_info;
 
+	Ram_dataspace_info(Ram_dataspace_info const&) = default;
+        Ram_dataspace_info& operator=(Ram_dataspace_info const&) = default;
+
 	Ram_dataspace_info(Genode::Ram_dataspace_capability ds_cap, Genode::size_t size, Genode::Cache_attribute cached,
 			bool bootstrapped, Managed_region_map_info *mrm_info = nullptr)
 	:

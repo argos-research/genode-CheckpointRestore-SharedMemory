@@ -12,6 +12,7 @@
 
 /* Rtcr includes */
 #include "../online_storage/info_structs.h"
+#include "../online_storage/ram_dataspace_info.h"
 #include "../online_storage/native_capability_info.h"
 #include "../online_storage/signal_context_info.h"
 #include "../online_storage/signal_source_info.h"
@@ -25,6 +26,7 @@ namespace Rtcr {
  */
 struct Rtcr::Pd_session_info : Session_rpc_info
 {
+	Genode::List<Ram_dataspace_info> ram_dataspaces { };
 	/**
 	 * Lock for Signal_sources
 	 */

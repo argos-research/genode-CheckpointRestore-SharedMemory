@@ -24,7 +24,7 @@ namespace Rtcr {
  */
 struct Rtcr::Cpu_session_info : Session_rpc_info
 {
-	Genode::Signal_context_capability sigh;
+	Genode::Signal_context_capability sigh { };
 	/**
 	 * Lock to make _threads thread-safe
 	 */
