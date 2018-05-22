@@ -24,8 +24,8 @@ struct Rtcr::Stored_rom_session_info : Stored_session_info, Genode::List<Stored_
 	Genode::uint16_t dataspace_badge;
 	Genode::uint16_t sigh_badge;
 
-	Stored_rom_session_info(Rom_session_component &rom_session, Genode::addr_t targets_kcap,
-			Genode::Ram_dataspace_capability copy_ds_cap)
+	Stored_rom_session_info(Rom_session_component &rom_session, Genode::addr_t targets_kcap
+				/*,Genode::Ram_dataspace_capability copy_ds_cap*/)
 	:
 		Stored_session_info(rom_session.parent_state().creation_args.string(),
 				rom_session.parent_state().upgrade_args.string(),
