@@ -15,9 +15,9 @@ SRC_CC += main.cc \
           checkpointer.cc \
           restorer.cc
 
-LIBS   += base
+LIBS   += base syscall-foc
 
-INC_DIR += $(BASE_DIR)/../base-foc/src/include
+INC_DIR += $(BASE_DIR)/../base-focnados/src/include
 
 vpath pd_session.cc            $(REP_DIR)/include/rtcr/intercept
 vpath cpu_session.cc           $(REP_DIR)/include/rtcr/intercept
