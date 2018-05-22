@@ -10,7 +10,7 @@
 /* Genode includes */
 #include <util/list.h>
 #include <region_map/client.h>
-#include <foc_native_pd/client.h>
+//#include <foc_native_pd/client.h> does not exist anymore
 
 /* Rtcr includes */
 #include "target_state.h"
@@ -51,17 +51,17 @@ private:
 	/**
 	 * Capability map of Target_child in a condensed form
 	 */
-	Genode::List<Kcap_badge_info>      _kcap_mappings;
+	Genode::List<Kcap_badge_info>      _kcap_mappings { };
 	/**
 	 * Mapping to find a copy dataspace for a given original dataspace badge
 	 */
-	Genode::List<Dataspace_translation_info> _dataspace_translations;
+	Genode::List<Dataspace_translation_info> _dataspace_translations { };
 	/**
 	 * List of dataspace badges which are (known) managed dataspaces
 	 * These dataspaces are not needed to be copied
 	 */
-	Genode::List<Ref_badge_info>            _region_maps;
-	Genode::List<Simplified_managed_dataspace_info> _managed_dataspaces;
+	Genode::List<Ref_badge_info>            _region_maps { };
+	Genode::List<Simplified_managed_dataspace_info> _managed_dataspaces { };
 
 
 	template<typename T>
@@ -144,9 +144,9 @@ private:
 	Genode::List<Ref_badge_info> _create_region_map_dataspaces_list(
 			Genode::List<Pd_session_component> &pd_sessions, Genode::List<Rm_session_component> *rm_sessions);
 
-	void _create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions);
+	void _create_managed_dataspace_list(Genode::List<Pd_session_component> &ram_sessions);
 
-	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
+	void _detach_designated_dataspaces(Genode::List<Pd_session_component> &ram_sessions);
 
 	void _checkpoint_dataspaces();
 	void _checkpoint_dataspace_content(Genode::Dataspace_capability dst_ds_cap, Genode::Dataspace_capability src_ds_cap,
