@@ -18,7 +18,7 @@
 /* Rtcr includes */
 #include "intercept/pd_session.h"
 #include "intercept/cpu_session.h"
-#include "intercept/ram_session.h"
+//#include "intercept/ram_session.h"
 #include "intercept/rm_session.h"
 #include "intercept/log_session.h"
 #include "intercept/rom_session.h"
@@ -41,6 +41,8 @@ namespace Rtcr {
 class Rtcr::Target_child : public Genode::Child_policy
 {
 private:
+	Target_child(Target_child const&) = default;
+        Target_child& operator=(Target_child const&) = default;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -85,31 +87,47 @@ private:
 	struct Custom_services
 	{
 	private:
+		Custom_services(Custom_services const&) = default;
+        	Custom_services& operator=(Custom_services const&) = default;
 		Genode::Env        &_env;
 		Genode::Allocator  &_md_alloc;
 		Genode::Entrypoint &_resource_ep;
 		bool &_bootstrap_phase;
 	public:
 		Pd_root *pd_root = nullptr;
-		Genode::Local_service *pd_service = nullptr;
+		Pd_session_component *pd_session = nullptr;
+		Genode::Local_service<Pd_session_component>::Single_session_factory *pd_factory = nullptr;
+		Genode::Local_service<Pd_session_component> *pd_service = nullptr;
 
 		Cpu_root *cpu_root = nullptr;
-		Genode::Local_service *cpu_service = nullptr;
+		Cpu_session_component *cpu_session = nullptr;
+		Genode::Local_service<Cpu_session_component>::Single_session_factory *cpu_factory = nullptr;
+		Genode::Local_service<Cpu_session_component> *cpu_service = nullptr;
 
-		Ram_root *ram_root  = nullptr;
-		Genode::Local_service *ram_service = nullptr;
+		/*Ram_root *ram_root  = nullptr;
+		Pd_session_component *ram_session = nullptr;
+		Genode::Local_service<Pd_session_component>::Single_session_factory *ram_factory = nullptr;
+		Genode::Local_service<Pd_session_component> *ram_service = nullptr;*/
 
 		Rom_root *rom_root  = nullptr;
-		Genode::Local_service *rom_service = nullptr;
+		Rom_session_component *rom_session = nullptr;
+		Genode::Local_service<Rom_session_component>::Single_session_factory *rom_factory = nullptr;
+		Genode::Local_service<Rom_session_component> *rom_service = nullptr;
 
 		Rm_root *rm_root  = nullptr;
-		Genode::Local_service *rm_service = nullptr;
+		Rm_session_component *rm_session = nullptr;
+		Genode::Local_service<Rm_session_component>::Single_session_factory *rm_factory = nullptr;
+		Genode::Local_service<Rm_session_component> *rm_service = nullptr;
 
 		Log_root *log_root  = nullptr;
-		Genode::Local_service *log_service = nullptr;
+		Log_session_component *log_session = nullptr;
+		Genode::Local_service<Log_session_component>::Single_session_factory *log_factory = nullptr;
+		Genode::Local_service<Log_session_component> *log_service = nullptr;
 
 		Timer_root *timer_root  = nullptr;
-		Genode::Local_service *timer_service = nullptr;
+		Timer_session_component *timer_session = nullptr;
+		Genode::Local_service<Timer_session_component>::Single_session_factory *timer_factory = nullptr;
+		Genode::Local_service<Timer_session_component> *timer_service = nullptr;
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 				Genode::size_t granularity, bool &bootstrap_phase);
@@ -133,7 +151,7 @@ private:
 		/**
 		 * Custom RAM RPC object
 		 */
-		Ram_session_component  &ram;
+		//Ram_session_component  &ram;
 		/**
 		 * Parent's ROM session
 		 */
@@ -144,13 +162,13 @@ private:
 
 		Pd_session_component &init_pd(const char *label, Pd_root &pd_root);
 		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root);
-		Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
+		//Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
 	} _resources;
 
 	/**
 	 * Needed for child's creation
 	 */
-	Genode::Child::Initial_thread  _initial_thread;
+	//Genode::Child::Initial_thread  _initial_thread;
 	/**
 	 * Needed for child's creation
 	 */
@@ -158,7 +176,7 @@ private:
 	/**
 	 * Registry for parent's services (parent of RTCR component). It is shared between all children.
 	 */
-	Genode::Service_registry      &_parent_services;
+	Genode::Registry<Genode::Service>      &_parent_services;
 	/**
 	 * Child object
 	 */
@@ -174,7 +192,7 @@ public:
 	 * TODO Separate child's name and filename to support multiple child's with the same rom module
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-			Genode::Service_registry &parent_services, const char *name,
+			Genode::Registry<Genode::Service> &parent_services, const char *name,
 			Genode::size_t granularity);
 
 	~Target_child();
@@ -190,7 +208,7 @@ public:
 	/**
 	 * Return the custom Ram session
 	 */
-	Ram_session_component &ram() { return _resources.ram; }
+	//Ram_session_component &ram() { return _resources.ram; }
 	/**
 	 * Return the struct of custom services
 	 */
@@ -220,9 +238,12 @@ public:
 	 ** Child-policy interface **
 	 ****************************/
 
-	const char *name() const { return _name.string(); }
+	Name name() const { Genode::log("grab name");return _name.string(); }
 	Genode::Service *resolve_session_request(const char *service_name, const char *args);
 	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
+
+	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
+	Genode::Pd_session_capability ref_pd_cap() const { return _resources.pd.cap();  }
 
 };
 
