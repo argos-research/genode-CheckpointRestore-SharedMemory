@@ -20,7 +20,7 @@ void test_entrypoint_creation(Genode::Env &env)
 	Genode::Entrypoint ep2(env, 12*1024, "test_ep2");
 }
 
-void test_signal_context_creation(Genode::Env &env)
+void test_signal_context_creation(/*Genode::Env &env*/)
 {
 	Genode::log("Creating signal context and receiver");
 
@@ -46,7 +46,7 @@ void Component::construct(Genode::Env &env)
 
 	//test_entrypoint_creation(env);
 
-	//Genode::log(Genode::Hex(Genode::Dataspace_client(env.rm().dataspace()).size()));
+	Genode::log(Genode::Hex(Genode::Dataspace_client(env.rm().dataspace()).size()));
 
 	Genode::log("I'm done!");
 }
