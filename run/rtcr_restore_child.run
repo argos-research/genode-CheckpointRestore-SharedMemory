@@ -11,12 +11,12 @@ create_boot_directory
 #
 
 install_config {
-<config>
+<config verbose="no">
 	<parent-provides>
 		<service name="PD"/>
 		<service name="CPU"/>
-		<service name="ROM"/>
 		<service name="RAM"/>
+		<service name="ROM"/>
 		<service name="RM"/>
 		<service name="LOG"/>
 		<service name="IO_MEM"/>
@@ -26,12 +26,13 @@ install_config {
 	<default-route>
 		<any-service> <parent/> <any-child/> </any-service>
 	</default-route>
+	<default caps="50"/>
 	<start name="timer">
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Timer"/></provides>
 	</start>
-	<start name="target_restorer-tester">
-		<resource name="RAM" quantum="1G"/>
+	<start name="target_restorer-tester" caps="8000">
+		<resource name="RAM" quantum="200M"/>
 	</start>
 </config>}
 
@@ -39,7 +40,7 @@ install_config {
 # Boot image
 #
 
-build_boot_image { core init timer target_restorer-tester sheep_counter arbitrary_child }
+build_boot_image { core ld.lib.so init timer target_restorer-tester sheep_counter arbitrary_child }
 
 append qemu_args " -nographic "
 
