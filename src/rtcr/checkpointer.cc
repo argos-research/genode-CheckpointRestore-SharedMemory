@@ -57,7 +57,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 
 	// Retrieve cap_idx_alloc_addr
 	Genode::Pd_session_client pd_client(_child.pd().parent_cap());
-	addr_t const cap_idx_alloc_addr = Genode::Foc_native_pd_client(pd_client.native_pd()).cap_map_info();
+	addr_t const cap_idx_alloc_addr = 0;//Genode::Foc_native_pd_client(pd_client.native_pd()).cap_map_info();
 	_state._cap_idx_alloc_addr = cap_idx_alloc_addr;
 
 	if(verbose_kcap_mappings_debug) Genode::log("Address of cap_idx_alloc = ", Hex(cap_idx_alloc_addr));
@@ -153,7 +153,7 @@ Genode::List<Ref_badge_info> Checkpointer::_mark_and_attach_designated_dataspace
 
 	Genode::List<Ref_badge_info> result_infos;
 
-	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.ram().parent_state().ram_dataspaces);
+	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.pd().parent_state().ram_dataspaces);
 	if(mrm_info)
 	{
 		Designated_dataspace_info *dd_info = mrm_info->dd_infos.first();
@@ -179,7 +179,7 @@ void Checkpointer::_detach_and_unmark_designated_dataspaces(Genode::List<Ref_bad
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
-	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.ram().parent_state().ram_dataspaces);
+	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.pd().parent_state().ram_dataspaces);
 	if(mrm_info && badge_infos.first())
 	{
 		Designated_dataspace_info *dd_info = mrm_info->dd_infos.first();
@@ -533,7 +533,7 @@ Stored_attached_region_info &Checkpointer::_create_stored_attached_region(Attach
 		{
 			if(verbose_debug) Genode::log("Dataspace ", child_info.attached_ds_cap, " is not known. "
 					"Creating dataspace with size ", Genode::Hex(child_info.size));
-			ramds_cap = _state._env.ram().alloc(child_info.size);
+			ramds_cap = _state._env.pd().alloc(child_info.size);
 		}
 		else
 		{
@@ -553,14 +553,14 @@ void Checkpointer::_destroy_stored_attached_region(Stored_attached_region_info &
 	Genode::Dataspace_capability stored_ds_cap = _find_stored_dataspace(stored_info.attached_ds_badge);
 	if(!stored_ds_cap.valid())
 	{
-		_state._env.ram().free(stored_info.memory_content);
+		_state._env.pd().free(stored_info.memory_content);
 	}
 
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
 
-void Checkpointer::_prepare_ram_sessions(Genode::List<Stored_ram_session_info> &stored_infos,
+/*void Checkpointer::_prepare_ram_sessions(Genode::List<Stored_ram_session_info> &stored_infos,
 		Genode::List<Ram_session_component> &child_infos)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
@@ -610,7 +610,7 @@ void Checkpointer::_prepare_ram_sessions(Genode::List<Stored_ram_session_info> &
 
 		stored_info = next_info;
 	}
-}
+}*/
 void Checkpointer::_destroy_stored_ram_session(Stored_ram_session_info &stored_info)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
@@ -707,7 +707,7 @@ Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_datasp
 		{
 			if(verbose_debug) Genode::log("Dataspace ", child_info.cap, " is not known. "
 					"Creating dataspace with size ", Genode::Hex(child_info.size));
-			ramds_cap = _state._env.ram().alloc(child_info.size);
+			ramds_cap = _state._env.pd().alloc(child_info.size);
 		}
 		else
 		{
@@ -727,7 +727,7 @@ void Checkpointer::_destroy_stored_ram_dataspace(Stored_ram_dataspace_info &stor
 	Genode::Dataspace_capability stored_ds_cap = _find_stored_dataspace(stored_info.badge);
 	if(!stored_ds_cap.valid())
 	{
-		_state._env.ram().free(stored_info.memory_content);
+		_state._env.pd().free(stored_info.memory_content);
 	}
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -1302,13 +1302,13 @@ Genode::List<Ref_badge_info> Checkpointer::_create_region_map_dataspaces_list(
 }
 
 
-void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions)
+void Checkpointer::_create_managed_dataspace_list(Genode::List<Pd_session_component> &ram_sessions)
 {
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
 	typedef Simplified_managed_dataspace_info::Simplified_designated_ds_info Sim_dd_info;
 
-	Ram_session_component *ram_session = ram_sessions.first();
+	Pd_session_component *ram_session = ram_sessions.first();
 	while(ram_session)
 	{
 		Ram_dataspace_info *ramds_info = ram_session->parent_state().ram_dataspaces.first();
@@ -1340,11 +1340,11 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 }
 
 
-void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions)
+void Checkpointer::_detach_designated_dataspaces(Genode::List<Pd_session_component> &ram_sessions)
 {
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
-	Ram_session_component *ram_session = ram_sessions.first();
+	Pd_session_component *ram_session = ram_sessions.first();
 	while(ram_session)
 	{
 		Ram_dataspace_info *ramds_info = ram_session->parent_state().ram_dataspaces.first();
@@ -1488,7 +1488,7 @@ void Checkpointer::checkpoint()
 
 	// Prepare state lists
 	// implicitly _copy_dataspaces modified with the child's currently known dataspaces and copy dataspaces
-	_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().ram_root->session_infos());
+	//_prepare_ram_sessions(_state._stored_ram_sessions, _child.custom_services().pd_root->session_infos());
 	_prepare_pd_sessions(_state._stored_pd_sessions, _child.custom_services().pd_root->session_infos());
 	_prepare_cpu_sessions(_state._stored_cpu_sessions, _child.custom_services().cpu_root->session_infos());
 	if(_child.custom_services().rm_root)
@@ -1510,7 +1510,7 @@ void Checkpointer::checkpoint()
 	}
 
 	// Create a list of managed dataspaces
-	_create_managed_dataspace_list(_child.custom_services().ram_root->session_infos());
+	_create_managed_dataspace_list(_child.custom_services().pd_root->session_infos());
 
 	if(verbose_debug)
 	{
@@ -1536,7 +1536,7 @@ void Checkpointer::checkpoint()
 	}
 
 	// Detach all designated dataspaces
-	_detach_designated_dataspaces(_child.custom_services().ram_root->session_infos());
+	_detach_designated_dataspaces(_child.custom_services().pd_root->session_infos());
 
 	// Copy child dataspaces' content and to stored dataspaces' content
 	_checkpoint_dataspaces();
