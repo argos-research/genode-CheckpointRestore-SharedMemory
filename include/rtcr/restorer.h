@@ -8,7 +8,7 @@
 #define _RTCR_RESTORER_H_
 
 /* Genode includes */
-#include <foc_native_pd/client.h>
+//#include <foc_native_pd/client.h> does not exist anymore
 
 /* Rtcr includes */
 #include "target_state.h"
@@ -48,28 +48,28 @@ private:
 	 * * Restoration of the capability map: Store the badge to the corresponding kcap address
 	 * * Restoration of the cap space: Map the capability to the corresponding kcap address
 	 */
-	Genode::List<Kcap_cap_info> _kcap_mappings;
+	Genode::List<Kcap_cap_info> _kcap_mappings { };
 	/**
 	 * \brief Contains mappings of stored RPC objects to newly recreated RPC objects via badge association
 	 *
 	 * Each stored RPC object has an associated restored RPC object. This list contains a mapping of a badge
 	 * of the stored RPC object and the corresponding capability of the newly created RPC object
 	 */
-	Genode::List<Badge_translation_info> _rpcobject_translations;
+	Genode::List<Badge_translation_info> _rpcobject_translations { };
 	/**
 	 * \brief Contains mappings of stored dataspaces to newly recreated dataspaces via capability association
 	 *
 	 * Each stored dataspace has a corresponding restored dataspace. The content of the stored dataspace has to be
 	 * copied to the corresponding dataspace. Both dataspaces are associated via capabilities.
 	 */
-	Genode::List<Dataspace_translation_info> _dataspace_translations;
+	Genode::List<Dataspace_translation_info> _dataspace_translations { };
 	/**
 	 * \brief Contains badges of region maps
 	 *
 	 * This list contains badges of dataspace capabilities of region maps. They are used to identify region maps
 	 * which are attached to other region maps in order to not confuse them with real dataspaces.
 	 */
-	Genode::List<Ref_badge_info> _region_maps;
+	Genode::List<Ref_badge_info> _region_maps { };
 	/**
 	 * \brief Contains the managed dataspaces of the incremental checkpointing and their designated dataspaces
 	 *
@@ -77,7 +77,7 @@ private:
 	 * restoring the state of the dataspaces (i.e. copying memory content) to use directly the designated dataspaces
 	 * instead of triggering page faults by using the managed dataspace directly
 	 */
-	Genode::List<Simplified_managed_dataspace_info> _managed_dataspaces;
+	Genode::List<Simplified_managed_dataspace_info> _managed_dataspaces { };
 
 	template<typename T>
 	void _destroy_list(Genode::List<T> &list);
@@ -170,7 +170,7 @@ private:
 		return child_object;
 	}
 
-	void _create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions);
+	void _create_managed_dataspace_list(Genode::List<Pd_session_component> &ram_sessions);
 
 	void _restore_cap_map();
 	void _restore_cap_space();
