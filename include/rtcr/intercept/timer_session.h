@@ -28,9 +28,10 @@ namespace Rtcr {
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
 class Rtcr::Timer_session_component : public Genode::Rpc_object<Timer::Session>,
-                                      public Genode::List<Timer_session_component>::Element
+                                      private Genode::List<Timer_session_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Timer_session_component>;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -64,6 +65,8 @@ public:
 
 	Timer_session_component *find_by_badge(Genode::uint16_t badge);
 
+	using Genode::List<Rtcr::Timer_session_component>::Element::next;
+
 	/************************************
 	 ** Timer session Rpc interface **
 	 ************************************/
@@ -72,7 +75,8 @@ public:
 	void trigger_periodic(unsigned us) override;
 	void sigh(Genode::Signal_context_capability sigh) override;
 	unsigned long elapsed_ms() const override;
-	unsigned long now_us() const override;
+	//unsigned long now_us() const override;
+	unsigned long elapsed_us() const override;
 	void msleep(unsigned ms) override;
 	void usleep(unsigned us) override;
 };

@@ -17,13 +17,13 @@ Log_session_component::Log_session_component(Genode::Env &env, Genode::Allocator
 	_parent_log   (env, label),
 	_parent_state (creation_args, bootstrapped)
 {
-	if(verbose_debug) Genode::log("\033[33m", "Log", "\033[0m(parent ", _parent_log,")");
+	//if(verbose_debug) Genode::log("\033[33m", "Log", "\033[0m(parent ", _parent_log,")");
 }
 
 
 Log_session_component::~Log_session_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", "~Log", "\033[0m ", _parent_log);
+	//if(verbose_debug) Genode::log("\033[33m", "~Log", "\033[0m ", _parent_log);
 }
 
 
@@ -95,7 +95,7 @@ void Log_root::_upgrade_session(Log_session_component *session, const char *upgr
 
 	session->parent_state().upgrade_args = new_upgrade_args;
 
-	_env.parent().upgrade(session->parent_cap(), upgrade_args);
+	_env.parent().upgrade(Genode::Parent::Env::log(), upgrade_args);
 }
 
 
@@ -105,7 +105,7 @@ void Log_root::_destroy_session(Log_session_component *session)
 
 	// Remove and destroy list element
 	_session_rpc_objs.remove(session);
-	destroy(_md_alloc, session);
+	destroy(*session);
 }
 
 

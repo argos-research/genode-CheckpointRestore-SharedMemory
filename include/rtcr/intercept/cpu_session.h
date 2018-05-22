@@ -32,9 +32,10 @@ namespace Rtcr {
  * This custom Cpu session intercepts the creation and destruction of threads by the client
  */
 class Rtcr::Cpu_session_component : public Genode::Rpc_object<Genode::Cpu_session>,
-                                    public Genode::List<Cpu_session_component>::Element
+                                    private Genode::List<Cpu_session_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Cpu_session_component>;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -93,6 +94,8 @@ public:
 
 	Cpu_session_component *find_by_badge(Genode::uint16_t badge);
 
+	using Genode::List<Rtcr::Cpu_session_component>::Element::next;
+
 	/***************************
 	 ** Cpu_session interface **
 	 ***************************/
@@ -111,13 +114,6 @@ public:
 	int transfer_quota(Genode::Cpu_session_capability c, Genode::size_t q) override;
 	Genode::Capability<Native_cpu> native_cpu() override;
 
-	/*
-	 * KIA4SM methods
-	 */
-
-	int set_sched_type(unsigned core, unsigned sched_type) override;
-	int get_sched_type(unsigned core) override;
-	void set(Genode::Ram_session_capability ram_cap) override;
 	void deploy_queue(Genode::Dataspace_capability ds) override;
 	void rq(Genode::Dataspace_capability ds) override;
 	void dead(Genode::Dataspace_capability ds) override;

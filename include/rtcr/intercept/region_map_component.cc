@@ -18,7 +18,7 @@ Region_map_component::Region_map_component(Genode::Allocator &md_alloc, Genode::
 	_parent_region_map (region_map_cap),
 	_parent_state      (size, _parent_region_map.dataspace(), bootstrap_phase)
 {
-	if(verbose_debug) Genode::log("\033[33m", "Rmap", "\033[0m<\033[35m", _label, "\033[0m>(parent ", _parent_region_map, ")");
+	//if(verbose_debug) Genode::log("\033[33m", "Rmap", "\033[0m<\033[35m", _label, "\033[0m>(parent ", _parent_region_map, ")");
 }
 
 
@@ -30,7 +30,7 @@ Region_map_component::~Region_map_component()
 		Genode::destroy(_md_alloc, obj);
 	}
 
-	if(verbose_debug) Genode::log("\033[33m", "~Rmap", "\033[0m<\033[35m", _label,"\033[0m> ", _parent_region_map);
+	//if(verbose_debug) Genode::log("\033[33m", "~Rmap", "\033[0m<\033[35m", _label,"\033[0m> ", _parent_region_map);
 }
 
 

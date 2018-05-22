@@ -147,7 +147,7 @@ Ram_session_component::Ram_session_component(Genode::Env &env, Genode::Allocator
 {
 	_page_fault_handler.start();
 
-	if(verbose_debug) Genode::log("\033[33m", "Ram", "\033[0m(parent ", _parent_ram, ")");
+	//if(verbose_debug) Genode::log("\033[33m", "Ram", "\033[0m(parent ", _parent_ram, ")");
 }
 
 
@@ -159,7 +159,7 @@ Ram_session_component::~Ram_session_component()
 		_destroy_ramds_info(*rds_info);
 	}
 
-	if(verbose_debug) Genode::log("\033[33m", "~Ram", "\033[0m ", _parent_ram);
+	//if(verbose_debug) Genode::log("\033[33m", "~Ram", "\033[0m ", _parent_ram);
 }
 
 
@@ -193,13 +193,13 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 
 		// Create a Region map; if Rm_session is out of ram_quota, upgrade it
 		Genode::Capability<Genode::Region_map> new_region_map_cap =
-			Genode::retry<Genode::Rm_session::Out_of_metadata>(
+			Genode::retry<Genode::Out_of_ram>(
 				[&] () { return _parent_rm.create(num_dataspaces*ds_size + remaining_dataspace_size); },
 				[&] ()
 				{
 					char args[Genode::Parent::Session_args::MAX_SIZE];
 					Genode::snprintf(args, sizeof(args), "ram_quota=%u", 256*1024);
-					_env.parent().upgrade(_parent_rm, args);
+					_env.parent().upgrade(Genode::Parent::Env::pd(), args);
 				});
 
 		// Create Ram_dataspace_info and a Managed_region_map_info which contains a list of Designated_dataspace_infos
@@ -226,7 +226,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 			{
 				ds_cap = _parent_ram.alloc(ds_size, cached);
 			}
-			catch(Genode::Ram_session::Quota_exceeded)
+			catch(Genode::Ram_transfer::Quota_exceeded)
 			{
 				Genode::error("_parent_ram has no memory!");
 				return Genode::Capability<Genode::Ram_dataspace>();
@@ -253,7 +253,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 			{
 				ds_cap = _parent_ram.alloc(remaining_dataspace_size, cached);
 			}
-			catch(Genode::Ram_session::Quota_exceeded)
+			catch(Genode::Ram_transfer::Quota_exceeded)
 			{
 				Genode::error("_parent_ram has no memory!");
 				return Genode::Capability<Genode::Ram_dataspace>();
@@ -326,56 +326,16 @@ void Ram_session_component::free(Genode::Ram_dataspace_capability ds_cap)
 
 }
 
-int Ram_session_component::ref_account(Genode::Ram_session_capability ram_session)
+void Ram_session_component::ref_account(Genode::Capability<Genode::Pd_session> ram_session)
 {
 	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(ref=", ram_session, ")");
 
-	auto result = _parent_ram.ref_account(ram_session);
+	_parent_ram.ref_account(ram_session);
 	_parent_state.ref_account_cap = ram_session;
 
-	if(verbose_debug) Genode::log("  result: ", result);
+	//if(verbose_debug) Genode::log("  result: ", result);
 
-	return result;
-}
-
-int Ram_session_component::transfer_quota(Genode::Ram_session_capability ram_session, Genode::size_t amount)
-{
-	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m(to=", ram_session, ", size=", amount, ")");
-
-	auto result = _parent_ram.transfer_quota(ram_session, amount);
-
-	if(verbose_debug) Genode::log("  result: ", result);
-
-	return result;
-}
-
-Genode::size_t Ram_session_component::quota()
-{
-	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m()");
-
-	auto result = _parent_ram.quota();
-
-	if(verbose_debug) Genode::log("  result: ", result);
-
-	return result;
-}
-
-Genode::size_t Ram_session_component::used()
-{
-	if(verbose_debug) Genode::log("Ram::\033[33m", __func__, "\033[0m()");
-
-	auto result = _parent_ram.used();
-
-	if(verbose_debug) Genode::log("  result: ", result);
-
-	return result;
-}
-
-
-void Ram_session_component::set_label(char *label)
-{
-	// TODO verbose_debug
-	_parent_ram.set_label(label);
+	//return result;
 }
 
 
@@ -428,7 +388,7 @@ void Ram_root::_upgrade_session(Ram_session_component *session, const char *upgr
 
 	session->parent_state().upgrade_args = new_upgrade_args;
 
-	_env.parent().upgrade(session->parent_cap(), upgrade_args);
+	_env.parent().upgrade(Genode::Parent::Env::pd(), upgrade_args);
 }
 
 

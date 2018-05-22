@@ -58,7 +58,7 @@ Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &
 	_parent_rm        (env),
 	_parent_state     (creation_args, bootstrap_phase)
 {
-	if(verbose_debug) Genode::log("\033[33m", "Rm", "\033[0m(parent ", _parent_rm, ")");
+	//if(verbose_debug) Genode::log("\033[33m", "Rm", "\033[0m(parent ", _parent_rm, ")");
 }
 
 
@@ -69,7 +69,7 @@ Rm_session_component::~Rm_session_component()
 		_destroy(*obj);
 	}
 
-	if(verbose_debug) Genode::log("\033[33m", "~Rm", "\033[0m ", _parent_rm);
+	//if(verbose_debug) Genode::log("\033[33m", "~Rm", "\033[0m ", _parent_rm);
 }
 
 
@@ -163,7 +163,7 @@ void Rm_root::_upgrade_session(Rm_session_component *session, const char *upgrad
 
 	session->parent_state().upgrade_args = new_upgrade_args;
 
-	_env.parent().upgrade(session->parent_cap(), upgrade_args);
+	_env.parent().upgrade(Genode::Parent::Env::pd(), upgrade_args);
 }
 
 

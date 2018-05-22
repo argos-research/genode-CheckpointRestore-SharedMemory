@@ -18,12 +18,12 @@ Cpu_thread_component::Cpu_thread_component(Genode::Allocator &md_alloc, Genode::
 	_parent_state      (pd_session_cap, name, weight, utcb, bootstrap_phase)
 {
 	_parent_state.affinity = affinity;
-	if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _parent_state.name, "\033[0m>(parent ", _parent_cpu_thread,")");
+	//if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _parent_state.name, "\033[0m>(parent ", _parent_cpu_thread,")");
 }
 
 Cpu_thread_component::~Cpu_thread_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", "~Thread", "\033[0m<\033[35m", _parent_state.name, "\033[0m> ", _parent_cpu_thread);
+	//if(verbose_debug) Genode::log("\033[33m", "~Thread", "\033[0m<\033[35m", _parent_state.name, "\033[0m> ", _parent_cpu_thread);
 }
 
 Cpu_thread_component *Cpu_thread_component::find_by_badge(Genode::uint16_t badge)

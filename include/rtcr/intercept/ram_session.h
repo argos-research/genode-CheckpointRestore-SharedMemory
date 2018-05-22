@@ -11,12 +11,15 @@
 #include <root/component.h>
 #include <base/allocator.h>
 #include <base/rpc_server.h>
-#include <ram_session/connection.h>
+#include <ram_session/ram_session.h>
+#include <pd_session/connection.h>
+#include <pd_session/pd_session.h>
 #include <rm_session/connection.h>
 #include <region_map/client.h>
 #include <dataspace/client.h>
 #include <util/retry.h>
 #include <util/misc_math.h>
+#include <os/packet_allocator.h>
 
 /* Rtcr includes */
 #include "../online_storage/ram_dataspace_info.h"
@@ -86,9 +89,10 @@ public:
  * which are used to monitor the access to the provided RAM dataspaces
  */
 class Rtcr::Ram_session_component : public Genode::Rpc_object<Genode::Ram_session>,
-                                    public Genode::List<Ram_session_component>::Element
+                                    private Genode::List<Ram_session_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Ram_session_component>;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -109,7 +113,7 @@ private:
 	/**
 	 * Connection to the parent Ram session (usually core's Ram session)
 	 */
-	Genode::Ram_connection   _parent_ram;
+	Genode::Pd_connection   _parent_ram;
 	/**
 	 * Connection to the parent Rm session for creating new Region_maps (usually core's Rm session)
 	 */
@@ -150,6 +154,8 @@ public:
 
 	Ram_session_component *find_by_badge(Genode::uint16_t badge);
 
+	using Genode::List<Rtcr::Ram_session_component>::Element::next;
+
 	/***************************
 	 ** Ram_session interface **
 	 ***************************/
@@ -166,17 +172,31 @@ public:
 	 * Frees the Ram_dataspace and destroys all monitoring structures
 	 */
 	void free(Genode::Ram_dataspace_capability ds_cap) override;
-	int ref_account(Genode::Ram_session_capability ram_session) override;
-	int transfer_quota(Genode::Ram_session_capability ram_session, Genode::size_t amount) override;
-	Genode::size_t quota() override;
-	Genode::size_t used() override;
 
-	/*
-	 * KIA4SM method
-	 */
-	void set_label(char *label) override;
-
+	Genode::size_t dataspace_size(Genode::Ram_dataspace_capability ds) const override;
+	void assign_parent(Genode::Capability<Genode::Parent> parent) override;
+	bool assign_pci(Genode::addr_t pci_config_memory_address, Genode::uint16_t bdf) override;
+	void map(Genode::addr_t virt, Genode::addr_t size) override;
+	Signal_source_capability alloc_signal_source() override;
+	void free_signal_source(Signal_source_capability cap) override;
+  	Genode::Signal_context_capability alloc_context(Signal_source_capability source, unsigned long imprint) override;
+	void free_context(Genode::Capability<Genode::Signal_context> cap) override;
+	void submit(Genode::Capability<Genode::Signal_context> context, unsigned cnt = 1) override;
+	Genode::Native_capability alloc_rpc_cap(Genode::Native_capability ep) override;
+	void free_rpc_cap(Genode::Native_capability cap) override;
+	Genode::Capability<Genode::Region_map> address_space() override;
+	Genode::Capability<Genode::Region_map> stack_area() override;
+	Genode::Capability<Genode::Region_map> linker_area() override;
+	void ref_account(Genode::Capability<Genode::Pd_session>) override;
+	void transfer_quota(Genode::Capability<Genode::Pd_session> to, Genode::Cap_quota amount) override;
+	Genode::Cap_quota cap_quota() const override;
+	Genode::Cap_quota used_caps() const override;
+	void transfer_quota(Genode::Capability<Genode::Pd_session> to, Genode::Ram_quota amount) override;
+	Genode::Ram_quota ram_quota() const override;
+	Genode::Ram_quota used_ram() const override;
+	Genode::Capability<Genode::Pd_session::Native_pd> native_pd() override;
 };
+
 
 
 /**

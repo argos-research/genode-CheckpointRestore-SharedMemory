@@ -22,7 +22,7 @@ Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &
 	_stack_area      (_md_alloc, _parent_pd.stack_area(),    0, "stack_area", _bootstrap_phase),
 	_linker_area     (_md_alloc, _parent_pd.linker_area(),   0, "linker_area", _bootstrap_phase)
 {
-	if(verbose_debug) Genode::log("\033[33m", "Pd", "\033[0m (parent ", _parent_pd, ")");
+	//if(verbose_debug) Genode::log("\033[33m", "Pd", "\033[0m (parent ", _parent_pd, ")");
 
 	_ep.manage(_address_space);
 	_ep.manage(_stack_area);
@@ -32,7 +32,7 @@ Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &
 
 Pd_session_component::~Pd_session_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", "~Pd", "\033[0m ", _parent_pd);
+	//if(verbose_debug) Genode::log("\033[33m", "~Pd", "\033[0m ", _parent_pd);
 
 	_ep.dissolve(_linker_area);
 	_ep.dissolve(_stack_area);
@@ -68,6 +68,10 @@ bool Pd_session_component::assign_pci(Genode::addr_t addr, Genode::uint16_t bdf)
 	return result;
 }
 
+void Pd_session_component::map(Genode::addr_t _addr, Genode::addr_t __addr)
+{
+	_parent_pd.map(_addr, __addr);
+}
 
 Genode::Capability<Genode::Signal_source> Pd_session_component::alloc_signal_source()
 {
@@ -242,6 +246,67 @@ Genode::Capability<Genode::Region_map> Pd_session_component::linker_area()
 	return result;
 }
 
+void Pd_session_component::ref_account(Genode::Capability<Genode::Pd_session> cap)
+{
+	_parent_pd.ref_account(cap);
+}
+
+void Pd_session_component::transfer_quota(Genode::Capability<Genode::Pd_session> cap, Genode::Cap_quota quota)
+{
+	_parent_pd.transfer_quota(cap, quota);
+}
+
+void Pd_session_component::transfer_quota(Genode::Capability<Genode::Pd_session> cap, Genode::Ram_quota quota)
+{
+	_parent_pd.transfer_quota(cap, quota);
+}
+
+Genode::Cap_quota Pd_session_component::cap_quota() const
+{
+	auto result = _parent_pd.cap_quota();
+
+	return result;
+}
+
+Genode::Cap_quota Pd_session_component::used_caps() const
+{
+	auto result = _parent_pd.used_caps();
+
+	return result;
+}
+
+Genode::Ram_quota Pd_session_component::ram_quota() const
+{
+	auto result = _parent_pd.ram_quota();
+
+	return result;
+}
+
+Genode::Ram_quota Pd_session_component::used_ram() const
+{
+	auto result = _parent_pd.used_ram();
+
+	return result;
+}
+
+Genode::Ram_dataspace_capability Pd_session_component::alloc(Genode::size_t size, Genode::Cache_attribute attr)
+{
+	auto result = _parent_pd.alloc(size, attr);
+
+	return result;
+}
+
+void Pd_session_component::free(Genode::Ram_dataspace_capability ram_cap)
+{
+	_parent_pd.free(ram_cap);
+}
+
+Genode::size_t Pd_session_component::dataspace_size(Genode::Ram_dataspace_capability cap) const
+{
+	auto result = _parent_pd.dataspace_size(cap);
+
+	return result;
+}
 
 Genode::Capability<Genode::Pd_session::Native_pd> Pd_session_component::native_pd()
 {
@@ -303,7 +368,7 @@ void Pd_root::_upgrade_session(Pd_session_component *session, const char *upgrad
 
 	session->parent_state().upgrade_args = new_upgrade_args;
 
-	_env.parent().upgrade(session->parent_cap(), upgrade_args);
+	_env.parent().upgrade(Genode::Parent::Env::pd(), upgrade_args);
 }
 
 

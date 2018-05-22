@@ -28,9 +28,10 @@ namespace Rtcr {
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
 class Rtcr::Rm_session_component : public Genode::Rpc_object<Genode::Rm_session>,
-                                   public Genode::List<Rm_session_component>::Element
+                                   private Genode::List<Rm_session_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Rm_session_component>;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -72,6 +73,8 @@ public:
 	Rm_session_info const &parent_state() const { return _parent_state; }
 
 	Rm_session_component *find_by_badge(Genode::uint16_t badge);
+
+	using Genode::List<Rtcr::Rm_session_component>::Element::next;
 
 	/******************************
 	 ** Rm session Rpc interface **

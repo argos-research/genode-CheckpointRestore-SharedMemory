@@ -17,13 +17,13 @@ Timer_session_component::Timer_session_component(Genode::Env &env, Genode::Alloc
 	_parent_timer (env),
 	_parent_state (creation_args, bootstrapped)
 {
-	if(verbose_debug) Genode::log("\033[33m", "Timer", "\033[0m(parent ", _parent_timer, ")");
+	//if(verbose_debug) Genode::log("\033[33m", "Timer", "\033[0m(parent ", _parent_timer, ")");
 }
 
 
 Timer_session_component::~Timer_session_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", "~Timer", "\033[0m ", _parent_timer);
+	//if(verbose_debug) Genode::log("\033[33m", "~Timer", "\033[0m ", _parent_timer);
 }
 
 
@@ -74,14 +74,23 @@ unsigned long Timer_session_component::elapsed_ms() const
 	return result;
 }
 
-unsigned long Timer_session_component::now_us() const
+unsigned long Timer_session_component::elapsed_us() const
+{
+        if(verbose_debug) Genode::log("Timer::\033[33m", __func__, "\033[0m()");
+        auto result = _parent_timer.elapsed_us();
+        if(verbose_debug) Genode::log("  result: ", result);
+
+        return result;
+}
+
+/*unsigned long Timer_session_component::now_us() const
 {
         if(verbose_debug) Genode::log("Timer::\033[33m", __func__, "\033[0m()");
         auto result = _parent_timer.now_us();
         if(verbose_debug) Genode::log("  result: ", result);
 
         return result;
-}
+}*/
 
 void Timer_session_component::msleep(unsigned ms)
 {
@@ -145,7 +154,7 @@ void Timer_root::_upgrade_session(Timer_session_component *session, const char *
 
 	session->parent_state().upgrade_args = new_upgrade_args;
 
-	_env.parent().upgrade(session->parent_cap(), upgrade_args);
+	_env.parent().upgrade(Genode::Parent::Env::pd(), upgrade_args);
 }
 
 
@@ -154,7 +163,7 @@ void Timer_root::_destroy_session(Timer_session_component *session)
 	if(verbose_debug) Genode::log("Timer_root::\033[33m", __func__, "\033[0m(session ", session->cap(),")");
 
 	_session_rpc_objs.remove(session);
-	destroy(_md_alloc, session);
+	destroy(*session);
 
 }
 

@@ -62,7 +62,7 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 	_parent_state    (creation_args, bootstrap_phase)
 
 {
-	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
+	//if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent ", _parent_cpu,")");
 }
 
 
@@ -73,7 +73,7 @@ Cpu_session_component::~Cpu_session_component()
 		_kill_thread(*cpu_thread);
 	}
 
-	if(verbose_debug) Genode::log("\033[33m", "~Cpu", "\033[0m ", _parent_cpu);
+	//if(verbose_debug) Genode::log("\033[33m", "~Cpu", "\033[0m ", _parent_cpu);
 }
 
 
@@ -206,37 +206,6 @@ Genode::Capability<Genode::Cpu_session::Native_cpu> Cpu_session_component::nativ
 	return result;
 }
 
-
-int Cpu_session_component::set_sched_type(unsigned core, unsigned sched_type)
-{
-	// TODO verbose_debug
-
-	auto result = _parent_cpu.set_sched_type(core, sched_type);
-
-	if(verbose_debug) Genode::log("  result: ", result);
-
-	return result;
-}
-
-
-int Cpu_session_component::get_sched_type(unsigned core)
-{
-	// TODO verbose_debug
-
-	auto result = _parent_cpu.get_sched_type(core);
-
-	if(verbose_debug) Genode::log("  result: ", result);
-
-	return result;
-}
-
-
-void Cpu_session_component::set(Genode::Ram_session_capability ram_cap)
-{
-	// TODO verbose_debug
-	_parent_cpu.set(ram_cap);
-}
-
 void Cpu_session_component::deploy_queue(Genode::Dataspace_capability ds)
 {
 	// TODO verbose_debug
@@ -311,7 +280,7 @@ void Cpu_root::_upgrade_session(Cpu_session_component *session, const char *upgr
 
 	session->parent_state().upgrade_args = new_upgrade_args;
 
-	_env.parent().upgrade(session->parent_cap(), upgrade_args);
+	_env.parent().upgrade(Genode::Parent::Env::cpu(), upgrade_args);
 }
 
 

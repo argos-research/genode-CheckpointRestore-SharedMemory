@@ -18,13 +18,13 @@ Rtcr::Rom_session_component::Rom_session_component(Genode::Env& env, Genode::All
 	_parent_rom   (env, label),
 	_parent_state (creation_args, bootstrap_phase)
 {
-	if(verbose_debug) Genode::log("\033[33m", "Rom", "\033[0m(parent ", _parent_rom,")");
+	//if(verbose_debug) Genode::log("\033[33m", "Rom", "\033[0m(parent ", _parent_rom,")");
 }
 
 
 Rtcr::Rom_session_component::~Rom_session_component()
 {
-	if(verbose_debug) Genode::log("\033[33m", "~Rom", "\033[0m ", _parent_rom);
+	//if(verbose_debug) Genode::log("\033[33m", "~Rom", "\033[0m ", _parent_rom);
 }
 
 
@@ -116,7 +116,7 @@ void Rom_root::_upgrade_session(Rom_session_component *session, const char *upgr
 
 	session->parent_state().upgrade_args = new_upgrade_args;
 
-	_env.parent().upgrade(session->parent_cap(), upgrade_args);
+	_env.parent().upgrade(Genode::Parent::Env::pd(), upgrade_args);
 }
 
 

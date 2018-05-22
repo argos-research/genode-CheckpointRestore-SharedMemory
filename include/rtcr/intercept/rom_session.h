@@ -27,9 +27,10 @@ namespace Rtcr {
 }
 
 class Rtcr::Rom_session_component : public Genode::Rpc_object<Genode::Rom_session>,
-                                    public Genode::List<Rom_session_component>::Element
+                                    private Genode::List<Rom_session_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Rom_session_component>;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -67,6 +68,8 @@ public:
 	Rom_session_info const &parent_state() const { return _parent_state; }
 
 	Rom_session_component *find_by_badge(Genode::uint16_t badge);
+
+	using Genode::List<Rtcr::Rom_session_component>::Element::next;
 
 	/*******************************
 	 ** Rom session Rpc interface **

@@ -23,9 +23,10 @@ namespace Rtcr {
 }
 
 class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>,
-                                   public Genode::List<Cpu_thread_component>::Element
+                                   private Genode::List<Cpu_thread_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Cpu_thread_component>;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -58,6 +59,8 @@ public:
 
 	Cpu_thread_component *find_by_badge(Genode::uint16_t badge);
 	Cpu_thread_component *find_by_name(const char* name);
+
+	using Genode::List<Rtcr::Cpu_thread_component>::Element::next;
 
 	/******************************
 	 ** Cpu thread Rpc interface **

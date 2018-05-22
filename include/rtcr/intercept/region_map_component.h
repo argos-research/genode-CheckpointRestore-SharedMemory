@@ -27,9 +27,13 @@ namespace Rtcr {
  * Custom Region map intercepting RPC methods
  */
 class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>,
-                                   public Genode::List<Region_map_component>::Element
+                                   private Genode::List<Region_map_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Region_map_component>;
+
+	Region_map_component(Region_map_component const&) = default;
+        Region_map_component& operator=(Region_map_component const&) = default;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -67,6 +71,8 @@ public:
 	Region_map_info const &parent_state() const { return _parent_state; }
 
 	Region_map_component *find_by_badge(Genode::uint16_t badge);
+
+	using Genode::List<Rtcr::Region_map_component>::Element::next;
 
 	/******************************
 	 ** Region map Rpc interface **

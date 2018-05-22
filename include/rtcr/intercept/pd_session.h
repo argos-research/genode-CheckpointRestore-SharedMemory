@@ -22,16 +22,17 @@ namespace Rtcr {
 	class Pd_root;
 
 	constexpr bool pd_verbose_debug = true;
-	constexpr bool pd_root_verbose_debug = false;
+	constexpr bool pd_root_verbose_debug = true;
 }
 
 /**
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
 class Rtcr::Pd_session_component : public Genode::Rpc_object<Genode::Pd_session>,
-                                   public Genode::List<Pd_session_component>::Element
+                                   private Genode::List<Pd_session_component>::Element
 {
 private:
+	friend class Genode::List<Rtcr::Pd_session_component>;
 	/**
 	 * Enable log output for debugging
 	 */
@@ -99,6 +100,8 @@ public:
 
 	Pd_session_component *find_by_badge(Genode::uint16_t badge);
 
+	using Genode::List<Rtcr::Pd_session_component>::Element::next;
+
 	/**************************
 	 ** Pd_session interface **
 	 **************************/
@@ -106,6 +109,8 @@ public:
 	void assign_parent(Genode::Capability<Genode::Parent> parent) override;
 
 	bool assign_pci(Genode::addr_t addr, Genode::uint16_t bdf) override;
+
+	void map(Genode::addr_t _addr, Genode::addr_t __addr) override;
 
 	Signal_source_capability alloc_signal_source() override;
 	void free_signal_source(Signal_source_capability cap) override;
@@ -130,6 +135,25 @@ public:
 	 * Return custom linker area
 	 */
 	Genode::Capability<Genode::Region_map> linker_area() override;
+
+	void ref_account(Genode::Capability<Genode::Pd_session>) override;
+
+	void transfer_quota(Genode::Capability<Genode::Pd_session>, Genode::Cap_quota) override;
+	void transfer_quota(Genode::Capability<Genode::Pd_session>, Genode::Ram_quota) override;
+
+	Genode::Cap_quota cap_quota() const override;
+
+	Genode::Cap_quota used_caps() const override;
+
+	Genode::Ram_quota ram_quota() const override;
+
+	Genode::Ram_quota used_ram() const override;
+
+	Genode::Ram_dataspace_capability alloc(Genode::size_t, Genode::Cache_attribute) override;
+
+	void free(Genode::Ram_dataspace_capability) override;
+
+	Genode::size_t dataspace_size(Genode::Ram_dataspace_capability) const override;
 	Genode::Capability<Native_pd> native_pd() override;
 
 };
