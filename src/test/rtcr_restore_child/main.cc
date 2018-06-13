@@ -12,10 +12,10 @@
 #include <timer_session/connection.h>
 
 /* Rtcr includes */
-#include "../../rtcr/target_child.h"
-#include "../../rtcr/target_state.h"
-#include "../../rtcr/checkpointer.h"
-#include "../../rtcr/restorer.h"
+#include "rtcr/target_child.h"
+#include "rtcr/target_state.h"
+#include "rtcr/checkpointer.h"
+#include "rtcr/restorer.h"
 
 namespace Rtcr {
 	struct Main;
