@@ -49,7 +49,7 @@ struct Rtcr::Badge_translation_info : Genode::List<Badge_translation_info>::Elem
 	{
 		using Genode::Hex;
 
-		Genode::print(output, "ckpt_badge=", ckpt_badge, ", resto ", resto_cap);
+		Genode::print(output, "ckpt_badge=", Hex(ckpt_badge), ", resto ", resto_cap);
 	}
 };
 
