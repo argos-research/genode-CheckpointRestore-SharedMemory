@@ -63,7 +63,8 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	addr_t const cap_idx_alloc_addr = Genode::Foc_native_pd_client(pd_client.native_pd()).cap_map_info();
 	_state._cap_idx_alloc_addr = cap_idx_alloc_addr;
 
-	if(verbose_kcap_mappings_debug) Genode::log("Address of cap_idx_alloc = ", Hex(cap_idx_alloc_addr));
+//	if(verbose_kcap_mappings_debug)
+		Genode::log("Address of cap_idx_alloc = ", Hex(cap_idx_alloc_addr));
 
 	// Find child's dataspace containing the capability map
 	// It is found via cap_idx_alloc_addr
@@ -82,7 +83,12 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 
 	// Create new badge_kcap list
 	size_t const struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
+
+	// lj
 	size_t const array_ele_size = sizeof(Genode::Cap_index);
+	log("Checkpointer array element size: ", array_ele_size, " <> 8");
+//	array_ele_size = 8; // actual size Genode uses
+
 	size_t const array_size     = array_ele_size*4096;
 
 	addr_t const child_ds_start     = ar_info->rel_addr;
@@ -99,7 +105,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 	addr_t const local_array_start  = local_struct_start + 8;
 	addr_t const local_array_end    = local_array_start + array_size;
 
-	auto* my_cap_allocator = (Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>*)cap_idx_alloc_addr;
+//	auto* my_cap_allocator = (Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>*)cap_idx_alloc_addr;
 
 	if(verbose_kcap_mappings_debug)
 	{
@@ -120,10 +126,12 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 
 	//dump_mem((void*)local_array_start, 0x1200);
 
+//	auto my_local_array_start = (Genode::Cap_index*)local_array_start;
+
 	enum { UNUSED = 0, INVALID_ID = 0xffff };
 	for(addr_t curr = local_array_start; curr < local_array_end; curr += array_ele_size)
 	{
-		Genode::Cap_index* my_cap_idx = (Genode::Cap_index*)curr;
+	//	auto my_curr = (Genode::Cap_index*)curr;
 
 		size_t const badge_offset = 6;
 
@@ -134,6 +142,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 		// kcap = current capability map slot shifted by 12 bits to the left (last 12 bits are used
 		// by Fiasco.OC for parameters for IPC calls)
 		addr_t const kcap  = ((curr - local_array_start) / array_ele_size) << 12;
+	//	addr_t my_kcap = ((curr - local_array_start) / 8) << 12;//(my_curr - my_local_array_start) << 12;
 
 		if(badge != UNUSED && badge != INVALID_ID)
 		{
@@ -141,10 +150,30 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 			result.insert(state_info);
 
 		//	if(verbose_kcap_mappings_debug)
-				log("+ ", Hex(kcap), ": ", badge, " (", Hex(badge), "), -- ", Hex(my_cap_idx->kcap()));
+			log("+ badge: ", Hex(badge), " kcap: ", Hex(kcap));
+
+		/*	{
+				void* mem = (void *)curr;
+				unsigned int size = array_ele_size;
+
+				const char *p = reinterpret_cast<const char*>(mem);
+
+				log("Block: [", Hex((addr_t)mem), ", ", Hex((addr_t)mem + (addr_t)size), ")");
+				for(unsigned int i = 0; i < size/16+1; i++)
+				{
+					log(Hex(i*16, Hex::PREFIX, Hex::PAD),
+							"  ", Hex(p[i*16+0],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+1],  Hex::OMIT_PREFIX, Hex::PAD),
+							" ",  Hex(p[i*16+2],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+3],  Hex::OMIT_PREFIX, Hex::PAD),
+							"  ", Hex(p[i*16+4],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+5],  Hex::OMIT_PREFIX, Hex::PAD),
+							" ",  Hex(p[i*16+6],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+7],  Hex::OMIT_PREFIX, Hex::PAD),
+							"  ", Hex(p[i*16+8],  Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+9],  Hex::OMIT_PREFIX, Hex::PAD),
+							" ",  Hex(p[i*16+10], Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+11], Hex::OMIT_PREFIX, Hex::PAD),
+							"  ", Hex(p[i*16+12], Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+13], Hex::OMIT_PREFIX, Hex::PAD),
+							" ",  Hex(p[i*16+14], Hex::OMIT_PREFIX, Hex::PAD), " ", Hex(p[i*16+15], Hex::OMIT_PREFIX, Hex::PAD));
+				}
+			}
+		*/
 		}
-
-
 	}
 
 	_state._env.rm().detach(local_ds_start);
@@ -1488,7 +1517,8 @@ void Checkpointer::checkpoint()
 	// For new intercepted sessions which trade managed dataspaces between child and themselves,
 	// the region map dataspace capability has to be inserted into this list
 	Genode::List<Rm_session_component> *rm_sessions = nullptr;
-	if(_child.custom_services().rm_root) rm_sessions = &_child.custom_services().rm_root->session_infos();
+	if(_child.custom_services().rm_root)
+		rm_sessions = &_child.custom_services().rm_root->session_infos();
 	_region_maps = _create_region_map_dataspaces_list(_child.custom_services().pd_root->session_infos(), rm_sessions);
 
 	if(verbose_debug)
@@ -1567,5 +1597,5 @@ void Checkpointer::checkpoint()
 	_destroy_list(_managed_dataspaces);
 
 	// Resume child
-	_child.resume();
+//	_child.resume();
 }
