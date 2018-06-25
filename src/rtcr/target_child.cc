@@ -209,6 +209,9 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child           (nullptr)
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
+
+	Genode::raw("cap_cr|STAGE|Target_child::ctor|");
+
 	_in_bootstrap = false;
 }
 
@@ -225,6 +228,8 @@ Target_child::~Target_child()
 void Target_child::start()
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m()");
+
+	Genode::raw("cap_cr|STAGE|Target_child::start|");
 
 	_child = new (_md_alloc) Genode::Child (
 			_resources.rom.dataspace(),

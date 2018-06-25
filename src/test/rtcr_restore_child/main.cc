@@ -17,6 +17,10 @@
 #include "../../rtcr/checkpointer.h"
 #include "../../rtcr/restorer.h"
 
+namespace Fiasco {
+#include <l4/sys/kdebug.h>
+}
+
 namespace Rtcr {
 	struct Main;
 }
@@ -34,18 +38,36 @@ struct Rtcr::Main
 
 		Timer::Connection timer { env };
 
+		raw("cap_cr|STAGE|start|");
+
+		raw("cap_cr|STAGE|Target_child_normal|");
+
 		Target_child child { env, heap, parent_services, "sheep_counter", 0 };
 		child.start();
 
 		timer.msleep(3000);
 
+		raw("cap_cr|STAGE|sleep_end|");
+
+	//	enter_kdebug("target_child created");
+
+		raw("cap_cr|STAGE|checkpointing|");
+
 		Target_state ts(env, heap);
 		Checkpointer ckpt(heap, child, ts);
 		ckpt.checkpoint();
 
+		raw("cap_cr|STAGE|Target_child_restored|");
+
 		Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };
 		Restorer resto(heap, child_restored, ts);
 		child_restored.start(resto);
+
+		timer.msleep(3000);
+
+		raw("cap_cr|STAGE|sleep_end|");
+
+	//	enter_kdebug("target_child restored");
 
 		//log("The End");
 		Genode::sleep_forever();
