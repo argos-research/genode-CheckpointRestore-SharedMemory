@@ -10,6 +10,12 @@
 #include <base/internal/cap_map.h>
 #include <base/internal/cap_alloc.h>
 
+#include <signal_source/client.h>
+
+namespace Fiasco {
+#include <l4/sys/kdebug.h>
+}
+
 using namespace Rtcr;
 
 template<typename T>
@@ -413,7 +419,7 @@ void Restorer::_identify_recreate_cpu_threads(Cpu_session_component &cpu_session
 			if(trans_info) trans_info = trans_info->find_by_ckpt_badge(stored_cpu_thread->pd_session_badge);
 			if(!trans_info)
 			{
-				Genode::error("Could not find translation for stored PD session badge=", stored_cpu_thread->pd_session_badge);
+				Genode::error("Could not find translation for stored PD session badge=", Genode::Hex(stored_cpu_thread->pd_session_badge));
 				throw Genode::Exception();
 			}
 			// Find PD session corresponding to the found PD session badge
@@ -1081,7 +1087,11 @@ void Restorer::_restore_cap_map()
 	}
 
 	size_t const struct_size    = sizeof(Genode::Cap_index_allocator_tpl<Genode::Cap_index,4096>);
+
+	// lj
 	size_t const array_ele_size = sizeof(Genode::Cap_index);
+	log("Restorer array element size: ", array_ele_size, " <> 8");
+
 	size_t const array_size     = array_ele_size*4096;
 
 	/**
@@ -1204,8 +1214,8 @@ void Restorer::_restore_cap_map()
 					if(verbose_cap_map_debug)
 					{
 						Genode::warning("At cap_index=", Hex(current_cap_index),
-								": Overriding badge=", *(Genode::uint16_t*) (current_pos+6),
-								" with new badge=", kcap_info->cap.local_name());
+								": Overriding badge=", Hex(*(Genode::uint16_t*) (current_pos+6)),
+								" with new badge=", Hex(kcap_info->cap.local_name()));
 					}
 				}
 
@@ -1353,6 +1363,7 @@ void Restorer::_start_threads(Cpu_root &cpu_root, Genode::List<Stored_cpu_sessio
 			{
 				if(true or !Genode::strcmp(cpu_thread->parent_state().name.string(), "signal handler"))
 				{
+					Genode::log("CPU thread name: ", cpu_thread->parent_state().name.string());
 					Genode::Thread_state ts = cpu_thread->state();
 					print_thread_state(ts, true);
 
@@ -1368,6 +1379,53 @@ void Restorer::_start_threads(Cpu_root &cpu_root, Genode::List<Stored_cpu_sessio
 
 }
 
+void Restorer::_reattach_signal_thread_irq()
+{
+	Genode::log("bla");
+	auto pd_sessions = _child.custom_services().pd_root->session_infos();
+	Genode::log("bla2");
+//	Stored_cpu_thread_info* stored_cpu_thread = stored_cpu_threads.first();
+
+	auto& pd_session = _child.pd();
+
+	auto cpu_thread = _child.cpu().parent_state().cpu_threads.first();
+	while( cpu_thread )
+	{
+		if( !Genode::strcmp(cpu_thread->parent_state().name.string(), "signal handler") )
+		{
+			Genode::Cpu_thread_client ctc(cpu_thread->parent_cap());
+			auto state = ctc.state();
+			Genode::log("[lj][Restorer::_reattach_signal_thread_irq] cpu_thread state id: ", Genode::Hex(state.id), " kcap: ", Genode::Hex(state.kcap));
+			auto signal_source = pd_session.parent_state().signal_sources.first();
+
+		//	enter_kdebug("before ssc");
+			Genode::Signal_source_client ssc(signal_source->cap, cpu_thread->parent_cap());//state.id);
+		//	enter_kdebug("after ssc");
+			Genode::log("[lj] after signal source client");
+		//	break;
+		}
+
+		cpu_thread = cpu_thread->next();
+	}
+
+	Genode::log("end of scope");
+
+/*	auto pd_session = _child.custom_services().pd_root->session_infos().first();
+	while( pd_session )
+	{
+		auto signal_source = pd_session->parent_state().signal_sources.first();
+		while( signal_source )
+		{
+			Signal_source_restorer ssr()
+
+			signal_source = signal_source->next();
+		}
+
+
+		pd_session = pd_session->next();
+	}
+*/
+}
 
 Restorer::Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &state)
 : _alloc(alloc), _child(child), _state(state) { }
@@ -1518,6 +1576,9 @@ void Restorer::restore()
 		}
 	}
 
+
+
+
 	// Replace old badges with new in capability map
 	_restore_cap_map();
 
@@ -1532,6 +1593,9 @@ void Restorer::restore()
 	// Start threads
 	_start_threads(*_child.custom_services().cpu_root, _state._stored_cpu_sessions);
 
+//	enter_kdebug("before reattach");
+	_reattach_signal_thread_irq();
+
 	// Clean up
 	_destroy_list(_kcap_mappings);
 	_destroy_list(_rpcobject_translations);
@@ -1539,5 +1603,5 @@ void Restorer::restore()
 	_destroy_list(_region_maps);
 	_destroy_list(_managed_dataspaces);
 
-
+	Genode::log("restore() end");
 }

@@ -182,6 +182,7 @@ private:
 	void _start_threads(
 			Cpu_root &cpu_root, Genode::List<Stored_cpu_session_info> &stored_cpu_sessions);
 
+	void _reattach_signal_thread_irq();
 
 public:
 	Restorer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
