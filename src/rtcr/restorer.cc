@@ -1395,13 +1395,13 @@ void Restorer::_reattach_signal_thread_irq()
 		{
 			Genode::Cpu_thread_client ctc(cpu_thread->parent_cap());
 			auto state = ctc.state();
-			Genode::log("[lj][Restorer::_reattach_signal_thread_irq] cpu_thread state id: ", Genode::Hex(state.id), " kcap: ", Genode::Hex(state.kcap));
+			Genode::log("[cap_cr][Restorer::_reattach_signal_thread_irq] cpu_thread state id: ", Genode::Hex(state.id), " kcap: ", Genode::Hex(state.kcap));
 			auto signal_source = pd_session.parent_state().signal_sources.first();
 
 		//	enter_kdebug("before ssc");
 			Genode::Signal_source_client ssc(signal_source->cap, cpu_thread->parent_cap());//state.id);
 		//	enter_kdebug("after ssc");
-			Genode::log("[lj] after signal source client");
+			Genode::log("[cap_cr] after signal source client");
 		//	break;
 		}
 
