@@ -19,15 +19,15 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 :
 	_env(env), _md_alloc(md_alloc), _resource_ep(ep), _bootstrap_phase(bootstrap_phase)
 {
-	pd_root  = new (_md_alloc) Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
+	pd_root  = new (_md_alloc) Rtcr::Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
 	bool foo=false;
 
-	pd_session = new (_md_alloc) Pd_session_component(env,md_alloc,ep,"sheep_counter","PD",foo);
+	pd_session = new (_md_alloc) Rtcr::Pd_session_component(_env,_md_alloc,_resource_ep,"sheep_counter","PD",foo);
 	pd_factory = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory(*pd_session);
 	pd_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*pd_factory);
 
-	cpu_root = new (_md_alloc) Cpu_root(_env, _md_alloc, _resource_ep, *pd_root, _bootstrap_phase);
-	cpu_session = new (_md_alloc) Cpu_session_component(env,md_alloc,ep,*pd_root,"sheep_counter","CPU",foo);
+	cpu_root = new (_md_alloc) Rtcr::Cpu_root(_env, _md_alloc, _resource_ep, *pd_root, _bootstrap_phase);
+	cpu_session = new (_md_alloc) Rtcr::Cpu_session_component(_env,_md_alloc,_resource_ep,*pd_root,"sheep_counter","CPU",foo);
 	cpu_factory = new (_md_alloc) Genode::Local_service<Rtcr::Cpu_session_component>::Single_session_factory(*cpu_session);
 	cpu_service = new (_md_alloc) Genode::Local_service<Rtcr::Cpu_session_component>(*cpu_factory);
 
@@ -122,20 +122,25 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 
 
 
-Target_child::Resources::Resources(Genode::Env &env, const char *label, Custom_services &custom_services)
+Target_child::Resources::Resources(Genode::Env &env, Genode::Allocator &md_alloc, const char *label, Custom_services &custom_services)
 :
-	pd  (init_pd(label, *custom_services.pd_root)),
-	cpu (init_cpu(label, *custom_services.cpu_root)),
+	pd  (init_pd(label, *custom_services.pd_root, md_alloc)),
+	cpu (init_cpu(label, *custom_services.cpu_root, md_alloc)),
 	//ram (init_ram(label, *custom_services.ram_root)),
 	rom (env, label)
 {
 	// Donate ram quota to child
 	// TODO Replace static quota donation with the amount of quota, the child needs
-	Genode::Cap_quota donate_quota;
-	donate_quota.value=100;
+	Genode::Ram_quota quota;
+	quota.value=100;
+	Genode::Cap_quota caps;
+	caps.value=5;
 	pd.ref_account(env.ram_session_cap());
 	// Note: transfer goes directly to parent's ram session
-	env.pd().transfer_quota(env.ram_session_cap(), donate_quota);
+	pd.transfer_quota(env.pd_session_cap(), quota);
+	pd.transfer_quota(env.pd_session_cap(), caps);
+	
+	Genode::log("donation complete");
 }
 
 
@@ -143,18 +148,19 @@ Target_child::Resources::~Resources()
 { }
 
 
-Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_root &pd_root)
+Pd_session_component &Target_child::Resources::init_pd(const char *label, Rtcr::Pd_root &pd_root, Genode::Allocator &)
 {
+	Genode::log("init pd");
 	// Preparing argument string
 	char args_buf[160];
-	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%lu, cap_quota=%d, label=\"%s\"", 1, 20*1024*sizeof(long), 50, label);
+	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%d, cap_quota=%d, label=\"%s\"", 1, 1024*1024, 50, label);
 	Genode::log("init_pd ",(const char*)args_buf);
 	// Issuing session method of pd_root
-	Genode::Session_capability pd_cap = pd_root.session(args_buf, Genode::Affinity());
+	Rtcr::Pd_session_component* pd_session = pd_root._create_session(args_buf);
 
 	// Find created RPC object in pd_root's list
-	Pd_session_component *pd_session = pd_root.session_infos().first();
-	if(pd_session) pd_session = pd_session->find_by_badge(pd_cap.local_name());
+	//Pd_session_component *pd_session = pd_root.session_infos().first();
+	//if(pd_session) pd_session = pd_session->find_by_badge(pd_cap.local_name());
 	if(!pd_session)
 	{
 		Genode::error("Creating custom PD session failed: Could not find PD session in PD root");
@@ -164,20 +170,20 @@ Pd_session_component &Target_child::Resources::init_pd(const char *label, Pd_roo
 }
 
 
-Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_root &cpu_root)
+Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &)
 {
 	// Preparing argument string
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
 			"priority=0x%x, ram_quota=%u, cap_quota=%d, label=\"%s\"",
-			Genode::Cpu_session::DEFAULT_PRIORITY, 128*1024, 100, label);
+			Genode::Cpu_session::DEFAULT_PRIORITY, 1024*1024, 100, label);
 	Genode::log("init_cpu ",(const char*)args_buf);
 	// Issuing session method of Cpu_root
-	Genode::Session_capability cpu_cap = cpu_root.session(args_buf, Genode::Affinity());
+	Cpu_session_component *cpu_session = cpu_root._create_session(args_buf);
 
 	// Find created RPC object in Cpu_root's list
-	Cpu_session_component *cpu_session = cpu_root.session_infos().first();
-	if(cpu_session) cpu_session = cpu_session->find_by_badge(cpu_cap.local_name());
+	//Cpu_session_component *cpu_session = cpu_root.session_infos().first();
+	//if(cpu_session) cpu_session = cpu_session->find_by_badge(cpu_cap.local_name());
 	if(!cpu_session)
 	{
 		Genode::error("Creating custom PD session failed: Could not find PD session in PD root");
@@ -213,7 +219,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 
 
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-		Genode::Registry<Genode::Service> &parent_services, const char *name, Genode::size_t granularity)
+		Genode::Registry<Genode::Registered<Genode::Parent_service> > &parent_services, const char *name, Genode::size_t granularity)
 :
 	_in_bootstrap    (true),
 	_name            (name),
@@ -224,8 +230,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_granularity     (granularity),
 	_restorer        (nullptr),
 	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap),
-	_resources       (_env, _name.string(), _custom_services),
-	//_initial_thread  (_resources.cpu, _resources.pd.cap(), _name.string()),
+	_resources       (_env, _md_alloc, _name.string(), _custom_services),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
 	_child           (nullptr)
@@ -559,17 +564,53 @@ void Target_child::print(Genode::Output &output) const
 
 }
 
+void Target_child::init(Genode::Pd_session &session, Genode::Capability<Genode::Pd_session> cap) 
+{	
+	Genode::log("init pd session");
+	session.ref_account(_resources.pd.cap());
+        Genode::log("init pd session");
+	Genode::size_t const initial_session_costs =
+		100;//session_alloc_batch_size()*_child->session_factory().session_costs();
+	Genode::log("init pd session");
+	Genode::Ram_quota const ram_quota { 1000000 > initial_session_costs
+	                          ? 1000000 - initial_session_costs
+	                          : 0 };
+	Genode::log("init pd session");
+	Genode::Cap_quota const cap_quota { 25 };
+	Genode::log("init pd session");
+	try { _custom_services.pd_root->session_infos().first()->transfer_quota(cap, cap_quota); }
+	catch (Genode::Out_of_caps) {
+		error(name(), ": unable to initialize cap quota of PD"); }
+	Genode::log("init pd session");
+	try { _custom_services.pd_root->session_infos().first()->transfer_quota(cap, ram_quota); }
+	catch (Genode::Out_of_ram) {
+		error(name(), ": unable to initialize RAM quota of PD"); }
+
+	//Genode::log("RAM ",_task._desc.quota.value," caps ",_task._desc.caps);
+}
+
+bool Target_child::initiate_env_sessions() const
+{
+	Genode::log("initiate_env_sessions");
+	return true;
+}
+
 Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Service::Name const &name,
 		                              Genode::Session_label const &label)
 {
-	Genode::log("Resolve session request ",name);
+	
+	Genode::log("Resolve session request ",name," ",label);
+	/*if(name=="ROM")
+	{
+		return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false} };
+	}*/
 	return Route { *_custom_services.find(name.string()), label, Genode::Session::Diag{false} };
 	Genode::log("Could not find ",name);
 	Genode::Child_policy::Route *foo=0;
 	return *foo;
 }
 
-Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Service::Name &service_name, Genode::Session_label &label)
+/*Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Service::Name &service_name, Genode::Session_label &label)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(", service_name, " ", label, ")");
 
@@ -594,7 +635,7 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 	}
 
 	return *service;
-}
+}*/
 
 
 void Target_child::filter_session_args(const char *service, char *args, Genode::size_t args_len)

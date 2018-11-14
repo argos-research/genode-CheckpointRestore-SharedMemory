@@ -25,6 +25,8 @@
 #include "intercept/timer_session.h"
 #include "target_state.h"
 
+#include <os/session_requester.h>
+
 namespace Rtcr {
 	class Target_child;
 
@@ -34,6 +36,28 @@ namespace Rtcr {
 	class Restorer;
 }
 
+
+template <typename T>
+inline T &find_service(Genode::Registry<T> &services,
+                       Genode::Service::Name const &name)
+{
+	T *service = nullptr;
+	services.for_each([&] (T &s) {
+
+		if (service || s.name() != name)
+			return;
+
+		service = &s;
+	});
+
+	//if (!service)
+		//throw Service_denied();
+
+	//if (service->abandoned())
+		//throw Service_denied();
+
+	return *service;
+}
 
 /**
  * Encapsulates the policy and creation of the child
@@ -157,11 +181,11 @@ private:
 		 */
 		Genode::Rom_connection  rom;
 
-		Resources(Genode::Env &env, const char *label, Custom_services &custom_services);
+		Resources(Genode::Env &env, Genode::Allocator &md_alloc, const char *label, Custom_services &custom_services);
 		~Resources();
 
-		Pd_session_component &init_pd(const char *label, Pd_root &pd_root);
-		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root);
+		Pd_session_component &init_pd(const char *label, Pd_root &pd_root, Genode::Allocator &_md_alloc);
+		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &_md_alloc);
 		//Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
 	} _resources;
 
@@ -176,7 +200,7 @@ private:
 	/**
 	 * Registry for parent's services (parent of RTCR component). It is shared between all children.
 	 */
-	Genode::Registry<Genode::Service>      &_parent_services;
+	Genode::Registry<Genode::Registered<Genode::Parent_service> > &_parent_services;
 	/**
 	 * Child object
 	 */
@@ -192,7 +216,7 @@ public:
 	 * TODO Separate child's name and filename to support multiple child's with the same rom module
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-			Genode::Registry<Genode::Service> &parent_services, const char *name,
+			Genode::Registry<Genode::Registered<Genode::Parent_service> > &_parent_services, const char *name,
 			Genode::size_t granularity);
 
 	~Target_child();
@@ -243,6 +267,8 @@ public:
 		                              Genode::Session_label const &) override;
 	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name &service_name, Genode::Session_label &label);
 	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
+	void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
+	bool initiate_env_sessions() const override;
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
 	Genode::Pd_session_capability ref_pd_cap() const { return _resources.pd.cap();  }

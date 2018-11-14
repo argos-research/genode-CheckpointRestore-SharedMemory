@@ -196,11 +196,12 @@ private:
 	Genode::List<Pd_session_component> _session_rpc_objs;
 
 protected:
-	Pd_session_component *_create_session(const char *args);
+	
 	void _upgrade_session(Pd_session_component *session, const char *upgrade_args);
 	void _destroy_session(Pd_session_component *session);
 
 public:
+	Pd_session_component *_create_session(const char *args);
 	Pd_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
 			bool &bootstrap_phase);
     ~Pd_root();

@@ -5,6 +5,7 @@
  */
 
 /* Genode include */
+#include <os/static_parent_services.h>
 #include <base/component.h>
 #include <base/signal.h>
 #include <base/sleep.h>
@@ -26,7 +27,8 @@ struct Rtcr::Main
 	enum { ROOT_STACK_SIZE = 16*1024 };
 	Genode::Env              &env;
 	Genode::Heap              heap            { env.ram(), env.rm() };
-	Genode::Registry<Genode::Service>  parent_services { };
+	Genode::Static_parent_services<Genode::Ram_session, Genode::Pd_session, Genode::Cpu_session,
+	Genode::Rom_session, Genode::Log_session, Timer::Session> parent_services { };
 
 	Main(Genode::Env &env_) : env(env_)
 	{
