@@ -108,6 +108,8 @@ private:
 	/**
 	 * Struct for custom / intercepted services
 	 */
+
+
 	struct Custom_services
 	{
 	private:
@@ -118,8 +120,11 @@ private:
 		Genode::Entrypoint &_resource_ep;
 		bool &_bootstrap_phase;
 	public:
+		Genode::Session::Resources         resources {};
+		Genode::Session::Diag              diag {};
+		bool foo=false;
 		Pd_root *pd_root = nullptr;
-		Pd_session_component *pd_session = nullptr;
+		Pd_session_component pd_session {_env,_md_alloc,_resource_ep,"sheep_counter","PD",foo,resources,diag};
 		Genode::Local_service<Pd_session_component>::Single_session_factory *pd_factory = nullptr;
 		Genode::Local_service<Pd_session_component> *pd_service = nullptr;
 
