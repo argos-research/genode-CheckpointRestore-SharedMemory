@@ -15,10 +15,11 @@ using namespace Rtcr;
 
 
 Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		Genode::size_t granularity, bool &bootstrap_phase)
+		Genode::size_t granularity, bool &bootstrap_phase, Genode::Session::Resources         resources)
 :
-	_env(env), _md_alloc(md_alloc), _resource_ep(ep), _bootstrap_phase(bootstrap_phase)
+	_env(env), _md_alloc(md_alloc), _resource_ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources)
 {
+	Genode::log("Custom services");
 	pd_root  = new (_md_alloc) Rtcr::Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
 	
 
@@ -132,9 +133,9 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Allocator &md_alloc
 	// Donate ram quota to child
 	// TODO Replace static quota donation with the amount of quota, the child needs
 	Genode::Ram_quota quota;
-	quota.value=100;
+	quota.value=10000000;
 	Genode::Cap_quota caps;
-	caps.value=5;
+	caps.value=100;
 	pd.ref_account(env.ram_session_cap());
 	// Note: transfer goes directly to parent's ram session
 	env.pd().transfer_quota(pd.parent_cap(), quota);
@@ -153,7 +154,7 @@ Pd_session_component &Target_child::Resources::init_pd(const char *label, Rtcr::
 	Genode::log("init pd");
 	// Preparing argument string
 	char args_buf[160];
-	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%d, cap_quota=%d, label=\"%s\"", 1, 1024*1024, 50, label);
+	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%d, cap_quota=%d, label=\"%s\"", 1, 1024*1024, 100, label);
 	Genode::log("init_pd ",(const char*)args_buf);
 	// Issuing session method of pd_root
 	//Rtcr::Pd_session_component* pd_session = 
@@ -231,7 +232,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_restorer        (nullptr),
-	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap),
+	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap,Genode::session_resources_from_args("cap_quota=100,ram_quota=1000000")),
 	_resources       (_env, _md_alloc, _name.string(), _custom_services),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
@@ -570,9 +571,9 @@ void Target_child::init(Genode::Pd_session &session, Genode::Capability<Genode::
 {	
 	session.ref_account(_env.pd_session_cap());
 	Genode::log("env ram_quota ",_env.pd().ram_quota().value);
-	Genode::Ram_quota const ram_quota { 1000000 };
+	Genode::Ram_quota const ram_quota { 10000 };
 	Genode::log("env cap_quota ",_env.pd().cap_quota().value);
-	Genode::Cap_quota const cap_quota { 25 };
+	Genode::Cap_quota const cap_quota { 100 };
 	Genode::log("session ram_quota ",session.ram_quota().value);
 	Genode::log("session cap_quota ",session.cap_quota().value);
 	try { _env.pd().transfer_quota(cap, ram_quota); }

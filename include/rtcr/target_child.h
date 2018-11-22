@@ -120,11 +120,11 @@ private:
 		Genode::Entrypoint &_resource_ep;
 		bool &_bootstrap_phase;
 	public:
-		Genode::Session::Resources         resources {};
+		Genode::Session::Resources         _resources;
 		Genode::Session::Diag              diag {};
 		bool foo=false;
 		Pd_root *pd_root = nullptr;
-		Pd_session_component pd_session {_env,_md_alloc,_resource_ep,"sheep_counter","PD",foo,resources,diag};
+		Pd_session_component pd_session {_env,_md_alloc,_resource_ep,"sheep_counter","PD",foo,_resources,diag};
 		Genode::Local_service<Pd_session_component>::Single_session_factory *pd_factory = nullptr;
 		Genode::Local_service<Pd_session_component> *pd_service = nullptr;
 
@@ -159,7 +159,7 @@ private:
 		Genode::Local_service<Timer_session_component> *timer_service = nullptr;
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-				Genode::size_t granularity, bool &bootstrap_phase);
+				Genode::size_t granularity, bool &bootstrap_phase, Genode::Session::Resources         resources);
 		~Custom_services();
 
 		Genode::Service *find(const char *service_name);
