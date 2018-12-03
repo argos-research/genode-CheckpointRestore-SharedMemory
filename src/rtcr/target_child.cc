@@ -132,16 +132,16 @@ Target_child::Resources::Resources(Genode::Env &env, Genode::Allocator &md_alloc
 {
 	// Donate ram quota to child
 	// TODO Replace static quota donation with the amount of quota, the child needs
-	Genode::Ram_quota quota;
-	quota.value=10000000;
-	Genode::Cap_quota caps;
-	caps.value=100;
-	pd.ref_account(env.ram_session_cap());
+	//Genode::Ram_quota quota;
+	//quota.value=10000000;
+	//Genode::Cap_quota caps;
+	//caps.value=100;
+	//pd.ref_account(env.ram_session_cap());
 	// Note: transfer goes directly to parent's ram session
-	env.pd().transfer_quota(pd.parent_cap(), quota);
-	env.pd().transfer_quota(pd.parent_cap(), caps);
+	//env.pd().transfer_quota(pd.parent_cap(), quota);
+	//env.pd().transfer_quota(pd.parent_cap(), caps);
 	
-	Genode::log("donation complete");
+	//Genode::log("donation complete");
 }
 
 
@@ -570,16 +570,16 @@ void Target_child::print(Genode::Output &output) const
 void Target_child::init(Genode::Pd_session &session, Genode::Capability<Genode::Pd_session> cap) 
 {	
 	session.ref_account(_env.pd_session_cap());
-	Genode::log("env ram_quota ",_env.pd().ram_quota().value);
-	Genode::Ram_quota const ram_quota { 10000 };
-	Genode::log("env cap_quota ",_env.pd().cap_quota().value);
+	//Genode::log("env ram_quota ",_env.pd().ram_quota().value);
+	Genode::Ram_quota const ram_quota { 1000000 };
+	//Genode::log("env cap_quota ",_env.pd().cap_quota().value);
 	Genode::Cap_quota const cap_quota { 100 };
-	Genode::log("session ram_quota ",session.ram_quota().value);
-	Genode::log("session cap_quota ",session.cap_quota().value);
+	//Genode::log("session ram_quota ",session.ram_quota().value);
+	//Genode::log("session cap_quota ",session.cap_quota().value);
 	try { _env.pd().transfer_quota(cap, ram_quota); }
 	catch (Genode::Out_of_ram) {
 		error(name(), ": unable to initialize RAM quota of PD"); }
-	Genode::log("init pd session trans cap");
+	//Genode::log("init pd session trans cap");
 	try { _env.pd().transfer_quota(cap, cap_quota); }
 	catch (Genode::Out_of_caps) {
 		error(name(), ": unable to initialize cap quota of PD"); }
@@ -598,10 +598,7 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 {
 	
 	Genode::log("Resolve session request ",name," ",label);
-	if(name=="ROM")
-	{
-		return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false} };
-	}
+	return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
 	return Route { *_custom_services.find(name.string()), label, Genode::Session::Diag{false} };
 	Genode::log("Could not find ",name);
 	Genode::Child_policy::Route *foo=0;

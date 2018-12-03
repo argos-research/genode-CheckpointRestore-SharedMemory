@@ -340,12 +340,10 @@ Pd_session_component *Pd_root::_create_session(const char *args)
 	Genode::snprintf(ram_quota_buf, sizeof(ram_quota_buf), "%zu", readjusted_ram_quota);
 	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);
 
-
-	Genode::Session::Resources resources;
 	Genode::Session::Diag diag{};
 	// Create custom Pd_session
 	Pd_session_component *new_session =
-			new (md_alloc()) Pd_session_component(_env, _md_alloc, _ep, label_buf, readjusted_args, _bootstrap_phase, resources, diag);
+			new (md_alloc()) Pd_session_component(_env, _md_alloc, _ep, label_buf, readjusted_args, _bootstrap_phase, Genode::session_resources_from_args("cap_quota=50,ram_quota=100000"), diag);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
