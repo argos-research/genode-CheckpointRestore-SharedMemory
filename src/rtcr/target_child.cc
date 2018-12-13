@@ -21,10 +21,8 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 {
 	Genode::log("Custom services");
 	pd_root  = new (_md_alloc) Rtcr::Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
-	
-
-	//pd_session = new (_md_alloc) Rtcr::Pd_session_component();
-	pd_factory = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory(pd_session);
+	pd_session = new (_md_alloc) Rtcr::Pd_session_component(_env,_md_alloc,_resource_ep,"sheep_counter","PD",foo,_resources,diag);
+	pd_factory = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory(*pd_session);
 	pd_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*pd_factory);
 
 	cpu_root = new (_md_alloc) Rtcr::Cpu_root(_env, _md_alloc, _resource_ep, *pd_root, _bootstrap_phase);
@@ -587,12 +585,6 @@ void Target_child::init(Genode::Pd_session &session, Genode::Capability<Genode::
 	//Genode::log("RAM ",_task._desc.quota.value," caps ",_task._desc.caps);
 }
 
-bool Target_child::initiate_env_sessions() const
-{
-	Genode::log("initiate_env_sessions");
-	return true;
-}
-
 Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Service::Name const &name,
 		                              Genode::Session_label const &label)
 {
@@ -633,8 +625,9 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 }*/
 
 
-void Target_child::filter_session_args(const char *service, char *args, Genode::size_t args_len)
+void Target_child::filter_session_args(Genode::Service::Name const &service,
+	                                 char * args, Genode::size_t args_len)
 {
-	Genode::log("session args", service);
+	Genode::log("session args ", service);
 	Genode::Arg_string::set_arg_string(args, args_len, "label", _name.string());
 }

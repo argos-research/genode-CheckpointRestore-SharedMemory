@@ -124,7 +124,7 @@ private:
 		Genode::Session::Diag              diag {};
 		bool foo=false;
 		Pd_root *pd_root = nullptr;
-		Pd_session_component pd_session {_env,_md_alloc,_resource_ep,"sheep_counter","PD",foo,_resources,diag};
+		Pd_session_component *pd_session = nullptr;
 		Genode::Local_service<Pd_session_component>::Single_session_factory *pd_factory = nullptr;
 		Genode::Local_service<Pd_session_component> *pd_service = nullptr;
 
@@ -270,10 +270,9 @@ public:
 	Name name() const {return _name.string(); }
 	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name const &,
 		                              Genode::Session_label const &) override;
-	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name &service_name, Genode::Session_label &label);
-	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
+	void filter_session_args(Genode::Service::Name const &,
+	                                 char * /*args*/, Genode::size_t /*args_len*/) override;
 	void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
-	bool initiate_env_sessions() const override;
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
 	Genode::Pd_session_capability ref_pd_cap() const { return _resources.pd.cap();  }

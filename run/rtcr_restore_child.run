@@ -33,6 +33,15 @@ install_config {
 	</start>
 	<start name="target_restorer-tester" caps="8000">
 		<resource name="RAM" quantum="200M"/>
+		<provides><service name="PD"/>
+		<service name="CPU"/>
+		<service name="RAM"/>
+		<service name="ROM"/>
+		<service name="RM"/>
+		<service name="LOG"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="IRQ"/></provides>
 	</start>
 </config>}
 
