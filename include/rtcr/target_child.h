@@ -108,7 +108,51 @@ private:
 	/**
 	 * Struct for custom / intercepted services
 	 */
+	struct Intercepted_parent_service : Genode::Parent_service
+	{
+		Genode::Signal_context_capability fault_sigh { };
 
+		Intercepted_parent_service(Genode::Env &env, Genode::Service::Name const &name)
+		: Parent_service(env, name) { }
+	};
+
+	struct Local_cpu_service : Intercepted_parent_service
+	{
+		Local_cpu_service(Genode::Env &env) : Intercepted_parent_service(env, "CPU") { }
+
+		void initiate_request(Genode::Session_state &session) override
+		{
+			Intercepted_parent_service::initiate_request(session);
+
+			if (session.phase != Genode::Session_state::AVAILABLE)
+				return;
+
+			Genode::Cpu_session_client cpu(Genode::reinterpret_cap_cast<Genode::Cpu_session>(session.cap));
+			cpu.exception_sigh(fault_sigh);
+		}
+	};
+
+	struct Local_pd_service : Intercepted_parent_service
+	{
+		Local_pd_service(Genode::Env &env) : Intercepted_parent_service(env, "PD") { }
+
+		void initiate_request(Genode::Session_state &session) override
+		{
+			Intercepted_parent_service::initiate_request(session);
+
+			if (session.phase != Genode::Session_state::AVAILABLE)
+				return;
+
+			Genode::Pd_session_client pd(Genode::reinterpret_cap_cast<Genode::Pd_session>(session.cap));
+
+			Genode::Region_map_client(pd.address_space()).fault_handler(fault_sigh);
+			Genode::Region_map_client(pd.stack_area())   .fault_handler(fault_sigh);
+			Genode::Region_map_client(pd.linker_area())  .fault_handler(fault_sigh);
+		}
+	};
+
+	Local_cpu_service           _cpu_service { _env };
+	Local_pd_service            _pd_service  { _env };
 
 	struct Custom_services
 	{
@@ -123,7 +167,7 @@ private:
 		Genode::Session::Resources         _resources;
 		Genode::Session::Diag              diag {};
 		bool foo=false;
-		Pd_root *pd_root = nullptr;
+		/*Pd_root *pd_root = nullptr;
 		Pd_session_component *pd_session = nullptr;
 		Genode::Local_service<Pd_session_component>::Single_session_factory *pd_factory = nullptr;
 		Genode::Local_service<Pd_session_component> *pd_service = nullptr;
@@ -133,7 +177,7 @@ private:
 		Genode::Local_service<Cpu_session_component>::Single_session_factory *cpu_factory = nullptr;
 		Genode::Local_service<Cpu_session_component> *cpu_service = nullptr;
 
-		/*Ram_root *ram_root  = nullptr;
+		Ram_root *ram_root  = nullptr;
 		Pd_session_component *ram_session = nullptr;
 		Genode::Local_service<Pd_session_component>::Single_session_factory *ram_factory = nullptr;
 		Genode::Local_service<Pd_session_component> *ram_service = nullptr;*/
@@ -163,6 +207,8 @@ private:
 		~Custom_services();
 
 		Genode::Service *find(const char *service_name);
+
+
 	} _custom_services;
 	/**
 	 * Child's resources
@@ -189,8 +235,8 @@ private:
 		Resources(Genode::Env &env, Genode::Allocator &md_alloc, const char *label, Custom_services &custom_services);
 		~Resources();
 
-		Pd_session_component &init_pd(const char *label, Pd_root &pd_root, Genode::Allocator &_md_alloc);
-		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &_md_alloc);
+		/*Pd_session_component &init_pd(const char *label, Pd_root &pd_root, Genode::Allocator &_md_alloc);
+		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &_md_alloc);*/
 		//Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
 	} _resources;
 
@@ -270,8 +316,8 @@ public:
 	Name name() const {return _name.string(); }
 	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name const &,
 		                              Genode::Session_label const &) override;
-	void filter_session_args(Genode::Service::Name const &,
-	                                 char * /*args*/, Genode::size_t /*args_len*/) override;
+	//void filter_session_args(Genode::Service::Name const &,
+	//                                 char * /*args*/, Genode::size_t /*args_len*/) override;
 	void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }

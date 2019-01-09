@@ -13,14 +13,13 @@ namespace Fiasco {
 
 using namespace Rtcr;
 
-
 Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 		Genode::size_t granularity, bool &bootstrap_phase, Genode::Session::Resources         resources)
 :
 	_env(env), _md_alloc(md_alloc), _resource_ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources)
 {
 	Genode::log("Custom services");
-	pd_root  = new (_md_alloc) Rtcr::Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
+	/*pd_root  = new (_md_alloc) Rtcr::Pd_root(_env, _md_alloc, _resource_ep, _bootstrap_phase);
 	pd_session = new (_md_alloc) Rtcr::Pd_session_component(_env,_md_alloc,_resource_ep,"sheep_counter","PD",foo,_resources,diag);
 	pd_factory = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory(*pd_session);
 	pd_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*pd_factory);
@@ -32,7 +31,7 @@ Target_child::Custom_services::Custom_services(Genode::Env &env, Genode::Allocat
 
 	Genode::log("granularity ",granularity);
 
-	/*ram_root = new (_md_alloc) Ram_root(_env, _md_alloc, _resource_ep, granularity, _bootstrap_phase);
+	ram_root = new (_md_alloc) Ram_root(_env, _md_alloc, _resource_ep, granularity, _bootstrap_phase);
 	ram_session = new (_md_alloc) Pd_session_component(env,md_alloc,ep,"RAM","RAM",foo);
 	ram_factory = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory(*ram_session);
 	ram_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*ram_factory);*/
@@ -55,11 +54,11 @@ Target_child::Custom_services::~Custom_services()
 	//if(ram_root)    Genode::destroy(_md_alloc, ram_root);
 	//if(ram_service) Genode::destroy(_md_alloc, ram_service);
 
-	if(cpu_root)    Genode::destroy(_md_alloc, cpu_root);
-	if(cpu_service) Genode::destroy(_md_alloc, cpu_service);
+	//if(cpu_root)    Genode::destroy(_md_alloc, cpu_root);
+	if(_cpu_service) Genode::destroy(_md_alloc, _cpu_service);
 
-	if(pd_root)    Genode::destroy(_md_alloc, pd_root);
-	if(pd_service) Genode::destroy(_md_alloc, pd_service);
+	//if(pd_root)    Genode::destroy(_md_alloc, pd_root);
+	if(_pd_service) Genode::destroy(_md_alloc, _pd_service);
 }
 
 
@@ -69,11 +68,11 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 
 	if(!Genode::strcmp(service_name, "PD"))
 	{
-		service = pd_service;
+		service = _pd_service;
 	}
 	else if(!Genode::strcmp(service_name, "CPU"))
 	{
-		service = cpu_service;
+		service = _cpu_service;
 	}
 	/*else if(!Genode::strcmp(service_name, "RAM"))
 	{
@@ -123,8 +122,8 @@ Genode::Service *Target_child::Custom_services::find(const char *service_name)
 
 Target_child::Resources::Resources(Genode::Env &env, Genode::Allocator &md_alloc, const char *label, Custom_services &custom_services)
 :
-	pd  (init_pd(label, *custom_services.pd_root, md_alloc)),
-	cpu (init_cpu(label, *custom_services.cpu_root, md_alloc)),
+	//pd  (init_pd(label, *custom_services.pd_root, md_alloc)),
+	//cpu (init_cpu(label, *custom_services.cpu_root, md_alloc)),
 	//ram (init_ram(label, *custom_services.ram_root)),
 	rom (env, label)
 {
@@ -147,7 +146,7 @@ Target_child::Resources::~Resources()
 { }
 
 
-Pd_session_component &Target_child::Resources::init_pd(const char *label, Rtcr::Pd_root &pd_root, Genode::Allocator &)
+/*Pd_session_component &Target_child::Resources::init_pd(const char *label, Rtcr::Pd_root &pd_root, Genode::Allocator &)
 {
 	Genode::log("init pd");
 	// Preparing argument string
@@ -192,7 +191,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 	}
 
 	return *cpu_session;
-}
+}*/
 
 
 /*Ram_session_component &Target_child::Resources::init_ram(const char *label, Ram_root &ram_root)
@@ -345,7 +344,7 @@ void Target_child::resume()
 
 void Target_child::print(Genode::Output &output) const
 {
-	using Genode::print;
+	/*using Genode::print;
 
 	print(output, "##########################\n");
 	print(output, "###    Target_child    ###\n");
@@ -464,7 +463,7 @@ void Target_child::print(Genode::Output &output) const
 			cpu_session = cpu_session->next();
 		}
 	}
-	/* RAM session
+	 RAM session
 	{
 		print(output, "RAM sessions:\n");
 		Ram_session_component const *ram_session = _custom_services.ram_root->session_infos().first();
@@ -494,7 +493,7 @@ void Target_child::print(Genode::Output &output) const
 
 			ram_session = ram_session->next();
 		}
-	}*/
+	}
 	// RM sessions
 	{
 		print(output, "RM sessions:\n");
@@ -561,7 +560,7 @@ void Target_child::print(Genode::Output &output) const
 			}
 
 		}
-	}
+	}*/
 
 }
 
@@ -590,7 +589,7 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 {
 	
 	Genode::log("Resolve session request ",name," ",label);
-	return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
+	//return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
 	return Route { *_custom_services.find(name.string()), label, Genode::Session::Diag{false} };
 	Genode::log("Could not find ",name);
 	Genode::Child_policy::Route *foo=0;
@@ -625,9 +624,9 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 }*/
 
 
-void Target_child::filter_session_args(Genode::Service::Name const &service,
+/*void Target_child::filter_session_args(Genode::Service::Name const &service,
 	                                 char * args, Genode::size_t args_len)
 {
 	Genode::log("session args ", service);
 	Genode::Arg_string::set_arg_string(args, args_len, "label", _name.string());
-}
+}*/
