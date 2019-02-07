@@ -59,6 +59,13 @@ inline T &find_service(Genode::Registry<T> &services,
 	return *service;
 }
 
+/*struct Genode::Local_service<Rtcr::Pd_session_component>::Factory
+{
+	Rtcr::Pd_session_component Genode::Local_service<Rtcr::Pd_session_component>::Factory::create(Args const &, Affinity);
+			void Genode::Local_service<Rtcr::Pd_session_component>::Factory::upgrade(Rtcr::Pd_session_component &, Args const &);
+			void Genode::Local_service<Rtcr::Pd_session_component>::Factory::destroy(Rtcr::Pd_session_component &);
+}*/
+
 /**
  * Encapsulates the policy and creation of the child
  */
@@ -167,17 +174,17 @@ private:
 		Genode::Session::Resources         _resources;
 		Genode::Session::Diag              diag {};
 		bool foo=false;
-		/*Pd_root *pd_root = nullptr;
+		Pd_root *pd_root = nullptr;
 		Pd_session_component *pd_session = nullptr;
-		Genode::Local_service<Pd_session_component>::Single_session_factory *pd_factory = nullptr;
-		Genode::Local_service<Pd_session_component> *pd_service = nullptr;
+		Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory *pd_factory = nullptr;
+		Genode::Local_service<Rtcr::Pd_session_component> *pd_service = nullptr;
 
 		Cpu_root *cpu_root = nullptr;
 		Cpu_session_component *cpu_session = nullptr;
 		Genode::Local_service<Cpu_session_component>::Single_session_factory *cpu_factory = nullptr;
 		Genode::Local_service<Cpu_session_component> *cpu_service = nullptr;
 
-		Ram_root *ram_root  = nullptr;
+		/*Ram_root *ram_root  = nullptr;
 		Pd_session_component *ram_session = nullptr;
 		Genode::Local_service<Pd_session_component>::Single_session_factory *ram_factory = nullptr;
 		Genode::Local_service<Pd_session_component> *ram_service = nullptr;*/
@@ -235,8 +242,8 @@ private:
 		Resources(Genode::Env &env, Genode::Allocator &md_alloc, const char *label, Custom_services &custom_services);
 		~Resources();
 
-		/*Pd_session_component &init_pd(const char *label, Pd_root &pd_root, Genode::Allocator &_md_alloc);
-		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &_md_alloc);*/
+		Pd_session_component &init_pd(const char *label, Pd_root &pd_root, Genode::Allocator &_md_alloc);
+		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &_md_alloc);
 		//Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
 	} _resources;
 
@@ -318,7 +325,7 @@ public:
 		                              Genode::Session_label const &) override;
 	//void filter_session_args(Genode::Service::Name const &,
 	//                                 char * /*args*/, Genode::size_t /*args_len*/) override;
-	void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
+	//void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
 	Genode::Pd_session_capability ref_pd_cap() const { return _resources.pd.cap();  }
