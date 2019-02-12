@@ -25,6 +25,8 @@
 #include "intercept/timer_session.h"
 #include "target_state.h"
 
+#include <os/session_requester.h>
+
 namespace Rtcr {
 	class Target_child;
 
@@ -34,6 +36,35 @@ namespace Rtcr {
 	class Restorer;
 }
 
+
+template <typename T>
+inline T &find_service(Genode::Registry<T> &services,
+                       Genode::Service::Name const &name)
+{
+	T *service = nullptr;
+	services.for_each([&] (T &s) {
+
+		if (service || s.name() != name)
+			return;
+
+		service = &s;
+	});
+
+	//if (!service)
+		//throw Service_denied();
+
+	//if (service->abandoned())
+		//throw Service_denied();
+
+	return *service;
+}
+
+/*struct Genode::Local_service<Rtcr::Pd_session_component>::Factory
+{
+	Rtcr::Pd_session_component Genode::Local_service<Rtcr::Pd_session_component>::Factory::create(Args const &, Affinity);
+			void Genode::Local_service<Rtcr::Pd_session_component>::Factory::upgrade(Rtcr::Pd_session_component &, Args const &);
+			void Genode::Local_service<Rtcr::Pd_session_component>::Factory::destroy(Rtcr::Pd_session_component &);
+}*/
 
 /**
  * Encapsulates the policy and creation of the child
@@ -84,6 +115,52 @@ private:
 	/**
 	 * Struct for custom / intercepted services
 	 */
+	struct Intercepted_parent_service : Genode::Parent_service
+	{
+		Genode::Signal_context_capability fault_sigh { };
+
+		Intercepted_parent_service(Genode::Env &env, Genode::Service::Name const &name)
+		: Parent_service(env, name) { }
+	};
+
+	struct Local_cpu_service : Intercepted_parent_service
+	{
+		Local_cpu_service(Genode::Env &env) : Intercepted_parent_service(env, "CPU") { }
+
+		void initiate_request(Genode::Session_state &session) override
+		{
+			Intercepted_parent_service::initiate_request(session);
+
+			if (session.phase != Genode::Session_state::AVAILABLE)
+				return;
+
+			Genode::Cpu_session_client cpu(Genode::reinterpret_cap_cast<Genode::Cpu_session>(session.cap));
+			cpu.exception_sigh(fault_sigh);
+		}
+	};
+
+	struct Local_pd_service : Intercepted_parent_service
+	{
+		Local_pd_service(Genode::Env &env) : Intercepted_parent_service(env, "PD") { }
+
+		void initiate_request(Genode::Session_state &session) override
+		{
+			Intercepted_parent_service::initiate_request(session);
+
+			if (session.phase != Genode::Session_state::AVAILABLE)
+				return;
+
+			Genode::Pd_session_client pd(Genode::reinterpret_cap_cast<Genode::Pd_session>(session.cap));
+
+			Genode::Region_map_client(pd.address_space()).fault_handler(fault_sigh);
+			Genode::Region_map_client(pd.stack_area())   .fault_handler(fault_sigh);
+			Genode::Region_map_client(pd.linker_area())  .fault_handler(fault_sigh);
+		}
+	};
+
+	Local_cpu_service           _cpu_service { _env };
+	Local_pd_service            _pd_service  { _env };
+
 	struct Custom_services
 	{
 	private:
@@ -94,10 +171,13 @@ private:
 		Genode::Entrypoint &_resource_ep;
 		bool &_bootstrap_phase;
 	public:
+		Genode::Session::Resources         _resources;
+		Genode::Session::Diag              diag {};
+		bool foo=false;
 		Pd_root *pd_root = nullptr;
 		Pd_session_component *pd_session = nullptr;
-		Genode::Local_service<Pd_session_component>::Single_session_factory *pd_factory = nullptr;
-		Genode::Local_service<Pd_session_component> *pd_service = nullptr;
+		Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory *pd_factory = nullptr;
+		Genode::Local_service<Rtcr::Pd_session_component> *pd_service = nullptr;
 
 		Cpu_root *cpu_root = nullptr;
 		Cpu_session_component *cpu_session = nullptr;
@@ -130,10 +210,12 @@ private:
 		Genode::Local_service<Timer_session_component> *timer_service = nullptr;
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-				Genode::size_t granularity, bool &bootstrap_phase);
+				Genode::size_t granularity, bool &bootstrap_phase, Genode::Session::Resources         resources);
 		~Custom_services();
 
 		Genode::Service *find(const char *service_name);
+
+
 	} _custom_services;
 	/**
 	 * Child's resources
@@ -157,11 +239,11 @@ private:
 		 */
 		Genode::Rom_connection  rom;
 
-		Resources(Genode::Env &env, const char *label, Custom_services &custom_services);
+		Resources(Genode::Env &env, Genode::Allocator &md_alloc, const char *label, Custom_services &custom_services);
 		~Resources();
 
-		Pd_session_component &init_pd(const char *label, Pd_root &pd_root);
-		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root);
+		Pd_session_component &init_pd(const char *label, Pd_root &pd_root, Genode::Allocator &_md_alloc);
+		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &_md_alloc);
 		//Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
 	} _resources;
 
@@ -176,7 +258,7 @@ private:
 	/**
 	 * Registry for parent's services (parent of RTCR component). It is shared between all children.
 	 */
-	Genode::Registry<Genode::Service>      &_parent_services;
+	Genode::Registry<Genode::Registered<Genode::Parent_service> > &_parent_services;
 	/**
 	 * Child object
 	 */
@@ -192,7 +274,7 @@ public:
 	 * TODO Separate child's name and filename to support multiple child's with the same rom module
 	 */
 	Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
-			Genode::Registry<Genode::Service> &parent_services, const char *name,
+			Genode::Registry<Genode::Registered<Genode::Parent_service> > &_parent_services, const char *name,
 			Genode::size_t granularity);
 
 	~Target_child();
@@ -241,8 +323,9 @@ public:
 	Name name() const {return _name.string(); }
 	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name const &,
 		                              Genode::Session_label const &) override;
-	Genode::Child_policy::Route resolve_session_request(Genode::Service::Name &service_name, Genode::Session_label &label);
-	void filter_session_args(const char *service, char *args, Genode::size_t args_len);
+	//void filter_session_args(Genode::Service::Name const &,
+	//                                 char * /*args*/, Genode::size_t /*args_len*/) override;
+	//void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
 	Genode::Pd_session_capability ref_pd_cap() const { return _resources.pd.cap();  }

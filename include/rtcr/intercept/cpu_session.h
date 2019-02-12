@@ -24,7 +24,7 @@ namespace Rtcr {
 	class Cpu_root;
 
 	constexpr bool cpu_verbose_debug = true;
-	constexpr bool cpu_root_verbose_debug = false;
+	constexpr bool cpu_root_verbose_debug = true;
 }
 
 
@@ -167,11 +167,12 @@ private:
 	Genode::List<Cpu_session_component> _session_rpc_objs;
 
 protected:
-	Cpu_session_component *_create_session(const char *args);
+	
 	void _upgrade_session(Cpu_session_component *session, const char *upgrade_args);
 	void _destroy_session(Cpu_session_component *session);
 
 public:
+	Cpu_session_component *_create_session(const char *args);
 	Cpu_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
 			Pd_root &pd_root, bool &bootstrap_phase);
     ~Cpu_root();

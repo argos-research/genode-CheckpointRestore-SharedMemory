@@ -8,10 +8,13 @@
 #define _RTCR_PD_SESSION_H_
 
 /* Genode includes */
-#include <root/component.h>
-#include <base/allocator.h>
-#include <base/rpc_server.h>
-#include <pd_session/connection.h>
+#include <util/reconstructible.h>
+#include <base/allocator_guard.h>
+#include <base/session_object.h>
+#include <base/registry.h>
+#include <base/heap.h>
+#include <pd_session/pd_session.h>
+#include <util/arg_string.h>
 
 /* Rtcr includes */
 #include "../online_storage/pd_session_info.h"
@@ -28,7 +31,7 @@ namespace Rtcr {
 /**
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
-class Rtcr::Pd_session_component : public Genode::Rpc_object<Genode::Pd_session>,
+class Rtcr::Pd_session_component : public Genode::Session_object<Genode::Pd_session>,
                                    private Genode::List<Pd_session_component>::Element
 {
 private:
@@ -78,10 +81,9 @@ private:
 	Region_map_component   _linker_area;
 
 
-
 public:
 	Pd_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *label, const char *creation_args, bool &bootstrap_phase);
+		const char *label, const char *creation_args, bool &bootstrap_phase, Resources resources, Diag diag);
 	~Pd_session_component();
 
 	Genode::Pd_session_capability parent_cap() { return _parent_pd.cap(); }
@@ -196,11 +198,12 @@ private:
 	Genode::List<Pd_session_component> _session_rpc_objs;
 
 protected:
-	Pd_session_component *_create_session(const char *args);
+	
 	void _upgrade_session(Pd_session_component *session, const char *upgrade_args);
 	void _destroy_session(Pd_session_component *session);
 
 public:
+	Pd_session_component *_create_session(const char *args);
 	Pd_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep,
 			bool &bootstrap_phase);
     ~Pd_root();
