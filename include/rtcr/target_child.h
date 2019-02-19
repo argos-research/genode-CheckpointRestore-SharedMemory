@@ -28,6 +28,9 @@
 #include <os/session_requester.h>
 
 namespace Rtcr {
+	typedef Genode::Local_service<Rtcr::Pd_session_component> Local_pd_service;
+	class Local_pd_factory;
+
 	class Target_child;
 
 	constexpr bool child_verbose_debug = true;
@@ -36,6 +39,32 @@ namespace Rtcr {
 	class Restorer;
 }
 
+
+class Rtcr::Local_pd_factory : public Local_pd_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	const char *_label;
+	const char *_creation_args;
+	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
+	public:
+	Local_pd_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+		const char *label, const char *creation_args, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag)
+	{ }
+
+	Local_pd_factory(const Rtcr::Local_pd_factory&) = default;
+	Local_pd_factory& operator=(const Rtcr::Local_pd_factory&) = default;
+
+	Rtcr::Pd_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Pd_session_component &, Args const &) override;
+	void destroy(Rtcr::Pd_session_component &) override;
+};
 
 template <typename T>
 inline T &find_service(Genode::Registry<T> &services,
@@ -115,51 +144,7 @@ private:
 	/**
 	 * Struct for custom / intercepted services
 	 */
-	struct Intercepted_parent_service : Genode::Parent_service
-	{
-		Genode::Signal_context_capability fault_sigh { };
-
-		Intercepted_parent_service(Genode::Env &env, Genode::Service::Name const &name)
-		: Parent_service(env, name) { }
-	};
-
-	struct Local_cpu_service : Intercepted_parent_service
-	{
-		Local_cpu_service(Genode::Env &env) : Intercepted_parent_service(env, "CPU") { }
-
-		void initiate_request(Genode::Session_state &session) override
-		{
-			Intercepted_parent_service::initiate_request(session);
-
-			if (session.phase != Genode::Session_state::AVAILABLE)
-				return;
-
-			Genode::Cpu_session_client cpu(Genode::reinterpret_cap_cast<Genode::Cpu_session>(session.cap));
-			cpu.exception_sigh(fault_sigh);
-		}
-	};
-
-	struct Local_pd_service : Intercepted_parent_service
-	{
-		Local_pd_service(Genode::Env &env) : Intercepted_parent_service(env, "PD") { }
-
-		void initiate_request(Genode::Session_state &session) override
-		{
-			Intercepted_parent_service::initiate_request(session);
-
-			if (session.phase != Genode::Session_state::AVAILABLE)
-				return;
-
-			Genode::Pd_session_client pd(Genode::reinterpret_cap_cast<Genode::Pd_session>(session.cap));
-
-			Genode::Region_map_client(pd.address_space()).fault_handler(fault_sigh);
-			Genode::Region_map_client(pd.stack_area())   .fault_handler(fault_sigh);
-			Genode::Region_map_client(pd.linker_area())  .fault_handler(fault_sigh);
-		}
-	};
-
-	Local_cpu_service           _cpu_service { _env };
-	Local_pd_service            _pd_service  { _env };
+	
 
 	struct Custom_services
 	{
@@ -176,7 +161,7 @@ private:
 		bool foo=false;
 		Pd_root *pd_root = nullptr;
 		Pd_session_component *pd_session = nullptr;
-		Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory *pd_factory = nullptr;
+		Rtcr::Local_pd_factory *pd_factory = nullptr;
 		Genode::Local_service<Rtcr::Pd_session_component> *pd_service = nullptr;
 
 		Cpu_root *cpu_root = nullptr;
@@ -325,7 +310,7 @@ public:
 		                              Genode::Session_label const &) override;
 	//void filter_session_args(Genode::Service::Name const &,
 	//                                 char * /*args*/, Genode::size_t /*args_len*/) override;
-	//void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
+	void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
 	Genode::Pd_session_capability ref_pd_cap() const { return _resources.pd.cap();  }

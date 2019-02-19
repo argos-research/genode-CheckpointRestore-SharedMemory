@@ -27,7 +27,6 @@ namespace Rtcr {
 	constexpr bool cpu_root_verbose_debug = true;
 }
 
-
 /**
  * This custom Cpu session intercepts the creation and destruction of threads by the client
  */

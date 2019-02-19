@@ -174,6 +174,24 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 	return *cpu_session;
 }
 
+void Target_child::init(Genode::Pd_session &session, Genode::Capability<Genode::Pd_session> cap) { 	session.ref_account(_resources.pd.cap());
+
+	//Genode::size_t const initial_session_costs =
+	//	session_alloc_batch_size()*_child.session_factory().session_costs();
+
+	Genode::Ram_quota const ram_quota { 1000000 };
+
+	Genode::Cap_quota const cap_quota { 100 };
+
+	try { _resources.pd.transfer_quota(cap, cap_quota); }
+	catch (Genode::Out_of_caps) {
+		error(name(), ": unable to initialize cap quota of PD"); }
+
+	try { _resources.pd.transfer_quota(cap, ram_quota); }
+	catch (Genode::Out_of_ram) {
+		error(name(), ": unable to initialize RAM quota of PD"); }
+
+}
 
 Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 		Genode::Registry<Genode::Registered<Genode::Parent_service> > &parent_services, const char *name, Genode::size_t granularity)
@@ -192,8 +210,9 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_parent_services (parent_services),
 	_child           (nullptr)
 {
+	bool bar=false;
 	_custom_services.pd_session = &_resources.pd;
-	_custom_services.pd_factory = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory(*_custom_services.pd_session);
+	_custom_services.pd_factory = new (_md_alloc) Rtcr::Local_pd_factory(_env, _md_alloc, _resources_ep, name, name, bar, Genode::session_resources_from_args("cap_quota=100,ram_quota=1000000"), Genode::Session::Diag());//(*_custom_services.pd_session);
 	_custom_services.pd_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*_custom_services.pd_factory);
 	Genode::Ram_quota quota;
 	quota.value=1000000;
@@ -542,12 +561,28 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 {
 	
 	Genode::log("Resolve session request ",name," ",label);
-	if(name=="ROM"&&label=="sheep_counter")
-	{
-		return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
-	}
+	//if(name=="ROM"&&(label=="sheep_counter"||label=="ld.lib.so"))
+	//{
+		//return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
+	//}
 	return Route { *_custom_services.find(name.string()), label, Genode::Session::Diag{false} };
 	Genode::log("Could not find ",name);
 	Genode::Child_policy::Route *foo=0;
 	return *foo;
+}
+
+Rtcr::Pd_session_component &Local_pd_factory::create(Args const &, Genode::Affinity)
+{
+	return *new (_md_alloc) Pd_session_component(_env, _md_alloc, _ep,
+		_label, _creation_args, _bootstrap_phase, _resources, _diag);
+}
+
+void Local_pd_factory::upgrade(Rtcr::Pd_session_component &, Args const &)
+{
+
+}
+
+void Local_pd_factory::destroy(Rtcr::Pd_session_component &)
+{
+
 }
