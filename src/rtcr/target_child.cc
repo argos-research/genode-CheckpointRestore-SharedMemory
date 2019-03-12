@@ -132,7 +132,7 @@ Pd_session_component &Target_child::Resources::init_pd(const char *label, Rtcr::
 	Genode::log("init pd");
 	// Preparing argument string
 	char args_buf[160];
-	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%d, cap_quota=%d, label=\"%s\"", 1, 1024*1024, 100, label);
+	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%d, cap_quota=%d, label=\"%s\"", 1, 1024*1024, 1, label);
 	Genode::log("init_pd ",(const char*)args_buf);
 	// Issuing session method of pd_root
 	Rtcr::Pd_session_component* pd_session = 
@@ -157,7 +157,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
 			"priority=0x%x, ram_quota=%u, cap_quota=%d, label=\"%s\"",
-			Genode::Cpu_session::DEFAULT_PRIORITY, 1024*1024, 100, label);
+			Genode::Cpu_session::DEFAULT_PRIORITY, 1024*1024, 1, label);
 	Genode::log("init_cpu ",(const char*)args_buf);
 	// Issuing session method of Cpu_root
 	Cpu_session_component *cpu_session = cpu_root._create_session(args_buf);
@@ -184,7 +184,7 @@ void Target_child::init(Genode::Pd_session &session, Genode::Capability<Genode::
 
 	Genode::Ram_quota const ram_quota { 1000000 };
 
-	Genode::Cap_quota const cap_quota { 100 };
+	Genode::Cap_quota const cap_quota { 1 };
 	Genode::log(cap);
 	try { _resources.pd.transfer_quota(cap, cap_quota); }
 	catch (Genode::Out_of_caps) {
@@ -215,12 +215,12 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 {
 	bool bar=false;
 	_custom_services.pd_session = &_resources.pd;
-	_custom_services.pd_factory = new (_md_alloc) Rtcr::Local_pd_factory(_env, _md_alloc, _resources_ep, name, name, bar, Genode::session_resources_from_args("cap_quota=100,ram_quota=1000000"), Genode::Session::Diag());//(*_custom_services.pd_session);
+	_custom_services.pd_factory = new (_md_alloc) Rtcr::Local_pd_factory(_env, _md_alloc, _resources_ep, name, name, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag());//(*_custom_services.pd_session);
 	_custom_services.pd_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*_custom_services.pd_factory);
 	Genode::Ram_quota quota;
 	quota.value=10000000;
 	Genode::Cap_quota caps;
-	caps.value=100;
+	caps.value=10;
 	Genode::log("ref account");
 	_resources.pd.ref_account(env.pd_session_cap());
 	Genode::log("quota ", _resources.pd.ram_quota().value);
