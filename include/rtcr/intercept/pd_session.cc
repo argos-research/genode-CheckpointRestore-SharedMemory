@@ -254,11 +254,16 @@ void Pd_session_component::ref_account(Genode::Capability<Genode::Pd_session> ca
 
 void Pd_session_component::transfer_quota(Genode::Capability<Genode::Pd_session> cap, Genode::Cap_quota quota)
 {
+	Genode::log("intercepted cap quota ",quota.value);
+	Genode::log("intercepted cap quota ",_parent_pd.cap_quota().value);
+	Genode::log(cap);
 	_parent_pd.transfer_quota(cap, quota);
 }
 
 void Pd_session_component::transfer_quota(Genode::Capability<Genode::Pd_session> cap, Genode::Ram_quota quota)
 {
+	Genode::log("intercepted ram quota ",quota.value);
+	Genode::log("intercepted ram quota ",_parent_pd.ram_quota().value);
 	_parent_pd.transfer_quota(cap, quota);
 }
 
@@ -344,7 +349,7 @@ Pd_session_component *Pd_root::_create_session(const char *args)
 	Genode::Session::Diag diag{};
 	// Create custom Pd_session
 	Pd_session_component *new_session =
-			new (md_alloc()) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args("cap_quota=50,ram_quota=100000"), diag);
+			new (_md_alloc) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args("cap_quota=50,ram_quota=100000"), diag);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
