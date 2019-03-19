@@ -51,7 +51,7 @@ void Cpu_session_component::_kill_thread(Cpu_thread_component &cpu_thread)
 
 
 Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase)
+		Pd_root *pd_root, const char *label, const char *creation_args, bool &bootstrap_phase)
 :
 	_env             (env),
 	_md_alloc        (md_alloc),

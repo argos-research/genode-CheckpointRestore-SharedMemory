@@ -230,7 +230,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	env.pd().transfer_quota(_resources.pd.parent_cap(), caps);
 	Genode::log("cap ", _resources.pd.cap_quota().value);
 	_custom_services.cpu_session = &_resources.cpu;
-	_custom_services.cpu_factory = new (_md_alloc) Genode::Local_service<Rtcr::Cpu_session_component>::Single_session_factory(*_custom_services.cpu_session);
+	_custom_services.cpu_factory = new (_md_alloc) Rtcr::Local_cpu_factory(_env, _md_alloc, _resources_ep, _custom_services.pd_root, name, name, bar);
 	_custom_services.cpu_service = new (_md_alloc) Genode::Local_service<Rtcr::Cpu_session_component>(*_custom_services.cpu_factory);
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
 	_in_bootstrap = false;
@@ -581,6 +581,13 @@ Rtcr::Pd_session_component &Local_pd_factory::create(Args const &, Genode::Affin
 	Genode::log("create custom pd session from factory");
 	return *new (_md_alloc) Rtcr::Pd_session_component(_env, _md_alloc, _ep,
 		_label, _creation_args, _bootstrap_phase, _resources, _diag);
+}
+
+Rtcr::Cpu_session_component &Local_cpu_factory::create(Args const &, Genode::Affinity)
+{
+	Genode::log("create custom cpu session from factory");
+	return *new (_md_alloc) Rtcr::Cpu_session_component(_env, _md_alloc, _ep, _pd_root,
+		_label, _creation_args, _bootstrap_phase);
 }
 
 void Local_pd_factory::upgrade(Rtcr::Pd_session_component &, Args const &)

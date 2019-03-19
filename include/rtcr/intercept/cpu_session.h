@@ -61,7 +61,7 @@ private:
 	 *
 	 * Is used to translate child's known PD session (= custom PD session) to parent's PD session.
 	 */
-	Pd_root            &_pd_root;
+	Pd_root            *_pd_root;
 	/**
 	 * Connection to parent's Cpu session, usually from core; this class wraps this session
 	 */
@@ -83,7 +83,7 @@ private:
 
 public:
 	Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase);
+			Pd_root *pd_root, const char *label, const char *creation_args, bool &bootstrap_phase);
 	~Cpu_session_component();
 
 	Genode::Cpu_session_capability parent_cap() { return _parent_cpu.cap(); }

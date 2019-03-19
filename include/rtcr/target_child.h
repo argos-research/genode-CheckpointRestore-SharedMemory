@@ -29,7 +29,9 @@
 
 namespace Rtcr {
 	typedef Genode::Local_service<Rtcr::Pd_session_component> Local_pd_service;
+	typedef Genode::Local_service<Rtcr::Cpu_session_component> Local_cpu_service;
 	class Local_pd_factory;
+	class Local_cpu_factory;
 
 	class Target_child;
 
@@ -64,6 +66,33 @@ class Rtcr::Local_pd_factory : public Local_pd_service::Factory
 
 	void upgrade(Rtcr::Pd_session_component &, Args const &) override;
 	void destroy(Rtcr::Pd_session_component &) override;
+};
+
+class Rtcr::Local_cpu_factory : public Local_cpu_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	Rtcr::Pd_root* _pd_root;
+	const char *_label;
+	const char *_creation_args;
+	bool &_bootstrap_phase;
+
+	public:
+	Local_cpu_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+			Rtcr::Pd_root* pd_root, const char *label, const char *creation_args,
+			bool &bootstrap_phase)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _pd_root(pd_root), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase)
+	{ }
+
+	Local_cpu_factory(const Rtcr::Local_cpu_factory&) = default;
+	Local_cpu_factory& operator=(const Rtcr::Local_cpu_factory&) = default;
+
+	Rtcr::Cpu_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Cpu_session_component &, Args const &) override;
+	void destroy(Rtcr::Cpu_session_component &) override;
 };
 
 template <typename T>
@@ -166,7 +195,7 @@ private:
 
 		Cpu_root *cpu_root = nullptr;
 		Cpu_session_component *cpu_session = nullptr;
-		Genode::Local_service<Cpu_session_component>::Single_session_factory *cpu_factory = nullptr;
+		Rtcr::Local_cpu_factory *cpu_factory = nullptr;
 		Genode::Local_service<Cpu_session_component> *cpu_service = nullptr;
 
 		/*Ram_root *ram_root  = nullptr;
