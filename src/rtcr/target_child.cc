@@ -599,3 +599,13 @@ void Local_pd_factory::destroy(Rtcr::Pd_session_component &)
 {
 
 }
+
+void Local_cpu_factory::upgrade(Rtcr::Cpu_session_component &, Args const &)
+{
+
+}
+
+void Local_cpu_factory::destroy(Rtcr::Cpu_session_component &)
+{
+
+}

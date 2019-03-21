@@ -92,7 +92,7 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 
 	// Find corresponding parent PD session cap for the given custom PD session cap
-	Pd_session_component *pd_session = _pd_root.session_infos().first();
+	Pd_session_component *pd_session = _pd_root->session_infos().first();
 	if(pd_session) pd_session = pd_session->find_by_badge(child_pd_cap.local_name());
 	if(!pd_session)
 	{
@@ -253,7 +253,7 @@ Cpu_session_component *Cpu_root::_create_session(const char *args)
 
 	// Create custom Rm_session
 	Cpu_session_component *new_session =
-			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, _pd_root, label_buf, readjusted_args, _bootstrap_phase);
+			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, &_pd_root, label_buf, readjusted_args, _bootstrap_phase);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);

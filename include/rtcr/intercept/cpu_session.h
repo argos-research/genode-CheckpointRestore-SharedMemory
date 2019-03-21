@@ -95,6 +95,9 @@ public:
 
 	using Genode::List<Rtcr::Cpu_session_component>::Element::next;
 
+	Cpu_session_component(const Rtcr::Cpu_session_component&) = default;
+	Cpu_session_component& operator=(const Rtcr::Cpu_session_component&) = default;
+
 	/***************************
 	 ** Cpu_session interface **
 	 ***************************/

@@ -73,14 +73,14 @@ class Rtcr::Local_cpu_factory : public Local_cpu_service::Factory
 	Genode::Env &_env;
 	Genode::Allocator &_md_alloc;
 	Genode::Entrypoint &_ep;
-	Rtcr::Pd_root* _pd_root;
+	Rtcr::Pd_root *_pd_root;
 	const char *_label;
 	const char *_creation_args;
 	bool &_bootstrap_phase;
 
 	public:
 	Local_cpu_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			Rtcr::Pd_root* pd_root, const char *label, const char *creation_args,
+			Rtcr::Pd_root *pd_root, const char *label, const char *creation_args,
 			bool &bootstrap_phase)
 	:
 		_env(env), _md_alloc(md_alloc), _ep(ep), _pd_root(pd_root), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase)
