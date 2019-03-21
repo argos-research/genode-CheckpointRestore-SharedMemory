@@ -75,6 +75,16 @@ unsigned long Timer_session_component::elapsed_ms() const
 }
 
 
+unsigned long Timer_session_component::now_us() const
+{
+	if(verbose_debug) Genode::log("Timer::\033[33m", __func__, "\033[0m()");
+	auto result = _parent_timer.now_us();
+	if(verbose_debug) Genode::log("  result: ", result);
+
+	return result;
+}
+
+
 void Timer_session_component::msleep(unsigned ms)
 {
 	if(verbose_debug) Genode::log("Timer::\033[33m", __func__, "\033[0m(ms=", ms, ")");

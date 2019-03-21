@@ -72,6 +72,7 @@ public:
 	void trigger_periodic(unsigned us) override;
 	void sigh(Genode::Signal_context_capability sigh) override;
 	unsigned long elapsed_ms() const override;
+	unsigned long now_us() const override;
 	void msleep(unsigned ms) override;
 	void usleep(unsigned us) override;
 };

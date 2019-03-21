@@ -9,28 +9,6 @@
 using namespace Rtcr;
 
 
-Cpu_thread_component &Cpu_session_component::_create_fp_edf_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
-		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb, unsigned priority, unsigned deadline)
-{
-	// Create real CPU thread from parent
-	auto cpu_thread_cap = _parent_cpu.create_fp_edf_thread(parent_pd_cap, name, affinity, weight, utcb, priority, deadline);
-
-	// Create custom CPU thread
-	Cpu_thread_component *new_cpu_thread =
-			new (_md_alloc) Cpu_thread_component(_md_alloc, cpu_thread_cap, child_pd_cap, name.string(),
-					weight, utcb, affinity, _bootstrap_phase);
-
-	// Manage custom CPU thread
-	_ep.manage(*new_cpu_thread);
-
-	// Insert custom CPU thread into list
-	Genode::Lock::Guard _lock_guard(_parent_state.cpu_threads_lock);
-	_parent_state.cpu_threads.insert(new_cpu_thread);
-
-	return *new_cpu_thread;
-}
-
-
 Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb)
 {
@@ -129,29 +107,6 @@ int Cpu_session_component::get_sched_type(unsigned core)
 	if(verbose_debug) Genode::log("  result: ", result);
 
 	return result;
-}
-
-
-Genode::Thread_capability Cpu_session_component::create_fp_edf_thread(Genode::Pd_session_capability child_pd_cap,
-		Name const &name, Genode::Affinity::Location affinity, Weight weight,
-		Genode::addr_t utcb, unsigned priority, unsigned deadline)
-{
-	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
-
-	// Find corresponding parent PD session cap for the given custom PD session cap
-	Pd_session_component *pd_session = _pd_root.session_infos().first();
-	if(pd_session) pd_session = pd_session->find_by_badge(child_pd_cap.local_name());
-	if(!pd_session)
-	{
-		Genode::error("Thread creation failed: PD session ", child_pd_cap, " is unknown.");
-		throw Genode::Exception();
-	}
-
-	// Create custom CPU thread
-	Cpu_thread_component &new_cpu_thread = _create_fp_edf_thread(child_pd_cap, pd_session->parent_cap(), name, affinity, weight, utcb, priority, deadline);
-
-	if(verbose_debug) Genode::log("  Created custom CPU thread ", new_cpu_thread.cap());
-	return new_cpu_thread.cap();
 }
 
 
@@ -286,6 +241,13 @@ int Cpu_session_component::transfer_quota(Genode::Cpu_session_capability c, Geno
 	if(verbose_debug) Genode::log("  result: ", result);
 
 	return result;
+}
+
+void Cpu_session_component::killed()
+{
+	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m()");
+
+	_parent_cpu.killed();
 }
 
 Genode::Capability<Genode::Cpu_session::Native_cpu> Cpu_session_component::native_cpu()

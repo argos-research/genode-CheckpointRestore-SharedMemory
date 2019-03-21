@@ -98,9 +98,6 @@ public:
 	Genode::Thread_capability create_thread(Genode::Pd_session_capability pd_cap,
 			Name const &name, Genode::Affinity::Location affinity, Weight weight,
 			Genode::addr_t utcb) override;
-	Genode::Thread_capability create_fp_edf_thread(Genode::Pd_session_capability pd_cap,
-			Name const &name, Genode::Affinity::Location affinity, Weight weight,
-			Genode::addr_t utcb, unsigned priority, unsigned deadline) override;
 	void kill_thread(Genode::Thread_capability thread_cap) override;
 
 	void exception_sigh(Genode::Signal_context_capability handler) override;
@@ -114,6 +111,7 @@ public:
 	void dead(Genode::Dataspace_capability ds) override;
 	int ref_account(Genode::Cpu_session_capability c) override;
 	int transfer_quota(Genode::Cpu_session_capability c, Genode::size_t q) override;
+	void killed() override;
 	Genode::Capability<Native_cpu> native_cpu() override;
 };
 
