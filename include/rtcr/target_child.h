@@ -52,11 +52,12 @@ class Rtcr::Local_pd_factory : public Local_pd_service::Factory
 	bool &_bootstrap_phase;
 	Genode::Session::Resources _resources;
 	Genode::Session::Diag _diag;
+	Pd_session_component   &_pd;
 	public:
 	Local_pd_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		const char *label, const char *creation_args, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag)
+		const char *label, const char *creation_args, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Pd_session_component   &pd)
 	:
-		_env(env), _md_alloc(md_alloc), _ep(ep), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag)
+		_env(env), _md_alloc(md_alloc), _ep(ep), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _pd(pd)
 	{ }
 
 	Local_pd_factory(const Rtcr::Local_pd_factory&) = default;
