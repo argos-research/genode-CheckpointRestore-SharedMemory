@@ -233,7 +233,7 @@ void Cpu_session_component::killed()
 
 Cpu_session_component *Cpu_root::_create_session(const char *args)
 {
-	if(verbose_debug) Genode::log("Rm_root::\033[33m", __func__, "\033[0m(", args,")");
+	if(verbose_debug) Genode::log("Cpu_root::\033[33m", __func__, "\033[0m(", args,")");
 
 	// Extracting label from args
 	char label_buf[128];

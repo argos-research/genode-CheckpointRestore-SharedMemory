@@ -117,12 +117,12 @@ private:
 	 */
 	Genode::List<Timer_session_component> _session_rpc_objs;
 
-protected:
+public:
 	Timer_session_component *_create_session(const char *args);
 	void _upgrade_session(Timer_session_component *session, const char *upgrade_args);
 	void _destroy_session(Timer_session_component *session);
 
-public:
+
 	Timer_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool &bootstrap_phase);
     ~Timer_root();
     

@@ -116,12 +116,11 @@ private:
 	 */
 	Genode::List<Rom_session_component> _session_rpc_objs;
 
-protected:
+public:
 	Rom_session_component *_create_session(const char *args);
 	void _upgrade_session(Rom_session_component *session, const char *upgrade_args);
 	void _destroy_session(Rom_session_component *session);
 
-public:
 	Rom_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool &bootstrap_phase);
     ~Rom_root();
 

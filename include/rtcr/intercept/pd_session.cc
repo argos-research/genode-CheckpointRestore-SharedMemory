@@ -327,7 +327,6 @@ Genode::Capability<Genode::Pd_session::Native_pd> Pd_session_component::native_p
 
 Pd_session_component *Pd_root::_create_session(const char *args)
 {
-	Genode::log("BUMMMM");
 	if(verbose_debug) Genode::log("Pd_root::\033[33m", __func__, "\033[0m(", args,")");
 
 	/// Extracting label from args
@@ -335,7 +334,7 @@ Pd_session_component *Pd_root::_create_session(const char *args)
 	Genode::Arg label_arg = Genode::Arg_string::find_arg(args, "label");
 	label_arg.string(label_buf, sizeof(label_buf), "");
 
-	/* Revert ram_quota calculation, because the monitor needs the original session creation argument
+	// Revert ram_quota calculation, because the monitor needs the original session creation argument
 	char ram_quota_buf[32];
 	char readjusted_args[160];
 	Genode::strncpy(readjusted_args, args, sizeof(readjusted_args));
@@ -344,12 +343,12 @@ Pd_session_component *Pd_root::_create_session(const char *args)
 	readjusted_ram_quota = readjusted_ram_quota + sizeof(Pd_session_component) + md_alloc()->overhead(sizeof(Pd_session_component));
 
 	Genode::snprintf(ram_quota_buf, sizeof(ram_quota_buf), "%zu", readjusted_ram_quota);
-	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);*/
+	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);
 
 	Genode::Session::Diag diag{};
 	// Create custom Pd_session
 	Pd_session_component *new_session =
-			new (_md_alloc) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args("cap_quota=50,ram_quota=100000"), diag);
+			new (_md_alloc) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args(readjusted_args), diag);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);

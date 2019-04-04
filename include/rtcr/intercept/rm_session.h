@@ -128,12 +128,12 @@ private:
 	 */
 	Genode::List<Rm_session_component> _session_rpc_objs;
 
-protected:
+public:
 	Rm_session_component *_create_session(const char *args);
 	void _upgrade_session(Rm_session_component *session, const char *upgrade_args);
 	void _destroy_session(Rm_session_component *session);
 
-public:
+
 	Rm_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &session_ep, bool &bootstrap_phase);
     ~Rm_root();
 
