@@ -19,15 +19,17 @@ Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &
 	_bootstrap_phase (bootstrap_phase),
 	_parent_pd       (env, label),
 	_parent_state    (creation_args, _bootstrap_phase),
-	_address_space   (_md_alloc, _parent_pd.address_space(), 0, "address_space", _bootstrap_phase),
-	_stack_area      (_md_alloc, _parent_pd.stack_area(),    0, "stack_area", _bootstrap_phase),
-	_linker_area     (_md_alloc, _parent_pd.linker_area(),   0, "linker_area", _bootstrap_phase)
+	_address_space   (_md_alloc, _parent_pd.address_space(), 0, "address_space", _bootstrap_phase, resources, diag, ep),
+	_stack_area      (_md_alloc, _parent_pd.stack_area(),    0, "stack_area", _bootstrap_phase, resources, diag, ep),
+	_linker_area     (_md_alloc, _parent_pd.linker_area(),   0, "linker_area", _bootstrap_phase, resources, diag, ep)
 {
 	//if(verbose_debug) Genode::log("\033[33m", "Pd", "\033[0m (parent ", _parent_pd, ")");
 
 	_ep.manage(_address_space);
 	_ep.manage(_stack_area);
 	_ep.manage(_linker_area);
+
+	Genode::log("PD cap ",cap());
 }
 
 
@@ -348,7 +350,7 @@ Pd_session_component *Pd_root::_create_session(const char *args)
 	Genode::Session::Diag diag{};
 	// Create custom Pd_session
 	Pd_session_component *new_session =
-			new (_md_alloc) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args(readjusted_args), diag);
+			new (md_alloc()) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args(readjusted_args), diag);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
@@ -400,6 +402,7 @@ Pd_root::Pd_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoi
 	_session_rpc_objs ()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	Genode::log("Pd root cap ",cap());
 }
 
 

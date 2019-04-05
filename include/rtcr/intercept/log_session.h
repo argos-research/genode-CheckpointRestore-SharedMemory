@@ -8,10 +8,14 @@
 #define _RTCR_LOG_SESSION_H_
 
 /* Genode includes */
+#include <util/reconstructible.h>
+#include <base/allocator_guard.h>
+#include <base/session_object.h>
+#include <base/registry.h>
+#include <base/heap.h>
 #include <log_session/connection.h>
-#include <base/allocator.h>
+#include <util/arg_string.h>
 #include <root/component.h>
-#include <util/list.h>
 
 /* Rtcr includes */
 #include "../online_storage/log_session_info.h"
@@ -27,7 +31,7 @@ namespace Rtcr {
 /**
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
-class Rtcr::Log_session_component : public Genode::Rpc_object<Genode::Log_session>,
+class Rtcr::Log_session_component : public Genode::Session_object<Genode::Log_session>,
                                     private Genode::List<Log_session_component>::Element
 {
 private:
@@ -56,7 +60,7 @@ private:
 
 public:
 	Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *label, const char *creation_args, bool bootstrapped = false);
+			const char *label, const char *creation_args, bool bootstrapped, Resources resources, Diag diag);
 	~Log_session_component();
 
 	Genode::Log_session_capability parent_cap() { return _parent_log.cap(); }

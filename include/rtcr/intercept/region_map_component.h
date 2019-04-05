@@ -11,6 +11,7 @@
 #include <region_map/client.h>
 #include <dataspace/client.h>
 #include <base/allocator.h>
+#include <base/session_object.h>
 
 /* Rtcr includes */
 #include "ram_session.h"
@@ -26,7 +27,7 @@ namespace Rtcr {
 /**
  * Custom Region map intercepting RPC methods
  */
-class Rtcr::Region_map_component : public Genode::Rpc_object<Genode::Region_map>,
+class Rtcr::Region_map_component : public Genode::Session_object<Genode::Region_map>,
                                    private Genode::List<Region_map_component>::Element
 {
 private:
@@ -62,7 +63,7 @@ private:
 
 public:
 	Region_map_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Region_map> region_map_cap,
-			Genode::size_t size, const char *label, bool &bootstrap_phase);
+			Genode::size_t size, const char *label, bool &bootstrap_phase, Resources resources, Diag diag, Genode::Entrypoint &ep);
 	~Region_map_component();
 
 	Genode::Capability<Genode::Region_map> parent_cap() { return _parent_region_map; }

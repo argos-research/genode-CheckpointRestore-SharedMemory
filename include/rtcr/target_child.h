@@ -86,13 +86,15 @@ class Rtcr::Local_cpu_factory : public Local_cpu_service::Factory
 	const char *_label;
 	const char *_creation_args;
 	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
 	Cpu_session_component  &_cpu;
 	public:
 	Local_cpu_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
 			Rtcr::Pd_root *pd_root, const char *label, const char *creation_args,
-			bool &bootstrap_phase, Cpu_session_component  &cpu)
+			bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Cpu_session_component  &cpu)
 	:
-		_env(env), _md_alloc(md_alloc), _ep(ep), _pd_root(pd_root), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase), _cpu(cpu)
+		_env(env), _md_alloc(md_alloc), _ep(ep), _pd_root(pd_root), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _cpu(cpu)
 	{ }
 
 	Local_cpu_factory(const Rtcr::Local_cpu_factory&) = default;
@@ -110,11 +112,13 @@ class Rtcr::Local_rom_factory : public Local_rom_service::Factory
 	Genode::Allocator &_md_alloc;
 	Genode::Entrypoint &_ep;
 	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
 	Rom_session_component  &_rom;
 	public:
-	Local_rom_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Rom_session_component  &rom)
+	Local_rom_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Rom_session_component  &rom)
 	:
-		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _rom(rom)
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _rom(rom)
 	{ }
 
 	Local_rom_factory(const Rtcr::Local_rom_factory&) = default;
@@ -132,11 +136,13 @@ class Rtcr::Local_rm_factory : public Local_rm_service::Factory
 	Genode::Allocator &_md_alloc;
 	Genode::Entrypoint &_ep;
 	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
 	Rm_session_component  &_rm;
 	public:
-	Local_rm_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Rm_session_component  &rm)
+	Local_rm_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Rm_session_component  &rm)
 	:
-		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _rm(rm)
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _rm(rm)
 	{ }
 
 	Local_rm_factory(const Rtcr::Local_rm_factory&) = default;
@@ -154,11 +160,13 @@ class Rtcr::Local_log_factory : public Local_log_service::Factory
 	Genode::Allocator &_md_alloc;
 	Genode::Entrypoint &_ep;
 	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
 	Log_session_component  &_log;
 	public:
-	Local_log_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Log_session_component  &log)
+	Local_log_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Log_session_component  &log)
 	:
-		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _log(log)
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _log(log)
 	{ }
 
 	Local_log_factory(const Rtcr::Local_log_factory&) = default;
@@ -176,11 +184,13 @@ class Rtcr::Local_timer_factory : public Local_timer_service::Factory
 	Genode::Allocator &_md_alloc;
 	Genode::Entrypoint &_ep;
 	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
 	Timer_session_component  &_timer;
 	public:
-	Local_timer_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Timer_session_component  &timer)
+	Local_timer_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Timer_session_component  &timer)
 	:
-		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _timer(timer)
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _timer(timer)
 	{ }
 
 	Local_timer_factory(const Rtcr::Local_timer_factory&) = default;

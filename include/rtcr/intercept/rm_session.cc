@@ -14,9 +14,10 @@ Region_map_component &Rm_session_component::_create(Genode::size_t size)
 	// Create real Region map from parent
 	auto parent_cap = _parent_rm.create(size);
 
+	Genode::Session::Diag diag{};
 	// Create custom Region map
 	Region_map_component *new_region_map =
-			new (_md_alloc) Region_map_component(_md_alloc, parent_cap, size, "custom", _bootstrap_phase);
+			new (_md_alloc) Region_map_component(_md_alloc, parent_cap, size, "custom", _bootstrap_phase, Genode::session_resources_from_args(""), diag, _ep);
 
 	// Manage custom Region map
 	_ep.manage(*new_region_map);
@@ -50,8 +51,9 @@ void Rm_session_component::_destroy(Region_map_component &region_map)
 
 
 Rm_session_component::Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		const char *creation_args, bool &bootstrap_phase)
+		const char *creation_args, bool &bootstrap_phase, Resources resources, Diag diag)
 :
+	Session_object(ep, resources, "", diag),
 	_md_alloc         (md_alloc),
 	_ep               (ep),
 	_bootstrap_phase  (bootstrap_phase),
@@ -134,9 +136,10 @@ Rm_session_component *Rm_root::_create_session(const char *args)
 	Genode::snprintf(ram_quota_buf, sizeof(ram_quota_buf), "%zu", readjusted_ram_quota);
 	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);
 
+	Genode::Session::Diag diag{};
 	// Create custom Rm_session
 	Rm_session_component *new_session =
-			new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep, readjusted_args, _bootstrap_phase);
+			new (md_alloc()) Rm_session_component(_env, _md_alloc, _ep, readjusted_args, _bootstrap_phase, Genode::session_resources_from_args(readjusted_args), diag);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);

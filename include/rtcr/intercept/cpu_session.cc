@@ -51,8 +51,9 @@ void Cpu_session_component::_kill_thread(Cpu_thread_component &cpu_thread)
 
 
 Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		Pd_root *pd_root, const char *label, const char *creation_args, bool &bootstrap_phase)
+		Pd_root &pd_root, const char *label, const char *creation_args, bool &bootstrap_phase, Resources resources, Diag diag)
 :
+	Session_object(ep, resources, label, diag),
 	_env             (env),
 	_md_alloc        (md_alloc),
 	_ep              (ep),
@@ -62,7 +63,9 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 	_parent_state    (creation_args, bootstrap_phase)
 
 {
-	if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent)");
+	//if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent)");
+	Genode::log("Parent Cpu cap ",_parent_cpu.cap());
+	Genode::log("Cpu cap ",cap());
 }
 
 
@@ -92,7 +95,7 @@ Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_sessio
 	if(verbose_debug) Genode::log("Cpu::\033[33m", __func__, "\033[0m(name=", name.string(), ")");
 
 	// Find corresponding parent PD session cap for the given custom PD session cap
-	Pd_session_component *pd_session = _pd_root->session_infos().first();
+	Pd_session_component *pd_session = _pd_root.session_infos().first();
 	if(pd_session) pd_session = pd_session->find_by_badge(child_pd_cap.local_name());
 	if(!pd_session)
 	{
@@ -251,9 +254,11 @@ Cpu_session_component *Cpu_root::_create_session(const char *args)
 	Genode::snprintf(ram_quota_buf, sizeof(ram_quota_buf), "%zu", readjusted_ram_quota);
 	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);
 
+	Genode::Session::Diag diag{};
 	// Create custom Rm_session
 	Cpu_session_component *new_session =
-			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, &_pd_root, label_buf, readjusted_args, _bootstrap_phase);
+			new (md_alloc()) Cpu_session_component(_env, _md_alloc, _ep, _pd_root, label_buf, readjusted_args, _bootstrap_phase, Genode::session_resources_from_args(readjusted_args), diag);
+	Genode::log("new_session cap ",new_session->cap());
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
@@ -306,6 +311,7 @@ Cpu_root::Cpu_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entryp
 	_session_rpc_objs ()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	Genode::log("Cpu root cap ",cap());
 }
 
 Cpu_root::~Cpu_root()

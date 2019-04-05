@@ -8,6 +8,7 @@
 #define _RTCR_TIMER_SESSION_H_
 
 /* Genode includes */
+#include <base/session_object.h>
 #include <timer_session/connection.h>
 #include <root/component.h>
 #include <base/allocator.h>
@@ -27,7 +28,7 @@ namespace Rtcr {
 /**
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
-class Rtcr::Timer_session_component : public Genode::Rpc_object<Timer::Session>,
+class Rtcr::Timer_session_component : public Genode::Session_object<Timer::Session>,
                                       private Genode::List<Timer_session_component>::Element
 {
 private:
@@ -55,7 +56,7 @@ private:
 
 public:
 	Timer_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *creation_args, bool bootstrapped = false);
+			const char *creation_args, bool bootstrapped, Resources resources, Diag diag);
 	~Timer_session_component();
 
 	Timer::Session_capability parent_cap() { return _parent_timer.cap(); }

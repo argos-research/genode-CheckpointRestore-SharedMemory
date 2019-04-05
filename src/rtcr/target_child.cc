@@ -133,7 +133,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 			Genode::Cpu_session::DEFAULT_PRIORITY, 1024*1024, 10, label);
 	Genode::log("init_cpu ",(const char*)args_buf);
 	// Issuing session method of Cpu_root
-	Cpu_session_component *cpu_session = cpu_root._create_session(args_buf);
+	Rtcr::Cpu_session_component *cpu_session = cpu_root._create_session(args_buf);
 
 	// Find created RPC object in Cpu_root's list
 	//Cpu_session_component *cpu_session = cpu_root.session_infos().first();
@@ -266,18 +266,18 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 {
 	bool bar=false;
 	_custom_services.pd_session = &_resources.pd;
+	_custom_services.cpu_session = &_resources.cpu;
 	_custom_services.pd_factory = new (_md_alloc) Rtcr::Local_pd_factory(_env, _md_alloc, _resources_ep, name, name, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(),_resources.pd);
 	_custom_services.pd_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*_custom_services.pd_factory);
-	_custom_services.cpu_session = &_resources.cpu;
-	_custom_services.cpu_factory = new (_md_alloc) Rtcr::Local_cpu_factory(_env, _md_alloc, _resources_ep, _custom_services.pd_root, name, name, bar, _resources.cpu);
+	_custom_services.cpu_factory = new (_md_alloc) Rtcr::Local_cpu_factory(_env, _md_alloc, _resources_ep, _custom_services.pd_root, name, name, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.cpu);
 	_custom_services.cpu_service = new (_md_alloc) Genode::Local_service<Rtcr::Cpu_session_component>(*_custom_services.cpu_factory);
-	_custom_services.rom_factory = new (_md_alloc) Rtcr::Local_rom_factory(_env, _md_alloc, _resources_ep, bar, _resources.rom);
+	_custom_services.rom_factory = new (_md_alloc) Rtcr::Local_rom_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.rom);
 	_custom_services.rom_service = new (_md_alloc) Genode::Local_service<Rtcr::Rom_session_component>(*_custom_services.rom_factory);
-	_custom_services.rm_factory = new (_md_alloc) Rtcr::Local_rm_factory(_env, _md_alloc, _resources_ep, bar, _resources.rm);
+	_custom_services.rm_factory = new (_md_alloc) Rtcr::Local_rm_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.rm);
 	_custom_services.rm_service = new (_md_alloc) Genode::Local_service<Rtcr::Rm_session_component>(*_custom_services.rm_factory);
-	_custom_services.log_factory = new (_md_alloc) Rtcr::Local_log_factory(_env, _md_alloc, _resources_ep, bar, _resources.log);
+	_custom_services.log_factory = new (_md_alloc) Rtcr::Local_log_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.log);
 	_custom_services.log_service = new (_md_alloc) Genode::Local_service<Rtcr::Log_session_component>(*_custom_services.log_factory);
-	_custom_services.timer_factory = new (_md_alloc) Rtcr::Local_timer_factory(_env, _md_alloc, _resources_ep, bar, _resources.timer);
+	_custom_services.timer_factory = new (_md_alloc) Rtcr::Local_timer_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.timer);
 	_custom_services.timer_service = new (_md_alloc) Genode::Local_service<Rtcr::Timer_session_component>(*_custom_services.timer_factory);
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
 	_in_bootstrap = false;
