@@ -18,7 +18,7 @@ Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_c
 	// Create custom CPU thread
 	Cpu_thread_component *new_cpu_thread =
 			new (_md_alloc) Cpu_thread_component(_md_alloc, cpu_thread_cap, child_pd_cap, name.string(),
-					weight, utcb, affinity, _bootstrap_phase);
+					weight, utcb, affinity, _bootstrap_phase, _resources, _diag, _ep);
 
 	// Manage custom CPU thread
 	_ep.manage(*new_cpu_thread);
@@ -60,7 +60,9 @@ Cpu_session_component::Cpu_session_component(Genode::Env &env, Genode::Allocator
 	_bootstrap_phase (bootstrap_phase),
 	_pd_root         (pd_root),
 	_parent_cpu      (env, label),
-	_parent_state    (creation_args, bootstrap_phase)
+	_parent_state    (creation_args, bootstrap_phase),
+	_resources(resources),
+	_diag(diag)
 
 {
 	//if(verbose_debug) Genode::log("\033[33m", "Cpu", "\033[0m(parent)");
@@ -311,7 +313,7 @@ Cpu_root::Cpu_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entryp
 	_session_rpc_objs ()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
-	Genode::log("Cpu root cap ",cap());
+	//Genode::log("Cpu root cap ",cap());
 }
 
 Cpu_root::~Cpu_root()

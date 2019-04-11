@@ -12,6 +12,7 @@
 #include <base/allocator.h>
 #include <base/rpc_server.h>
 #include <base/entrypoint.h>
+#include <base/session_object.h>
 
 /* Rtcr includes */
 #include "../online_storage/cpu_thread_info.h"
@@ -22,7 +23,7 @@ namespace Rtcr {
 	constexpr bool cpu_thread_verbose_debug = true;
 }
 
-class Rtcr::Cpu_thread_component : public Genode::Rpc_object<Genode::Cpu_thread>,
+class Rtcr::Cpu_thread_component : public Genode::Session_object<Genode::Cpu_thread>,
                                    private Genode::List<Cpu_thread_component>::Element
 {
 private:
@@ -49,7 +50,7 @@ public:
 
 	Cpu_thread_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Cpu_thread> cpu_thread_cap,
 			Genode::Pd_session_capability pd_session_cap, const char *name, Genode::Cpu_session::Weight weight,
-			Genode::addr_t utcb, Genode::Affinity::Location affinity, bool &bootstrap_phase);
+			Genode::addr_t utcb, Genode::Affinity::Location affinity, bool &bootstrap_phase,Resources resources, Diag diag, Genode::Entrypoint &ep);
 	~Cpu_thread_component();
 
 	Genode::Capability<Genode::Cpu_thread> parent_cap() { return _parent_cpu_thread; }

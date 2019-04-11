@@ -402,7 +402,7 @@ Pd_root::Pd_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoi
 	_session_rpc_objs ()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
-	Genode::log("Pd root cap ",cap());
+	//Genode::log("Pd root cap ",cap());
 }
 
 
