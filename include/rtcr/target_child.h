@@ -28,6 +28,19 @@
 #include <os/session_requester.h>
 
 namespace Rtcr {
+	typedef Genode::Local_service<Rtcr::Pd_session_component> Local_pd_service;
+	typedef Genode::Local_service<Rtcr::Cpu_session_component> Local_cpu_service;
+	typedef Genode::Local_service<Rtcr::Rom_session_component> Local_rom_service;
+	typedef Genode::Local_service<Rtcr::Rm_session_component> Local_rm_service;
+	typedef Genode::Local_service<Rtcr::Log_session_component> Local_log_service;
+	typedef Genode::Local_service<Rtcr::Timer_session_component> Local_timer_service;
+	class Local_pd_factory;
+	class Local_cpu_factory;
+	class Local_rom_factory;
+	class Local_rm_factory;
+	class Local_log_factory;
+	class Local_timer_factory;
+
 	class Target_child;
 
 	constexpr bool child_verbose_debug = true;
@@ -36,6 +49,158 @@ namespace Rtcr {
 	class Restorer;
 }
 
+
+class Rtcr::Local_pd_factory : public Local_pd_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	const char *_label;
+	const char *_creation_args;
+	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
+	Pd_session_component   &_pd;
+	public:
+	Local_pd_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+		const char *label, const char *creation_args, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Pd_session_component   &pd)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _pd(pd)
+	{ }
+
+	Local_pd_factory(const Rtcr::Local_pd_factory&) = default;
+	Local_pd_factory& operator=(const Rtcr::Local_pd_factory&) = default;
+
+	Rtcr::Pd_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Pd_session_component &, Args const &) override;
+	void destroy(Rtcr::Pd_session_component &) override;
+};
+
+class Rtcr::Local_cpu_factory : public Local_cpu_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	Rtcr::Pd_root *_pd_root;
+	const char *_label;
+	const char *_creation_args;
+	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
+	Cpu_session_component  &_cpu;
+	public:
+	Local_cpu_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
+			Rtcr::Pd_root *pd_root, const char *label, const char *creation_args,
+			bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Cpu_session_component  &cpu)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _pd_root(pd_root), _label(label), _creation_args(creation_args), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _cpu(cpu)
+	{ }
+
+	Local_cpu_factory(const Rtcr::Local_cpu_factory&) = default;
+	Local_cpu_factory& operator=(const Rtcr::Local_cpu_factory&) = default;
+
+	Rtcr::Cpu_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Cpu_session_component &, Args const &) override;
+	void destroy(Rtcr::Cpu_session_component &) override;
+};
+
+class Rtcr::Local_rom_factory : public Local_rom_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
+	Rom_session_component  &_rom;
+	public:
+	Local_rom_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Rom_session_component  &rom)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _rom(rom)
+	{ }
+
+	Local_rom_factory(const Rtcr::Local_rom_factory&) = default;
+	Local_rom_factory& operator=(const Rtcr::Local_rom_factory&) = default;
+
+	Rtcr::Rom_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Rom_session_component &, Args const &) override;
+	void destroy(Rtcr::Rom_session_component &) override;
+};
+
+class Rtcr::Local_rm_factory : public Local_rm_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
+	Rm_session_component  &_rm;
+	public:
+	Local_rm_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Rm_session_component  &rm)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _rm(rm)
+	{ }
+
+	Local_rm_factory(const Rtcr::Local_rm_factory&) = default;
+	Local_rm_factory& operator=(const Rtcr::Local_rm_factory&) = default;
+
+	Rtcr::Rm_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Rm_session_component &, Args const &) override;
+	void destroy(Rtcr::Rm_session_component &) override;
+};
+
+class Rtcr::Local_log_factory : public Local_log_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
+	Log_session_component  &_log;
+	public:
+	Local_log_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Log_session_component  &log)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _log(log)
+	{ }
+
+	Local_log_factory(const Rtcr::Local_log_factory&) = default;
+	Local_log_factory& operator=(const Rtcr::Local_log_factory&) = default;
+
+	Rtcr::Log_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Log_session_component &, Args const &) override;
+	void destroy(Rtcr::Log_session_component &) override;
+};
+
+class Rtcr::Local_timer_factory : public Local_timer_service::Factory
+{
+	Genode::Env &_env;
+	Genode::Allocator &_md_alloc;
+	Genode::Entrypoint &_ep;
+	bool &_bootstrap_phase;
+	Genode::Session::Resources _resources;
+	Genode::Session::Diag _diag;
+	Timer_session_component  &_timer;
+	public:
+	Local_timer_factory(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep, bool &bootstrap_phase, Genode::Session::Resources resources, Genode::Session::Diag diag, Timer_session_component  &timer)
+	:
+		_env(env), _md_alloc(md_alloc), _ep(ep), _bootstrap_phase(bootstrap_phase), _resources(resources), _diag(diag), _timer(timer)
+	{ }
+
+	Local_timer_factory(const Rtcr::Local_timer_factory&) = default;
+	Local_timer_factory& operator=(const Rtcr::Local_timer_factory&) = default;
+
+	Rtcr::Timer_session_component &create(Args const &, Genode::Affinity) override;
+
+	void upgrade(Rtcr::Timer_session_component &, Args const &) override;
+	void destroy(Rtcr::Timer_session_component &) override;
+};
 
 template <typename T>
 inline T &find_service(Genode::Registry<T> &services,
@@ -58,13 +223,6 @@ inline T &find_service(Genode::Registry<T> &services,
 
 	return *service;
 }
-
-/*struct Genode::Local_service<Rtcr::Pd_session_component>::Factory
-{
-	Rtcr::Pd_session_component Genode::Local_service<Rtcr::Pd_session_component>::Factory::create(Args const &, Affinity);
-			void Genode::Local_service<Rtcr::Pd_session_component>::Factory::upgrade(Rtcr::Pd_session_component &, Args const &);
-			void Genode::Local_service<Rtcr::Pd_session_component>::Factory::destroy(Rtcr::Pd_session_component &);
-}*/
 
 /**
  * Encapsulates the policy and creation of the child
@@ -115,51 +273,7 @@ private:
 	/**
 	 * Struct for custom / intercepted services
 	 */
-	struct Intercepted_parent_service : Genode::Parent_service
-	{
-		Genode::Signal_context_capability fault_sigh { };
-
-		Intercepted_parent_service(Genode::Env &env, Genode::Service::Name const &name)
-		: Parent_service(env, name) { }
-	};
-
-	struct Local_cpu_service : Intercepted_parent_service
-	{
-		Local_cpu_service(Genode::Env &env) : Intercepted_parent_service(env, "CPU") { }
-
-		void initiate_request(Genode::Session_state &session) override
-		{
-			Intercepted_parent_service::initiate_request(session);
-
-			if (session.phase != Genode::Session_state::AVAILABLE)
-				return;
-
-			Genode::Cpu_session_client cpu(Genode::reinterpret_cap_cast<Genode::Cpu_session>(session.cap));
-			cpu.exception_sigh(fault_sigh);
-		}
-	};
-
-	struct Local_pd_service : Intercepted_parent_service
-	{
-		Local_pd_service(Genode::Env &env) : Intercepted_parent_service(env, "PD") { }
-
-		void initiate_request(Genode::Session_state &session) override
-		{
-			Intercepted_parent_service::initiate_request(session);
-
-			if (session.phase != Genode::Session_state::AVAILABLE)
-				return;
-
-			Genode::Pd_session_client pd(Genode::reinterpret_cap_cast<Genode::Pd_session>(session.cap));
-
-			Genode::Region_map_client(pd.address_space()).fault_handler(fault_sigh);
-			Genode::Region_map_client(pd.stack_area())   .fault_handler(fault_sigh);
-			Genode::Region_map_client(pd.linker_area())  .fault_handler(fault_sigh);
-		}
-	};
-
-	Local_cpu_service           _cpu_service { _env };
-	Local_pd_service            _pd_service  { _env };
+	
 
 	struct Custom_services
 	{
@@ -176,12 +290,12 @@ private:
 		bool foo=false;
 		Pd_root *pd_root = nullptr;
 		Pd_session_component *pd_session = nullptr;
-		Genode::Local_service<Rtcr::Pd_session_component>::Single_session_factory *pd_factory = nullptr;
+		Rtcr::Local_pd_factory *pd_factory = nullptr;
 		Genode::Local_service<Rtcr::Pd_session_component> *pd_service = nullptr;
 
 		Cpu_root *cpu_root = nullptr;
 		Cpu_session_component *cpu_session = nullptr;
-		Genode::Local_service<Cpu_session_component>::Single_session_factory *cpu_factory = nullptr;
+		Rtcr::Local_cpu_factory *cpu_factory = nullptr;
 		Genode::Local_service<Cpu_session_component> *cpu_service = nullptr;
 
 		/*Ram_root *ram_root  = nullptr;
@@ -191,22 +305,22 @@ private:
 
 		Rom_root *rom_root  = nullptr;
 		Rom_session_component *rom_session = nullptr;
-		Genode::Local_service<Rom_session_component>::Single_session_factory *rom_factory = nullptr;
+		Rtcr::Local_rom_factory *rom_factory = nullptr;
 		Genode::Local_service<Rom_session_component> *rom_service = nullptr;
 
 		Rm_root *rm_root  = nullptr;
 		Rm_session_component *rm_session = nullptr;
-		Genode::Local_service<Rm_session_component>::Single_session_factory *rm_factory = nullptr;
+		Rtcr::Local_rm_factory *rm_factory = nullptr;
 		Genode::Local_service<Rm_session_component> *rm_service = nullptr;
 
 		Log_root *log_root  = nullptr;
 		Log_session_component *log_session = nullptr;
-		Genode::Local_service<Log_session_component>::Single_session_factory *log_factory = nullptr;
+		Rtcr::Local_log_factory *log_factory = nullptr;
 		Genode::Local_service<Log_session_component> *log_service = nullptr;
 
 		Timer_root *timer_root  = nullptr;
 		Timer_session_component *timer_session = nullptr;
-		Genode::Local_service<Timer_session_component>::Single_session_factory *timer_factory = nullptr;
+		Rtcr::Local_timer_factory *timer_factory = nullptr;
 		Genode::Local_service<Timer_session_component> *timer_service = nullptr;
 
 		Custom_services(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
@@ -233,17 +347,23 @@ private:
 		/**
 		 * Custom RAM RPC object
 		 */
-		//Ram_session_component  &ram;
-		/**
-		 * Parent's ROM session
-		 */
-		Genode::Rom_connection  rom;
+		Rom_session_component  &rom;
+
+		Rm_session_component  &rm;
+
+		Log_session_component  &log;
+
+		Timer_session_component  &timer;
 
 		Resources(Genode::Env &env, Genode::Allocator &md_alloc, const char *label, Custom_services &custom_services);
 		~Resources();
 
 		Pd_session_component &init_pd(const char *label, Pd_root &pd_root, Genode::Allocator &_md_alloc);
 		Cpu_session_component &init_cpu(const char *label, Cpu_root &cpu_root, Genode::Allocator &_md_alloc);
+		Rom_session_component &init_rom(const char *label, Rom_root &rom_root, Genode::Allocator &_md_alloc);
+		Rm_session_component &init_rm(const char *label, Rm_root &rm_root, Genode::Allocator &_md_alloc);
+		Log_session_component &init_log(const char *label, Log_root &log_root, Genode::Allocator &_md_alloc);
+		Timer_session_component &init_timer(const char *label, Timer_root &timer_root, Genode::Allocator &_md_alloc);
 		//Ram_session_component &init_ram(const char *label, Ram_root &ram_root);
 	} _resources;
 
@@ -325,7 +445,8 @@ public:
 		                              Genode::Session_label const &) override;
 	//void filter_session_args(Genode::Service::Name const &,
 	//                                 char * /*args*/, Genode::size_t /*args_len*/) override;
-	//void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
+	void init(Genode::Pd_session &, Genode::Capability<Genode::Pd_session>) override;
+	void init(Genode::Cpu_session &, Genode::Capability<Genode::Cpu_session>) override;
 
 	Genode::Pd_session           &ref_pd() { return _resources.pd;  }
 	Genode::Pd_session_capability ref_pd_cap() const { return _resources.pd.cap();  }

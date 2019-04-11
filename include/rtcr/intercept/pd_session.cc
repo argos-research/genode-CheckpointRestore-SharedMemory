@@ -19,15 +19,17 @@ Pd_session_component::Pd_session_component(Genode::Env &env, Genode::Allocator &
 	_bootstrap_phase (bootstrap_phase),
 	_parent_pd       (env, label),
 	_parent_state    (creation_args, _bootstrap_phase),
-	_address_space   (_md_alloc, _parent_pd.address_space(), 0, "address_space", _bootstrap_phase),
-	_stack_area      (_md_alloc, _parent_pd.stack_area(),    0, "stack_area", _bootstrap_phase),
-	_linker_area     (_md_alloc, _parent_pd.linker_area(),   0, "linker_area", _bootstrap_phase)
+	_address_space   (_md_alloc, _parent_pd.address_space(), 0, "address_space", _bootstrap_phase, resources, diag, ep),
+	_stack_area      (_md_alloc, _parent_pd.stack_area(),    0, "stack_area", _bootstrap_phase, resources, diag, ep),
+	_linker_area     (_md_alloc, _parent_pd.linker_area(),   0, "linker_area", _bootstrap_phase, resources, diag, ep)
 {
 	//if(verbose_debug) Genode::log("\033[33m", "Pd", "\033[0m (parent ", _parent_pd, ")");
 
 	_ep.manage(_address_space);
 	_ep.manage(_stack_area);
 	_ep.manage(_linker_area);
+
+	Genode::log("PD cap ",cap());
 }
 
 
@@ -254,11 +256,16 @@ void Pd_session_component::ref_account(Genode::Capability<Genode::Pd_session> ca
 
 void Pd_session_component::transfer_quota(Genode::Capability<Genode::Pd_session> cap, Genode::Cap_quota quota)
 {
+	Genode::log("intercepted cap quota ",quota.value);
+	Genode::log("intercepted cap quota ",_parent_pd.cap_quota().value);
+	Genode::log(cap);
 	_parent_pd.transfer_quota(cap, quota);
 }
 
 void Pd_session_component::transfer_quota(Genode::Capability<Genode::Pd_session> cap, Genode::Ram_quota quota)
 {
+	Genode::log("intercepted ram quota ",quota.value);
+	Genode::log("intercepted ram quota ",_parent_pd.ram_quota().value);
 	_parent_pd.transfer_quota(cap, quota);
 }
 
@@ -322,7 +329,6 @@ Genode::Capability<Genode::Pd_session::Native_pd> Pd_session_component::native_p
 
 Pd_session_component *Pd_root::_create_session(const char *args)
 {
-	Genode::log("BUMMMM");
 	if(verbose_debug) Genode::log("Pd_root::\033[33m", __func__, "\033[0m(", args,")");
 
 	/// Extracting label from args
@@ -330,7 +336,7 @@ Pd_session_component *Pd_root::_create_session(const char *args)
 	Genode::Arg label_arg = Genode::Arg_string::find_arg(args, "label");
 	label_arg.string(label_buf, sizeof(label_buf), "");
 
-	/* Revert ram_quota calculation, because the monitor needs the original session creation argument
+	// Revert ram_quota calculation, because the monitor needs the original session creation argument
 	char ram_quota_buf[32];
 	char readjusted_args[160];
 	Genode::strncpy(readjusted_args, args, sizeof(readjusted_args));
@@ -339,12 +345,12 @@ Pd_session_component *Pd_root::_create_session(const char *args)
 	readjusted_ram_quota = readjusted_ram_quota + sizeof(Pd_session_component) + md_alloc()->overhead(sizeof(Pd_session_component));
 
 	Genode::snprintf(ram_quota_buf, sizeof(ram_quota_buf), "%zu", readjusted_ram_quota);
-	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);*/
+	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);
 
 	Genode::Session::Diag diag{};
 	// Create custom Pd_session
 	Pd_session_component *new_session =
-			new (md_alloc()) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args("cap_quota=50,ram_quota=100000"), diag);
+			new (md_alloc()) Pd_session_component(_env, _md_alloc, _ep, args, args, _bootstrap_phase, Genode::session_resources_from_args(readjusted_args), diag);
 
 	Genode::Lock::Guard lock(_objs_lock);
 	_session_rpc_objs.insert(new_session);
@@ -396,6 +402,7 @@ Pd_root::Pd_root(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoi
 	_session_rpc_objs ()
 {
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m");
+	//Genode::log("Pd root cap ",cap());
 }
 
 

@@ -57,7 +57,7 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 
 	// Retrieve cap_idx_alloc_addr
 	Genode::Pd_session_client pd_client(_child.pd().parent_cap());
-	addr_t const cap_idx_alloc_addr = 0;//Genode::Foc_native_pd_client(pd_client.native_pd()).cap_map_info();
+	addr_t const cap_idx_alloc_addr = 0xc0198;//Genode::Foc_native_pd_client(pd_client.native_pd()).cap_map_info();
 	_state._cap_idx_alloc_addr = cap_idx_alloc_addr;
 
 	if(verbose_kcap_mappings_debug) Genode::log("Address of cap_idx_alloc = ", Hex(cap_idx_alloc_addr));

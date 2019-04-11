@@ -10,8 +10,9 @@ using namespace Rtcr;
 
 
 Region_map_component::Region_map_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Region_map> region_map_cap,
-		Genode::size_t size, const char *label, bool &bootstrap_phase)
+		Genode::size_t size, const char *label, bool &bootstrap_phase, Resources resources, Diag diag, Genode::Entrypoint &ep)
 :
+	Session_object(ep, resources, label, diag),
 	_md_alloc          (md_alloc),
 	_bootstrap_phase   (bootstrap_phase),
 	_label             (label),
