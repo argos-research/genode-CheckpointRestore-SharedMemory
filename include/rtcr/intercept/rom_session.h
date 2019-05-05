@@ -27,7 +27,7 @@ namespace Rtcr {
 	constexpr bool rom_root_verbose_debug = false;
 }
 
-class Rtcr::Rom_session_component : public Genode::Session_object<Genode::Rom_session>,
+class Rtcr::Rom_session_component : public Genode::Rpc_object<Genode::Rom_session>,
                                     private Genode::List<Rom_session_component>::Element
 {
 private:
@@ -48,7 +48,7 @@ private:
 	/**
 	 * Entrypoint
 	 */
-	Genode::Entrypoint     &_ep;
+	Genode::Rpc_entrypoint     &_ep;
 	/**
 	 * Connection to parent's ROM session
 	 */
@@ -59,8 +59,8 @@ private:
 	Rom_session_info        _parent_state;
 
 public:
-	Rom_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *label, const char *creation_args, bool &bootstrap_phase, Resources resources, Diag diag);
+	Rom_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Rpc_entrypoint &ep,
+			const char *label, const char *creation_args, bool &bootstrap_phase);
 	~Rom_session_component();
 
 	Genode::Rom_session_capability parent_cap() { return _parent_rom.cap(); }

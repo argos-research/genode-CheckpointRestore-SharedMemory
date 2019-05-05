@@ -27,7 +27,7 @@ namespace Rtcr {
 /**
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
-class Rtcr::Rm_session_component : public Genode::Session_object<Genode::Rm_session>,
+class Rtcr::Rm_session_component : public Genode::Rpc_object<Genode::Rm_session>,
                                    private Genode::List<Rm_session_component>::Element
 {
 private:
@@ -44,7 +44,7 @@ private:
 	/**
 	 * Entrypoint for managing created Rpc objects
 	 */
-	Genode::Entrypoint    &_ep;
+	Genode::Rpc_entrypoint    &_ep;
 	/**
 	 * Reference to Target_child's bootstrap phase
 	 */
@@ -63,8 +63,8 @@ private:
 	void _destroy(Region_map_component &region_map);
 
 public:
-	Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *creation_args, bool &bootstrap_phase, Resources resources, Diag diag);
+	Rm_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Rpc_entrypoint &ep,
+			const char *creation_args, bool &bootstrap_phase);
 	~Rm_session_component();
 
 	Genode::Rm_session_capability parent_cap() { return _parent_rm.cap(); }

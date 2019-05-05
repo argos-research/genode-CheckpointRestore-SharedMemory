@@ -11,13 +11,13 @@ using namespace Rtcr;
 
 Cpu_thread_component::Cpu_thread_component(Genode::Allocator &md_alloc, Genode::Capability<Genode::Cpu_thread> cpu_thread_cap,
 		Genode::Pd_session_capability pd_session_cap, const char *name, Genode::Cpu_session::Weight weight, Genode::addr_t utcb,
-		Genode::Affinity::Location affinity, bool &bootstrap_phase,Resources resources, Diag diag, Genode::Entrypoint &ep)
+		Genode::Affinity::Location affinity, bool &bootstrap_phase, Genode::Rpc_entrypoint &ep)
 :
-	Session_object(ep, resources, name, diag),
 	_md_alloc          (md_alloc),
 	_parent_cpu_thread (cpu_thread_cap),
 	_parent_state      (pd_session_cap, name, weight, utcb, bootstrap_phase)
 {
+	ep.manage(this);
 	_parent_state.affinity = affinity;
 	//if(verbose_debug) Genode::log("\033[33m", "Thread", "\033[0m<\033[35m", _parent_state.name, "\033[0m>(parent ", _parent_cpu_thread,")");
 }

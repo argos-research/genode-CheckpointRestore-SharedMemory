@@ -9,15 +9,15 @@
 using namespace Rtcr;
 
 
-Log_session_component::Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-		const char *label, const char *creation_args, bool bootstrapped, Resources resources, Diag diag)
+Log_session_component::Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Rpc_entrypoint &ep,
+		const char *label, const char *creation_args, bool bootstrapped)
 :
-	Session_object(ep, resources, label, diag),
 	_md_alloc     (md_alloc),
 	_ep           (ep),
 	_parent_log   (env, label),
 	_parent_state (creation_args, bootstrapped)
 {
+	_ep.manage(this);
 	//if(verbose_debug) Genode::log("\033[33m", "Log", "\033[0m(parent ", _parent_log,")");
 }
 
@@ -67,10 +67,9 @@ Log_session_component *Log_root::_create_session(const char *args)
 	Genode::snprintf(ram_quota_buf, sizeof(ram_quota_buf), "%zu", readjusted_ram_quota);
 	Genode::Arg_string::set_arg(readjusted_args, sizeof(readjusted_args), "ram_quota", ram_quota_buf);
 
-	Genode::Session::Diag diag{};
 	// Create virtual session object
 	Log_session_component *new_session =
-			new (md_alloc()) Log_session_component(_env, _md_alloc, _ep, label_buf, readjusted_args, _bootstrap_phase, Genode::session_resources_from_args(readjusted_args), diag);
+			new (_md_alloc) Log_session_component(_env, _md_alloc, _ep.rpc_ep(), label_buf, readjusted_args, _bootstrap_phase);
 
 	Genode::Lock::Guard guard(_objs_lock);
 	_session_rpc_objs.insert(new_session);

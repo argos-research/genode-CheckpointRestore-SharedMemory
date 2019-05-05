@@ -24,14 +24,14 @@ namespace Rtcr {
 	class Log_session_component;
 	class Log_root;
 
-	constexpr bool log_verbose_debug = false;
-	constexpr bool log_root_verbose_debug = false;
+	constexpr bool log_verbose_debug = true;
+	constexpr bool log_root_verbose_debug = true;
 }
 
 /**
  * Custom RPC session object to intercept its creation, modification, and destruction through its interface
  */
-class Rtcr::Log_session_component : public Genode::Session_object<Genode::Log_session>,
+class Rtcr::Log_session_component : public Genode::Rpc_object<Genode::Log_session>,
                                     private Genode::List<Log_session_component>::Element
 {
 private:
@@ -47,7 +47,7 @@ private:
 	/**
 	 * Entrypoint for managing created Rpc objects
 	 */
-	Genode::Entrypoint            &_ep;
+	Genode::Rpc_entrypoint            &_ep;
 	/**
 	 * Parent's session connection which is used by the intercepted methods
 	 */
@@ -59,8 +59,8 @@ private:
 
 
 public:
-	Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Entrypoint &ep,
-			const char *label, const char *creation_args, bool bootstrapped, Resources resources, Diag diag);
+	Log_session_component(Genode::Env &env, Genode::Allocator &md_alloc, Genode::Rpc_entrypoint &ep,
+			const char *label, const char *creation_args, bool bootstrapped);
 	~Log_session_component();
 
 	Genode::Log_session_capability parent_cap() { return _parent_log.cap(); }
