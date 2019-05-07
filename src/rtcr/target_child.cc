@@ -613,7 +613,7 @@ Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Servic
 {
 	
 	//Genode::log("Resolve session request ",name," ",label);
-	//return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
+	if(!Genode::strcmp("ld.lib.so",label.string())) return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
 	//Genode::log("local service ",name);
 	return Route { *_custom_services.find(name.string()), label, Genode::Session::Diag{false} };
 	Genode::log("Could not find ",name);
