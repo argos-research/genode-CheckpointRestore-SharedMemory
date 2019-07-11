@@ -6,6 +6,7 @@
 
 #include "rtcr/target_child.h"
 #include "rtcr/restorer.h"
+#include "rtcr/util/empty_rom_service.h"
 
 namespace Fiasco {
 #include <l4/sys/kdebug.h>
@@ -105,7 +106,7 @@ Pd_session_component &Target_child::Resources::init_pd(const char *label, Rtcr::
 	Genode::log("init pd");
 	// Preparing argument string
 	char args_buf[160];
-	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%d, cap_quota=%d, label=\"%s\"", 1, 1024*1024, 10, label);
+	Genode::snprintf(args_buf, sizeof(args_buf), "virt_space=%d, ram_quota=%d, cap_quota=%d, label=\"%s\"", 1, 1, 1, label);
 	Genode::log("init_pd ",(const char*)args_buf);
 	// Issuing session method of pd_root
 	Rtcr::Pd_session_component* pd_session = 
@@ -130,7 +131,7 @@ Cpu_session_component &Target_child::Resources::init_cpu(const char *label, Cpu_
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
 			"priority=0x%x, ram_quota=%u, cap_quota=%d, label=\"%s\"",
-			Genode::Cpu_session::DEFAULT_PRIORITY, 1024*1024, 10, label);
+			Genode::Cpu_session::DEFAULT_PRIORITY, 10, 10, label);
 	Genode::log("init_cpu ",(const char*)args_buf);
 	// Issuing session method of Cpu_root
 	Rtcr::Cpu_session_component *cpu_session = cpu_root._create_session(args_buf);
@@ -153,7 +154,7 @@ Rom_session_component &Target_child::Resources::init_rom(const char *label, Rom_
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
 			"ram_quota=%u, cap_quota=%d, label=\"%s\"",
-			 1024*1024, 10, label);
+			 10, 10, label);
 	//Genode::log("init_rom ",(const char*)args_buf);
 	// Issuing session method of Rom_root
 	Rom_session_component *rom_session = rom_root._create_session(args_buf);
@@ -173,7 +174,7 @@ Rm_session_component &Target_child::Resources::init_rm(const char *label, Rm_roo
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
 			"ram_quota=%u, cap_quota=%d, label=\"%s\"",
-			 1024*1024, 10, label);
+			 10, 10, label);
 	//Genode::log("init_rm ",(const char*)args_buf);
 	// Issuing session method of Rm_root
 	Rm_session_component *rm_session = rm_root._create_session(args_buf);
@@ -193,7 +194,7 @@ Log_session_component &Target_child::Resources::init_log(const char *label, Log_
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
 			"ram_quota=%u, cap_quota=%d, label=\"%s\"",
-			 1024*1024, 10, label);
+			 10, 10, label);
 	//Genode::log("init_log ",(const char*)args_buf);
 	// Issuing session method of Rm_root
 	Log_session_component *log_session =log_root._create_session(args_buf);
@@ -213,7 +214,7 @@ Timer_session_component &Target_child::Resources::init_timer(const char *label, 
 	char args_buf[160];
 	Genode::snprintf(args_buf, sizeof(args_buf),
 			"ram_quota=%u, cap_quota=%d, label=\"%s\"",
-			 1024*1024, 10, label);
+			 10, 10, label);
 	//Genode::log("init_timer ",(const char*)args_buf);
 	// Issuing session method of Rm_root
 	Timer_session_component *timer_session = timer_root._create_session(args_buf);
@@ -230,9 +231,9 @@ Timer_session_component &Target_child::Resources::init_timer(const char *label, 
 void Target_child::init(Genode::Pd_session &session, Genode::Capability<Genode::Pd_session> /*cap*/) { 
 	//Genode::log("init ram");	
 	Genode::Ram_quota quota;
-	quota.value=1000000;
+	quota.value=150000;
 	Genode::Cap_quota caps;
-	caps.value=100;
+	caps.value=1000;
 	session.ref_account(_env.pd_session_cap());
 	try { _env.pd().transfer_quota(_resources.pd.parent_cap(), caps); }
 	catch (Genode::Out_of_caps) { }	
@@ -258,7 +259,7 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	_child_ep        (_env, 16*1024, "child ep"),
 	_granularity     (granularity),
 	_restorer        (nullptr),
-	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap,Genode::session_resources_from_args("cap_quota=100,ram_quota=1000000")),
+	_custom_services (_env, _md_alloc, _resources_ep, _granularity, _in_bootstrap,Genode::session_resources_from_args("cap_quota=1,ram_quota=1")),
 	_resources       (_env, _md_alloc, _name.string(), _custom_services),
 	_address_space   (_resources.pd.address_space()),
 	_parent_services (parent_services),
@@ -267,17 +268,17 @@ Target_child::Target_child(Genode::Env &env, Genode::Allocator &md_alloc,
 	bool bar=false;
 	_custom_services.pd_session = &_resources.pd;
 	_custom_services.cpu_session = &_resources.cpu;
-	_custom_services.pd_factory = new (_md_alloc) Rtcr::Local_pd_factory(_env, _md_alloc, _resources_ep, name, name, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(),_resources.pd);
+	_custom_services.pd_factory = new (_md_alloc) Rtcr::Local_pd_factory(_env, _md_alloc, _resources_ep, name, name, bar, Genode::session_resources_from_args("cap_quota=1,ram_quota=1"), Genode::Session::Diag(),_resources.pd);
 	_custom_services.pd_service = new (_md_alloc) Genode::Local_service<Rtcr::Pd_session_component>(*_custom_services.pd_factory);
-	_custom_services.cpu_factory = new (_md_alloc) Rtcr::Local_cpu_factory(_env, _md_alloc, _resources_ep, _custom_services.pd_root, name, name, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.cpu);
+	_custom_services.cpu_factory = new (_md_alloc) Rtcr::Local_cpu_factory(_env, _md_alloc, _resources_ep, _custom_services.pd_root, name, name, bar, Genode::session_resources_from_args("cap_quota=1,ram_quota=1"), Genode::Session::Diag(), _resources.cpu);
 	_custom_services.cpu_service = new (_md_alloc) Genode::Local_service<Rtcr::Cpu_session_component>(*_custom_services.cpu_factory);
-	_custom_services.rom_factory = new (_md_alloc) Rtcr::Local_rom_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.rom);
+	_custom_services.rom_factory = new (_md_alloc) Rtcr::Local_rom_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=1,ram_quota=1"), Genode::Session::Diag(), _resources.rom);
 	_custom_services.rom_service = new (_md_alloc) Genode::Local_service<Rtcr::Rom_session_component>(*_custom_services.rom_factory);
-	_custom_services.rm_factory = new (_md_alloc) Rtcr::Local_rm_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.rm);
+	_custom_services.rm_factory = new (_md_alloc) Rtcr::Local_rm_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=1,ram_quota=1"), Genode::Session::Diag(), _resources.rm);
 	_custom_services.rm_service = new (_md_alloc) Genode::Local_service<Rtcr::Rm_session_component>(*_custom_services.rm_factory);
-	_custom_services.log_factory = new (_md_alloc) Rtcr::Local_log_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.log);
+	_custom_services.log_factory = new (_md_alloc) Rtcr::Local_log_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=1,ram_quota=1"), Genode::Session::Diag(), _resources.log);
 	_custom_services.log_service = new (_md_alloc) Genode::Local_service<Rtcr::Log_session_component>(*_custom_services.log_factory);
-	_custom_services.timer_factory = new (_md_alloc) Rtcr::Local_timer_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=10,ram_quota=1000000"), Genode::Session::Diag(), _resources.timer);
+	_custom_services.timer_factory = new (_md_alloc) Rtcr::Local_timer_factory(_env, _md_alloc, _resources_ep, bar, Genode::session_resources_from_args("cap_quota=1,ram_quota=1"), Genode::Session::Diag(), _resources.timer);
 	_custom_services.timer_service = new (_md_alloc) Genode::Local_service<Rtcr::Timer_session_component>(*_custom_services.timer_factory);
 	if(verbose_debug) Genode::log("\033[33m", __func__, "\033[0m(child=", _name.string(), ")");
 	_in_bootstrap = false;
@@ -317,6 +318,8 @@ void Target_child::start(Restorer &restorer)
 {
 	if(verbose_debug) Genode::log("Target_child::\033[33m", __func__, "\033[0m(from_restorer=", &restorer,")");
 
+	_restorer = (Rtcr::Restorer *)0x1;
+
 	_child = new (_md_alloc) Genode::Child (
 			/*Genode::Dataspace_capability(),
 			Genode::Dataspace_capability(),
@@ -329,6 +332,8 @@ void Target_child::start(Restorer &restorer)
 			*_custom_services.cpu_service*/);
 
 	//enter_kdebug("before restore");
+	
+	Genode::log("done create child for restore");
 
 	restorer.restore();
 }
@@ -611,7 +616,14 @@ void Target_child::print(Genode::Output &output) const
 Genode::Child_policy::Route Target_child::resolve_session_request(Genode::Service::Name const &name,
 		                              Genode::Session_label const &label)
 {
-	
+	if (_restorer && !Genode::strcmp(name.string(), "ROM")) {
+		Genode::Entrypoint *_ep = new (_md_alloc) Genode::Entrypoint(_env, 16 * 1024, "custom ep");
+		Rtcr::Empty_ROM_session_factory *ersf = new (_md_alloc) Rtcr::Empty_ROM_session_factory { _md_alloc, _ep->rpc_ep(), _env };
+		Genode::Local_service<Rtcr::Empty_ROM_session_component> *ersls = new (_md_alloc) Genode::Local_service<Rtcr::Empty_ROM_session_component> { *ersf };
+		Genode::log("using empty rom service");
+		return Route { *ersls, label, Genode::Session::Diag{false} };
+	}
+
 	//Genode::log("Resolve session request ",name," ",label);
 	if(!Genode::strcmp("ld.lib.so",label.string())) return Route { find_service(_parent_services,name), label, Genode::Session::Diag{false}};
 	//Genode::log("local service ",name);
@@ -716,3 +728,40 @@ void Local_timer_factory::destroy(Rtcr::Timer_session_component &)
 {
 
 }
+
+/*void Target_child::resource_request(Genode::Parent::Resource_args const &args)
+{
+	
+	Genode::Ram_quota ram = Genode::ram_quota_from_args(args.string());
+	Genode::Cap_quota caps = Genode::cap_quota_from_args(args.string());
+
+	Genode::log("requested: ",ram.value," ",caps.value," available: ",_env.pd().avail_ram().value," ",_env.pd().avail_caps().value);
+
+	 XXX: pretty simplistic math here 
+
+	if (ram.value) {
+		Genode::Ram_quota avail = _env.pd().avail_ram();
+		if (avail.value > ram.value) {
+			try { _env.pd().transfer_quota(_resources.pd.parent_cap(), ram); Genode::log("transfered ",ram.value); }
+			catch (Genode::Out_of_ram) { Genode::log("Something went wrong"); }	
+		} else {
+			try { _env.pd().transfer_quota(_resources.pd.parent_cap(), Genode::Ram_quota{avail.value >> 1}); }
+			catch (Genode::Out_of_ram) { Genode::log("Something went wrong"); }	
+			_env.parent().resource_request(args);
+		}
+	}
+
+	if (caps.value) {
+		Genode::Cap_quota avail = _env.pd().avail_caps();
+		if (avail.value > caps.value) {
+			try { _env.pd().transfer_quota(_resources.pd.parent_cap(), ram); }
+			catch (Genode::Out_of_caps) { Genode::log("Something went wrong"); }	
+		} else {
+			try { _env.pd().transfer_quota(_resources.pd.parent_cap(), Genode::Cap_quota{avail.value >> 1}); }
+			catch (Genode::Out_of_caps) { Genode::log("Something went wrong"); }	
+			_env.parent().resource_request(args);
+		}
+	}
+	Genode::log("notify child");
+	_child->notify_resource_avail();
+}*/
