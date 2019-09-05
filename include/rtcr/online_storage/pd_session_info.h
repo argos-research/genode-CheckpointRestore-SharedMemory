@@ -28,6 +28,10 @@ struct Rtcr::Pd_session_info : Session_rpc_info
 {
 	Genode::List<Ram_dataspace_info> ram_dataspaces { };
 	/**
+	 * Objects lock
+	 */
+	Genode::Lock                     ram_dataspaces_lock;
+	/**
 	 * Lock for Signal_sources
 	 */
 	Genode::Lock                         signal_sources_lock;
@@ -55,6 +59,7 @@ struct Rtcr::Pd_session_info : Session_rpc_info
 	Pd_session_info(const char* creation_args, bool bootstrapped)
 	:
 		Session_rpc_info(creation_args, "", bootstrapped),
+		ram_dataspaces_lock(),
 		signal_sources_lock(), signal_sources(),
 		signal_contexts_lock(), signal_contexts(),
 		native_caps_lock(), native_caps()

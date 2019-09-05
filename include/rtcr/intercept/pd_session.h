@@ -79,6 +79,20 @@ private:
 	 * Custom linker area for monitoring the attachments of the Region map
 	 */
 	Region_map_component   _linker_area;
+	/**	
+	 * Connection to the parent Rm session for creating new Region_maps (usually core's Rm session)
+	 */
+	Genode::Rm_connection    _parent_rm;
+	/**
+	 * Receiver of page faults
+	 */
+	Genode::Signal_receiver  _receiver;
+	/**
+	 * Size of Dataspaces which are associated with the managed dataspace
+	 * _granularity is a multiple of a pagesize (4096 Byte)
+	 * Zero means, no managed dataspaces are used
+	 */
+	Genode::size_t           _granularity;
 
 
 public:
