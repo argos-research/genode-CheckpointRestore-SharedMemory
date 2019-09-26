@@ -8,7 +8,7 @@
 
 using namespace Rtcr;
 
-
+/*
 Cpu_thread_component &Cpu_session_component::_create_fp_edf_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight, Genode::addr_t utcb, unsigned priority, unsigned deadline)
 {
@@ -28,7 +28,7 @@ Cpu_thread_component &Cpu_session_component::_create_fp_edf_thread(Genode::Pd_se
 	_parent_state.cpu_threads.insert(new_cpu_thread);
 
 	return *new_cpu_thread;
-}
+}*/
 
 
 Cpu_thread_component &Cpu_session_component::_create_thread(Genode::Pd_session_capability child_pd_cap, Genode::Pd_session_capability parent_pd_cap,
@@ -131,7 +131,7 @@ int Cpu_session_component::get_sched_type(unsigned core)
 	return result;
 }
 
-
+/*
 Genode::Thread_capability Cpu_session_component::create_fp_edf_thread(Genode::Pd_session_capability child_pd_cap,
 		Name const &name, Genode::Affinity::Location affinity, Weight weight,
 		Genode::addr_t utcb, unsigned priority, unsigned deadline)
@@ -152,7 +152,7 @@ Genode::Thread_capability Cpu_session_component::create_fp_edf_thread(Genode::Pd
 
 	if(verbose_debug) Genode::log("  Created custom CPU thread ", new_cpu_thread.cap());
 	return new_cpu_thread.cap();
-}
+}*/
 
 
 Genode::Thread_capability Cpu_session_component::create_thread(Genode::Pd_session_capability child_pd_cap,
@@ -297,6 +297,11 @@ Genode::Capability<Genode::Cpu_session::Native_cpu> Cpu_session_component::nativ
 	if(verbose_debug) Genode::log("  result: ", result);
 
 	return result;
+}
+
+void Cpu_session_component::killed()
+{
+	_parent_cpu.killed();
 }
 
 

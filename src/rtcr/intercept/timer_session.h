@@ -74,6 +74,7 @@ public:
 	unsigned long elapsed_ms() const override;
 	void msleep(unsigned ms) override;
 	void usleep(unsigned us) override;
+	unsigned long now_us() const override;
 };
 
 /**

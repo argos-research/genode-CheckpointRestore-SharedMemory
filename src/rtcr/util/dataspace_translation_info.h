@@ -9,6 +9,7 @@
 
 /* Genode includes */
 #include <util/list.h>
+#include <base/lock.h>
 
 /* Rtcr includes */
 
@@ -25,7 +26,8 @@ struct Rtcr::Dataspace_translation_info : Genode::List<Dataspace_translation_inf
 	Genode::Ram_dataspace_capability ckpt_ds_cap;
 	Genode::Dataspace_capability     resto_ds_cap;
 	Genode::size_t                   size;
-	bool                             processed;
+	Genode::Lock                     lock;
+	bool                		     processed;
 
 	Dataspace_translation_info(Genode::Ram_dataspace_capability ckpt_ds_cap, Genode::Dataspace_capability resto_ds_cap, Genode::size_t size)
 	: ckpt_ds_cap(ckpt_ds_cap), resto_ds_cap(resto_ds_cap), size(size), processed(false) { }

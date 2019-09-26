@@ -1,0 +1,46 @@
+#
+# Build
+#
+
+build { core init drivers/timer benchmark/memory_usage }
+
+create_boot_directory
+
+#
+# Generate config
+#
+
+install_config {
+<config>
+	<parent-provides>
+		<service name="PD"/>
+		<service name="CPU"/>
+		<service name="ROM"/>
+		<service name="RAM"/>
+		<service name="RM"/>
+		<service name="LOG"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="IRQ"/>
+	</parent-provides>
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides><service name="Timer"/></provides>
+	</start>
+	<start name="memory_usage">
+		<resource name="RAM" quantum="550M"/>
+	</start>
+</config>}
+
+#
+# Boot image
+#
+
+build_boot_image { core init timer memory_usage }
+
+append qemu_args " -nographic -m 1024"
+
+run_genode_until forever #"test ended.*\n"

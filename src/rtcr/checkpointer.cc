@@ -29,6 +29,8 @@ template void Checkpointer::_destroy_list(Genode::List<Ref_badge_info> &list);
 
 void Checkpointer::_destroy_list(Genode::List<Simplified_managed_dataspace_info> &list)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	while(Simplified_managed_dataspace_info *smd_info = list.first())
 	{
 		list.remove(smd_info);
@@ -47,6 +49,8 @@ void Checkpointer::_destroy_list(Genode::List<Simplified_managed_dataspace_info>
 /* searches the capability map and stores contained capabilities as Kcap_badge_info objects */
 Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	using Genode::log;
 	using Genode::Hex;
 	using Genode::addr_t;
@@ -153,6 +157,8 @@ Genode::List<Kcap_badge_info> Checkpointer::_create_kcap_mappings()
 Genode::List<Ref_badge_info> Checkpointer::_mark_and_attach_designated_dataspaces(Attached_region_info &ar_info)
 /* marks infos by inserting them into the returned list */
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::List<Ref_badge_info> result_infos;
@@ -181,7 +187,9 @@ Genode::List<Ref_badge_info> Checkpointer::_mark_and_attach_designated_dataspace
 
 void Checkpointer::_detach_and_unmark_designated_dataspaces(Genode::List<Ref_badge_info> &badge_infos, Attached_region_info &ar_info)
 /* not really unmarking anything */
-{
+{	
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Managed_region_map_info *mrm_info = ar_info.managed_dataspace(_child.ram().parent_state().ram_dataspaces);
@@ -206,6 +214,8 @@ void Checkpointer::_detach_and_unmark_designated_dataspaces(Genode::List<Ref_bad
 
 Genode::addr_t Checkpointer::_find_kcap_by_badge(Genode::uint16_t badge)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::addr_t kcap = 0;
@@ -220,6 +230,8 @@ Genode::addr_t Checkpointer::_find_kcap_by_badge(Genode::uint16_t badge)
 
 Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16_t badge)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	Genode::Dataspace_capability result;
 
 	// RAM dataspace
@@ -241,6 +253,8 @@ Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16
 Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16_t badge,
 		Genode::List<Stored_ram_session_info> &state_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	Genode::Dataspace_capability result;
 
 	Stored_ram_session_info *session_info = state_infos.first();
@@ -263,6 +277,8 @@ Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16
 Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16_t badge,
 		Genode::List<Stored_pd_session_info> &state_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	Genode::Dataspace_capability result;
 
 	Stored_pd_session_info *session_info = state_infos.first();
@@ -287,6 +303,8 @@ Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16
 Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16_t badge,
 		Genode::List<Stored_rm_session_info> &state_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	Genode::Dataspace_capability result;
 
 	Stored_rm_session_info *session_info = state_infos.first();
@@ -311,6 +329,8 @@ Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16
 Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16_t badge,
 		Genode::List<Stored_attached_region_info> &state_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	Genode::Dataspace_capability result;
 
 	Stored_attached_region_info *info = state_infos.first();
@@ -323,6 +343,8 @@ Genode::Dataspace_capability Checkpointer::_find_stored_dataspace(Genode::uint16
 
 void Checkpointer::_prepare_rm_sessions(Genode::List<Stored_rm_session_info> &stored_infos, Genode::List<Rm_session_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Rm_session_component *child_info = nullptr;
@@ -371,8 +393,11 @@ void Checkpointer::_prepare_rm_sessions(Genode::List<Stored_rm_session_info> &st
 		stored_info = next_info;
 	}
 }
+
 void Checkpointer::_destroy_stored_rm_session(Stored_rm_session_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	while(Stored_region_map_info *info = stored_info.stored_region_map_infos.first())
@@ -386,6 +411,8 @@ void Checkpointer::_destroy_stored_rm_session(Stored_rm_session_info &stored_inf
 
 void Checkpointer::_prepare_region_maps(Genode::List<Stored_region_map_info> &stored_infos, Genode::List<Region_map_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Region_map_component *child_info = nullptr;
@@ -438,8 +465,11 @@ void Checkpointer::_prepare_region_maps(Genode::List<Stored_region_map_info> &st
 		stored_info = next_info;
 	}
 }
+
 void Checkpointer::_destroy_stored_region_map(Stored_region_map_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	while(Stored_attached_region_info *info = stored_info.stored_attached_region_infos.first())
@@ -453,6 +483,8 @@ void Checkpointer::_destroy_stored_region_map(Stored_region_map_info &stored_inf
 
 void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region_info> &stored_infos, Genode::List<Attached_region_info> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Attached_region_info *child_info = nullptr;
@@ -513,8 +545,11 @@ void Checkpointer::_prepare_attached_regions(Genode::List<Stored_attached_region
 		stored_info = next_info;
 	}
 }
+
 Stored_attached_region_info &Checkpointer::_create_stored_attached_region(Attached_region_info &child_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 
@@ -549,8 +584,11 @@ Stored_attached_region_info &Checkpointer::_create_stored_attached_region(Attach
 	Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info.attached_ds_cap.local_name());
 	return *new (_state._alloc) Stored_attached_region_info(child_info, childs_kcap, ramds_cap);
 }
+
 void Checkpointer::_destroy_stored_attached_region(Stored_attached_region_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	// Pre-condition: This stored object is removed from its list, thus,
@@ -568,6 +606,8 @@ void Checkpointer::_destroy_stored_attached_region(Stored_attached_region_info &
 void Checkpointer::_prepare_ram_sessions(Genode::List<Stored_ram_session_info> &stored_infos,
 		Genode::List<Ram_session_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Ram_session_component *child_info = nullptr;
@@ -618,6 +658,8 @@ void Checkpointer::_prepare_ram_sessions(Genode::List<Stored_ram_session_info> &
 }
 void Checkpointer::_destroy_stored_ram_session(Stored_ram_session_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	while(Stored_ram_dataspace_info *info = stored_info.stored_ramds_infos.first())
@@ -632,6 +674,8 @@ void Checkpointer::_destroy_stored_ram_session(Stored_ram_session_info &stored_i
 void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_info> &stored_infos,
 		Genode::List<Ram_dataspace_info> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Ram_dataspace_info *child_info = nullptr;
@@ -688,8 +732,11 @@ void Checkpointer::_prepare_ram_dataspaces(Genode::List<Stored_ram_dataspace_inf
 		stored_info = next_info;
 	}
 }
+
 Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_dataspace_info &child_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	// The dataspace with the memory content of the ram dataspace will be referenced by the stored ram dataspace
@@ -723,8 +770,11 @@ Stored_ram_dataspace_info &Checkpointer::_create_stored_ram_dataspace(Ram_datasp
 	Genode::addr_t childs_kcap = _find_kcap_by_badge(child_info.cap.local_name());
 	return *new (_state._alloc) Stored_ram_dataspace_info(child_info, childs_kcap, ramds_cap);
 }
+
 void Checkpointer::_destroy_stored_ram_dataspace(Stored_ram_dataspace_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	// Pre-condition: This stored object is removed from its list, thus,
@@ -742,6 +792,8 @@ void Checkpointer::_destroy_stored_ram_dataspace(Stored_ram_dataspace_info &stor
 void Checkpointer::_prepare_cpu_sessions(Genode::List<Stored_cpu_session_info> &stored_infos,
 		Genode::List<Cpu_session_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Cpu_session_component *child_info = nullptr;
@@ -793,6 +845,8 @@ void Checkpointer::_prepare_cpu_sessions(Genode::List<Stored_cpu_session_info> &
 }
 void Checkpointer::_destroy_stored_cpu_session(Stored_cpu_session_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	while(Stored_cpu_thread_info *info = stored_info.stored_cpu_thread_infos.first())
@@ -807,6 +861,8 @@ void Checkpointer::_destroy_stored_cpu_session(Stored_cpu_session_info &stored_i
 void Checkpointer::_prepare_cpu_threads(Genode::List<Stored_cpu_thread_info> &stored_infos,
 		Genode::List<Cpu_thread_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Cpu_thread_component *child_info = nullptr;
@@ -861,8 +917,11 @@ void Checkpointer::_prepare_cpu_threads(Genode::List<Stored_cpu_thread_info> &st
 		stored_info = next_info;
 	}
 }
+
 void Checkpointer::_destroy_stored_cpu_thread(Stored_cpu_thread_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+	
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -872,6 +931,8 @@ void Checkpointer::_destroy_stored_cpu_thread(Stored_cpu_thread_info &stored_inf
 void Checkpointer::_prepare_pd_sessions(Genode::List<Stored_pd_session_info> &stored_infos,
 		Genode::List<Pd_session_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Pd_session_component *child_info = nullptr;
@@ -937,8 +998,11 @@ void Checkpointer::_prepare_pd_sessions(Genode::List<Stored_pd_session_info> &st
 		stored_info = next_info;
 	}
 }
+
 void Checkpointer::_destroy_stored_pd_session(Stored_pd_session_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	while(Stored_signal_context_info *info = stored_info.stored_context_infos.first())
@@ -963,10 +1027,11 @@ void Checkpointer::_destroy_stored_pd_session(Stored_pd_session_info &stored_inf
 	Genode::destroy(_state._alloc, &stored_info);
 }
 
-
 void Checkpointer::_prepare_native_caps(Genode::List<Stored_native_capability_info> &stored_infos,
 		Genode::List<Native_capability_info> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);	
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Native_capability_info *child_info = nullptr;
@@ -1014,8 +1079,11 @@ void Checkpointer::_prepare_native_caps(Genode::List<Stored_native_capability_in
 		stored_info = next_info;
 	}
 }
+
 void Checkpointer::_destroy_stored_native_cap(Stored_native_capability_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -1025,6 +1093,8 @@ void Checkpointer::_destroy_stored_native_cap(Stored_native_capability_info &sto
 void Checkpointer::_prepare_signal_sources(Genode::List<Stored_signal_source_info> &stored_infos,
 		Genode::List<Signal_source_info> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Signal_source_info *child_info = nullptr;
@@ -1072,8 +1142,11 @@ void Checkpointer::_prepare_signal_sources(Genode::List<Stored_signal_source_inf
 		stored_info = next_info;
 	}
 }
+
 void Checkpointer::_destroy_stored_signal_source(Stored_signal_source_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -1083,6 +1156,8 @@ void Checkpointer::_destroy_stored_signal_source(Stored_signal_source_info &stor
 void Checkpointer::_prepare_signal_contexts(Genode::List<Stored_signal_context_info> &stored_infos,
 		Genode::List<Signal_context_info> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Signal_context_info *child_info = nullptr;
@@ -1141,6 +1216,8 @@ void Checkpointer::_destroy_stored_signal_context(Stored_signal_context_info &st
 void Checkpointer::_prepare_log_sessions(Genode::List<Stored_log_session_info> &stored_infos,
 		Genode::List<Log_session_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Log_session_component *child_info = nullptr;
@@ -1190,6 +1267,8 @@ void Checkpointer::_prepare_log_sessions(Genode::List<Stored_log_session_info> &
 }
 void Checkpointer::_destroy_stored_log_session(Stored_log_session_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -1199,6 +1278,8 @@ void Checkpointer::_destroy_stored_log_session(Stored_log_session_info &stored_i
 void Checkpointer::_prepare_timer_sessions(Genode::List<Stored_timer_session_info> &stored_infos,
 		Genode::List<Timer_session_component> &child_infos)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Timer_session_component *child_info = nullptr;
@@ -1249,8 +1330,11 @@ void Checkpointer::_prepare_timer_sessions(Genode::List<Stored_timer_session_inf
 		stored_info = next_info;
 	}
 }
+
 void Checkpointer::_destroy_stored_timer_session(Stored_timer_session_info &stored_info)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::destroy(_state._alloc, &stored_info);
@@ -1259,6 +1343,8 @@ void Checkpointer::_destroy_stored_timer_session(Stored_timer_session_info &stor
 Genode::List<Ref_badge_info> Checkpointer::_create_region_map_dataspaces_list(
 			Genode::List<Pd_session_component> &pd_sessions, Genode::List<Rm_session_component> *rm_sessions)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Genode::List<Ref_badge_info> result_list;
@@ -1312,6 +1398,8 @@ Genode::List<Ref_badge_info> Checkpointer::_create_region_map_dataspaces_list(
  */
 void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_component> &ram_sessions)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Resto::\033[33m", __func__, "\033[0m(...)");
 
 	typedef Simplified_managed_dataspace_info::Simplified_designated_ds_info Sim_dd_info;
@@ -1351,6 +1439,8 @@ void Checkpointer::_create_managed_dataspace_list(Genode::List<Ram_session_compo
 
 void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 	Ram_session_component *ram_session = ram_sessions.first();
@@ -1377,12 +1467,16 @@ void Checkpointer::_detach_designated_dataspaces(Genode::List<Ram_session_compon
 
 void Checkpointer::_checkpoint_dataspaces()
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(...)");
 
 
 	Dataspace_translation_info *memory_info = _dataspace_translations.first();
 	while(memory_info)
 	{
+		memory_info->lock.lock();
+
 		if(!memory_info->processed)
 		{
 			// Resolve managed dataspace of the incremental checkpointing mechanism
@@ -1413,14 +1507,54 @@ void Checkpointer::_checkpoint_dataspaces()
 			memory_info->processed = true;
 		}
 
+		memory_info->lock.unlock();
+
 		memory_info = memory_info->next();
 	}
+}
+
+// Extension for COW - used in fault handler during copy-on-write
+void Checkpointer::_checkpoint_specific_dataspace(Genode::uint16_t badge)
+{
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
+	Dataspace_translation_info *ds_trans_info = _dataspace_translations.first();
+
+	if(ds_trans_info) ds_trans_info = ds_trans_info->find_by_resto_badge(badge);
+
+	if(!ds_trans_info) return;
+
+	ds_trans_info->lock.lock();
+
+	if(!ds_trans_info->processed)
+	{
+		Simplified_managed_dataspace_info *smd_info = _managed_dataspaces.first();
+		if(smd_info) smd_info = smd_info->find_by_badge(ds_trans_info->resto_ds_cap.local_name());
+
+		if(smd_info)
+		{
+			Simplified_managed_dataspace_info::Simplified_designated_ds_info *sdd_info =
+					smd_info->designated_dataspaces.first();
+			while(sdd_info)
+			{
+				Genode::log("checkpoint managed dataspace...");
+				if(sdd_info->modified)
+					_checkpoint_dataspace_content(ds_trans_info->ckpt_ds_cap, sdd_info->dataspace_cap, sdd_info->addr, sdd_info->size);
+
+				sdd_info = sdd_info->next();
+			}
+		}
+		ds_trans_info->processed = true;
+	}
+	ds_trans_info->lock.unlock();
 }
 
 
 void Checkpointer::_checkpoint_dataspace_content(Genode::Dataspace_capability dst_ds_cap,
 		Genode::Dataspace_capability src_ds_cap, Genode::addr_t dst_offset, Genode::size_t size)
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);	
+
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m(dst ", dst_ds_cap,
 			", src ", src_ds_cap, ", dst_offset=", Genode::Hex(dst_offset),
 			", copy_size=", Genode::Hex(size), ")");
@@ -1436,9 +1570,9 @@ void Checkpointer::_checkpoint_dataspace_content(Genode::Dataspace_capability ds
 }
 
 
-Checkpointer::Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state)
+Checkpointer::Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state, Timer::Connection &timer)
 :
-	_alloc(alloc), _child(child), _state(state)
+	_alloc(alloc), _child(child), _state(state), _timer(timer)
 {
 	if(verbose_debug) Genode::log("\033[33m", "Checkpointer", "\033[0m(...)");
 }
@@ -1456,6 +1590,8 @@ Checkpointer::~Checkpointer()
 
 void Checkpointer::checkpoint()
 {
+	PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer);
+
 	using Genode::log;
 	if(verbose_debug) Genode::log("Ckpt::\033[33m", __func__, "\033[0m()");
 

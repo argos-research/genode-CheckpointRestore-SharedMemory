@@ -92,6 +92,11 @@ void Timer_session_component::usleep(unsigned us)
 	_parent_timer.usleep(us);
 }
 
+unsigned long Timer_session_component::now_us() const
+{
+	return _parent_timer.now_us();
+}
+
 
 Timer_session_component *Timer_root::_create_session(const char *args)
 {

@@ -109,7 +109,7 @@ Target_child::Resources::Resources(Genode::Env &env, const char *label, Custom_s
 {
 	// Donate ram quota to child
 	// TODO Replace static quota donation with the amount of quota, the child needs
-	Genode::size_t donate_quota = 1024*1024;
+	Genode::size_t donate_quota = 150*1024*1024;
 	ram.ref_account(env.ram_session_cap());
 	// Note: transfer goes directly to parent's ram session
 	env.ram().transfer_quota(ram.parent_cap(), donate_quota);

@@ -94,6 +94,10 @@ struct Rtcr::Managed_region_map_info
 	 */
 	Genode::Capability<Genode::Region_map> const region_map_cap;
 	/**
+	 * Capability of dataspace representation of the region_map -- Added for COW mechanism
+	 */
+	Genode::Dataspace_capability const region_map_ds_cap;
+	/**
 	 * List of designated Ram dataspaces
 	 */
 	Genode::List<Designated_dataspace_info> dd_infos;
@@ -102,9 +106,10 @@ struct Rtcr::Managed_region_map_info
 	 */
 	Genode::Signal_context context;
 
-	Managed_region_map_info(Genode::Capability<Genode::Region_map> region_map_cap)
+	Managed_region_map_info(Genode::Capability<Genode::Region_map> region_map_cap,
+								Genode::Dataspace_capability region_map_ds_cap)
 	:
-		region_map_cap(region_map_cap), dd_infos(), context()
+		region_map_cap(region_map_cap), region_map_ds_cap(region_map_ds_cap), dd_infos(), context()
 	{ }
 
 };

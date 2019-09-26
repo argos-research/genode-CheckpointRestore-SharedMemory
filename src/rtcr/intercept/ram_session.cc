@@ -208,7 +208,7 @@ Genode::Ram_dataspace_capability Ram_session_component::alloc(Genode::size_t siz
 		Genode::Region_map_client new_rm_client(new_region_map_cap);
 
 		Managed_region_map_info *new_mrm_info =
-				new (_md_alloc) Managed_region_map_info(new_region_map_cap);
+				new (_md_alloc) Managed_region_map_info(new_region_map_cap, new_rm_client.dataspace());
 
 		Ram_dataspace_info *new_ramds_info =
 				new (_md_alloc) Ram_dataspace_info(

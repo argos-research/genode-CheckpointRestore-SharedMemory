@@ -34,13 +34,13 @@ struct Rtcr::Main
 
 		Timer::Connection timer { env };
 
-		Target_child child { env, heap, parent_services, "sheep_counter", 0 };
+		Target_child child { env, heap, parent_services, "memory_usage", 1 };
 		child.start();
 
-		timer.msleep(3000);
+		timer.msleep(5000);
 
 		Target_state ts(env, heap);
-		Checkpointer ckpt(heap, child, ts);
+		Checkpointer ckpt(heap, child, ts, timer);
 		ckpt.checkpoint();
 
 		//Target_child child_restored { env, heap, parent_services, "sheep_counter", 0 };

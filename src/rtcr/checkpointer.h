@@ -20,6 +20,14 @@
 #include "util/ref_badge_info.h"
 #include "util/simplified_managed_dataspace_info.h"
 
+#include <util/profiler.h>
+
+#ifdef PROFILE_CHECKPOINT
+#define PROFILE_CHECKPOINTER_FUNCTION PROFILE_SCOPE(__PRETTY_FUNCTION__, "lightgreen", _timer)
+#else
+#define PROFILE_CHECKPOINTER_FUNCTION ;
+#endif
+
 namespace Rtcr {
 	class Checkpointer;
 
@@ -63,6 +71,7 @@ private:
 	Genode::List<Ref_badge_info>            _region_maps;
 	Genode::List<Simplified_managed_dataspace_info> _managed_dataspaces;
 
+	Timer::Connection &_timer;
 
 	template<typename T>
 	void _destroy_list(Genode::List<T> &list);
@@ -149,11 +158,12 @@ private:
 	void _detach_designated_dataspaces(Genode::List<Ram_session_component> &ram_sessions);
 
 	void _checkpoint_dataspaces();
+	void _checkpoint_specific_dataspace(Genode::uint16_t badge);
 	void _checkpoint_dataspace_content(Genode::Dataspace_capability dst_ds_cap, Genode::Dataspace_capability src_ds_cap,
 			Genode::addr_t dst_offset, Genode::size_t size);
 
 public:
-	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state);
+	Checkpointer(Genode::Allocator &alloc, Target_child &child, Target_state &state, Timer::Connection &timer);
 	~Checkpointer();
 
 	/**
